@@ -42,8 +42,10 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          grep -E '^e: ' /tmp/compile.log | head -40 | while IFS= read -r line; do
-            echo "::error::${line#e: }"
+          esc() { sed -e 's/%/%25/g' -e 's/\r/%0D/g' | cut -c1-450; }
+          echo "::error::LAST LINES: $(tail -8 /tmp/compile.log | esc | tr '\n' '|')"
+          grep -inE 'error|exception|what went wrong|failed' /tmp/compile.log | tail -25 | while IFS= read -r line; do
+            echo "::error::${line}" | esc
           done
           exit 1
 
