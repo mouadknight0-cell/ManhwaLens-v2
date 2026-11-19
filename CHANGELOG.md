@@ -3,7 +3,7 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [1.1.0] - Unreleased (in `arena/8383bba0-manhwalens-v2`)
+## [1.1.0] - 2026-11-19
 
 ### Fixed
 - **Capture session rebuilt.** Root cause of "capture session does not work":

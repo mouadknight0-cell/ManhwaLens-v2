@@ -100,18 +100,24 @@ jobs:
           body: |
             ## ManhwaLens ${{ steps.meta.outputs.VERSION_NAME }}
 
-            Native Android app for reading manhwa: on-device OCR (Korean · Japanese · Chinese · Latin) + on-device translation with a floating bubble overlay.
+            Native Android app for iPhone-free manhwa reading: captures the screen via MediaProjection, reads the English dialogue on-device (ML Kit OCR), and renders it in natural Arabic — with a floating bubble overlay. Fully offline after one-time model downloads.
 
             ### Install
             Download **`app-release.apk`** below and open it on your phone. If prompted, allow installation from unknown sources.
-             > If the release APK was built without the stable signing secret, it is debug-signed; uninstall any older ManhwaLens before installing.
+             > Until the `MANHWALENS_KEYSTORE_*` secrets are configured, the release APK is debug-signed; uninstall any older ManhwaLens before installing.
             `app-debug.apk` is a debug build suitable for testing.
 
-            ### Highlights
-            - Full-screen capture via MediaProjection with a held capture session
-            - Floating draggable lens bubble (overlay permission) — tap to translate the current page
-            - Reading history stored on-device (never uploaded)
-            - Arabic & English UI · RTL support
+            ### Highlights (v1.1.0)
+            - **Capture session rebuilt**: the pipeline now lives for the whole session (no per-capture VirtualDisplay race) — fresh frames with a newest-frame fallback
+            - **English → Arabic only** (locked scope), sentence reconstruction before translation, dialogue/narration/SFX classification
+            - **CN/KR character names** in romanized English are detected, never translated, and remembered permanently
+            - **Structured diagnostics** (content-free JSONL logs, per-journey trace id, consistent error codes) + **T0–T12 benchmark** system (first visible Arabic sentence / full screen), exportable from Settings → Diagnostics
+            - Progressive per-block translation reveal · Arabic RTL rendering · on-device history
             - Package id: `com.manhwalens.app`
+
+            ### Honest disclosure
+            - Builds run on GitHub Actions; the capture fix is verified by build + unit tests only and **has not yet been validated on a physical device**. See issue #7 for the device checklist (required before claiming v1.1.0 reliability).
+            - KO/ZH sources are deferred until the EN→AR pipeline is device-proven.
+            - Translation quality is bounded by the on-device ML Kit model (not an LLM).
           generate_release_notes: true
           fail_on_unmatched_files: false

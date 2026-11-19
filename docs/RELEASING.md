@@ -1,5 +1,12 @@
 # Releasing ManhwaLens
 
+## Build policy — always on GitHub
+
+- **The app is always built on GitHub Actions.** No local builds: the development environment has no JDK/Android SDK, and every CI run is the source of truth for "does it compile, do tests pass, does the APK build".
+- **After every prompt/iteration that lands changes, a new release tag (`vX.Y.Z`) is cut and pushed**; the [release workflow](../.github/workflows/release.yml) then runs unit tests → `assembleRelease` → `assembleDebug` → publishes a GitHub Release with both APKs attached.
+- Debug APK ships for testing; the release APK is stably signed once `MANHWALENS_KEYSTORE_*` secrets are configured (see below).
+- Tags live on the current working branch; package id `com.manhwalens.app` never changes.
+
 ## Release model
 
 - **Package id** `com.manhwalens.app` — permanent. Changing it breaks update compatibility for every installed user.
