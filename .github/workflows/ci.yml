@@ -53,7 +53,23 @@ jobs:
         run: ./gradlew :app:compileDebugUnitTestKotlin --stacktrace --no-daemon
 
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest --stacktrace --no-daemon
+        id: unit-tests
+        shell: bash
+        run: ./gradlew testDebugUnitTest --stacktrace --no-daemon 2>&1 | tee /tmp/test.log
+
+      - name: Annotate test failures
+        if: failure() && steps.unit-tests.outcome == 'failure'
+        shell: bash
+        run: |
+          esc() { sed -e 's/%/%25/g' -e 's/\r//g' -e 's/\x1b\[[0-9;]*m//g' | cut -c1-300; }
+          failed=$(find . -path '*test-results/testDebugUnitTest/*.xml' -name 'TEST-*.xml' -exec grep -l '<failure\|<error' {} + 2>/dev/null | head -10)
+          for f in $failed; do
+            awk -v file="$f" '/<(failure|error)[ >]/{gsub(/\n/," "); print "::error file=" file "::" $0}' "$f" | while IFS= read -r line; do
+              printf '%s\n' "$(printf '%s' "$line" | esc)"
+            done
+          done
+          grep -iE 'FAILED|AssertionError|Exception|expected' /tmp/test.log | head -30 | while IFS= read -r line; do printf '::error::%s\n' "$(printf '%s' "$line" | esc)"; done
+          exit 1
 
       - name: Assemble debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon
