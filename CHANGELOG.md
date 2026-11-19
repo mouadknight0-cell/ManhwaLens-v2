@@ -3,6 +3,13 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.15] - 2026-11-19
+
+- Prepare complete TXT before opening the document picker; preserve its path across recreation and verify saved byte count/hash before success. Physical provider behavior remains unverified.
+- Repair allowlisted D0CTOR / TO0 OCR confusions without changing numeric tokens or guessing YCu.
+- Reviewed first-person help utterances preserve speaker identity; negative regression tests prevent substring/negation rewrites. Not a general semantic-model upgrade.
+- See docs/REPORT-1.1.15.md for phone evidence and limitations.
+
 ## [1.1.14] - 2026-11-19
 
 - Add explicit opt-in unified TXT creation: save through Android document picker or share one UTF-8 attachment containing retained translations/history, benchmarks, errors, logs and bug reports. Automatic diagnostic bundles remain content-free.
