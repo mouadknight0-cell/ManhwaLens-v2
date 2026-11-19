@@ -96,3 +96,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Incremental, measured opaque translation cards with tap-to-reveal and long-card scrolling.
 - Worker-thread bitmap conversion; accurate partial-result completion markers.
 - Device/OEM and before/after performance validation remains pending; see docs/READER-1.1.6.md.
+
+## [1.1.7] - 2026-11-19
+- Reconstruct nearby OCR lines across block boundaries with a light-corridor guard before translation.
+- Prevent card collisions; fall back to one bounded scrollable reading panel when inline placement cannot fit.
+- Skip recognized browser tab overview without revoking capture or claiming translation success.
+- Include complete sample rectangles and non-content failure context.
+- Added grouping/placement/chrome-filter regression tests; phone validation and contextual ML Kit limitations documented in docs/DIALOGUE-1.1.7.md.

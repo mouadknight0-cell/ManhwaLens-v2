@@ -37,6 +37,7 @@ object TranslationSamples {
                     put("pair", "en→ar"); put("method", "ML Kit on-device")
                     put("app_version", com.manhwalens.app.BuildConfig.VERSION_NAME)
                     put("review", "unreviewed"); put("left", block.region.left); put("top", block.region.top)
+                    put("right", block.region.right); put("bottom", block.region.bottom)
                 })
             }
             write(JSONArray(all.takeLast(200)))

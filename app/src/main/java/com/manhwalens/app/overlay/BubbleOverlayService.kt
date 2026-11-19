@@ -86,6 +86,10 @@ class BubbleOverlayService : Service() {
             val xy = IntArray(2); view.getLocationOnScreen(xy)
             rectangles.add(android.graphics.Rect(xy[0], xy[1], xy[0] + dp(BUBBLE_SIZE_DP), xy[1] + dp(BUBBLE_SIZE_DP)))
         }
+        panelView?.let { view ->
+            val xy = IntArray(2); view.getLocationOnScreen(xy)
+            rectangles.add(android.graphics.Rect(xy[0], xy[1], xy[0] + view.width, xy[1] + view.height))
+        }
         dockRect?.let { rectangles.add(it) }
         CaptureManager.overlayBounds = rectangles
     }
@@ -138,11 +142,15 @@ class BubbleOverlayService : Service() {
 
     private val translationViews = mutableListOf<View>()
     private var displayedResultId: String? = null
+    private var readingPanelId: String? = null
+    private var dismissedPanelId: String? = null
     private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
     private fun clearTranslations() {
         translationViews.forEach { runCatching { windowManager.removeView(it) } }
         translationViews.clear()
+        if (readingPanelId != null) hidePanel()
+        readingPanelId = null
         displayedBlocks.clear()
         displayedResultId = null
         translationRects.clear()
@@ -373,7 +381,8 @@ class BubbleOverlayService : Service() {
 
     private fun showPanel(result: CaptureResult, final: Boolean) {
         // StateFlow replays its last result to new subscribers: never render history over a different app.
-        if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt) return
+        if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt || dismissedPanelId == result.id) return
+        if (readingPanelId == result.id) { showReadingPanel(result, final); return }
         hidePanel()
         if (displayedResultId != result.id) { clearTranslations(); displayedResultId = result.id }
         val bounds = if (Build.VERSION.SDK_INT >= 30) {
@@ -414,6 +423,18 @@ class BubbleOverlayService : Service() {
                 y = (region.top - (height - region.height) / 2).coerceIn(bounds.top, bounds.bottom - height)
                 alpha = 1f
             }
+            val occupied = translationRects.map { CardPlacement.Box(it.left, it.top, it.right, it.bottom) } +
+                listOfNotNull(bubbleView?.let { view ->
+                    val xy = IntArray(2); view.getLocationOnScreen(xy)
+                    CardPlacement.Box(xy[0], xy[1], xy[0] + view.width, xy[1] + view.height)
+                }, dockRect?.let { CardPlacement.Box(it.left, it.top, it.right, it.bottom) })
+            val placement = CardPlacement.place(CardPlacement.Box(params.x, params.y, params.x + width, params.y + height),
+                CardPlacement.Box(bounds.left, bounds.top, bounds.right, bounds.bottom), occupied, dp(6))
+            if (placement == null || kotlin.math.abs(placement.top - params.y) > dp(100) || kotlin.math.abs(placement.left - params.x) > dp(100)) {
+                showReadingPanel(result, final)
+                return
+            }
+            params.x = placement.left; params.y = placement.top
             val card: View = if (text.measuredHeight > bounds.height()) ScrollView(this).apply {
                 setBackgroundColor(android.graphics.Color.WHITE)
                 addView(text, android.widget.FrameLayout.LayoutParams(width, android.widget.FrameLayout.LayoutParams.WRAP_CONTENT))
@@ -428,6 +449,28 @@ class BubbleOverlayService : Service() {
                 publishBounds()
             }
         }
+        markRendered(result, final)
+    }
+
+    private fun showReadingPanel(result: CaptureResult, final: Boolean) {
+        clearTranslations()
+        hidePanel()
+        displayedResultId = result.id
+        readingPanelId = result.id
+        val root = basePanel()
+        root.addView(panelHeader("قراءة دون تداخل · اسحب لقراءة الباقي") { dismissedPanelId = result.id; hidePanel() })
+        val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        result.blocks.sortedWith(compareBy({ it.region.top }, { it.region.left })).forEachIndexed { index, block ->
+            list.addView(blockRow(index + 1, block))
+        }
+        val scroll = ScrollView(this).apply { addView(list) }
+        root.addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+            (availableBounds().height() / 2).coerceAtLeast(1)))
+        attachPanel(root)
+        markRendered(result, final)
+    }
+
+    private fun markRendered(result: CaptureResult, final: Boolean) {
         // Exact result identity prevents a queued callback marking a newer journey.
         bubbleView?.post {
             val current = CaptureManager.state.value
@@ -436,7 +479,7 @@ class BubbleOverlayService : Service() {
                 is CaptureManager.CaptureState.Done -> current.result.id
                 else -> null
             }
-            if (currentId != result.id || displayedResultId != result.id || translationViews.isEmpty()) return@post
+            if (currentId != result.id || displayedResultId != result.id || (translationViews.isEmpty() && panelView == null)) return@post
             if (result.blocks.any { it.errorCode == null && it.translated != it.original }) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T10")
             if (final) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T12")
         }
@@ -596,11 +639,14 @@ class BubbleOverlayService : Service() {
             )
         }
         panelView = if (attached.isSuccess) panel else null
+        panel.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> publishBounds() }
+        panel.post { publishBounds() }
     }
 
     private fun hidePanel() {
         panelView?.let { view -> runCatching { windowManager.removeView(view) } }
         panelView = null
+        publishBounds()
     }
 
     // ── Plumbing ───────────────────────────────────────────────────
