@@ -21,6 +21,8 @@ ITERATIONS = 600_000
 
 def password():
     value = os.environ.get('SIGNING_BACKUP_PASSWORD', '')
+    if not value:
+        raise RuntimeError('SIGNING_BACKUP_PASSWORD is missing or unavailable to this workflow. Add it as a repository Actions secret. No key generated.')
     if len(value) < 32:
         raise RuntimeError('Set SIGNING_BACKUP_PASSWORD in repository Actions secrets to a password-manager-generated value of at least 32 characters. Back it up privately. No key generated.')
     return value
@@ -77,4 +79,12 @@ def initialize():
         print('Initialization is not complete until the encrypted vault and pin are pushed successfully.')
 
 if __name__ == '__main__':
-    initialize()
+    try:
+        initialize()
+    except RuntimeError as error:
+        # Only our fixed validation messages, never material or environment values.
+        print('::error::' + str(error))
+        raise SystemExit(1)
+    except Exception:
+        print('::error::Vault initialization failed after validation. No signing or publication performed; inspect the workflow step.')
+        raise SystemExit(1)
