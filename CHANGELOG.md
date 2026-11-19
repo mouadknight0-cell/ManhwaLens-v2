@@ -55,3 +55,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Arabic and English UI with RTL support.
 - Unit tests for the recognition/translation pipeline (JVM).
 - GitHub Actions: CI (test + debug APK) and tag-triggered release workflow publishing signed APKs.
+
+## [1.1.1] - 2026-11-19
+
+- Start stable release signing continuity with a pinned certificate; no ephemeral debug-signed public releases.
+- GitHub builds/tests release APKs; offline signing publishes only verified signed outputs.
+- Capture full-display consent on Android 14, persistent-display resizing, cancellation fixes.
+- Bubble direction fix, edge snapping and Start/Stop controls.
+- Bounded progressive region translation; Copy Benchmark and local issue reports.
+- Device validation and old-certificate migration remain unverified; see docs/DEVICE-FOLLOWUP-1.1.1.md.

@@ -11,113 +11,55 @@ permissions:
 
 jobs:
   release:
-    name: Build, sign and publish APK
+    name: Test and build release on GitHub
     runs-on: ubuntu-latest
-    env:
-      VERSION_NAME: ''
-      VERSION_CODE: ''
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Compute version from tag
+      - uses: actions/checkout@v4
+      - name: Compute version
         id: meta
+        shell: bash
         run: |
-          TAG="${GITHUB_REF_NAME}"
-          if [[ "$TAG" == v* ]]; then
-            VERSION_NAME="${TAG#v}"
-          else
-            VERSION_NAME="1.0.0-snapshot"
+          if [[ "$GITHUB_REF_NAME" != v* ]]; then
+            echo '::error::Release must run against a version tag'
+            exit 1
           fi
-          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_OUTPUT"
-          echo "VERSION_CODE=$(( $(git show -s --format=%ct HEAD) - 1577836800 ))" >> "$GITHUB_OUTPUT"
-          echo "Building ManhwaLens $VERSION_NAME (code ${{ github.run_number }})"
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+          echo "name=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          echo "VERSION_NAME=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$(( $(git show -s --format=%ct HEAD) - 1577836800 ))" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-
-      - name: Decode release keystore (if configured)
-        id: keystore
-        env:
-          MANHWALENS_KEYSTORE_BASE64: ${{ secrets.MANHWALENS_KEYSTORE_BASE64 }}
-        run: |
-          if [ -n "$MANHWALENS_KEYSTORE_BASE64" ]; then
-            echo "$MANHWALENS_KEYSTORE_BASE64" | base64 -d > /tmp/manhwalens-release.p12
-            echo "present=true" >> "$GITHUB_OUTPUT"
-            echo "Release keystore decoded — APK will be signed with the stable key."
-          else
-            echo "::error::Original stable signing key is required. Release blocked to protect in-place upgrades."
-            exit 1
-          fi
-
-      - name: Run unit tests
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x gradlew
+      - name: Unit tests
         run: ./gradlew testDebugUnitTest --stacktrace
-        env:
-          VERSION_NAME: ${{ steps.meta.outputs.VERSION_NAME }}
-          VERSION_CODE: ${{ steps.meta.outputs.VERSION_CODE }}
-
-      - name: Assemble release APK
+      - name: Assemble unsigned release for offline signing
+        # Never publish this APK as an installable release. Only the signed, verified
+        # output may be made public. No private key is transferred to this workflow.
         run: ./gradlew assembleRelease --stacktrace
         env:
-          VERSION_NAME: ${{ steps.meta.outputs.VERSION_NAME }}
-          VERSION_CODE: ${{ steps.meta.outputs.VERSION_CODE }}
-          MANHWALENS_KEYSTORE_FILE: /tmp/manhwalens-release.p12
-          MANHWALENS_KEYSTORE_PASSWORD: ${{ secrets.MANHWALENS_KEYSTORE_PASSWORD }}
-          MANHWALENS_KEY_ALIAS: ${{ secrets.MANHWALENS_KEY_ALIAS }}
-          MANHWALENS_KEY_PASSWORD: ${{ secrets.MANHWALENS_KEY_PASSWORD }}
-
-      - name: Assemble debug APK (installable fallback)
-        run: ./gradlew assembleDebug --stacktrace
-        env:
-          VERSION_NAME: ${{ steps.meta.outputs.VERSION_NAME }}
-          VERSION_CODE: ${{ steps.meta.outputs.VERSION_CODE }}
-
-      - name: Verify APK outputs
+          ALLOW_UNSIGNED_RELEASE: 'true'
+      - name: Package signing inputs
         run: |
-          ls -la app/build/outputs/apk/release/ || true
-          ls -la app/build/outputs/apk/debug/ || true
-
-      - name: Clean up keystore
-        if: always()
-        run: rm -f /tmp/manhwalens-release.p12
-
-      - name: Create GitHub Release with APK
+          mkdir -p signing-input
+          cp app/build/outputs/apk/release/app-release-unsigned.apk signing-input/
+          cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" signing-input/
+          cd signing-input
+          sha256sum app-release-unsigned.apk apksigner.jar > SHA256SUMS
+          zip -0 ../signing-input.zip app-release-unsigned.apk apksigner.jar SHA256SUMS
+      - name: Save test evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-unit-test-results
+          path: app/build/test-results/testDebugUnitTest/
+      - name: Create PRIVATE draft awaiting signature verification
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            app/build/outputs/apk/release/app-release.apk
-            app/build/outputs/apk/debug/app-debug.apk
-          name: ManhwaLens ${{ steps.meta.outputs.VERSION_NAME }}
+          draft: true
+          name: ManhwaLens ${{ steps.meta.outputs.name }}
+          files: signing-input.zip
+          fail_on_unmatched_files: true
           body: |
-            ## ManhwaLens ${{ steps.meta.outputs.VERSION_NAME }}
-
-            Native Android English-to-Arabic reader with local ML Kit translation. Device verification remains pending.
-
-            ### Install
-            Download **`app-release.apk`** below and open it on your phone. If prompted, allow installation from unknown sources.
-            Stable signing is mandatory. Do not uninstall an existing app to work around signature conflicts.
-            `app-debug.apk` is a debug build suitable for testing.
-
-            ### Highlights (v1.1.0)
-            - **Capture session rebuilt**: the pipeline now lives for the whole session (no per-capture VirtualDisplay race) — fresh frames with a newest-frame fallback
-            - **English → Arabic only** (locked scope), sentence reconstruction before translation, dialogue/narration/SFX classification
-            - **CN/KR character names** in romanized English are detected, never translated, and remembered permanently
-            - **Structured diagnostics** (content-free JSONL logs, per-journey trace id, consistent error codes) + **T0–T12 benchmark** system (first visible Arabic sentence / full screen), exportable from Settings → Diagnostics
-            - Progressive per-block translation reveal · Arabic RTL rendering · on-device history
-            - Package id: `com.manhwalens.app`
-
-            ### Honest disclosure
-            - Builds run on GitHub Actions; the capture fix is verified by build + unit tests only and **has not yet been validated on a physical device**. See issue #7 for the device checklist (required before claiming v1.1.0 reliability).
-            - KO/ZH sources are deferred until the EN→AR pipeline is device-proven.
-            - Translation quality is bounded by the on-device ML Kit model (not an LLM).
-          generate_release_notes: true
-          fail_on_unmatched_files: false
+            Awaiting offline signing with the pinned stable release certificate.
+            Do not publish the unsigned signing-input archive.
