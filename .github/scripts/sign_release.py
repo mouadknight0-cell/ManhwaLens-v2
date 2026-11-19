@@ -30,7 +30,7 @@ def api(path, data=None):
     with urllib.request.urlopen(req) as response:
         return json.load(response)
 
-release = api('/releases/tags/' + tag)
+release = next(r for r in api('/releases?per_page=100') if r['tag_name'] == tag)
 assert release['draft'], 'Only drafts may be signed'
 private = rsa.generate_private_key(public_exponent=65537, key_size=3072)
 public = private.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo).decode()
