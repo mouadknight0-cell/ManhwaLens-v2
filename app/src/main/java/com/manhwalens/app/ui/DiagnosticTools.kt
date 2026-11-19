@@ -30,6 +30,7 @@ fun DiagnosticTools() {
         com.manhwalens.app.diagnostics.Diagnostics.error("diagnostics_ui", "action_failed", "DIAG-UI", "diagnostic action failed", throwable = failure)
         Toast.makeText(context, "Action failed. Check storage and retry.", Toast.LENGTH_SHORT).show()
     } }
+    val liveStatus by com.manhwalens.app.capture.CaptureManager.live.collectAsState()
     val modelState by com.manhwalens.app.translate.LanguageModels.state.collectAsState()
     var report by remember { mutableStateOf("") }
     var saved by remember { mutableStateOf(emptyList<File>()) }
@@ -52,6 +53,7 @@ fun DiagnosticTools() {
     }
     LaunchedEffect(Unit) { refresh() }
     Column {
+        Text("Live Translation: $liveStatus")
         Text("EN → AR language model")
         Text(modelState.phase)
         Text("File size / percentage: unavailable from ML Kit. Installation and a translation test are checked before Ready.")

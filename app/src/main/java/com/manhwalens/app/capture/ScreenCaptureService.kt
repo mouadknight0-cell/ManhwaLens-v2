@@ -67,6 +67,12 @@ import java.util.concurrent.atomic.AtomicReference
 class ScreenCaptureService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val liveGate = LiveFrameGate()
+    private var liveJob: kotlinx.coroutines.Job? = null
+    private val latestFrame = AtomicReference<Image?>(null)
+    private var lastSampleNs = 0L
+    @Volatile private var sceneRevision = 0L
+    @Volatile private var liveEnabled = false
     private var requestNs = 0L
     private var captureJob: kotlinx.coroutines.Job? = null
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -74,7 +80,7 @@ class ScreenCaptureService : Service() {
     private var mediaProjection: android.media.projection.MediaProjection? = null
     private val projectionCallback = object : android.media.projection.MediaProjection.Callback() {
         override fun onStop() {
-            captureJob?.cancel()
+            endLive(CaptureManager.LiveStatus.ERROR)
             // Fires on user-initiated stop AND on system revocation.
             val expected = expectedProjectionStop
             expectedProjectionStop = false
@@ -108,24 +114,102 @@ class ScreenCaptureService : Service() {
     private val pendingFrame = AtomicReference<CompletableDeferred<Image>?>(null)
 
     private val frameListener = ImageReader.OnImageAvailableListener { reader ->
-        val pending = pendingFrame.get()
-        if (pending != null) {
-            // Hand the fresh frame to whoever is waiting.
-            val image = runCatching { reader.acquireLatestImage() }
-                .onFailure {
-                    Diagnostics.error("capture", "frame_acquire", ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED,
-                        "failed to acquire image from reader", throwable = it)
-                }
-                .getOrNull()
-            if (image != null && pendingFrame.compareAndSet(pending, null)) {
-                pending.complete(image)
-            } else {
-                image?.close()
-                // Someone else consumed it or nobody was waiting; discard.
+        val image = runCatching { reader.acquireLatestImage() }.getOrElse {
+            Diagnostics.error("capture", "frame_acquire", ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED, "frame acquisition failed", throwable = it)
+            null
+        } ?: return@OnImageAvailableListener
+        if (liveEnabled && System.nanoTime() - lastSampleNs >= 70_000_000L) {
+            lastSampleNs = System.nanoTime()
+            val sample = sampleFrame(image)
+            if (liveGate.observe(sample, android.os.SystemClock.elapsedRealtime())) {
+                sceneRevision = liveGate.revision
+                captureJob?.cancel()
+                CaptureManager.setLive(CaptureManager.LiveStatus.SCROLLING)
             }
-        } else {
-            // Nobody is capturing right now — drain and close to free buffers.
-            runCatching { reader.acquireLatestImage()?.close() }
+        }
+        // Retain exactly one newest Image, so a static display does not require another frame.
+        // The consumer atomically takes ownership; only the previous unclaimed image is closed.
+        latestFrame.getAndSet(image)?.close()
+    }
+
+    private fun sampleFrame(image: Image): IntArray {
+        val plane = image.planes[0]
+        val buffer = plane.buffer
+        val masks = CaptureManager.overlayBounds
+        return IntArray(32 * 48) { index ->
+            val x = ((index % 32 + 0.5) * image.width / 32).toInt()
+            val y = ((index / 32 + 0.5) * image.height / 48).toInt()
+            if (y < image.height * 0.08 || y > image.height * 0.94 || masks.any { it.contains(x, y) }) -1
+            else {
+                val offset = y * plane.rowStride + x * plane.pixelStride
+                ((buffer.get(offset).toInt() and 255) * 3 +
+                    (buffer.get(offset + 1).toInt() and 255) * 6 +
+                    (buffer.get(offset + 2).toInt() and 255)) / 10
+            }
+        }
+    }
+
+    private fun startLive() {
+        if (liveEnabled && liveJob?.isActive == true) return
+        liveEnabled = true
+        liveGate.reset()
+        CaptureManager.setLive(CaptureManager.LiveStatus.WAITING)
+        Diagnostics.info("live", "start", "frame-driven live translation enabled")
+        liveJob = scope.launch {
+            try {
+            var pausedForApp = false
+            while (liveEnabled && mediaProjection != null) {
+                if (CaptureManager.appVisible.value) {
+                    captureJob?.cancel()
+                    pausedForApp = true
+                    CaptureManager.setLive(CaptureManager.LiveStatus.PAUSED_APP)
+                } else {
+                    if (pausedForApp) { liveGate.reset(); pausedForApp = false }
+                    // A static page may produce no callback. Sample the retained frame on the main
+                    // thread, where the listener owns/replaces it, to avoid closing races.
+                    kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
+                        latestFrame.get()?.let { image ->
+                            if (liveGate.observe(sampleFrame(image), android.os.SystemClock.elapsedRealtime())) {
+                                sceneRevision = liveGate.revision
+                                captureJob?.cancel()
+                                CaptureManager.setLive(CaptureManager.LiveStatus.SCROLLING)
+                            }
+                        }
+                    }
+                    if (captureJob?.isActive != true && liveGate.claim(android.os.SystemClock.elapsedRealtime()) != null) {
+                        requestNs = System.nanoTime()
+                        CaptureManager.setLive(CaptureManager.LiveStatus.PROCESSING)
+                        launchCapture()
+                    }
+                }
+                kotlinx.coroutines.delay(80) // sampling cadence; settle gate, not an OCR retry delay
+            }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (failure: Exception) {
+                Diagnostics.error("live", "monitor_failed", "CAP-LIVE-MONITOR", "live frame monitor failed", throwable = failure)
+                invalidateSession("Live capture stopped after a frame-monitor error. Start again to grant permission.", "CAP-LIVE-MONITOR")
+            }
+        }
+    }
+
+    private fun endLive(status: CaptureManager.LiveStatus = CaptureManager.LiveStatus.OFF) {
+        liveEnabled = false
+        liveJob?.cancel()
+        liveJob = null
+        captureJob?.cancel()
+        CaptureManager.setLive(status)
+    }
+
+    private fun invalidateSession(message: String, code: String) {
+        endLive(CaptureManager.LiveStatus.ERROR)
+        CaptureManager.setSessionActive(false)
+        CaptureManager.setState(CaptureManager.CaptureState.Error(message, code))
+        mainHandler.post {
+            expectedProjectionStop = true
+            mediaProjection?.let { it.unregisterCallback(projectionCallback); it.stop() }
+            mediaProjection = null
+            teardownCapturePipeline()
+            stopSelf()
         }
     }
 
@@ -142,7 +226,7 @@ class ScreenCaptureService : Service() {
             ACTION_STOP -> {
                 CaptureManager.consentGeneration.incrementAndGet()
                 Diagnostics.info("capture", "stop_requested", "stop requested by user or notification")
-                captureJob?.cancel()
+                endLive()
                 expectedProjectionStop = true
                 teardownCapturePipeline()
                 CaptureManager.setSessionActive(false)
@@ -173,7 +257,7 @@ class ScreenCaptureService : Service() {
 
         if (mediaProjection != null && virtualDisplay != null) {
             Diagnostics.info("capture", "session_reuse", "capture session already active; reusing pipeline")
-            if (autoCapture) launchCapture()
+            if (autoCapture) startLive()
             return
         }
 
@@ -232,7 +316,7 @@ class ScreenCaptureService : Service() {
             context = mapOf("width" to pipelineWidth.toString(), "height" to pipelineHeight.toString()))
 
         if (autoCapture) {
-            launchCapture(delayMs = 350)
+            startLive()
 
         }
     }
@@ -299,6 +383,7 @@ class ScreenCaptureService : Service() {
 
     /** Releases VirtualDisplay → ImageReader. Safe to call repeatedly. */
     private fun teardownCapturePipeline() {
+        latestFrame.getAndSet(null)?.close()
         pendingFrame.getAndSet(null)?.completeExceptionally(IllegalStateException("pipeline torn down"))
         runCatching { virtualDisplay?.release() }
         virtualDisplay = null
@@ -329,6 +414,8 @@ class ScreenCaptureService : Service() {
         // Android 14 forbids a second createVirtualDisplay on the same consent token.
         virtualDisplay?.resize(metrics.first, metrics.second, metrics.third)
         virtualDisplay?.surface = reader.surface
+        latestFrame.getAndSet(null)?.close()
+        liveGate.reset()
         imageReader?.setOnImageAvailableListener(null, null)
         imageReader?.close()
         imageReader = reader
@@ -350,7 +437,7 @@ class ScreenCaptureService : Service() {
             stopSelf()
             return
         }
-        launchCapture()
+        startLive()
     }
 
     private fun launchCapture(delayMs: Long = 0) {
@@ -363,6 +450,9 @@ class ScreenCaptureService : Service() {
             kotlinx.coroutines.delay(delayMs)
             try {
                 captureFrame()
+                if (CaptureManager.state.value is CaptureManager.CaptureState.Error && liveEnabled) {
+                    endLive(CaptureManager.LiveStatus.ERROR)
+                }
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 BenchmarkTracker.finish("cancelled")
                 throw cancelled
@@ -371,11 +461,13 @@ class ScreenCaptureService : Service() {
                     "capture journey failed", throwable = failure)
                 BenchmarkTracker.finish("error", errorCode = ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED)
                 CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_capture_generic)))
+                endLive(CaptureManager.LiveStatus.ERROR)
             }
         }
     }
 
     private suspend fun captureFrame() {
+        val frameRevision = sceneRevision
         val projection = mediaProjection ?: run {
             CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_session_expired), ErrorCodes.CAPTURE_SESSION_EXPIRED))
             return
@@ -388,7 +480,7 @@ class ScreenCaptureService : Service() {
             context = mapOf("journey_id" to journeyId))
         BenchmarkTracker.mark("T3") // session is active (projection + pipeline held)
 
-        if (!refreshPipelineIfNeeded(projection)) {
+        if (!kotlinx.coroutines.withContext(Dispatchers.Main.immediate) { refreshPipelineIfNeeded(projection) }) {
             BenchmarkTracker.finish("error", errorCode = ErrorCodes.CAPTURE_VIRTUAL_DISPLAY_FAILED)
             return
         }
@@ -408,15 +500,17 @@ class ScreenCaptureService : Service() {
         Diagnostics.info("capture", "frame_acquired", "frame acquired",
             context = mapOf("width" to image.width.toString(), "height" to image.height.toString()), traceId = traceId)
 
-        val frame = runCatching { imageToBitmap(image) }.getOrElse {
+        val frame = try {
+            kotlinx.coroutines.withContext(Dispatchers.Main.immediate) { imageToBitmap(image) }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (failure: Exception) {
+            val it = failure
             Diagnostics.error("capture", "image_convert", ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED,
                 "failed to convert Image to Bitmap", throwable = it)
-            image.close()
             BenchmarkTracker.finish("error", errorCode = ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED)
             CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_capture_generic), ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED))
             return
-        }
-        image.close()
+        } finally { image.close() }
         BenchmarkTracker.setJourneyCounts(frame.width, frame.height, 0, 0)
 
         val history: HistoryStore = (application as ManhwaLensApp).historyStore
@@ -435,6 +529,7 @@ class ScreenCaptureService : Service() {
             CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_ocr_failed), ErrorCodes.OCR_EXEC_FAILED))
             return
         }
+        currentCoroutineContext().ensureActive()
         val ocrMs = (System.nanoTime() - tOcr) / 1_000_000
         BenchmarkTracker.mark("T6")
         Diagnostics.info("ocr", "recognize", "OCR complete",
@@ -443,9 +538,12 @@ class ScreenCaptureService : Service() {
         // ── Reconstruction & grouping for translation quality ──
         val scale = frame.width.toFloat() / ocrBitmap.width
         if (com.manhwalens.app.pipeline.SourceScreenGuard.isOwnInterface(regions)) {
-            Diagnostics.error("capture", "wrong_source", "CAP-WRONG-SOURCE", "captured ManhwaLens interface rather than reading content")
+            BenchmarkTracker.setJourneyCounts(frame.width, frame.height, regions.size, 0)
+            CaptureManager.setSessionActive(false)
+            Diagnostics.error("capture", "wrong_source", "CAP-WRONG-SOURCE", "own-interface markers detected; invalidating projection and requiring fresh consent",
+                context = mapOf("app_visible" to CaptureManager.appVisible.value.toString(), "regions" to regions.size.toString()))
             BenchmarkTracker.finish("error", errorCode = "CAP-WRONG-SOURCE")
-            CaptureManager.setState(CaptureManager.CaptureState.Error("Captured ManhwaLens instead of the page. Stop capture, open your reader and start a new full-screen session."))
+            invalidateSession("Wrong capture source. Session stopped. Open the reader and grant a NEW full-screen capture permission.", "CAP-WRONG-SOURCE")
             return
         }
         val prepared = prepareRegions(regions.map { it.copy(
@@ -487,7 +585,8 @@ class ScreenCaptureService : Service() {
             },
             onReady = { completed ->
                 currentCoroutineContext().ensureActive()
-                if (completed.any { it.translated != it.original }) BenchmarkTracker.mark("T9")
+                if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
+                if (completed.any { it.errorCode == null && it.translated != it.original }) BenchmarkTracker.mark("T9")
                 CaptureManager.setState(CaptureManager.CaptureState.Partial(CaptureResult(
                     id, System.currentTimeMillis(), OCR_SOURCE, TARGET, completed)))
                 try { com.manhwalens.app.history.TranslationSamples.collect(id, traceId, completed) }
@@ -520,10 +619,12 @@ class ScreenCaptureService : Service() {
         Diagnostics.info("capture", "journey_done", "capture journey complete",
             traceId = traceId, context = mapOf("blocks" to blocks.size.toString()))
         currentCoroutineContext().ensureActive()
+        if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
         CaptureManager.setState(CaptureManager.CaptureState.Done(result))
+        if (liveEnabled) CaptureManager.setLive(CaptureManager.LiveStatus.READY)
         scope.launch {
             kotlinx.coroutines.delay(1500)
-            BenchmarkTracker.finishIfActive(journeyId)
+            BenchmarkTracker.finishIfActive(journeyId, if (blocks.any { it.errorCode != null }) "partial" else "ok")
         }
         // Note: T12 is marked by the UI when the final result is rendered; if it
         // never happens (e.g., app backgrounded without the bubble) the record
@@ -573,19 +674,13 @@ class ScreenCaptureService : Service() {
         return merged
     }
 
-    private suspend fun acquireFreshFrame(): Image? {
-        val reader = imageReader ?: return null
-        val deferred = CompletableDeferred<Image>()
-        pendingFrame.set(deferred)
-        val image = try {
-            withTimeoutOrNull(FRAME_WAIT_MS) { deferred.await() }
-        } finally {
-            pendingFrame.compareAndSet(deferred, null)
+    private suspend fun acquireFreshFrame(): Image? = withTimeoutOrNull(FRAME_WAIT_MS) {
+        var image = latestFrame.getAndSet(null)
+        while (image == null) {
+            kotlinx.coroutines.delay(16)
+            image = latestFrame.getAndSet(null)
         }
-        if (image != null) return image
-        pendingFrame.compareAndSet(deferred, null)
-        // Fallback: the pipeline may have already delivered a frame between our waits.
-        return runCatching { reader.acquireLatestImage() }.getOrNull()
+        image
     }
 
     private fun releaseIfDifferent(a: Bitmap, b: Bitmap) {
@@ -669,6 +764,7 @@ class ScreenCaptureService : Service() {
     }
 
     override fun onDestroy() {
+        endLive(if (CaptureManager.live.value == CaptureManager.LiveStatus.ERROR) CaptureManager.LiveStatus.ERROR else CaptureManager.LiveStatus.OFF)
         expectedProjectionStop = true
         teardownCapturePipeline()
         CaptureManager.setSessionActive(false)

@@ -44,8 +44,14 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     /** Translates one region, applying the name shield. Never throws — original text on failure. */
     suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList()): TranslatedBlock {
         val normalized = com.manhwalens.app.pipeline.SentenceReconstructor.normalize(region.text)
-        val translated = translateText(normalized, glossaryNames)
-        return TranslatedBlock(region.copy(text = normalized), normalized, translated)
+        return try {
+            val translated = translateText(normalized, glossaryNames)
+            TranslatedBlock(region.copy(text = normalized), normalized, translated)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (failure: TranslationFailure) {
+            Diagnostics.error("translate", "block_failed", failure.code, "translation block failed; source retained, failure shown", throwable = failure)
+            TranslatedBlock(region.copy(text = normalized), normalized, "تعذّرت الترجمة — أعد المحاولة", failure.code)
+        }
     }
 
     /** Core translate path used for every complete utterance. */
@@ -53,7 +59,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val trimmed = text.trim()
         if (trimmed.isBlank()) return trimmed
 
-        val cacheKey = "en>ar:${TranslationCache.normalize(trimmed)}"
+        val identity = trimmed + "\u0000" + glossaryNames.sorted().joinToString("\u0000")
+        val cacheKey = "en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
         cache.get(cacheKey)?.let { return it }
 
         val namesInText = NameDetector.find(trimmed, glossaryNames).map { it.name }
@@ -69,18 +76,22 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             throw cancelled
         } catch (t: Throwable) {
             Diagnostics.error("translate", "translate", ErrorCodes.TRANSLATE_FAILED,
-                "translation failed; keeping original text", throwable = t,
+                "translation failed", throwable = t,
                 context = mapOf("chars" to trimmed.length.toString()))
-            null
+            throw TranslationFailure(ErrorCodes.TRANSLATE_FAILED)
         }
         if (raw == null) {
             LanguageModels.invalidate()
-            Diagnostics.warn("translate", "translate_timeout", "translation timed out; keeping original text",
+            Diagnostics.warn("translate", "translate_timeout", "translation timed out; block marked failed",
                 code = ErrorCodes.TRANSLATE_TIMEOUT,
-                context = mapOf("chars" to trimmed.length.toString()), recovery = "original shown")
-            return trimmed
+                context = mapOf("chars" to trimmed.length.toString()), recovery = "explicit failure shown")
+            throw TranslationFailure(ErrorCodes.TRANSLATE_TIMEOUT)
         }
         val restored = NameShield.restore(raw, protected)
+        if (restored.isBlank() || (restored.none { it in '\u0600'..'\u06ff' } && protected.none { it.equals(trimmed, true) })) {
+            throw TranslationFailure("TR-INVALID-OUTPUT")
+        }
+        if (protected.any { !restored.contains(it, ignoreCase = true) }) throw TranslationFailure("TR-NAME-LOST")
         cache.put(cacheKey, restored)
         return restored
     }
@@ -113,6 +124,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             knownPairs.clear()
         }
     }
+
+    private class TranslationFailure(val code: String) : Exception(code)
 
     companion object {
         const val SOURCE = "en"

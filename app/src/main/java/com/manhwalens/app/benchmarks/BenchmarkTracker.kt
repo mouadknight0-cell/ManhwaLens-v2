@@ -56,8 +56,8 @@ object BenchmarkTracker {
     }
 
     @Synchronized
-    fun finishIfActive(resultId: String) {
-        if (active?.id == resultId) finish("ok")
+    fun finishIfActive(resultId: String, status: String = "ok") {
+        if (active?.id == resultId) finish(status)
     }
 
     fun activeSessionId(): String? = active?.id
@@ -101,7 +101,7 @@ object BenchmarkTracker {
         if (!s.marks.containsKey("T11")) s.marks["T11"] = System.nanoTime()
         // Honest fallback: never lose the journey, but flag the approximation.
         val t12Inferred = !s.marks.containsKey("T12")
-        if (t12Inferred) s.marks["T12"] = s.marks.getValue("T11")
+        // Missing T12 stays missing; T11 is processing completion, NOT visibility.
         if (appT0 != 0L) s.marks["T0"] = appT0
         if (appT1 != 0L) s.marks["T1"] = appT1
         val record = BenchmarkRecord(
@@ -130,11 +130,11 @@ object BenchmarkTracker {
             record.latencyMs("T5", "T6")?.let { append(" ocr=${it.fmt()}ms") }
             record.latencyMs("T6", "T7")?.let { append(" group=${it.fmt()}ms") }
             record.latencyMs("T7", "T9")?.let { append(" first_sentence=${it.fmt()}ms") }
-            record.latencyMs("T0", "T10")?.let { append(" visible=${it.fmt()}ms") }
-            record.latencyMs("T0", "T11")?.let { append(" full=${it.fmt()}ms") }
-            record.latencyMs("T0", "T12")?.let { append(" visible_all=${it.fmt()}ms") }
+            record.latencyMs("T2", "T10")?.let { append(" visible=${it.fmt()}ms") }
+            record.latencyMs("T2", "T11")?.let { append(" full=${it.fmt()}ms") }
+            record.latencyMs("T2", "T12")?.let { append(" visible_all=${it.fmt()}ms") }
             if (record.t12Inferred) append(" t12_inferred=true")
-            record.totalMs()?.let { append(" e2e=${it.fmt()}ms") }
+            record.latencyMs("T2", "T11")?.let { append(" processing=${it.fmt()}ms") }
         }
         if (store != null) {
             runCatching { store!!.add(record) }
@@ -145,7 +145,7 @@ object BenchmarkTracker {
             if (status == "ok") ErrorCodes.APP_INFO else (errorCode ?: ErrorCodes.CAPTURE_TIMEOUT),
             "benchmarks", "journey",
             summary,
-            durationMs = record.totalMs()?.toLong(),
+            durationMs = record.latencyMs("T2", "T11")?.toLong(),
             status = status,
             traceId = s.traceId,
         )

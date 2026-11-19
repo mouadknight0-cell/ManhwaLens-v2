@@ -25,7 +25,7 @@ object NameShield {
         val used = mutableListOf<String>()
         var next = BASE
         for (name in unique) {
-            val regex = Regex(Regex.escape(name), RegexOption.IGNORE_CASE)
+            val regex = Regex("(?<![\\p{L}\\p{N}_])" + Regex.escape(name) + "(?![\\p{L}\\p{N}_])", RegexOption.IGNORE_CASE)
             if (regex.containsMatchIn(result)) {
                 val token = next.toString()
                 result = result.replace(regex, " $token ")

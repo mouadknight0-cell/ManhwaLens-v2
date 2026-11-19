@@ -22,6 +22,13 @@ object CaptureManager {
 
     enum class Status { PREPARING, READING, TRANSLATING, DOWNLOADING_MODEL }
 
+    enum class LiveStatus { OFF, WAITING, SCROLLING, PROCESSING, READY, PAUSED_APP, ERROR }
+    private val _live = MutableStateFlow(LiveStatus.OFF)
+    val live = _live.asStateFlow()
+    internal fun setLive(status: LiveStatus) { _live.value = status }
+    /** Physical screen rectangles occupied by our windows; excluded from motion sampling. */
+    @Volatile var overlayBounds: List<android.graphics.Rect> = emptyList()
+
     val consentGeneration = java.util.concurrent.atomic.AtomicLong(0)
 
     private val _appVisible = MutableStateFlow(false)
@@ -32,13 +39,10 @@ object CaptureManager {
     val state: StateFlow<CaptureState> = _state.asStateFlow()
 
     /** True while the media projection session is held by [ScreenCaptureService]. */
-    @Volatile
-    var sessionActive: Boolean = false
-        private set
-
-    internal fun setSessionActive(value: Boolean) {
-        sessionActive = value
-    }
+    private val _session = MutableStateFlow(false)
+    val session = _session.asStateFlow()
+    val sessionActive: Boolean get() = _session.value
+    internal fun setSessionActive(value: Boolean) { _session.value = value }
 
     fun setState(state: CaptureState) {
         _state.value = state

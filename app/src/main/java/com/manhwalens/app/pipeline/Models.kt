@@ -26,6 +26,7 @@ data class TranslatedBlock(
     val region: TextRegion,
     val original: String,
     val translated: String,
+    val errorCode: String? = null,
 )
 
 /** One completed capture + pipeline run. Persisted to history. */

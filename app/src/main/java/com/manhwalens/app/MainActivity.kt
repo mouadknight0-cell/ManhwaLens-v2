@@ -231,7 +231,7 @@ private fun ManhwaLensRoot(
     var selectedResult by remember { mutableStateOf<CaptureResult?>(null) }
     var resultIsFinal by remember { mutableStateOf(true) }
     var workingStatus by remember { mutableStateOf<CaptureManager.Status?>(null) }
-    var sessionActive by remember { mutableStateOf(CaptureManager.sessionActive) }
+    val sessionActive by CaptureManager.session.collectAsState()
     var learnedNames by remember { mutableStateOf(nameGlossary.all()) }
     var benchmarksRecorded by remember { mutableStateOf(BenchmarkTracker.records().size) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -245,7 +245,6 @@ private fun ManhwaLensRoot(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 onRefreshPermissions()
-                sessionActive = CaptureManager.sessionActive
                 refreshEntries()
             }
         }
@@ -264,17 +263,14 @@ private fun ManhwaLensRoot(
             when (state) {
                 is CaptureManager.CaptureState.Working -> {
                     workingStatus = state.status
-                    sessionActive = CaptureManager.sessionActive
                 }
                 is CaptureManager.CaptureState.Partial -> {
                     workingStatus = null
-                    sessionActive = CaptureManager.sessionActive
                     resultIsFinal = false
                     selectedResult = state.result
                 }
                 is CaptureManager.CaptureState.Done -> {
                     workingStatus = null
-                    sessionActive = CaptureManager.sessionActive
                     resultIsFinal = true
                     selectedResult = state.result
                     refreshEntries()
@@ -283,14 +279,12 @@ private fun ManhwaLensRoot(
                 }
                 is CaptureManager.CaptureState.Error -> {
                     workingStatus = null
-                    sessionActive = CaptureManager.sessionActive
                     selectedResult = null
                     benchmarksRecorded = BenchmarkTracker.records().size
                     snackbarHostState.showSnackbar(state.message)
                 }
                 CaptureManager.CaptureState.Idle -> {
                     workingStatus = null
-                    sessionActive = CaptureManager.sessionActive
                 }
             }
         }

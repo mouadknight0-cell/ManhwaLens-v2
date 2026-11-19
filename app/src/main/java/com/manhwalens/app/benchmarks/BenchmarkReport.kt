@@ -9,6 +9,7 @@ object BenchmarkReport {
         val unique = records.distinctBy { it.id }
         unique.forEachIndexed { index, r ->
             appendLine("\nRun ${index + 1}: ${r.startedAtMs} | ${r.status} | cold=${r.coldStart}")
+            appendLine("Error code: ${r.errorCode ?: "none"}")
             appendLine("Trace ID: ${r.traceId} | Session: ${r.id}")
             appendLine("Frame: ${r.frameWidth}×${r.frameHeight}; regions=${r.regionCount}; blocks=${r.blockCount}")
             val stages = linkedMapOf(
@@ -23,7 +24,7 @@ object BenchmarkReport {
             appendLine("Full processing: ${r.latencyMs("T2", "T11") ?: "unavailable"} ms")
             appendLine("Render dispatch: ${if (r.t12Inferred) "not confirmed" else r.latencyMs("T11", "T12")} ms")
             appendLine("First visible from request: ${r.latencyMs("T2", "T10") ?: "unavailable"} ms")
-            appendLine("Total from request: ${r.latencyMs("T2", "T12") ?: "unavailable"} ms; inferred=${r.t12Inferred}")
+            appendLine("Final visible from request: ${if (r.t12Inferred) "unconfirmed" else r.latencyMs("T2", "T12") ?: "unavailable"} ms; inferred=${r.t12Inferred}")
             appendLine("Process-to-result (includes user idle): ${r.totalMs()} ms")
             appendLine("Slowest measured stage: ${stages.filterValues { it != null }.maxByOrNull { it.value!! }?.key ?: "unavailable"}")
             appendLine("Raw monotonic marks (ns): ${r.marks}")

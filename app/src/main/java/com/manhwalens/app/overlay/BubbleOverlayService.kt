@@ -54,10 +54,23 @@ class BubbleOverlayService : Service() {
     private var acceptResults = false
     private var requestedAt = Long.MAX_VALUE
     private var running = false
+    private val translationRects = mutableListOf<android.graphics.Rect>()
+    private var dockRect: android.graphics.Rect? = null
+    private fun publishBounds() {
+        val rectangles = translationRects.toMutableList()
+        bubbleView?.let { view ->
+            val xy = IntArray(2); view.getLocationOnScreen(xy)
+            rectangles.add(android.graphics.Rect(xy[0], xy[1], xy[0] + dp(BUBBLE_SIZE_DP), xy[1] + dp(BUBBLE_SIZE_DP)))
+        }
+        dockRect?.let { rectangles.add(it) }
+        CaptureManager.overlayBounds = rectangles
+    }
     private fun event(operation: String) = com.manhwalens.app.diagnostics.Diagnostics.info("overlay", operation, "floating control event")
     private fun collapseActions() {
         actionDock?.let { it.animate().cancel(); runCatching { windowManager.removeView(it) } }
         actionDock = null
+        dockRect = null
+        publishBounds()
     }
     private fun stopTranslation() {
         event("stop_click")
@@ -72,7 +85,7 @@ class BubbleOverlayService : Service() {
     }
     private fun startTranslation() {
         event("start_click")
-        if (running || startJob?.isActive == true) return
+        if (CaptureManager.live.value !in listOf(CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR) || startJob?.isActive == true) return
         collapseActions()
         hidePanel()
         clearTranslations()
@@ -102,6 +115,8 @@ class BubbleOverlayService : Service() {
     private fun clearTranslations() {
         translationViews.forEach { runCatching { windowManager.removeView(it) } }
         translationViews.clear()
+        translationRects.clear()
+        publishBounds()
     }
     private fun availableBounds(): android.graphics.Rect {
         if (Build.VERSION.SDK_INT >= 30) {
@@ -155,6 +170,20 @@ class BubbleOverlayService : Service() {
         if (stateCollectorActive) return
         stateCollectorActive = true
         scope.launch {
+            CaptureManager.live.collect { status ->
+                when (status) {
+                    CaptureManager.LiveStatus.SCROLLING, CaptureManager.LiveStatus.PAUSED_APP -> clearTranslations()
+                    CaptureManager.LiveStatus.PROCESSING -> {
+                        acceptResults = !CaptureManager.appVisible.value
+                        requestedAt = System.currentTimeMillis()
+                    }
+                    CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR -> clearTranslations()
+                    else -> Unit
+                }
+                bubbleView?.contentDescription = "Live translation: $status"
+            }
+        }
+        scope.launch {
             CaptureManager.appVisible.collect { visible ->
                 if (visible) { acceptResults = false; clearTranslations(); collapseActions() }
             }
@@ -201,6 +230,7 @@ class BubbleOverlayService : Service() {
                 params.x = FloatingGeometry.move(params.x, dx, availableBounds().width(), size)
                 params.y = FloatingGeometry.move(params.y, dy, availableBounds().height(), size)
                 windowManager.updateViewLayout(icon, params)
+                publishBounds()
             },
             onTap = ::onBubbleTapped,
             onRelease = {
@@ -208,6 +238,7 @@ class BubbleOverlayService : Service() {
                 val maxX = (availableBounds().width() - size).coerceAtLeast(0)
                 params.x = FloatingGeometry.snap(params.x, availableBounds().width(), size)
                 windowManager.updateViewLayout(icon, params)
+                publishBounds()
                 getSharedPreferences("bubble_position", MODE_PRIVATE).edit().putInt("x", params.x).putInt("y", params.y).apply()
             },
         ))
@@ -220,6 +251,7 @@ class BubbleOverlayService : Service() {
         }
         bubbleView = icon
         bubbleParams = params
+        icon.post { publishBounds() }
     }
 
     private fun onBubbleTapped() {
@@ -276,6 +308,9 @@ class BubbleOverlayService : Service() {
         }
         runCatching { windowManager.addView(dock, params) }.onSuccess {
             actionDock = dock
+            val topInset = if (Build.VERSION.SDK_INT >= 30) windowManager.currentWindowMetrics.windowInsets.getInsets(android.view.WindowInsets.Type.statusBars()).top else 0
+            dockRect = android.graphics.Rect(params.x, params.y + topInset, params.x + width, params.y + topInset + buttonSize)
+            publishBounds()
             dock.alpha = 0f; dock.scaleX = 0.85f; dock.scaleY = 0.85f
             dock.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(140).start()
             event("controls_expanded")
@@ -308,7 +343,7 @@ class BubbleOverlayService : Service() {
                 this.text = block.translated
                 textSize = 14f
                 setAutoSizeTextTypeUniformWithConfiguration(10, 18, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
-                setTextColor(android.graphics.Color.BLACK)
+                setTextColor(if (block.errorCode == null) android.graphics.Color.BLACK else android.graphics.Color.RED)
                 setBackgroundColor(android.graphics.Color.WHITE)
                 gravity = Gravity.CENTER
                 textDirection = View.TEXT_DIRECTION_RTL
@@ -324,14 +359,16 @@ class BubbleOverlayService : Service() {
                 y = region.top.coerceAtLeast(0)
                 alpha = 0.8f
             }
+            translationRects.add(android.graphics.Rect(params.x, params.y, params.x + params.width, params.y + params.height))
+            publishBounds()
             if (runCatching { windowManager.addView(text, params) }.isSuccess) translationViews.add(text)
         }
         // UI-post is a rendering proxy, not a hardware presentation timestamp.
         bubbleView?.post {
             val current = CaptureManager.state.value
             if (current !is CaptureManager.CaptureState.Partial && current !is CaptureManager.CaptureState.Done) return@post
-            if (translationViews.isNotEmpty()) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T10")
-            if (final && translationViews.isNotEmpty()) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T12")
+            if (result.blocks.any { it.errorCode == null && it.translated != it.original }) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T10")
+            if (final && result.blocks.isNotEmpty() && result.blocks.all { it.errorCode == null }) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T12")
         }
     }
 
@@ -530,6 +567,7 @@ class BubbleOverlayService : Service() {
         hidePanel()
         bubbleView?.let { view -> runCatching { windowManager.removeView(view) } }
         bubbleView = null
+        CaptureManager.overlayBounds = emptyList()
         super.onDestroy()
     }
 
