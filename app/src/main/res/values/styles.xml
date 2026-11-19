@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.ManhwaLens" parent="@android:style/Theme.Material.NoTitleBar">
+        <item name="android:windowBackground">#0D0A1A</item>
+        <item name="android:statusBarColor">#0D0A1A</item>
+        <item name="android:navigationBarColor">#0D0A1A</item>
+        <item name="android:colorPrimary">#8B5CF6</item>
+        <item name="android:colorAccent">#F59E0B</item>
+    </style>
+
+    <style name="Theme.ManhwaLens.Transparent" parent="@android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

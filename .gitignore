@@ -1,0 +1,33 @@
+# Gradle
+.gradle/
+build/
+*/build/
+!gradle-wrapper.jar
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.cxx/
+.externalNativeBuild/
+captures/
+local.properties
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Signing — never commit keys or their passwords
+*.jks
+*.keystore
+*.p12
+*.pfx
+keystore.properties
+
+# Release outputs
+/app/release/
+*.apk
+*.aab
+
+# Misc
+node_modules/
+*.log
