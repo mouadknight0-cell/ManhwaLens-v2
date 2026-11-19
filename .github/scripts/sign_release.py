@@ -88,16 +88,16 @@ with tempfile.TemporaryDirectory() as tmp:
     subprocess.run(['gh', 'release', 'upload', tag, str(apk), str(root / 'SHA256SUMS.txt'), str(root / 'release-cert.sha256'), str(root / 'APK-IDENTITY.txt'), '--clobber'], check=True)
     subprocess.run(['gh', 'release', 'delete-asset', tag, 'signing-input.zip', '--yes'], check=True)
     notes = root / 'notes.md'
-    notes.write_text(f'''## ManhwaLens {tag} — connected controls and verified language models
+    notes.write_text(f'''## ManhwaLens {tag} — live capture and session reliability
 
 Download **app-release.apk**. Built and unit-tested on GitHub Actions; APK signature verified against the pinned stable certificate.
 
 Future releases must use this same certificate, package ID `com.manhwalens.app`, and a higher versionCode to preserve update compatibility.
 This new certificate does NOT retroactively match old ephemeral debug-signed installations. Do not clear data or uninstall as an upgrade workaround.
 
-Includes connected Start/Stop/Disable/Open controls, stale-result protection, model download and inference verification, request-based benchmarks, Copy Bugs and local source/translation samples.
+Includes service-owned visual-motion Live Mode, stale-frame cancellation, wrong-source session invalidation, bounded native inference, explicit translation failures and corrected visibility benchmarks.
 
-Physical-device behavior, performance improvements, and in-place upgrade/data preservation have not been tested. Continuous scroll tracking and advanced bubble fitting remain incomplete.
+Physical-device behavior, performance improvements, and in-place upgrade/data preservation have not been tested. Live visual-motion thresholds, continuous reading and advanced bubble fitting require physical-device validation; contextual Arabic quality remains limited by ML Kit.
 ''')
     subprocess.run(['gh', 'release', 'edit', tag, '--draft=false', '--latest', '--notes-file', str(notes)], check=True)
 print('Published signed release with pinned certificate: ' + tag)
