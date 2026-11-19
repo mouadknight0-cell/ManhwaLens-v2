@@ -111,15 +111,15 @@ object Diagnostics {
             LogLevel.WARN -> Log.w(TAG, line)
             LogLevel.ERROR, LogLevel.FATAL -> Log.e(TAG, line)
         }
-        // Ring buffer
-        ring.add(event)
-        while (ring.size > MAX_RING) ring.removeAt(0)
-        // Disk (best effort)
-        if (initialized) {
-            appendToDisk(event)
-            if (level == LogLevel.ERROR || level == LogLevel.FATAL) BugArchive.save(appContext, event)
+        // Serialize event persistence with scoped resets, but never hold this lock while
+        // taking the archive/benchmark locks (avoids lock inversion during export).
+        synchronized(this) {
+            ring.add(event)
+            while (ring.size > MAX_RING) ring.removeAt(0)
+            if (initialized) appendToDisk(event)
+            counters.getOrPut(code) { AtomicLong() }.incrementAndGet()
         }
-        counters.getOrPut(code) { AtomicLong() }.incrementAndGet()
+        if (initialized && (level == LogLevel.ERROR || level == LogLevel.FATAL)) BugArchive.save(appContext, event)
     }
 
     fun info(component: String, operation: String, message: String, code: String = ErrorCodes.APP_INFO, stage: String? = null, durationMs: Long? = null, context: Map<String, String> = emptyMap(), traceId: String = currentTraceId) =

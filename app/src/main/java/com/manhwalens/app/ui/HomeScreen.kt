@@ -58,6 +58,7 @@ fun HomeScreen(
     overlayGranted: Boolean,
     notificationsGranted: Boolean,
     sessionActive: Boolean,
+    sessionPhase: CaptureManager.SessionPhase,
     bubbleEnabled: Boolean,
     working: CaptureManager.Status?,
     recent: CaptureResult?,
@@ -106,10 +107,15 @@ fun HomeScreen(
         CaptureButton(
             working = working,
             sessionActive = sessionActive,
+            sessionPhase = sessionPhase,
             onClick = onCaptureClick,
             onStopSession = onStopSession,
         )
 
+        Text("Capture: $sessionPhase", style = MaterialTheme.typography.bodyMedium)
+        if (sessionPhase == CaptureManager.SessionPhase.STARTING || (sessionActive && working != null)) {
+            OutlinedButton(onClick = onStopSession, modifier = Modifier.fillMaxWidth()) { Text("إيقاف جلسة الالتقاط") }
+        }
         // Permission status
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -229,6 +235,7 @@ fun HomeScreen(
 private fun CaptureButton(
     working: CaptureManager.Status?,
     sessionActive: Boolean,
+    sessionPhase: CaptureManager.SessionPhase,
     onClick: () -> Unit,
     onStopSession: () -> Unit,
 ) {
@@ -243,7 +250,7 @@ private fun CaptureButton(
             .height(150.dp)
             .clip(RoundedCornerShape(26.dp))
             .background(brush)
-            .clickable(enabled = working == null, onClick = onClick),
+            .clickable(enabled = working == null && sessionPhase !in listOf(CaptureManager.SessionPhase.STARTING, CaptureManager.SessionPhase.STOPPING), onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         if (working != null) {
@@ -257,7 +264,11 @@ private fun CaptureButton(
                 Icon(Icons.Filled.PhotoCamera, contentDescription = null, tint = Color.White, modifier = Modifier.size(38.dp))
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = stringResource(R.string.home_capture_button),
+                    text = when (sessionPhase) {
+                        CaptureManager.SessionPhase.STARTING -> "بدء الجلسة…"
+                        CaptureManager.SessionPhase.STOPPING -> "إيقاف الجلسة…"
+                        else -> stringResource(R.string.home_capture_button)
+                    },
                     color = Color.White,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,

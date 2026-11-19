@@ -329,6 +329,7 @@ private fun ManhwaLensRoot(
                         overlayGranted = overlayGranted,
                         notificationsGranted = notificationsGranted,
                         sessionActive = sessionActive,
+                        sessionPhase = sessionPhase,
                         bubbleEnabled = bubbleEnabled,
                         working = workingStatus,
                         recent = entries.firstOrNull(),
