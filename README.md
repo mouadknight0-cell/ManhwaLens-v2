@@ -24,7 +24,7 @@ Read any manhwa, translated in seconds — entirely on your phone.
 
 ManhwaLens تطبيق **Android أصلي (Native)** يعمل فوق أي قارئ مانهوا: تلتقط الشاشة عبر `MediaProjection`، تتعرف على نص الفقاعات بالمحلية عبر **ML Kit OCR** (كورية · يابانية · صينية · لاتينية)، ثم تترجمه فوراً بـ 16 لغة — الافتراضية **العربية** — دون أي خادم ودون مفاتيح API.
 
-ManhwaLens is a **native Android** overlay that reads speech bubbles on screen and translates them in place — no server, no API keys, no data ever leaves your device.
+ManhwaLens is a **native Android** overlay that reads English dialogue on screen and renders it in natural Arabic — no server, no API keys, no data ever leaves your device. (v1.1 locks the pipeline to EN→AR; KO/ZH support returns after the EN→AR pipeline is device-proven.)
 
 ## 📱 مميزات | Features
 
@@ -33,8 +33,10 @@ ManhwaLens is a **native Android** overlay that reads speech bubbles on screen a
 - **معالجة محلية 100%** — التعرف على النصوص والترجمة يعملان على الجهاز (ML Kit). السجلّ يُخزَّن داخل مساحة التطبيق فقط.
 - **جلسات التقاط مُدارة** — MediaProjection داخل foreground service بنوع `mediaProjection` مع إشعار دائم وزر إيقاف.
 - **خصوصية كاملة** — لا تحليلات، لا تتبع، لا رفع للصور. يمكن مسح السجل في أي وقت.
+- **متتبع معايير T0–T12** — زمن حتى أول جملة عربية وحتى الشاشة الكاملة، قابل للتصدير من الإعدادات.
 - **واجهة عربية وإنجليزية** مع دعم RTL كامل، ووضع ليلي.
 - **History** — كل التقاط يُحفظ محلياً مع صورة مصغرة وقابلة للحذف.
+- **حماية الأسماء الصينية والكورية** — تُكتشف تلقائياً وتُحفظ Romanized ولا تُترجم أبداً؛ تتراكم عبر الفصول.
 
 ## 📥 التثبيت | Install
 

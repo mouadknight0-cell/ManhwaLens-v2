@@ -3,6 +3,44 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0] - Unreleased (in `arena/8383bba0-manhwalens-v2`)
+
+### Fixed
+- **Capture session rebuilt.** Root cause of "capture session does not work":
+  every capture created a fresh `ImageReader` + `VirtualDisplay` and raced the
+  GPU for a single frame — on static screens the frame often never arrived, so
+  every capture ended in a timeout. The pipeline now lives for the whole
+  session, the projection callback is registered before `createVirtualDisplay`
+  (Android 14 requirement), frames are acquired with a 1.5s fresh-frame wait
+  and a newest-frame fallback, and teardown releases VD → ImageReader →
+  projection in the correct order. Rotation rebuilds the pipeline once.
+- User-initiated stop no longer surfaces a bogus "session expired" error.
+- `startForeground` failure is caught and reported (`CAP-2005`).
+
+### Added
+- English → Arabic pipeline, locked scope: on-device ML Kit translate with
+  sentence reconstruction, dialogue/narration/SFX classification, name shield
+  (CN/KR romanized names are never translated), persistent auto-learned name
+  glossary (visible/removable in Settings).
+- Structured diagnostics (JSONL, rotated; per-journey trace id chaining all
+  stages; consistent error codes; levels incl. FATAL; content-free by design).
+- T0–T12 benchmark system with persisted records (200 cap), avg/P50/P90/P95/
+  P99 (≥100 samples), success/timeout rates, cold/warm split, optional T12
+  auto-completion; exportable from Settings → Diagnostics.
+- Progressive per-block translation reveal (`Partial` state) in the result
+  sheet and the floating panel; Arabic RTL rendering in both.
+- Diagnostics export via FileProvider (logs + benchmarks).
+- JVM unit tests: sentence reconstructor, region classifier, name detector,
+  name shield, benchmark math, log-event round-trip. CI annotates unit-test
+  failures (previously invisible).
+- docs/DIAGNOSTICS.md — benchmark methodology, export, on-device verification
+  protocol and failure-injection checklist.
+
+### Changed
+- Language selection in Settings replaced by a locked EN → العربية pair
+  (one-time migration of stored ko/zh/ja preferences).
+- Settings gained learned-names management and diagnostics/benchmark export.
+
 ## [1.0.0] - 2026-11-19
 
 ### Added
