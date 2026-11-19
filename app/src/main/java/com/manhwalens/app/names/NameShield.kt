@@ -35,8 +35,13 @@ object NameShield {
             }
         }
         result = result.replace(Regex("\\s{2,}"), " ").trim()
+        result = fixSpaceBeforePunctuation(result)
         return MaskResult(result, used)
     }
+
+    /** "hello , world" -> "hello, world" — protects masked text and restored output alike. */
+    private fun fixSpaceBeforePunctuation(text: String): String =
+        text.replace(Regex("\\s+([,.;:!?%\\)\\]»”])"), "$1")
 
     fun restore(translated: String, namesInOrder: List<String>): String {
         if (namesInOrder.isEmpty()) return translated
@@ -46,6 +51,7 @@ object NameShield {
             result = Regex("(?<![0-9])${Regex.escape(token)}(?![0-9])").replace(result, name)
         }
         result = result.replace(Regex("\\s{2,}"), " ").trim()
+        result = fixSpaceBeforePunctuation(result)
         return result
     }
 
