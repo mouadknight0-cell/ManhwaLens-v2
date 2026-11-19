@@ -41,7 +41,6 @@ class TextRecognitionClient {
                                         top = box.top,
                                         right = box.right,
                                         bottom = box.bottom,
-                                        confidence = line.confidence ?: 0.9f,
                                         languageHint = LanguageMapper.autoLanguageFor(script),
                                     )
                                 }

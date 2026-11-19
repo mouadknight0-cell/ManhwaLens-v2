@@ -35,7 +35,17 @@ jobs:
         run: ./gradlew :app:dependencies --configuration debugUnitTestCompileClasspath --no-daemon > /tmp/deps.txt 2>&1 || (cat /tmp/deps.txt && exit 1)
 
       - name: Compile app sources
-        run: ./gradlew :app:compileDebugKotlin --stacktrace --no-daemon
+        shell: bash
+        run: ./gradlew :app:compileDebugKotlin --stacktrace --no-daemon 2>&1 | tee /tmp/compile.log
+
+      - name: Annotate compiler errors
+        if: failure()
+        shell: bash
+        run: |
+          grep -E '^e: ' /tmp/compile.log | head -40 | while IFS= read -r line; do
+            echo "::error::${line#e: }"
+          done
+          exit 1
 
       - name: Compile test sources
         run: ./gradlew :app:compileDebugUnitTestKotlin --stacktrace --no-daemon
