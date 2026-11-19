@@ -8,7 +8,7 @@ import java.io.File
 /** Persists benchmark records on-device (app-private). Keeps the newest [MAX_RECORDS]. */
 class BenchmarkStore(context: Context) {
 
-    private val dir: File get() = File(context.filesDir, "benchmarks").apply { mkdirs() }
+    private val dir: File = File(context.filesDir, "benchmarks").apply { mkdirs() }
     private val file: File get() = File(dir, "records.json")
 
     @Synchronized

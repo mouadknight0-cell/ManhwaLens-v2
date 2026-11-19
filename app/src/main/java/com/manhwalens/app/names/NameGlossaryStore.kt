@@ -12,7 +12,7 @@ import java.io.File
  */
 class NameGlossaryStore(context: Context) {
 
-    private val file: File get() = File(File(context.filesDir, "glossary").apply { mkdirs() }, "names.json")
+    private val file: File = File(File(context.filesDir, "glossary").apply { mkdirs() }, "names.json")
 
     @Synchronized
     fun all(): List<String> = load().keys().asSequence().filter { it.isNotBlank() }.toList().sortedBy { it.lowercase() }
