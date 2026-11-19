@@ -1,0 +1,20 @@
+# v1.1.7 — dialogue reconstruction and collision-free placement
+
+## Evidence and baseline
+Seven supplied v1.1.6 Xiaomi Android 14 screenshots show overlapping opaque cards, not merely low opacity: WHILE obscures the first line of its sentence; IT WOULD becomes a failed separate block; MY LIFE / AND HATRED / TOWARDS / HIM form a stack of cards. Samples confirm these fragments were separate before inference. One balloon must be reconstructed before translation, not stitched from independently translated Arabic afterwards.
+
+The first 20 supplied runs contain 10 ok, 1 partial, 9 cancelled. Ten have a T12 UI-post marker (including the partial run); run 2 is ok for processing but has no confirmed final-render marker. First visible among those 10 ok runs ranges from 370.5 to 1100.6ms, OCR from 263.2 to 404.0ms. These include cache hits and different scenes, and are NOT a matched before/after test. `ok` is a pipeline outcome, not a linguistic quality score. No after-device measurements have been made here.
+
+The cold tab overview samples explicitly include Search your tabs, inactive items and a router thumbnail with 300Mbps V. That is actual browser content, not a status-bar exclusion failure. Valid conversation text IT WOULD failed separately, so suppressing all short phrases/errors would hide a real grouping problem.
+
+## Implementation
+- OCR now retains raw line rectangles across recognizer blocks. DialogueAssembler uses reading order, proportional line-height gap, overlap and center alignment to reconstruct complete utterances before inference/cache. Same-block lines retain geometric grouping even on dark backgrounds. Cross-block joins additionally require a sampled continuous light corridor; a dark border/gutter vetoes the join. This is conservative geometry/visual evidence, NOT a semantic bubble segmentation model, and unusual balloon shapes may still fragment or misgroup.
+- The translator and name protection remain ML Kit EN→AR. No screenshot-specific translations or canned replacements. This does not promise correction of literal idioms, pronouns, tone, or the mistranslation of MONSTER. Feeding a complete sentence is a necessary input repair, not proof of improved model fluency.
+- Each measured card is placed against existing cards, the icon and open dock, with a gap. If no nearby valid position exists, the entire current result moves into one bounded scrollable reading panel in source order with original and Arabic text. It never intentionally stacks overlapping cards or shrinks text to illegibility. The fallback is explicit and sacrifices inline placement; tap its close control to dismiss it for the rest of that result. New scene clears it; its bounds are excluded from motion detection. Actual touch/font/orientation behavior needs device validation.
+- Tab overview is skipped only when multiple specific chrome markers occur together. No projection is revoked; Live waits for a changed scene. Benchmarks label this skipped, not a translation success/error. This does not detect every browser menu or non-reader screen.
+- New local samples include right/bottom coordinates for reproducible grouping/placement inspection. Translation failure events include text length, word count and bounds without exposing source text in automatic error logs. Existing preferences, history and glossary are not deleted.
+
+## Verification
+Added deterministic JVM regressions for WHILE and IT WOULD reconstruction, dark-border veto via the visual predicate, adjacent speakers, occupied/full-screen card placement and multi-marker tab-overview detection. The visual predicate's Android bitmap sampling and real ML Kit output are not exercised by those JVM tests. All builds/tests run on GitHub.
+
+No attached device/emulator: no phone consent, upgrade, actual translation-quality, render-latency, battery or gesture test performed. Test supplied panels stationary then scrolling; expect one reconstructed sentence where visual grouping permits, otherwise readable non-overlapping placement or the scroll panel. Compare fresh samples by source/box/version, not just total ok count. Capture permission flow is unchanged from v1.1.6.
