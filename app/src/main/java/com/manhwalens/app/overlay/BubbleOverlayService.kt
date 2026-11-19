@@ -394,7 +394,11 @@ class BubbleOverlayService : Service() {
             val region = block.region
             val key = "${region.left}:${region.top}:${region.right}:${region.bottom}:${block.translated}"
             if (key in displayedBlocks) return@forEach
-            val width = (region.width + dp(16)).coerceIn(minOf(dp(100), bounds.width()), bounds.width())
+            // Failure messages are indicators, not replacements for the OCR rectangle.
+            // A spurious giant OCR box must never become a giant opaque error card.
+            val failed = block.errorCode != null
+            val width = (if (failed) dp(180) else region.width + dp(16))
+                .coerceIn(minOf(dp(100), bounds.width()), bounds.width())
             val text = TextView(this).apply {
                 this.text = block.translated
                 textSize = 16f
@@ -414,7 +418,7 @@ class BubbleOverlayService : Service() {
             }
             text.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
-            val height = maxOf(text.measuredHeight, region.height + dp(8)).coerceAtMost(bounds.height())
+            val height = (if (failed) text.measuredHeight else maxOf(text.measuredHeight, region.height + dp(8))).coerceAtMost(bounds.height())
             val params = WindowManager.LayoutParams(width, height, overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT).apply {
@@ -431,6 +435,11 @@ class BubbleOverlayService : Service() {
             val placement = CardPlacement.place(CardPlacement.Box(params.x, params.y, params.x + width, params.y + height),
                 CardPlacement.Box(bounds.left, bounds.top, bounds.right, bounds.bottom), occupied, dp(6))
             if (placement == null || kotlin.math.abs(placement.top - params.y) > dp(100) || kotlin.math.abs(placement.left - params.x) > dp(100)) {
+                showReadingPanel(result, final)
+                return
+            }
+            if (!failed && (placement.left > region.left || placement.top > region.top ||
+                    placement.right < region.right || placement.bottom < region.bottom)) {
                 showReadingPanel(result, final)
                 return
             }

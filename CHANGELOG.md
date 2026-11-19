@@ -3,6 +3,15 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.11] - 2026-11-19
+
+- Allow small OCR line-box overlaps while preserving geometry and visual separation checks; add phone-case regressions and pixel-corridor tests.
+- Bound failure-card size independently of noisy OCR bounds; use reading fallback when collision placement exposes the source text.
+- Recognize the additional own-dashboard marker combination; report empty content honestly without unnecessary model initialization.
+- Apply narrow English OCR input repairs and retain raw source / unverified semantic-quality metadata in optional samples.
+- Reuse the durable v1.1.10 signer. No settings/history migration or deletion.
+- Arabic semantic quality and physical balloon fitting are **not** claimed solved. See docs/PHONE-REPORT-1.1.11.md for evidence, limitations and device checks.
+
 ## [1.1.0] - 2026-11-19
 
 ### Fixed

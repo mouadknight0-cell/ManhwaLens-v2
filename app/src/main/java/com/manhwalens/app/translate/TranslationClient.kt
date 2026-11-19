@@ -44,17 +44,19 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
     /** Translates one region, applying the name shield. Never throws — original text on failure. */
     suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList()): TranslatedBlock {
-        val normalized = com.manhwalens.app.pipeline.SentenceReconstructor.normalize(region.text)
+        val normalized = com.manhwalens.app.pipeline.EnglishOcrRepair.repair(
+            com.manhwalens.app.pipeline.SentenceReconstructor.normalize(region.text))
+        if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
         val began = System.nanoTime()
         val block = try {
             val translated = translateText(normalized, glossaryNames)
-            TranslatedBlock(region.copy(text = normalized), normalized, translated)
+            TranslatedBlock(region, normalized, translated)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {
             Diagnostics.error("translate", "block_failed", failure.code, "translation block failed; source retained, failure shown", throwable = failure,
                 context = mapOf("source_chars" to normalized.length.toString(), "word_count" to normalized.split(Regex("\\s+")).size.toString(),
                     "bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
-            TranslatedBlock(region.copy(text = normalized), normalized, "تعذّرت الترجمة — أعد المحاولة", failure.code)
+            TranslatedBlock(region, normalized, "تعذّرت الترجمة — أعد المحاولة", failure.code)
         }
         return block.copy(durationMs = (System.nanoTime() - began) / 1_000_000)
     }

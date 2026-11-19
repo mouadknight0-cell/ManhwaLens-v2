@@ -19,7 +19,10 @@ object DialogueAssembler {
     private fun canFollow(a: TextRegion, b: TextRegion): Boolean {
         val gap = b.top - a.bottom
         val height = maxOf(a.height, b.height)
-        if (gap < 0 || gap > height * 0.9f) return false
+        // Small box overlap is OCR geometry jitter, not necessarily a shared row.
+        val smallerHeight = minOf(a.height, b.height)
+        if (smallerHeight <= 0 || b.top - a.top < smallerHeight * 0.5f) return false
+        if (gap < -smallerHeight * 0.2f || gap > height * 0.9f) return false
         val overlap = minOf(a.right, b.right) - maxOf(a.left, b.left)
         if (overlap < minOf(a.width, b.width) * 0.65f) return false
         if (kotlin.math.abs(a.centerX - b.centerX) > maxOf(a.width, b.width) * 0.3f) return false

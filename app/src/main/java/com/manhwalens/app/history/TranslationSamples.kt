@@ -31,7 +31,9 @@ object TranslationSamples {
                 if (all.any { it.optString("id") == key }) continue
                 all.add(JSONObject().apply {
                     put("id", key); put("trace", trace); put("timestamp", System.currentTimeMillis())
-                    put("source", safe(block.original)); put("translation", if (block.errorCode == null) safe(block.translated) else JSONObject.NULL)
+                    put("source", safe(block.original)); put("ocr_source", safe(block.region.text))
+                    put("semantic_quality", "unverified")
+                    put("translation", if (block.errorCode == null) safe(block.translated) else JSONObject.NULL)
                     put("error_code", block.errorCode ?: JSONObject.NULL)
                     put("duration_ms", block.durationMs ?: JSONObject.NULL)
                     put("pair", "en→ar"); put("method", "ML Kit on-device")

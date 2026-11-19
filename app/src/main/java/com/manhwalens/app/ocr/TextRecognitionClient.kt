@@ -75,22 +75,10 @@ class TextRecognitionClient {
     /** Sample several rows across the horizontal overlap. A balloon outline or
      * dark panel gutter must veto grouping even when geometry alone looks plausible. */
     private fun lightBridge(bitmap: Bitmap, a: TextRegion, b: TextRegion): Boolean {
-        val left = maxOf(a.left, b.left).coerceIn(0, bitmap.width - 1)
-        val right = minOf(a.right, b.right).coerceIn(left + 1, bitmap.width)
-        if (b.top <= a.bottom) return false
-        val stepY = maxOf(1, (b.top - a.bottom) / 8)
-        for (y in a.bottom until b.top step stepY) {
-            if (y !in 0 until bitmap.height) return false
-            var light = 0
-            var count = 0
-            for (x in left until right step maxOf(1, (right - left) / 24)) {
-                val pixel = bitmap.getPixel(x, y)
-                if (android.graphics.Color.red(pixel) >= 225 && android.graphics.Color.green(pixel) >= 225 && android.graphics.Color.blue(pixel) >= 225) light++
-                count++
-            }
-            if (count == 0 || light.toFloat() / count < 0.94f) return false
+        return com.manhwalens.app.pipeline.LightCorridor.isClear(a, b, bitmap.width, bitmap.height) { x, y ->
+            val pixel = bitmap.getPixel(x, y)
+            android.graphics.Color.red(pixel) >= 225 && android.graphics.Color.green(pixel) >= 225 && android.graphics.Color.blue(pixel) >= 225
         }
-        return true
     }
 
     private fun recognizerFor(script: LanguageMapper.Script) = when (script) {
