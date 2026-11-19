@@ -17,3 +17,9 @@ Pure regressions cover untruncated large Arabic report sections, redaction, load
 No physical Xiaomi/MediaProjection overlay test, document-provider interaction test or latency A/B benchmark was performed here. Cancellations are not assumed engine crashes. Known TR-INVALID-OUTPUT remains for unsupported OCR; semantic errors such as '4 days straight' and past-tense/pronoun mistakes in ML Kit are NOT solved by this release. No expanded sentence-specific patch table or new contextual model is claimed.
 
 Install over v1.1.13 using the unchanged durable v1.1.10+ signer. Do not uninstall or clear settings/history.
+
+## Executed verification
+
+- JVM tests, compile/debug assembly and signing recovery passed: https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44615901600 .
+- Android 14 instrumentation passed, including complete TXT with seeded Arabic/history/sample content and click/long-click propagation: https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44616872195 .
+- The preceding emulator run 44615901658 terminated with `Process crashed` and no useful crash stack in its test XML. Added crash-buffer collection; the next run passed without a production-code change. The earlier crash is unexplained, not claimed repaired or dismissed as harmless.
