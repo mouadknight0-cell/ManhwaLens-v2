@@ -42,10 +42,10 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          esc() { sed -e 's/%/%25/g' -e 's/\r/%0D/g' | cut -c1-450; }
-          echo "::error::LAST LINES: $(tail -8 /tmp/compile.log | esc | tr '\n' '|')"
-          grep -inE 'error|exception|what went wrong|failed' /tmp/compile.log | tail -25 | while IFS= read -r line; do
-            echo "::error::${line}" | esc
+          esc() { sed -e 's/%/%25/g' -e 's/\r//g' -e 's/\x1b\[[0-9;]*m//g' | cut -c1-300; }
+          echo "::error::TAIL: $(tail -45 /tmp/compile.log | esc | tr '\n' '@')"
+          grep -niE 'e: |error:|unresolved|not found|overload|type mismatch|illegal' /tmp/compile.log | head -20 | while IFS= read -r line; do
+            printf '::error::%s\n' "$(printf '%s' "$line" | esc)"
           done
           exit 1
 
