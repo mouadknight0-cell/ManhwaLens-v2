@@ -88,3 +88,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Independent confirmed Copy/Reset/View/Share for Benchmark, Translation, Errors and Bugs; lossless multipart clipboard support.
 - Preserve OCR line boundaries for dehyphenation; correct partial/cancelled benchmark error classification; record translation error/timing samples.
 - Device UI/permission/clipboard validation remains pending (docs/UX-1.1.4.md).
+
+## [1.1.5] - 2026-11-19
+- Keep floating icon visible during immediate consent launch; diagnose blocked trampoline entry.
+- Exclude system bars and URL-shaped text from translation, retain short punctuated dialogue.
+- Stop automatic uppercase/English-homograph name shielding; retain legacy glossary data.
+- Incremental, measured opaque translation cards with tap-to-reveal and long-card scrolling.
+- Worker-thread bitmap conversion; accurate partial-result completion markers.
+- Device/OEM and before/after performance validation remains pending; see docs/READER-1.1.5.md.

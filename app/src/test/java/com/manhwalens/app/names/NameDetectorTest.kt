@@ -49,4 +49,10 @@ class NameDetectorTest {
         assertEquals(1, hits.size)
         assertEquals(NameHit.Source.GLOSSARY, hits[0].source)
     }
+    @Test fun `uppercase dialogue is not automatically shielded as names`() {
+        assertTrue(NameDetector.find("NO WAY! HE WAS HERE. AN OLD MAN.").isEmpty())
+        assertTrue(NameDetector.find("LONG AGO").isEmpty())
+        assertEquals("KIM JIWOO", NameDetector.find("KIM JIWOO", listOf("Kim Jiwoo")).single().name)
+        assertTrue(!NameDetector.safeAutomaticName("NO WAY"))
+    }
 }

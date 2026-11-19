@@ -48,6 +48,14 @@ object NameDetector {
         "Ouyang", "Shangguan", "Sima", "Zhuge", "Dongfang", "Situ",
     )
 
+    // Uppercase comic typography is not evidence of a proper name. Ambiguous
+    // English words require an explicit glossary entry, not automatic shielding.
+    fun safeAutomaticName(name: String): Boolean {
+        val letters = name.filter { it.isLetter() }
+        val first = name.trim().substringBefore(' ').lowercase()
+        return letters.any { it.isLowerCase() } && first !in setOf("no", "he", "an", "im", "long", "son", "sun", "moon", "song")
+    }
+
     private val wordRegex = Regex("[A-Za-z][A-Za-z'’-]*")
 
     /**
@@ -91,7 +99,7 @@ object NameDetector {
                 consumed++
                 if (consumed - 1 >= limit) break
             }
-            if (consumed > 1) {
+            if (consumed > 1 && safeAutomaticName(text.substring(start, spanEnd))) {
                 hits.add(NameHit(text.substring(start, spanEnd), start, spanEnd, family))
             }
         }

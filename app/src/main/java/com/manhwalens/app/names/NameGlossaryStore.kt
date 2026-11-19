@@ -17,6 +17,12 @@ class NameGlossaryStore(context: Context) {
     @Synchronized
     fun all(): List<String> = load().keys.filter { it.isNotBlank() }.sortedBy { it.lowercase() }
 
+    /** Keep questionable legacy entries on disk/UI, but do not shield them automatically. */
+    @Synchronized
+    fun translationNames(): List<String> = load().filter { (name, note) ->
+        note != "auto" || NameDetector.safeAutomaticName(name)
+    }.keys.toList()
+
     @Synchronized
     fun snapshot(): List<Pair<String, String>> = load().entries.map { it.key to it.value }
 

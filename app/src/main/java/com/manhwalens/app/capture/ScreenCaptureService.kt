@@ -669,7 +669,7 @@ class ScreenCaptureService : Service() {
 
     /** Detect CN/KR names, persist new surname-pattern detections, return glossary + fresh names. */
     private fun learnNames(regions: List<TextRegion>, traceId: String): List<String> {
-        val glossary = nameGlossary.all()
+        val glossary = nameGlossary.translationNames()
         val detected = regions.flatMap { NameDetector.find(it.text, glossary) }
         val fresh = detected
             .filter { it.source == NameHit.Source.KOREAN_SURNAME || it.source == NameHit.Source.CHINESE_SURNAME }

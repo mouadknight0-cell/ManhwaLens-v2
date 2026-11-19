@@ -402,7 +402,7 @@ class BubbleOverlayService : Service() {
                 contentDescription = "${block.translated}. اضغط لإظهار النص الأصلي"
             }
             text.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(bounds.height(), View.MeasureSpec.AT_MOST))
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
             val height = maxOf(text.measuredHeight, region.height + dp(8)).coerceAtMost(bounds.height())
             val params = WindowManager.LayoutParams(width, height, overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
@@ -412,13 +412,17 @@ class BubbleOverlayService : Service() {
                 y = (region.top - (height - region.height) / 2).coerceIn(bounds.top, bounds.bottom - height)
                 alpha = 1f
             }
+            val card: View = if (text.measuredHeight > bounds.height()) ScrollView(this).apply {
+                setBackgroundColor(android.graphics.Color.WHITE)
+                addView(text, android.widget.FrameLayout.LayoutParams(width, android.widget.FrameLayout.LayoutParams.WRAP_CONTENT))
+            } else text
             val rect = android.graphics.Rect(params.x, params.y, params.x + width, params.y + height)
             text.setOnClickListener {
-                runCatching { windowManager.removeView(text) }
-                translationViews.remove(text); translationRects.remove(rect); publishBounds()
+                runCatching { windowManager.removeView(card) }
+                translationViews.remove(card); translationRects.remove(rect); publishBounds()
             }
-            if (runCatching { windowManager.addView(text, params) }.isSuccess) {
-                translationViews.add(text); translationRects.add(rect); displayedBlocks.add(key)
+            if (runCatching { windowManager.addView(card, params) }.isSuccess) {
+                translationViews.add(card); translationRects.add(rect); displayedBlocks.add(key)
                 publishBounds()
             }
         }
