@@ -44,7 +44,7 @@ class TextRecognitionClient {
                     try {
                         task.await().let { result ->
                             result.textBlocks.flatMap { block ->
-                                RegionMerger.merge(RegionFilter.filter(block.lines.mapNotNull { line ->
+                                RegionFilter.filter(block.lines.mapNotNull { line ->
                                     val box = line.boundingBox ?: return@mapNotNull null
                                     TextRegion(
                                         text = line.text,
@@ -54,7 +54,7 @@ class TextRecognitionClient {
                                         bottom = box.bottom,
                                         languageHint = LanguageMapper.autoLanguageFor(script),
                                     )
-                                }))
+                                })
                             }
                         }
                     } catch (t: Throwable) {
@@ -65,7 +65,30 @@ class TextRecognitionClient {
         }
 
         val filtered = RegionFilter.filter(detected)
-        return filtered // Keep recognizer block boundaries; never merge across speakers.
+        return com.manhwalens.app.pipeline.DialogueAssembler.assemble(filtered) { a, b ->
+            lightBridge(bitmap, a, b)
+        }
+    }
+
+    /** Sample several rows, including a narrow side margin. A balloon outline or
+     * dark panel gutter must veto grouping even when geometry alone looks plausible. */
+    private fun lightBridge(bitmap: Bitmap, a: TextRegion, b: TextRegion): Boolean {
+        val left = maxOf(a.left, b.left).coerceIn(0, bitmap.width - 1)
+        val right = minOf(a.right, b.right).coerceIn(left + 1, bitmap.width)
+        if (b.top <= a.bottom) return false
+        val stepY = maxOf(1, (b.top - a.bottom) / 8)
+        for (y in a.bottom until b.top step stepY) {
+            if (y !in 0 until bitmap.height) return false
+            var light = 0
+            var count = 0
+            for (x in left until right step maxOf(1, (right - left) / 24)) {
+                val pixel = bitmap.getPixel(x, y)
+                if (android.graphics.Color.red(pixel) >= 225 && android.graphics.Color.green(pixel) >= 225 && android.graphics.Color.blue(pixel) >= 225) light++
+                count++
+            }
+            if (count == 0 || light.toFloat() / count < 0.94f) return false
+        }
+        return true
     }
 
     private fun recognizerFor(script: LanguageMapper.Script) = when (script) {
