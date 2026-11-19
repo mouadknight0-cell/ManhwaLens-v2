@@ -29,3 +29,10 @@ The report's repeated GO0D source previously went unchanged to ML Kit; it is now
 A genuinely stronger contextual engine remains necessary for the broader requested accuracy. The existing on-device ML Kit API does not accept structured conversation context. Do not claim all reported issues resolved or fabricate a quality score. Next device checks: screenshot scenes with errors, GO0D source/output, SINCE and I SENT MY split lines, short and long circular content, font scaling, rotation, live scrolling and safe update preserving history/settings.
 
 Signing: reuse the v1.1.10/v1.1.12 vault and certificate; no initialization, deletion or data migration.
+
+## Executed GitHub evidence
+
+- CI compile, JVM unit tests, signing recovery and debug assembly: PASS, run [44605008627](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44605008627), application source at 234bac7.
+- Android 14 emulator instrumentation: PASS, run [44605008577](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44605008577). Bundled OCR recognized POISON and SECT in the real supplied crop. Circular view tests drew to a bitmap at diameters 240/420/600, checked transparent corners/opaque center, minimum font size, overflowing Arabic content height and long-click handler.
+- The emulator test checks a laid-out view, not an attached MediaProjection overlay. Animations were disabled in the emulator workflow. Actual touch scrolling, overlay placement, animation smoothness, Xiaomi behavior and full EN→AR model A/B quality/latency benchmarks are NOT verified.
+- Initial test attempts exposed a test-source compatibility issue with desktop image APIs and an overflow fixture too short to guarantee overflow at every size. Replaced desktop decoding with a threshold raster derived from the same crop and made the long-text fixture unambiguously long; production circle/translation code was not loosened to pass those tests.
