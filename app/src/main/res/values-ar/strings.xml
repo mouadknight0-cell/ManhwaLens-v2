@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ManhwaLens</string>
+
+    <!-- الرئيسية -->
+    <string name="tagline">اقرأ المانهوا بعربية طبيعية</string>
+    <string name="home_ready_title">جاهز عندما تكون جاهزاً</string>
+    <string name="home_status_capture">جلسة الالتقاط</string>
+    <string name="home_status_bubble">الفقاعة العائمة</string>
+    <string name="home_status_notifications">الإشعارات</string>
+    <string name="home_status_granted">جاهز</string>
+    <string name="home_status_missing">يحتاج إعداداً</string>
+    <string name="home_capture_button">ترجمة الشاشة الآن</string>
+    <string name="home_stop_session">إيقاف جلسة الالتقاط</string>
+    <string name="home_recent_title">آخر ترجمة</string>
+    <string name="home_recent_empty">ستظهر ترجماتك هنا</string>
+    <string name="home_see_all">عرض الكل</string>
+    <string name="home_tip_title">كيف يعمل؟</string>
+    <string name="home_tip_body">١. افتح المانهوا في أي قارئ.\n٢. انقر فقاعة ManhwaLens العائمة.\n٣. تُلتقط الشاشة على الجهاز وتُترجم الفقاعات فوراً.\n\nلا تغادر أي بيانات هاتفك: التعرّف على النصوص والترجمة يعملان محلياً.</string>
+    <string name="home_bubble_enable">تفعيل الفقاعة العائمة</string>
+    <string name="home_bubble_disable">إيقاف الفقاعة العائمة</string>
+
+    <!-- الترحيب -->
+    <string name="onboarding_title">أهلاً بك في ManhwaLens</string>
+    <string name="onboarding_subtitle">يقرأ ManhwaLens الحوار الإنجليزي على شاشتك ويُظهره بعربية طبيعية — فوق الصفحة، وعلى جهازك بالكامل.</string>
+    <string name="onboarding_step_capture_title">التقاط الشاشة</string>
+    <string name="onboarding_step_capture_body">يطلب Android موافقة لمرة واحدة قبل أي التقاط. تُعالج الصور على الجهاز ولا تُرفع أبداً.</string>
+    <string name="onboarding_step_bubble_title">فقاعة عائمة</string>
+    <string name="onboarding_step_bubble_body">عدسة قابلة للسحب تبقى فوق قارئ المانهوا. انقرها لترجمة ما تراه.</string>
+    <string name="onboarding_step_private_title">خصوصية حقيقية</string>
+    <string name="onboarding_step_private_body">تُحلَّل لقطات الشاشة محلياً عبر ML Kit. السجل محفوظ على هذا الهاتف فقط ويمكن مسحه متى شئت.</string>
+    <string name="onboarding_allow_overlay">السماح بالنافذة العائمة</string>
+    <string name="onboarding_allow_notifications">السماح بالإشعارات</string>
+    <string name="onboarding_start">ابدأ استخدام ManhwaLens</string>
+
+    <!-- شريط التنقل -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_history">السجل</string>
+    <string name="nav_settings">الإعدادات</string>
+
+    <!-- السجل -->
+    <string name="history_title">سجل الترجمات</string>
+    <string name="history_empty_title">لا توجد ترجمات بعد</string>
+    <string name="history_empty_body">التقط صفحة مانهوا وستُحفظ فقاعاتها المترجمة هنا.</string>
+    <string name="history_clear">مسح الكل</string>
+    <string name="history_clear_confirm">حذف كل الترجمات والصور المصغرة المحفوظة؟</string>
+    <string name="history_clear_action">حذف</string>
+    <string name="history_cancel">إلغاء</string>
+    <string name="history_delete_one">حذف العنصر</string>
+    <string name="history_blocks_count">%d سطر</string>
+
+    <!-- الإعدادات -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_recognition">التعرف على النص</string>
+    <string name="settings_source_language">لغة المصدر</string>
+    <string name="settings_target_language">الترجمة إلى</string>
+    <string name="settings_source_auto">تلقائي (كورية · يابانية · صينية · لاتينية)</string>
+    <string name="settings_models_note">تُنزَّل نماذج الترجمة والتعرف على النص مرة واحدة ثم تعمل دون إنترنت.</string>
+    <string name="settings_bubble_section">الفقاعة العائمة</string>
+    <string name="settings_bubble_toggle">إظهار الفقاعة فوق التطبيقات</string>
+    <string name="settings_bubble_permission_missing">يلزم إذن النافذة العائمة — ستُفتح إعدادات النظام…</string>
+    <string name="settings_history_section">السجل</string>
+    <string name="settings_clear_history">مسح سجل الترجمة</string>
+    <string name="settings_about">عن التطبيق</string>
+    <string name="settings_version">الإصدار</string>
+    <string name="settings_package">المعرّف</string>
+    <string name="settings_privacy">لا تغادر لقطات الشاشة الجهاز أبداً. التعرف على النص والترجمة يعملان محلياً، والسجل محفوظ داخل مساحة التطبيق الخاصة.</string>
+
+    <!-- ورقة النتيجة -->
+    <string name="result_title">الترجمة</string>
+    <string name="result_copy_all">نسخ الكل</string>
+    <string name="result_copied">نُسخ إلى الحافظة</string>
+    <string name="result_saved">حُفظ في السجل</string>
+    <string name="result_empty">لم يُعثر على نص مقروء في الشاشة</string>
+    <string name="result_close">إغلاق</string>
+
+    <!-- الإشعارات -->
+    <string name="notif_channel_capture">جلسة الالتقاط</string>
+    <string name="notif_channel_capture_desc">تظهر أثناء قدرة ManhwaLens على التقاط الشاشة</string>
+    <string name="notif_channel_bubble">الفقاعة العائمة</string>
+    <string name="notif_channel_bubble_desc">تظهر أثناء عمل العدسة العائمة</string>
+    <string name="notif_capture_title">ManhwaLens يرى شاشتك</string>
+    <string name="notif_capture_text">انقر الفقاعة العائمة لترجمة الصفحة الحالية</string>
+    <string name="notif_bubble_title">الفقاعة العائمة نشطة</string>
+    <string name="notif_bubble_text">انقر العدسة لترجمة ما تراه</string>
+    <string name="notif_action_stop">إيقاف</string>
+
+    <!-- الأخطاء والحالات -->
+    <string name="error_overlay_denied">رُفض إذن النافذة العائمة</string>
+    <string name="error_capture_denied">رُفض إذن التقاط الشاشة</string>
+    <string name="error_capture_timeout">انتهت مهلة الالتقاط — حاول مرة أخرى</string>
+    <string name="error_session_expired">انتهت جلسة الالتقاط — امنح إذن الشاشة مجدداً</string>
+    <string name="error_ocr_failed">تعذرت قراءة نص الشاشة</string>
+    <string name="status_preparing">جارٍ تجهيز الالتقاط…</string>
+    <string name="status_reading">جارٍ قراءة الفقاعات…</string>
+    <string name="status_translating">جارٍ الترجمة…</string>
+    <string name="status_downloading_model">تنزيل نموذج اللغة… لمرة واحدة</string>
+
+
+    <!-- 1.1: قفل الإنجليزية→العربية، الأسماء المتعلمة، التشخيص -->
+    <string name="settings_language_pair_title">زوج اللغات</string>
+    <string name="settings_language_pair_locked">English → العربية</string>
+    <string name="settings_language_pair_note">الإصدار 1.1 يترجم حوار المانهوا المكتوب بأحرف لاتينية إلى عربية طبيعية. الأسماء الصينية والكورية المكتوبة بالإنجليزية تُكتشف وتُحفظ كما هي.</string>
+    <string name="settings_names_section">أسماء الشخصيات (متعلَّمة)</string>
+    <string name="settings_names_note">لا تُترجم الأسماء أبداً — تُحفظ بتهجئتها اللاتينية وتُتذكَّر عبر الفصول.</string>
+    <string name="settings_names_empty">لا توجد أسماء متعلَّمة بعد. تتراكم تلقائياً أثناء القراءة.</string>
+    <string name="settings_names_clear">مسح الأسماء المتعلَّمة</string>
+    <string name="settings_names_remove">إزالة</string>
+    <string name="settings_diagnostics_section">التشخيص والمعايير</string>
+    <string name="settings_diagnostics_note">سجلات منظمة (JSONL) ومعايير أداء (T0–T12) — تُستخدم لتشخيص مشاكل الالتقاط والتعرف والترجمة. لا تحتوي أبداً على نص الشاشة.</string>
+    <string name="settings_export_diagnostics">تصدير التشخيص والمعايير</string>
+    <string name="settings_export_share">مشاركة حزمة التشخيص</string>
+    <string name="settings_export_ok">حزمة التشخيص جاهزة للمشاركة</string>
+    <string name="settings_export_failed">تعذر إنشاء حزمة التشخيص</string>
+    <string name="settings_benchmarks_clear">مسح سجلات المعايير</string>
+    <string name="settings_benchmarks_count">%1$d جولة معيار مسجلة</string>
+    <string name="error_capture_generic">فشل الالتقاط — صدّر التشخيص وراجع رمز الخطأ</string>
+    <string name="error_translation_model">تعذر تنزيل نموذج الترجمة العربية — اتصل بالإنترنت مرة واحدة ثم حاول مجدداً</string>
+
+    <!-- عام -->
+    <string name="cancel">إلغاء</string>
+    <string name="ok">حسناً</string>
+    <string name="delete">حذف</string>
+</resources>

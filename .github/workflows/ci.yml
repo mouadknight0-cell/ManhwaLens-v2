@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Test & assemble debug APK
+    runs-on: ubuntu-latest
+    env:
+      VERSION_NAME: 1.1.6-candidate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Monotonic version code
+        run: echo "VERSION_CODE=$(( $(git show -s --format=%ct HEAD) - 1577836800 ))" >> "$GITHUB_ENV"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Verify Gradle boots (configuration smoke test)
+        run: ./gradlew help --stacktrace --no-daemon
+
+      - name: Resolve dependency graph
+        run: ./gradlew :app:dependencies --configuration debugUnitTestCompileClasspath --no-daemon > /tmp/deps.txt 2>&1 || (cat /tmp/deps.txt && exit 1)
+
+      - name: Compile app sources
+        shell: bash
+        run: ./gradlew :app:compileDebugKotlin --stacktrace --no-daemon 2>&1 | tee /tmp/compile.log
+
+      - name: Annotate compiler errors
+        if: failure()
+        shell: bash
+        run: |
+          esc() { sed -e 's/%/%25/g' -e 's/\r//g' -e 's/\x1b\[[0-9;]*m//g' | cut -c1-300; }
+          echo "::error::TAIL: $(tail -45 /tmp/compile.log | esc | tr '\n' '@')"
+          grep -niE 'e: |error:|unresolved|not found|overload|type mismatch|illegal' /tmp/compile.log | head -20 | while IFS= read -r line; do
+            printf '::error::%s\n' "$(printf '%s' "$line" | esc)"
+          done
+          exit 1
+
+      - name: Compile test sources
+        run: ./gradlew :app:compileDebugUnitTestKotlin --stacktrace --no-daemon
+
+      - name: Unit tests
+        id: unit-tests
+        shell: bash
+        run: ./gradlew testDebugUnitTest --stacktrace --no-daemon 2>&1 | tee /tmp/test.log
+
+      - name: Annotate test failures
+        if: failure() && steps.unit-tests.outcome == 'failure'
+        shell: bash
+        run: |
+          esc() { sed -e 's/%/%25/g' -e 's/\r//g' -e 's/\x1b\[[0-9;]*m//g' | cut -c1-300; }
+          failed=$(find . -path '*test-results/testDebugUnitTest/*.xml' -name 'TEST-*.xml' -exec grep -l '<failure\|<error' {} + 2>/dev/null | head -10)
+          for f in $failed; do
+            awk -v file="$f" '/<(failure|error)[ >]/{gsub(/\n/," "); print "::error file=" file "::" $0}' "$f" | while IFS= read -r line; do
+              printf '%s\n' "$(printf '%s' "$line" | esc)"
+            done
+          done
+          grep -iE 'FAILED|AssertionError|Exception|expected' /tmp/test.log | head -30 | while IFS= read -r line; do printf '::error::%s\n' "$(printf '%s' "$line" | esc)"; done
+          exit 1
+
+      - name: Assemble debug APK
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
+
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: manhwalens-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14

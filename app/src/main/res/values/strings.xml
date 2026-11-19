@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ManhwaLens</string>
+
+    <!-- Home -->
+    <string name="tagline">Read manhwa in natural Arabic</string>
+    <string name="home_ready_title">Ready when you are</string>
+    <string name="home_status_capture">Capture session</string>
+    <string name="home_status_bubble">Floating bubble</string>
+    <string name="home_status_notifications">Notifications</string>
+    <string name="home_status_granted">Ready</string>
+    <string name="home_status_missing">Setup needed</string>
+    <string name="home_capture_button">Translate screen now</string>
+    <string name="home_stop_session">Stop capture session</string>
+    <string name="home_recent_title">Latest translation</string>
+    <string name="home_recent_empty">Your translations will appear here</string>
+    <string name="home_see_all">See all</string>
+    <string name="home_tip_title">How it works</string>
+    <string name="home_tip_body">1. Open your manhwa in any reader app.\n2. Tap the floating ManhwaLens bubble.\n3. The current screen is captured on-device and speech bubbles are translated instantly.\n\nNothing leaves your phone: OCR and translation run locally.</string>
+    <string name="home_bubble_enable">Enable floating bubble</string>
+    <string name="home_bubble_disable">Disable floating bubble</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Welcome to ManhwaLens</string>
+    <string name="onboarding_subtitle">ManhwaLens reads the English dialogue on your screen and renders it in natural Arabic — over the page, fully on-device.</string>
+    <string name="onboarding_step_capture_title">Screen capture</string>
+    <string name="onboarding_step_capture_body">Android asks for one-time consent before any capture. Frames are processed on-device and never uploaded.</string>
+    <string name="onboarding_step_bubble_title">Floating bubble</string>
+    <string name="onboarding_step_bubble_body">A draggable lens sits above your reader app. Tap it to translate what is on screen.</string>
+    <string name="onboarding_step_private_title">Private by design</string>
+    <string name="onboarding_step_private_body">Screenshots are analyzed locally with ML Kit. History is stored only on this device and can be cleared anytime.</string>
+    <string name="onboarding_allow_overlay">Allow floating window</string>
+    <string name="onboarding_allow_notifications">Allow notifications</string>
+    <string name="onboarding_start">Start using ManhwaLens</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_history">History</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- History -->
+    <string name="history_title">Translation history</string>
+    <string name="history_empty_title">No translations yet</string>
+    <string name="history_empty_body">Capture a manhwa page and your translated bubbles will be saved here.</string>
+    <string name="history_clear">Clear all</string>
+    <string name="history_clear_confirm">Delete all saved translations and thumbnails?</string>
+    <string name="history_clear_action">Delete</string>
+    <string name="history_cancel">Cancel</string>
+    <string name="history_delete_one">Delete entry</string>
+    <string name="history_blocks_count">%d lines</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_recognition">Recognition</string>
+    <string name="settings_source_language">Source language</string>
+    <string name="settings_target_language">Translate into</string>
+    <string name="settings_source_auto">Auto-detect (Korean · Japanese · Chinese · Latin)</string>
+    <string name="settings_models_note">Translation and OCR models download once, then work offline.</string>
+    <string name="settings_bubble_section">Floating bubble</string>
+    <string name="settings_bubble_toggle">Show bubble over other apps</string>
+    <string name="settings_bubble_permission_missing">Overlay permission required — opening system settings…</string>
+    <string name="settings_history_section">History</string>
+    <string name="settings_clear_history">Clear translation history</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_package">Package</string>
+    <string name="settings_privacy">Screen frames never leave the device. OCR and translation run on-device; history stays in app-private storage.</string>
+
+    <!-- Result sheet -->
+    <string name="result_title">Translation</string>
+    <string name="result_copy_all">Copy all</string>
+    <string name="result_copied">Copied to clipboard</string>
+    <string name="result_saved">Saved to history</string>
+    <string name="result_empty">No readable text found on screen</string>
+    <string name="result_close">Close</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_capture">Capture session</string>
+    <string name="notif_channel_capture_desc">Shown while ManhwaLens can capture the screen</string>
+    <string name="notif_channel_bubble">Floating bubble</string>
+    <string name="notif_channel_bubble_desc">Shown while the floating lens is active</string>
+    <string name="notif_capture_title">ManhwaLens is watching your screen</string>
+    <string name="notif_capture_text">Tap the floating bubble to translate the current page</string>
+    <string name="notif_bubble_title">Floating bubble active</string>
+    <string name="notif_bubble_text">Tap the lens to translate what you see</string>
+    <string name="notif_action_stop">Stop</string>
+
+    <!-- Errors / status -->
+    <string name="error_overlay_denied">Overlay permission denied</string>
+    <string name="error_capture_denied">Screen capture permission denied</string>
+    <string name="error_capture_timeout">The capture timed out — try again</string>
+    <string name="error_session_expired">Capture session ended — grant screen access again</string>
+    <string name="error_ocr_failed">Could not read the screen text</string>
+    <string name="status_preparing">Preparing capture…</string>
+    <string name="status_reading">Reading speech bubbles…</string>
+    <string name="status_translating">Translating…</string>
+    <string name="status_downloading_model">Downloading language model… one-time</string>
+
+
+    <!-- v1.1: EN→AR lock, learned names, diagnostics -->
+    <string name="settings_language_pair_title">Language pair</string>
+    <string name="settings_language_pair_locked">English → العربية</string>
+    <string name="settings_language_pair_note">v1.1 translates romanized-English manhwa dialogue into natural Arabic. Chinese- and Korean-origin names written in English are recognized and kept as-is.</string>
+    <string name="settings_names_section">Character names (learned)</string>
+    <string name="settings_names_note">Names are never translated — they keep their romanized spelling and are remembered across chapters.</string>
+    <string name="settings_names_empty">No names learned yet. They accumulate automatically as you read.</string>
+    <string name="settings_names_clear">Clear learned names</string>
+    <string name="settings_names_remove">Remove</string>
+    <string name="settings_diagnostics_section">Diagnostics &amp; benchmarks</string>
+    <string name="settings_diagnostics_note">Structured logs (JSONL) plus performance benchmarks (T0–T12) — used to find capture, OCR and translation issues. Never contains screen text.</string>
+    <string name="settings_export_diagnostics">Export diagnostics &amp; benchmarks</string>
+    <string name="settings_export_share">Share diagnostic bundle</string>
+    <string name="settings_export_ok">Diagnostic bundle ready to share</string>
+    <string name="settings_export_failed">Could not build the diagnostic bundle</string>
+    <string name="settings_benchmarks_clear">Clear benchmark records</string>
+    <string name="settings_benchmarks_count">%1$d benchmark runs recorded</string>
+    <string name="error_capture_generic">Capture failed — export diagnostics and check the error code</string>
+    <string name="error_translation_model">Could not download the Arabic translation model — connect to the internet once, then retry</string>
+
+    <!-- Common -->
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="delete">Delete</string>
+</resources>

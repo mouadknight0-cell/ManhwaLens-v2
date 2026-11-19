@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Test and build release on GitHub
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compute version
+        id: meta
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_NAME" != v* ]]; then
+            echo '::error::Release must run against a version tag'
+            exit 1
+          fi
+          echo "name=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          echo "VERSION_NAME=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$(( $(git show -s --format=%ct HEAD) - 1577836800 ))" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x gradlew
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+      - name: Assemble unsigned release for offline signing
+        # Never publish this APK as an installable release. Only the signed, verified
+        # output may be made public. No private key is transferred to this workflow.
+        run: ./gradlew assembleRelease --stacktrace
+        env:
+          ALLOW_UNSIGNED_RELEASE: 'true'
+      - name: Package signing inputs
+        run: |
+          mkdir -p signing-input
+          cp app/build/outputs/apk/release/app-release-unsigned.apk signing-input/
+          cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" signing-input/
+          cd signing-input
+          sha256sum app-release-unsigned.apk apksigner.jar > SHA256SUMS
+          zip -0 ../signing-input.zip app-release-unsigned.apk apksigner.jar SHA256SUMS
+      - name: Save test evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-unit-test-results
+          path: app/build/test-results/testDebugUnitTest/
+      - name: Create PRIVATE draft awaiting signature verification
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: ManhwaLens ${{ steps.meta.outputs.name }}
+          files: signing-input.zip
+          fail_on_unmatched_files: true
+          body: |
+            Awaiting offline signing with the pinned stable release certificate.
+            Do not publish the unsigned signing-input archive.

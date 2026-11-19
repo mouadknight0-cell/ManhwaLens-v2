@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest an improvement for ManhwaLens
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      placeholder: "Vertical Japanese bubbles are merged incorrectly…"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - OCR / recognition
+        - Translation
+        - Floating bubble / overlay
+        - Screen capture
+        - History / storage
+        - UI / UX
+        - Build / CI / release

@@ -1,0 +1,33 @@
+name: Bug report
+description: Something crashes or misbehaves
+labels: [bug]
+body:
+  - type: input
+    id: device
+    attributes:
+      label: Device & Android version
+      placeholder: "Pixel 7 · Android 15"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      placeholder: "Bubble tap did nothing after granting capture…"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Enable floating bubble
+        2. Open reader app
+        3. Tap lens
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: ManhwaLens version
+      placeholder: "1.0.0 (3)"
