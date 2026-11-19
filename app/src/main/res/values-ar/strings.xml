@@ -3,7 +3,7 @@
     <string name="app_name">ManhwaLens</string>
 
     <!-- الرئيسية -->
-    <string name="tagline">اقرأ أي مانهوا — تُترجم في ثوانٍ</string>
+    <string name="tagline">اقرأ المانهوا بعربية طبيعية</string>
     <string name="home_ready_title">جاهز عندما تكون جاهزاً</string>
     <string name="home_status_capture">جلسة الالتقاط</string>
     <string name="home_status_bubble">الفقاعة العائمة</string>
@@ -22,7 +22,7 @@
 
     <!-- الترحيب -->
     <string name="onboarding_title">أهلاً بك في ManhwaLens</string>
-    <string name="onboarding_subtitle">العدسة التي تقرأ المانهوا الكورية واليابانية والصينية وتترجمها لك — فوق الصفحة مباشرة.</string>
+    <string name="onboarding_subtitle">يقرأ ManhwaLens الحوار الإنجليزي على شاشتك ويُظهره بعربية طبيعية — فوق الصفحة، وعلى جهازك بالكامل.</string>
     <string name="onboarding_step_capture_title">التقاط الشاشة</string>
     <string name="onboarding_step_capture_body">يطلب Android موافقة لمرة واحدة قبل أي التقاط. تُعالج الصور على الجهاز ولا تُرفع أبداً.</string>
     <string name="onboarding_step_bubble_title">فقاعة عائمة</string>
@@ -95,6 +95,27 @@
     <string name="status_reading">جارٍ قراءة الفقاعات…</string>
     <string name="status_translating">جارٍ الترجمة…</string>
     <string name="status_downloading_model">تنزيل نموذج اللغة… لمرة واحدة</string>
+
+
+    <!-- 1.1: قفل الإنجليزية→العربية، الأسماء المتعلمة، التشخيص -->
+    <string name="settings_language_pair_title">زوج اللغات</string>
+    <string name="settings_language_pair_locked">English → العربية</string>
+    <string name="settings_language_pair_note">الإصدار 1.1 يترجم حوار المانهوا المكتوب بأحرف لاتينية إلى عربية طبيعية. الأسماء الصينية والكورية المكتوبة بالإنجليزية تُكتشف وتُحفظ كما هي.</string>
+    <string name="settings_names_section">أسماء الشخصيات (متعلَّمة)</string>
+    <string name="settings_names_note">لا تُترجم الأسماء أبداً — تُحفظ بتهجئتها اللاتينية وتُتذكَّر عبر الفصول.</string>
+    <string name="settings_names_empty">لا توجد أسماء متعلَّمة بعد. تتراكم تلقائياً أثناء القراءة.</string>
+    <string name="settings_names_clear">مسح الأسماء المتعلَّمة</string>
+    <string name="settings_names_remove">إزالة</string>
+    <string name="settings_diagnostics_section">التشخيص والمعايير</string>
+    <string name="settings_diagnostics_note">سجلات منظمة (JSONL) ومعايير أداء (T0–T12) — تُستخدم لتشخيص مشاكل الالتقاط والتعرف والترجمة. لا تحتوي أبداً على نص الشاشة.</string>
+    <string name="settings_export_diagnostics">تصدير التشخيص والمعايير</string>
+    <string name="settings_export_share">مشاركة حزمة التشخيص</string>
+    <string name="settings_export_ok">حزمة التشخيص جاهزة للمشاركة</string>
+    <string name="settings_export_failed">تعذر إنشاء حزمة التشخيص</string>
+    <string name="settings_benchmarks_clear">مسح سجلات المعايير</string>
+    <string name="settings_benchmarks_count">%1$d جولة معيار مسجلة</string>
+    <string name="error_capture_generic">فشل الالتقاط — صدّر التشخيص وراجع رمز الخطأ</string>
+    <string name="error_translation_model">تعذر تنزيل نموذج الترجمة العربية — اتصل بالإنترنت مرة واحدة ثم حاول مجدداً</string>
 
     <!-- عام -->
     <string name="cancel">إلغاء</string>

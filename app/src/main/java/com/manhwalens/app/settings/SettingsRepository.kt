@@ -12,6 +12,18 @@ class SettingsRepository(context: Context) {
 
     private val prefs = context.getSharedPreferences("manhwalens_settings", Context.MODE_PRIVATE)
 
+    init {
+        // v1.1.0 scope decision: the pipeline is locked to English → Arabic.
+        // Force-migrate previously saved language pairs once; EN→AR only from now on.
+        if (!prefs.getBoolean(KEY_MIGRATION_EN_AR_V2, false)) {
+            prefs.edit()
+                .putString(KEY_SOURCE, "en")
+                .putString(KEY_TARGET, "ar")
+                .putBoolean(KEY_MIGRATION_EN_AR_V2, true)
+                .apply()
+        }
+    }
+
     private val _sourceLanguage = MutableStateFlow(prefs.getString(KEY_SOURCE, DEFAULT_SOURCE) ?: DEFAULT_SOURCE)
     val sourceLanguage: StateFlow<String> = _sourceLanguage.asStateFlow()
 
@@ -50,8 +62,10 @@ class SettingsRepository(context: Context) {
         private const val KEY_BUBBLE = "bubble_enabled"
         private const val KEY_ONBOARDING = "onboarding_seen"
 
-        // ManhwaLens is Korean-first; Arabic is the default target for its audience.
-        const val DEFAULT_SOURCE = "ko"
+        // Legacy key: the app is Korean-first; Arabic is the default target for its audience.
+        // v1.1.0 locks the pipeline to English → Arabic (see migration below).
+        const val DEFAULT_SOURCE = "en"
         const val DEFAULT_TARGET = "ar"
+        private const val KEY_MIGRATION_EN_AR_V2 = "migration_en_ar_v2"
     }
 }

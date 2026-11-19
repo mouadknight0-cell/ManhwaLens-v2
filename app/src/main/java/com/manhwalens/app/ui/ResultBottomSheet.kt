@@ -29,14 +29,20 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.LayoutDirection
 import com.manhwalens.app.R
+import com.manhwalens.app.benchmarks.BenchmarkTracker
 import com.manhwalens.app.pipeline.CaptureResult
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,8 +50,15 @@ import com.manhwalens.app.pipeline.CaptureResult
 fun ResultBottomSheet(
     result: CaptureResult,
     onDismiss: () -> Unit,
+    /** False while the sheet is showing progressive (partial) translation blocks. */
+    isFinal: Boolean = true,
 ) {
     val context = LocalContext.current
+
+    // T12 = full translation visible on screen; marks/finishes the benchmark journey.
+    LaunchedEffect(result.id, isFinal) {
+        if (isFinal) BenchmarkTracker.mark("T12")
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -121,12 +134,15 @@ fun ResultBottomSheet(
                                     overflow = TextOverflow.Ellipsis,
                                 )
                                 Spacer(Modifier.height(2.dp))
-                                Text(
-                                    text = block.translated,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
+                                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                                    Text(
+                                        text = block.translated,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        textAlign = TextAlign.Start,
+                                    )
+                                }
                             }
                             IconButton(
                                 onClick = {

@@ -3,7 +3,7 @@
     <string name="app_name">ManhwaLens</string>
 
     <!-- Home -->
-    <string name="tagline">Read any manhwa — translated in seconds</string>
+    <string name="tagline">Read manhwa in natural Arabic</string>
     <string name="home_ready_title">Ready when you are</string>
     <string name="home_status_capture">Capture session</string>
     <string name="home_status_bubble">Floating bubble</string>
@@ -22,7 +22,7 @@
 
     <!-- Onboarding -->
     <string name="onboarding_title">Welcome to ManhwaLens</string>
-    <string name="onboarding_subtitle">The lens that reads Korean, Japanese and Chinese manhwa and translates them for you — right over the page.</string>
+    <string name="onboarding_subtitle">ManhwaLens reads the English dialogue on your screen and renders it in natural Arabic — over the page, fully on-device.</string>
     <string name="onboarding_step_capture_title">Screen capture</string>
     <string name="onboarding_step_capture_body">Android asks for one-time consent before any capture. Frames are processed on-device and never uploaded.</string>
     <string name="onboarding_step_bubble_title">Floating bubble</string>
@@ -95,6 +95,27 @@
     <string name="status_reading">Reading speech bubbles…</string>
     <string name="status_translating">Translating…</string>
     <string name="status_downloading_model">Downloading language model… one-time</string>
+
+
+    <!-- v1.1: EN→AR lock, learned names, diagnostics -->
+    <string name="settings_language_pair_title">Language pair</string>
+    <string name="settings_language_pair_locked">English → العربية</string>
+    <string name="settings_language_pair_note">v1.1 translates romanized-English manhwa dialogue into natural Arabic. Chinese- and Korean-origin names written in English are recognized and kept as-is.</string>
+    <string name="settings_names_section">Character names (learned)</string>
+    <string name="settings_names_note">Names are never translated — they keep their romanized spelling and are remembered across chapters.</string>
+    <string name="settings_names_empty">No names learned yet. They accumulate automatically as you read.</string>
+    <string name="settings_names_clear">Clear learned names</string>
+    <string name="settings_names_remove">Remove</string>
+    <string name="settings_diagnostics_section">Diagnostics &amp; benchmarks</string>
+    <string name="settings_diagnostics_note">Structured logs (JSONL) plus performance benchmarks (T0–T12) — used to find capture, OCR and translation issues. Never contains screen text.</string>
+    <string name="settings_export_diagnostics">Export diagnostics &amp; benchmarks</string>
+    <string name="settings_export_share">Share diagnostic bundle</string>
+    <string name="settings_export_ok">Diagnostic bundle ready to share</string>
+    <string name="settings_export_failed">Could not build the diagnostic bundle</string>
+    <string name="settings_benchmarks_clear">Clear benchmark records</string>
+    <string name="settings_benchmarks_count">%1$d benchmark runs recorded</string>
+    <string name="error_capture_generic">Capture failed — export diagnostics and check the error code</string>
+    <string name="error_translation_model">Could not download the Arabic translation model — connect to the internet once, then retry</string>
 
     <!-- Common -->
     <string name="cancel">Cancel</string>

@@ -93,7 +93,8 @@ class BubbleOverlayService : Service() {
         scope.launch {
             CaptureManager.state.collect { state ->
                 when (state) {
-                    is CaptureManager.CaptureState.Done -> showPanel(state.result)
+                    is CaptureManager.CaptureState.Done -> showPanel(state.result, final = true)
+                    is CaptureManager.CaptureState.Partial -> showPanel(state.result, final = false)
                     is CaptureManager.CaptureState.Error -> showError(state.message)
                     is CaptureManager.CaptureState.Working -> showWorking(state.status)
                     CaptureManager.CaptureState.Idle -> hidePanel()
@@ -147,9 +148,24 @@ class BubbleOverlayService : Service() {
 
     // ── Result panel ───────────────────────────────────────────────
 
-    private fun showPanel(result: CaptureResult) {
-        hidePanel()
-        val root = basePanel()
+    private fun showPanel(result: CaptureResult, final: Boolean) {
+        val existing = panelView as? LinearLayout
+        if (existing != null) {
+            // Progressive reveal: rebuild the panel content in place to avoid flicker.
+            existing.removeAllViews()
+            populatePanel(existing, result)
+        } else {
+            val root = basePanel()
+            populatePanel(root, result)
+            attachPanel(root)
+        }
+        if (final) {
+            // T12 = the full translation is on screen; finishes the journey and persists it.
+            com.manhwalens.app.benchmarks.BenchmarkTracker.mark("T12")
+        }
+    }
+
+    private fun populatePanel(root: LinearLayout, result: CaptureResult) {
         root.addView(panelHeader(getString(R.string.result_title)) { hidePanel() })
 
         if (result.blocks.isEmpty()) {
@@ -164,7 +180,6 @@ class BubbleOverlayService : Service() {
             root.addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(360)))
         }
         root.addView(panelActionRow(result.translatedText.ifBlank { "" }))
-        attachPanel(root)
     }
 
     private fun showWorking(status: CaptureManager.Status) {
@@ -244,11 +259,15 @@ class BubbleOverlayService : Service() {
             text = block.original
             setTextColor(PANEL_SECONDARY_TEXT)
             textSize = 12f
+            layoutDirection = View.LAYOUT_DIRECTION_LTR
         })
         box.addView(TextView(this).apply {
             text = block.translated
             setTextColor(PANEL_TEXT)
             textSize = 16f
+            // Arabic output renders right-to-left.
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+            textAlignment = View.TEXT_ALIGNMENT_VIEW_START
         })
         if (index < Int.MAX_VALUE) {
             box.addView(View(this).apply {
@@ -303,8 +322,15 @@ class BubbleOverlayService : Service() {
             x = 0
             y = 0
         }
-        runCatching { windowManager.addView(panel, params) }
-        panelView = panel
+        val attached = runCatching { windowManager.addView(panel, params) }
+        if (attached.isFailure) {
+            com.manhwalens.app.diagnostics.Diagnostics.error(
+                "overlay", "attach_panel", com.manhwalens.app.diagnostics.ErrorCodes.OVERLAY_PANEL_FAILED,
+                "failed to attach the result panel over other apps",
+                throwable = attached.exceptionOrNull(),
+            )
+        }
+        panelView = if (attached.isSuccess) panel else null
     }
 
     private fun hidePanel() {

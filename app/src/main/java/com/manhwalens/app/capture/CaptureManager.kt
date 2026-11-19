@@ -14,8 +14,10 @@ object CaptureManager {
     sealed interface CaptureState {
         data object Idle : CaptureState
         data class Working(val status: Status) : CaptureState
+        /** Progressive reveal: carries the blocks translated so far. */
+        data class Partial(val result: CaptureResult) : CaptureState
         data class Done(val result: CaptureResult) : CaptureState
-        data class Error(val message: String) : CaptureState
+        data class Error(val message: String, val code: String? = null) : CaptureState
     }
 
     enum class Status { PREPARING, READING, TRANSLATING, DOWNLOADING_MODEL }

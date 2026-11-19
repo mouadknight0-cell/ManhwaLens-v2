@@ -8,29 +8,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
@@ -38,20 +35,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
-import androidx.compose.material.icons.filled.ArrowDropDown
 import com.manhwalens.app.BuildConfig
 import com.manhwalens.app.R
-import com.manhwalens.app.pipeline.LanguageMapper
 
 @Composable
 fun SettingsScreen(
-    sourceLanguage: String,
-    targetLanguage: String,
     bubbleEnabled: Boolean,
-    onSourceLanguageChange: (String) -> Unit,
-    onTargetLanguageChange: (String) -> Unit,
     onBubbleEnabledChange: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
+    learnedNames: List<String>,
+    onRemoveName: (String) -> Unit,
+    onClearNames: () -> Unit,
+    benchmarksRecorded: Int,
+    onExportDiagnostics: () -> Unit,
+    onClearBenchmarks: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -68,26 +65,78 @@ fun SettingsScreen(
             color = MaterialTheme.colorScheme.onBackground,
         )
 
-        SectionCard(title = stringResource(R.string.settings_recognition)) {
-            LanguageDropdown(
-                label = stringResource(R.string.settings_source_language),
-                options = sourceOptions(),
-                selected = sourceLanguage,
-                onSelected = onSourceLanguageChange,
-            )
-            Spacer(Modifier.height(12.dp))
-            LanguageDropdown(
-                label = stringResource(R.string.settings_target_language),
-                options = LanguageMapper.supportedTargets,
-                selected = targetLanguage,
-                onSelected = onTargetLanguageChange,
-            )
+        // Language pair — locked to EN → AR in v1.1
+        SectionCard(title = stringResource(R.string.settings_language_pair_title)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.Translate,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp),
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = stringResource(R.string.settings_language_pair_locked),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    Icons.Filled.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
             Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.settings_language_pair_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(6.dp))
             Text(
                 text = stringResource(R.string.settings_models_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+
+        // Learned character names — never translated
+        SectionCard(title = stringResource(R.string.settings_names_section)) {
+            Text(
+                text = stringResource(R.string.settings_names_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(10.dp))
+            if (learnedNames.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.settings_names_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                // Flow-like wrapped list using simple rows of chips.
+                learnedNames.chunked(3).forEach { rowNames ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 3.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        rowNames.forEach { name -> NameChip(name = name, onRemove = { onRemoveName(name) }) }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = onClearNames) {
+                    Text(
+                        text = stringResource(R.string.settings_names_clear),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
         }
 
         SectionCard(title = stringResource(R.string.settings_bubble_section)) {
@@ -128,6 +177,35 @@ fun SettingsScreen(
             }
         }
 
+        // Diagnostics & benchmarks
+        SectionCard(title = stringResource(R.string.settings_diagnostics_section)) {
+            Text(
+                text = stringResource(R.string.settings_diagnostics_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = stringResource(R.string.settings_benchmarks_count, benchmarksRecorded),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(10.dp))
+            androidx.compose.material3.Button(
+                onClick = onExportDiagnostics,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) {
+                Icon(Icons.Filled.FileDownload, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.settings_export_diagnostics), fontWeight = FontWeight.SemiBold)
+            }
+            Spacer(Modifier.height(2.dp))
+            TextButton(onClick = onClearBenchmarks) {
+                Text(stringResource(R.string.settings_benchmarks_clear))
+            }
+        }
+
         SectionCard(title = stringResource(R.string.settings_about)) {
             AboutRow(label = stringResource(R.string.settings_version), value = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
             Spacer(Modifier.height(6.dp))
@@ -154,54 +232,33 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun sourceOptions(): List<Pair<String, String>> = listOf(
-    "auto" to stringResource(R.string.settings_source_auto),
-    "ko" to "한국어 (Korean)",
-    "ja" to "日本語 (Japanese)",
-    "zh" to "中文 (Chinese)",
-    "en" to "English",
-)
-
-@Composable
-private fun LanguageDropdown(
-    label: String,
-    options: List<Pair<String, String>>,
-    selected: String,
-    onSelected: (String) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val selectedName = options.firstOrNull { it.first == selected }?.second ?: selected
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(6.dp))
-    Box(modifier = Modifier.fillMaxWidth()) {
-        OutlinedButton(
-            onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+private fun NameChip(name: String, onRemove: () -> Unit) {
+    Card(
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(999.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 12.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = selectedName,
-                modifier = Modifier.weight(1f),
+                text = name,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
                 maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
-            Icon(
-                Icons.Filled.ArrowDropDown,
-                contentDescription = null,
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            options.forEach { (code, name) ->
-                DropdownMenuItem(
-                    text = { Text(name) },
-                    onClick = { onSelected(code); expanded = false },
+            Spacer(Modifier.width(4.dp))
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .clickable(onClick = onRemove),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.settings_names_remove),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }

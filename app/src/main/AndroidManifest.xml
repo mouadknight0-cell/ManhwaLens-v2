@@ -45,6 +45,17 @@
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
 
+        <!-- Read-only access for sharing exported diagnostic bundles. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.manhwalens.app.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <!-- Draggable floating translation bubble (special-use foreground service). -->
         <service
             android:name=".overlay.BubbleOverlayService"

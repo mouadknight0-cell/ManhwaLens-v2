@@ -4,6 +4,8 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import com.manhwalens.app.benchmarks.BenchmarkTracker
+import com.manhwalens.app.diagnostics.Diagnostics
 import com.manhwalens.app.history.HistoryStore
 import com.manhwalens.app.settings.SettingsRepository
 
@@ -15,10 +17,21 @@ class ManhwaLensApp : Application() {
         private set
 
     override fun onCreate() {
+        // T0 anchor: as close to process start as an Application can get.
+        BenchmarkTracker.markProcessStart()
         super.onCreate()
-        settingsRepository = SettingsRepository(this)
-        historyStore = HistoryStore(this)
-        createNotificationChannels()
+        Diagnostics.init(this)
+        runCatching {
+            settingsRepository = SettingsRepository(this)
+            historyStore = HistoryStore(this)
+            createNotificationChannels()
+        }.onFailure {
+            Diagnostics.fatal("app", "on_create", com.manhwalens.app.diagnostics.ErrorCodes.APP_ONCREATE_FAILED,
+                "application initialisation failed", throwable = it)
+            throw it
+        }
+        BenchmarkTracker.init(this)
+        Diagnostics.info("app", "on_create", "ManhwaLensApp initialised")
     }
 
     private fun createNotificationChannels() {

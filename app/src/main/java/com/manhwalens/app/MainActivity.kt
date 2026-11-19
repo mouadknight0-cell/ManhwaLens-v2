@@ -43,9 +43,14 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.manhwalens.app.benchmarks.BenchmarkTracker
 import com.manhwalens.app.capture.CaptureManager
 import com.manhwalens.app.capture.ScreenCaptureService
+import com.manhwalens.app.diagnostics.Diagnostics
+import com.manhwalens.app.diagnostics.ErrorCodes
+import com.manhwalens.app.diagnostics.ExportManager
 import com.manhwalens.app.history.HistoryStore
+import com.manhwalens.app.names.NameGlossaryStore
 import com.manhwalens.app.overlay.BubbleOverlayService
 import com.manhwalens.app.pipeline.CaptureResult
 import com.manhwalens.app.settings.SettingsRepository
@@ -66,6 +71,29 @@ class MainActivity : ComponentActivity() {
 
     internal val settingsRepository: SettingsRepository get() = (application as ManhwaLensApp).settingsRepository
     internal val historyStore: HistoryStore get() = (application as ManhwaLensApp).historyStore
+    internal val nameGlossary: NameGlossaryStore get() = NameGlossaryStore(this)
+
+    private fun exportDiagnostics() {
+        val file = ExportManager.exportAll(this)
+        if (file == null) {
+            Toast.makeText(this, getString(R.string.settings_export_failed), Toast.LENGTH_LONG).show()
+            return
+        }
+        runCatching {
+            val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(send, getString(R.string.settings_export_share)))
+            Toast.makeText(this, getString(R.string.settings_export_ok), Toast.LENGTH_LONG).show()
+        }.onFailure {
+            Diagnostics.error("diagnostics", "share_export", ErrorCodes.DIAGNOSTICS_EXPORT_FAILED,
+                "failed to share diagnostic bundle", throwable = it)
+            Toast.makeText(this, getString(R.string.settings_export_failed), Toast.LENGTH_LONG).show()
+        }
+    }
 
     private val projectionManager: MediaProjectionManager? by lazy {
         getSystemService(MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
@@ -103,6 +131,8 @@ class MainActivity : ComponentActivity() {
                         onStopSession = { ScreenCaptureService.stop(this) },
                         onBubbleToggle = ::onBubbleToggled,
                         onRefreshPermissions = ::refreshPermissionFlags,
+                        onExportDiagnostics = ::exportDiagnostics,
+                        nameGlossary = nameGlossary,
                     )
                 }
             }
@@ -177,6 +207,8 @@ private fun ManhwaLensRoot(
     onStopSession: () -> Unit,
     onBubbleToggle: (Boolean) -> Unit,
     onRefreshPermissions: () -> Unit,
+    onExportDiagnostics: () -> Unit,
+    nameGlossary: NameGlossaryStore,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val activity = context as MainActivity
@@ -184,14 +216,15 @@ private fun ManhwaLensRoot(
 
     val onboardingSeen by activity.settingsRepository.onboardingSeen.collectAsState()
     val bubbleEnabled by activity.settingsRepository.bubbleEnabled.collectAsState()
-    val sourceLanguage by activity.settingsRepository.sourceLanguage.collectAsState()
-    val targetLanguage by activity.settingsRepository.targetLanguage.collectAsState()
 
     var tab by remember { mutableStateOf(Tab.HOME) }
     var entries by remember { mutableStateOf(emptyList<CaptureResult>()) }
     var selectedResult by remember { mutableStateOf<CaptureResult?>(null) }
+    var resultIsFinal by remember { mutableStateOf(true) }
     var workingStatus by remember { mutableStateOf<CaptureManager.Status?>(null) }
     var sessionActive by remember { mutableStateOf(CaptureManager.sessionActive) }
+    var learnedNames by remember { mutableStateOf(nameGlossary.all()) }
+    var benchmarksRecorded by remember { mutableStateOf(BenchmarkTracker.records().size) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     fun refreshEntries() {
@@ -212,6 +245,8 @@ private fun ManhwaLensRoot(
     }
 
     LaunchedEffect(Unit) {
+        // T1 anchor: the first frame the user can actually interact with is on screen.
+        BenchmarkTracker.markUiUsable()
         entries = activity.historyStore.list()
     }
 
@@ -222,15 +257,26 @@ private fun ManhwaLensRoot(
                     workingStatus = state.status
                     sessionActive = CaptureManager.sessionActive
                 }
+                is CaptureManager.CaptureState.Partial -> {
+                    workingStatus = null
+                    sessionActive = CaptureManager.sessionActive
+                    resultIsFinal = false
+                    selectedResult = state.result
+                }
                 is CaptureManager.CaptureState.Done -> {
                     workingStatus = null
                     sessionActive = CaptureManager.sessionActive
+                    resultIsFinal = true
                     selectedResult = state.result
                     refreshEntries()
+                    learnedNames = nameGlossary.all()
+                    benchmarksRecorded = BenchmarkTracker.records().size
                 }
                 is CaptureManager.CaptureState.Error -> {
                     workingStatus = null
                     sessionActive = CaptureManager.sessionActive
+                    selectedResult = null
+                    benchmarksRecorded = BenchmarkTracker.records().size
                     snackbarHostState.showSnackbar(state.message)
                 }
                 CaptureManager.CaptureState.Idle -> {
@@ -304,11 +350,7 @@ private fun ManhwaLensRoot(
                         },
                     )
                     Tab.SETTINGS -> SettingsScreen(
-                        sourceLanguage = sourceLanguage,
-                        targetLanguage = targetLanguage,
                         bubbleEnabled = bubbleEnabled,
-                        onSourceLanguageChange = { activity.settingsRepository.setSourceLanguage(it) },
-                        onTargetLanguageChange = { activity.settingsRepository.setTargetLanguage(it) },
                         onBubbleEnabledChange = onBubbleToggle,
                         onClearHistory = {
                             scope.launch {
@@ -316,12 +358,35 @@ private fun ManhwaLensRoot(
                                 entries = activity.historyStore.list()
                             }
                         },
+                        learnedNames = learnedNames,
+                        onRemoveName = { name ->
+                            scope.launch {
+                                nameGlossary.remove(name)
+                                learnedNames = nameGlossary.all()
+                            }
+                        },
+                        onClearNames = {
+                            scope.launch {
+                                nameGlossary.clear()
+                                learnedNames = emptyList()
+                            }
+                        },
+                        benchmarksRecorded = benchmarksRecorded,
+                        onExportDiagnostics = onExportDiagnostics,
+                        onClearBenchmarks = {
+                            BenchmarkTracker.clearRecords()
+                            benchmarksRecorded = 0
+                        },
                     )
                 }
             }
 
             selectedResult?.let { result ->
-                ResultBottomSheet(result = result, onDismiss = { selectedResult = null })
+                ResultBottomSheet(
+                    result = result,
+                    onDismiss = { selectedResult = null },
+                    isFinal = resultIsFinal,
+                )
             }
         }
     }
