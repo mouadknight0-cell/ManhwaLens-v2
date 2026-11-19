@@ -1,0 +1,30 @@
+name: Sign verified release
+on:
+  push:
+    branches: ['arena/8383bba0-manhwalens-v2']
+    paths: ['.github/workflows/sign-release.yml', '.github/scripts/sign_release.py']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing draft release tag
+        required: true
+        default: v1.1.1
+permissions:
+  contents: write
+  issues: write
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: python3 -m pip install cryptography
+      - name: Receive encrypted signing material and publish verified APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || 'v1.1.1' }}
+        run: python3 .github/scripts/sign_release.py
