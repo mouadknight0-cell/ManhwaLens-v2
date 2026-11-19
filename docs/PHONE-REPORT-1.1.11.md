@@ -1,4 +1,6 @@
-# v1.1.10 phone report → v1.1.11 bounded fixes
+# v1.1.10 phone report → v1.1.12 bounded fixes
+
+v1.1.11 was an unpublished candidate: 109/110 JVM tests passed; the synthetic sparse-pixel fixture aliased with the sample step. v1.1.12 corrects the fixture to a defined 10%-width dark strip, without weakening the production threshold.
 
 Device: Xiaomi 23106RN0DA, Android 14, v1.1.10 (217277234).
 Evidence: user-supplied screenshots, translation samples and timing excerpts. The pasted export has gaps (including run 20→52), duplicated text/JSON records and truncated marks. No aggregate success percentage, cancellation rate or performance improvement is inferred from it. Capture INACTIVE / Live OFF describes export time only.

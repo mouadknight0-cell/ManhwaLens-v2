@@ -3,7 +3,11 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [1.1.11] - 2026-11-19
+## [1.1.12] - 2026-11-19
+
+- Publish the phone-report fixes below after correcting a synthetic pixel fixture: the original every-tenth-pixel pattern aliased with the sampler and exceeded the intended noise allowance. v1.1.11 failed this regression test and was not published as an APK.
+
+## [1.1.11] - 2026-11-19 (unpublished candidate)
 
 - Allow small OCR line-box overlaps while preserving geometry and visual separation checks; add phone-case regressions and pixel-corridor tests.
 - Bound failure-card size independently of noisy OCR bounds; use reading fallback when collision placement exposes the source text.

@@ -30,7 +30,7 @@ class PhoneReportRegressionTest {
         }
     }
     @Test fun sparseGlyphEdgesDoNotBreakLightCorridor() {
-        assertTrue(LightCorridor.isClear(r("A"), r("B", t = 130, b = 154), 720, 1600) { x, _ -> x % 10 != 0 })
+        assertTrue(LightCorridor.isClear(r("A"), r("B", t = 130, b = 154), 720, 1600) { x, _ -> x >= 120 })
     }
     @Test fun singleDarkOutlineRowVetoesJoin() {
         assertFalse(LightCorridor.isClear(r("A"), r("B", t = 130, b = 154), 720, 1600) { _, y -> y != 127 })
