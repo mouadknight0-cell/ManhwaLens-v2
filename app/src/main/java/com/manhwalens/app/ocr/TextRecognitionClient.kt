@@ -21,6 +21,7 @@ import kotlinx.coroutines.tasks.await
  * lines into speech-bubble-sized regions.
  */
 class TextRecognitionClient {
+    private val nativePermit = kotlinx.coroutines.sync.Semaphore(1)
 
     suspend fun recognize(bitmap: Bitmap, sourceLanguage: String): List<TextRegion> {
         val scripts = LanguageMapper.scriptsFor(sourceLanguage)
@@ -28,15 +29,17 @@ class TextRecognitionClient {
         val detected = coroutineScope {
             scripts.map { script ->
                 async {
-                    val recognizer = recognizerFor(script)
-                    val owned = bitmap.copy(Bitmap.Config.ARGB_8888, false)
+                    nativePermit.acquire()
+                    val recognizer = try { recognizerFor(script) } catch (failure: Exception) { nativePermit.release(); throw failure }
+                    val owned = try { bitmap.copy(Bitmap.Config.ARGB_8888, false) } catch (failure: Exception) { nativePermit.release(); recognizer.close(); throw failure }
                     val task = try { recognizer.process(InputImage.fromBitmap(owned, 0)) }
-                    catch (failure: Exception) { owned.recycle(); recognizer.close(); throw failure }
+                    catch (failure: Exception) { nativePermit.release(); owned.recycle(); recognizer.close(); throw failure }
                     // Task cancellation is not exposed by ML Kit. Its private bitmap lives until
                     // native completion, even when the caller's coroutine is cancelled by a swipe.
                     task.addOnCompleteListener(java.util.concurrent.Executor { it.run() }) {
                         owned.recycle()
                         recognizer.close()
+                        nativePermit.release()
                     }
                     try {
                         task.await().let { result ->

@@ -72,3 +72,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Verified language model download UI, automatic bounded bug reports and local translation samples.
 - Preserve OCR block boundaries and translate short uppercase dialogue rather than discarding it as SFX.
 - Physical-device verification remains pending; see docs/DEVICE-FOLLOWUP-1.1.2.md.
+
+## [1.1.3] - 2026-11-19
+
+- Service-owned live motion/stability gate, one retained latest frame, stale-work cancellation.
+- Wrong-source capture invalidation and observable session/live status.
+- Native OCR/translation concurrency guards; explicit block failures and stricter name/cache handling.
+- Remove fabricated final-visible timestamps and process-lifetime error durations.
+- Device verification and contextual model quality remain outstanding (docs/LIVE-1.1.3.md).

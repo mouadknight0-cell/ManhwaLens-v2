@@ -30,6 +30,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 class TranslationClient(private val cache: TranslationCache = TranslationCache(512)) {
 
+    private val nativePermits = kotlinx.coroutines.sync.Semaphore(2)
     private val translators = mutableMapOf<Pair<String, String>, Translator>()
     private val knownPairs = mutableSetOf<Pair<String, String>>()
 
@@ -70,7 +71,11 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
         val raw = try {
             withTimeoutOrNull(TRANSLATE_TIMEOUT_MS) {
-                translatorFor(SOURCE, TARGET).translate(maskResult.maskedText).await()
+                nativePermits.acquire()
+                val task = try { translatorFor(SOURCE, TARGET).translate(maskResult.maskedText) }
+                    catch (failure: Exception) { nativePermits.release(); throw failure }
+                task.addOnCompleteListener(java.util.concurrent.Executor { it.run() }) { nativePermits.release() }
+                task.await()
             }
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
