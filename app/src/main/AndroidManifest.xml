@@ -17,7 +17,7 @@
         android:supportsRtl="true"
         android:label="@string/app_name"
         android:theme="@style/Theme.ManhwaLens"
-        tools:targetApi="34">
+        tools:targetApi="35">
 
         <activity
             android:name=".MainActivity"

@@ -24,13 +24,13 @@ kotlin {
 
 android {
     namespace = "com.manhwalens.app"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         // Permanent application id — must never change between releases.
         applicationId = "com.manhwalens.app"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = appVersionCode
         versionName = appVersionName
         vectorDrawables.useSupportLibrary = true
