@@ -397,33 +397,16 @@ class BubbleOverlayService : Service() {
             // Failure messages are indicators, not replacements for the OCR rectangle.
             // A spurious giant OCR box must never become a giant opaque error card.
             val failed = block.errorCode != null
-            val width = (if (failed) dp(180) else region.width + dp(16))
-                .coerceIn(minOf(dp(100), bounds.width()), bounds.width())
-            val text = TextView(this).apply {
-                this.text = block.translated
-                textSize = 16f
-                setTextColor(if (block.errorCode == null) android.graphics.Color.rgb(24, 24, 30) else android.graphics.Color.rgb(150, 30, 30))
-                background = android.graphics.drawable.GradientDrawable().apply {
-                    setColor(android.graphics.Color.WHITE)
-                    cornerRadius = dp(10).toFloat()
-                    setStroke(dp(1), android.graphics.Color.rgb(210, 205, 220))
-                }
-                gravity = Gravity.CENTER
-                textDirection = View.TEXT_DIRECTION_FIRST_STRONG_RTL
-                setLineSpacing(dp(2).toFloat(), 1.08f)
-                setPadding(dp(8), dp(6), dp(8), dp(6))
-                // Opaque windows must be touchable on Android 12+; otherwise touches
-                // behind them are blocked as untrusted. Tap to reveal the original.
-                contentDescription = "${block.translated}. اضغط لإظهار النص الأصلي"
-            }
-            text.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
-            val height = (if (failed) text.measuredHeight else maxOf(text.measuredHeight, region.height + dp(8))).coerceAtMost(bounds.height())
+            val width = if (failed) minOf(dp(140), bounds.width(), bounds.height()) else
+                CircleGeometry.diameter(region.width + dp(16), region.height + dp(16),
+                    dp(140), minOf(dp(300), bounds.width(), bounds.height()))
+            val height = width
+            val text = CircularTranslationView(this, width, block.translated, failed)
             val params = WindowManager.LayoutParams(width, height, overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT).apply {
                 gravity = Gravity.TOP or Gravity.LEFT
-                x = (region.left - dp(8)).coerceIn(bounds.left, bounds.right - width)
+                x = (region.centerX - width / 2).coerceIn(bounds.left, bounds.right - width)
                 y = (region.top - (height - region.height) / 2).coerceIn(bounds.top, bounds.bottom - height)
                 alpha = 1f
             }
@@ -438,22 +421,22 @@ class BubbleOverlayService : Service() {
                 showReadingPanel(result, final)
                 return
             }
-            if (!failed && (placement.left > region.left || placement.top > region.top ||
-                    placement.right < region.right || placement.bottom < region.bottom)) {
+            if (!failed && !CircleGeometry.covers(placement,
+                    CardPlacement.Box(region.left, region.top, region.right, region.bottom))) {
                 showReadingPanel(result, final)
                 return
             }
             params.x = placement.left; params.y = placement.top
-            val card: View = if (text.measuredHeight > bounds.height()) ScrollView(this).apply {
-                setBackgroundColor(android.graphics.Color.WHITE)
-                addView(text, android.widget.FrameLayout.LayoutParams(width, android.widget.FrameLayout.LayoutParams.WRAP_CONTENT))
-            } else text
+            val card: View = text
             val rect = android.graphics.Rect(params.x, params.y, params.x + width, params.y + height)
-            text.setOnClickListener {
+            text.setOnLongClickListener {
                 runCatching { windowManager.removeView(card) }
                 translationViews.remove(card); translationRects.remove(rect); publishBounds()
+                true
             }
             if (runCatching { windowManager.addView(card, params) }.isSuccess) {
+                card.alpha = 0f
+                card.animate().alpha(1f).setDuration(120L).start()
                 translationViews.add(card); translationRects.add(rect); displayedBlocks.add(key)
                 publishBounds()
             }
@@ -462,20 +445,31 @@ class BubbleOverlayService : Service() {
     }
 
     private fun showReadingPanel(result: CaptureResult, final: Boolean) {
+        val oldScroll = if (readingPanelId == result.id) (panelView as? CircularTranslationView)?.scrollPosition() ?: 0 else 0
         clearTranslations()
         hidePanel()
         displayedResultId = result.id
         readingPanelId = result.id
-        val root = basePanel()
-        root.addView(panelHeader("قراءة دون تداخل · اسحب لقراءة الباقي") { dismissedPanelId = result.id; hidePanel() })
-        val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        result.blocks.sortedWith(compareBy({ it.region.top }, { it.region.left })).forEachIndexed { index, block ->
-            list.addView(blockRow(index + 1, block))
+        // Bounded circular reader replaces the half-screen rectangular fallback.
+        // Keep all sources/errors available; long content scrolls inside the circle.
+        val bounds = availableBounds()
+        val diameter = minOf(bounds.width(), bounds.height(), dp(300))
+        val message = result.blocks.sortedWith(compareBy({ it.region.top }, { it.region.left }))
+            .joinToString("\n\n") { "${it.original}\n${it.translated}" }
+        val reader = CircularTranslationView(this, diameter, message)
+        val params = WindowManager.LayoutParams(diameter, diameter, overlayType(),
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT).apply {
+            gravity = Gravity.TOP or Gravity.LEFT
+            x = bounds.left + (bounds.width() - diameter) / 2
+            y = bounds.top + (bounds.height() - diameter) / 2
         }
-        val scroll = ScrollView(this).apply { addView(list) }
-        root.addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-            (availableBounds().height() / 2).coerceAtLeast(1)))
-        attachPanel(root)
+        reader.setOnLongClickListener { dismissedPanelId = result.id; hidePanel(); true }
+        if (runCatching { windowManager.addView(reader, params) }.isSuccess) {
+            panelView = reader
+            reader.restoreScroll(oldScroll)
+            reader.post { publishBounds() }
+        }
         markRendered(result, final)
     }
 

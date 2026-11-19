@@ -3,6 +3,15 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.13] - 2026-11-19
+
+- True circular translation/error surfaces and bounded circular reader; inscribed text area, 12–18sp fitting, internal scrolling, long-press dismissal, and short entrance animation.
+- Correct raw/repaired source corruption in progressive deduplication; preserve OCR source and translation method in history and samples.
+- Restricted digit-confusion repair (GO0D → GOOD), explicit clipped/uncertain OCR states, no inference on known incomplete inputs, no stopping live solely for these input states.
+- Reviewed whole-utterance dialogue lexicon with punctuation preservation and narrow same-frame WHERE / AM I context. This is not a replacement for ML Kit or general cross-panel context understanding.
+- Inspect the interior of inter-line gaps rather than glyph edge rows. New tests include a real cropped phone-image pixel fixture, geometry, history, input quality and dialogue cases.
+- General semantic quality, arbitrary OCR corruption, all browser chrome detection and on-device rendering/performance remain unverified. See docs/QUALITY-1.1.13.md.
+
 ## [1.1.12] - 2026-11-19
 
 - Publish the phone-report fixes below after correcting a synthetic pixel fixture: the original every-tenth-pixel pattern aliased with the sampler and exceeded the intended noise allowance. v1.1.11 failed this regression test and was not published as an APK.

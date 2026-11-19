@@ -41,6 +41,8 @@ object HistoryJson {
             blocks.put(
                 JSONObject().apply {
                     put("o", block.original)
+                    put("ocr", block.region.text)
+                    put("method", block.method)
                     put("t", block.translated)
                     put("error", block.errorCode ?: JSONObject.NULL)
                     put("duration_ms", block.durationMs ?: JSONObject.NULL)
@@ -64,13 +66,13 @@ object HistoryJson {
                 val original = b.optString("o")
                 if (original.isBlank()) continue
                 val region = TextRegion(
-                    text = original,
+                    text = b.optString("ocr", original),
                     left = b.optInt("l", 0),
                     top = b.optInt("y", 0),
                     right = b.optInt("r", 0),
                     bottom = b.optInt("b", 0),
                 )
-                add(TranslatedBlock(region = region, original = original, translated = b.optString("t", original), errorCode = if (b.isNull("error")) null else b.optString("error").ifBlank { null }, durationMs = if (b.isNull("duration_ms")) null else b.optLong("duration_ms")))
+                add(TranslatedBlock(region = region, original = original, translated = b.optString("t", original), errorCode = if (b.isNull("error")) null else b.optString("error").ifBlank { null }, durationMs = if (b.isNull("duration_ms")) null else b.optLong("duration_ms"), method = b.optString("method", "ML Kit on-device")))
             }
         }
         return CaptureResult(

@@ -21,7 +21,7 @@ suspend fun progressiveTranslation(
         launch {
             for (group in jobs) {
                 val translated = translate(group.first().value)
-                results.send(group.map { it.index to translated.copy(region = it.value, original = it.value.text) })
+                results.send(group.map { it.index to translated.copy(region = it.value) })
             }
         }
     }

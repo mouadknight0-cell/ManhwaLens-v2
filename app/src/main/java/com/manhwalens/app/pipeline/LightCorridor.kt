@@ -9,8 +9,11 @@ object LightCorridor {
         if (width <= 0 || height <= 0) return false
         val left = maxOf(a.left, b.left)
         val right = minOf(a.right, b.right)
-        val start = minOf(a.bottom, b.top)
-        val end = maxOf(a.bottom, b.top)
+        // Bounding box edge rows can contain glyph ink. For a real gap, inspect
+        // its interior; outlines crossing it still veto the merge.
+        val gap = b.top - a.bottom
+        val start = if (gap > 2) a.bottom + 1 else minOf(a.bottom, b.top)
+        val end = if (gap > 2) b.top - 1 else maxOf(a.bottom, b.top)
         if (left < 0 || right > width || right <= left || start < 0 || end >= height) return false
         val rows = (start..end).toList()
         return rows.all { y ->

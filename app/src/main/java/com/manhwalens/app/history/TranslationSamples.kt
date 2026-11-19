@@ -36,7 +36,7 @@ object TranslationSamples {
                     put("translation", if (block.errorCode == null) safe(block.translated) else JSONObject.NULL)
                     put("error_code", block.errorCode ?: JSONObject.NULL)
                     put("duration_ms", block.durationMs ?: JSONObject.NULL)
-                    put("pair", "en→ar"); put("method", "ML Kit on-device")
+                    put("pair", "en→ar"); put("method", block.method)
                     put("app_version", com.manhwalens.app.BuildConfig.VERSION_NAME)
                     put("review", "unreviewed"); put("left", block.region.left); put("top", block.region.top)
                     put("right", block.region.right); put("bottom", block.region.bottom)

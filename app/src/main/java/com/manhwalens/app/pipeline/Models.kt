@@ -28,6 +28,7 @@ data class TranslatedBlock(
     val translated: String,
     val errorCode: String? = null,
     val durationMs: Long? = null,
+    val method: String = "ML Kit on-device",
 )
 
 /** One completed capture + pipeline run. Persisted to history. */

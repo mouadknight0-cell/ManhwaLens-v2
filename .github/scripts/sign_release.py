@@ -76,7 +76,7 @@ Download **app-release.apk**. Built and unit-tested on GitHub Actions; APK signa
 Future releases must use this same certificate, package ID `com.manhwalens.app`, and a higher versionCode to preserve update compatibility.
 SIGNING RESET: this newly authorized identity does NOT match v1.1.1–v1.1.6 or older debug-signed installations. This APK cannot update those installations in place. Do NOT uninstall or clear their data as an automatic workaround. Data migration requires a separate, verified plan. Future releases must reuse this vault and certificate.
 
-Includes phone-report fixes for overlapping OCR lines, bounded error cards, source-covering placement fallback, empty-result accounting, and auditable conservative OCR repairs. Semantic Arabic quality remains unverified. See docs/PHONE-REPORT-1.1.11.md. Updates from v1.1.10 reuse the same signing certificate. Back up signing/release-key.enc.json and its independent password privately. No plaintext private key is committed.
+Includes circular translation surfaces, auditable OCR input validation/repair, raw-source preservation and a bounded reviewed dialogue lexicon. General contextual Arabic quality remains limited by ML Kit. See docs/QUALITY-1.1.13.md. Updates from v1.1.10 reuse the same signing certificate. Back up signing/release-key.enc.json and its independent password privately. No plaintext private key is committed.
 
 Physical-device behavior, performance improvements, and in-place upgrade/data preservation have not been tested. Live visual-motion thresholds, continuous reading and advanced bubble fitting require physical-device validation; contextual Arabic quality remains limited by ML Kit.
 ''')

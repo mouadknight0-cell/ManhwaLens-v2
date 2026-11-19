@@ -43,14 +43,15 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     }
 
     /** Translates one region, applying the name shield. Never throws — original text on failure. */
-    suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList()): TranslatedBlock {
+    suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null): TranslatedBlock {
         val normalized = com.manhwalens.app.pipeline.EnglishOcrRepair.repair(
             com.manhwalens.app.pipeline.SentenceReconstructor.normalize(region.text))
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
         val began = System.nanoTime()
         val block = try {
-            val translated = translateText(normalized, glossaryNames)
-            TranslatedBlock(region, normalized, translated)
+            val reviewed = if (NameDetector.find(normalized, glossaryNames).isEmpty()) DialogueLexicon.translate(normalized, previous) else null
+            val translated = reviewed ?: translateText(normalized, glossaryNames)
+            TranslatedBlock(region, normalized, translated, method = if (reviewed == null) "ML Kit on-device" else "Reviewed dialogue lexicon v1")
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {
             Diagnostics.error("translate", "block_failed", failure.code, "translation block failed; source retained, failure shown", throwable = failure,

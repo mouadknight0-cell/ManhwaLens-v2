@@ -587,7 +587,19 @@ class ScreenCaptureService : Service() {
             prepared.filter { it.kind != RegionKind.SOUND_EFFECT }.map { it.region },
             translate = { region ->
                 val started = System.nanoTime()
-                translation.translateBlock(region, learnedNames).also {
+                val index = prepared.indexOfFirst { it.region == region }
+                val previousSource = prepared.getOrNull(index - 1)?.region?.text
+                val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                val bottomInset = if (Build.VERSION.SDK_INT >= 30) wm.maximumWindowMetrics.windowInsets.getInsetsIgnoringVisibility(
+                    android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout()).bottom else 0
+                val issue = com.manhwalens.app.pipeline.OcrInputQuality.issue(region, pipelineHeight - bottomInset)
+                val translated = if (issue == null) translation.translateBlock(region, learnedNames, previousSource) else {
+                    Diagnostics.warn("ocr", "input_quality", "OCR input requires a clearer or complete frame", code = issue,
+                        context = mapOf("bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
+                    com.manhwalens.app.pipeline.TranslatedBlock(region, region.text,
+                        com.manhwalens.app.pipeline.OcrInputQuality.message(issue, region.text), issue, method = "OCR input validation")
+                }
+                translated.also {
                     Diagnostics.info("translate", "block_complete", "local ML translation complete",
                         durationMs = (System.nanoTime() - started) / 1_000_000,
                         context = mapOf("chars" to region.text.length.toString()), traceId = traceId)
@@ -634,7 +646,7 @@ class ScreenCaptureService : Service() {
         if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
         CaptureManager.setState(CaptureManager.CaptureState.Done(result))
         if (liveEnabled) {
-            if (blocks.isNotEmpty() && blocks.all { it.errorCode != null }) {
+            if (blocks.isNotEmpty() && blocks.all { it.errorCode != null && !it.errorCode.startsWith("OCR-") }) {
                 liveEnabled = false
                 liveJob?.cancel()
                 CaptureManager.setLive(CaptureManager.LiveStatus.ERROR)
