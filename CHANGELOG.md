@@ -114,3 +114,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [1.1.9] - 2026-11-19
 - Surface safe, explicit initialization errors when the signing backup secret is missing/unavailable or too short.
 - GitHub initialization attempt confirmed the required secret was unavailable; no key was generated or replaced. Publication remains blocked pending the repository Actions secret.
+
+## [1.1.10] - 2026-11-19
+- Owner-authorized new signing identity generated on GitHub, encrypted recovery round-trip verified, and encrypted key/public fingerprint persisted in Git.
+- Durable recovery uses SIGNING_BACKUP_PASSWORD in repository Actions secrets plus its independent owner-held backup; subsequent releases reuse the same vault.
+- This new signature cannot update v1.1.1–v1.1.6 in place. No uninstall, data clearing or automatic migration was performed.
+- App behavior is unchanged from v1.1.7; this release establishes the new recoverable signing baseline once publication is verified.

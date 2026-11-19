@@ -2,9 +2,13 @@
 
 ## Current state
 
-The original v1.1.1–v1.1.6 key was lost with the previous workspace. The owner explicitly authorized a NEW key. No new key has been created yet: initialization is blocked until a durable secret and owner-held recovery password are available. The existing release-cert.sha256 still identifies the OLD signer until initialization succeeds. Never describe this setup as completed merely because code exists.
+The original v1.1.1–v1.1.6 key was lost with the previous workspace. The owner explicitly authorized a NEW key and confirmed an independently retained backup password. Initialization succeeded on GitHub run 44591306661: generation, encrypted recovery round-trip and same-branch persistence all passed. Commit 1c03288 contains the ciphertext and new public pin. Do NOT initialize again.
 
-## One owner action required
+New certificate SHA-256: `93794a2fb7635cbe20503fefc300f90bf1f7f1e11d6d0db86c6f7531ce8e0806`.
+
+`signing/release-key.enc.json` is the persistent encrypted key backup; `SIGNING_BACKUP_PASSWORD` is its independent Actions secret. Neither relies on sandbox file survival. Keep your own private backup of BOTH. The public legacy pin remains in `legacy-release-cert.sha256`. First release targeted with the new signer: v1.1.10. Build/sign publication must still be verified in its workflow; initialization alone is not a signed release.
+
+## Owner setup (completed; retained as recovery documentation)
 
 1. Generate a random password of at least 32 characters (prefer 64) using a password manager. Save it in that manager with a private backup. Do not post it in chat, workflow inputs, issues or Git.
 2. Open https://github.com/mouadknight0-cell/ManhwaLens-v2/settings/secrets/actions
