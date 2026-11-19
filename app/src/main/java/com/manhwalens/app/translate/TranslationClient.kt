@@ -51,7 +51,9 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             TranslatedBlock(region.copy(text = normalized), normalized, translated)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {
-            Diagnostics.error("translate", "block_failed", failure.code, "translation block failed; source retained, failure shown", throwable = failure)
+            Diagnostics.error("translate", "block_failed", failure.code, "translation block failed; source retained, failure shown", throwable = failure,
+                context = mapOf("source_chars" to normalized.length.toString(), "word_count" to normalized.split(Regex("\\s+")).size.toString(),
+                    "bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
             TranslatedBlock(region.copy(text = normalized), normalized, "تعذّرت الترجمة — أعد المحاولة", failure.code)
         }
         return block.copy(durationMs = (System.nanoTime() - began) / 1_000_000)

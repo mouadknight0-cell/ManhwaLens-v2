@@ -43,7 +43,7 @@ class TextRecognitionClient {
                     }
                     try {
                         task.await().let { result ->
-                            result.textBlocks.flatMap { block ->
+                            val linesByBlock = result.textBlocks.map { block ->
                                 RegionFilter.filter(block.lines.mapNotNull { line ->
                                     val box = line.boundingBox ?: return@mapNotNull null
                                     TextRegion(
@@ -56,6 +56,10 @@ class TextRecognitionClient {
                                     )
                                 })
                             }
+                            val owners = linesByBlock.flatMapIndexed { index, lines -> lines.map { it to index } }.toMap()
+                            com.manhwalens.app.pipeline.DialogueAssembler.assemble(linesByBlock.flatten()) { a, b ->
+                                owners[a] == owners[b] || lightBridge(bitmap, a, b)
+                            }
                         }
                     } catch (t: Throwable) {
                         throw t
@@ -65,12 +69,10 @@ class TextRecognitionClient {
         }
 
         val filtered = RegionFilter.filter(detected)
-        return com.manhwalens.app.pipeline.DialogueAssembler.assemble(filtered) { a, b ->
-            lightBridge(bitmap, a, b)
-        }
+        return filtered
     }
 
-    /** Sample several rows, including a narrow side margin. A balloon outline or
+    /** Sample several rows across the horizontal overlap. A balloon outline or
      * dark panel gutter must veto grouping even when geometry alone looks plausible. */
     private fun lightBridge(bitmap: Bitmap, a: TextRegion, b: TextRegion): Boolean {
         val left = maxOf(a.left, b.left).coerceIn(0, bitmap.width - 1)

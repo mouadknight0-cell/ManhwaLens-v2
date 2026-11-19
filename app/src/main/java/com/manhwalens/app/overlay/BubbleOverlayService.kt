@@ -143,6 +143,7 @@ class BubbleOverlayService : Service() {
     private val translationViews = mutableListOf<View>()
     private var displayedResultId: String? = null
     private var readingPanelId: String? = null
+    private var dismissedPanelId: String? = null
     private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
     private fun clearTranslations() {
@@ -380,7 +381,7 @@ class BubbleOverlayService : Service() {
 
     private fun showPanel(result: CaptureResult, final: Boolean) {
         // StateFlow replays its last result to new subscribers: never render history over a different app.
-        if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt) return
+        if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt || dismissedPanelId == result.id) return
         if (readingPanelId == result.id) { showReadingPanel(result, final); return }
         hidePanel()
         if (displayedResultId != result.id) { clearTranslations(); displayedResultId = result.id }
@@ -457,7 +458,7 @@ class BubbleOverlayService : Service() {
         displayedResultId = result.id
         readingPanelId = result.id
         val root = basePanel()
-        root.addView(panelHeader("قراءة دون تداخل · اسحب لقراءة الباقي") { hidePanel() })
+        root.addView(panelHeader("قراءة دون تداخل · اسحب لقراءة الباقي") { dismissedPanelId = result.id; hidePanel() })
         val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         result.blocks.sortedWith(compareBy({ it.region.top }, { it.region.left })).forEachIndexed { index, block ->
             list.addView(blockRow(index + 1, block))

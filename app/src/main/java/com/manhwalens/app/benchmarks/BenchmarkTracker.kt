@@ -144,7 +144,7 @@ object BenchmarkTracker {
                 .onFailure { Diagnostics.error("benchmarks", "persist", ErrorCodes.BENCHMARK_RECORD_FAILED, "failed to persist benchmark record", throwable = it) }
         }
         Diagnostics.log(
-            when (record.status) { "ok", "cancelled", "superseded" -> LogLevel.INFO; "partial" -> LogLevel.WARN; else -> LogLevel.ERROR },
+            when (record.status) { "ok", "cancelled", "superseded", "skipped" -> LogLevel.INFO; "partial" -> LogLevel.WARN; else -> LogLevel.ERROR },
             record.errorCode ?: when (record.status) { "timeout" -> ErrorCodes.CAPTURE_TIMEOUT; "error" -> "APP-JOURNEY-FAILED"; else -> ErrorCodes.APP_INFO },
             "benchmarks", "journey",
             summary,

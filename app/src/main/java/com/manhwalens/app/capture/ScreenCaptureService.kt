@@ -546,6 +546,13 @@ class ScreenCaptureService : Service() {
             invalidateSession("Wrong capture source. Session stopped. Open the reader and grant a NEW full-screen capture permission.", "CAP-WRONG-SOURCE")
             return
         }
+        if (com.manhwalens.app.pipeline.ReaderContentFilter.isTabOverview(regions)) {
+            Diagnostics.info("capture", "reader_skip", "tab overview skipped; waiting for reader content", traceId = traceId)
+            CaptureManager.setState(CaptureManager.CaptureState.Done(CaptureResult(journeyId, System.currentTimeMillis(), OCR_SOURCE, TARGET, emptyList())))
+            if (liveEnabled) CaptureManager.setLive(CaptureManager.LiveStatus.WAITING)
+            BenchmarkTracker.finish("skipped", frameWidth = frame.width, frameHeight = frame.height, regionCount = regions.size)
+            return
+        }
         val prepared = prepareRegions(regions.map { it.copy(
             left = (it.left * scale).toInt(), top = (it.top * scale).toInt(),
             right = (it.right * scale).toInt(), bottom = (it.bottom * scale).toInt()) })

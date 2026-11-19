@@ -15,4 +15,9 @@ class ReaderContentFilterTest {
     @Test fun adjacentBalloonsStaySeparate() {
         assertEquals(2, RegionMerger.merge(listOf(TextRegion("A GRUDGE?", 10, 100, 100, 130), TextRegion("I DO", 120, 100, 220, 130))).size)
     }
+    @Test fun tabOverviewRequiresMultipleChromeMarkers() {
+        assertTrue(ReaderContentFilter.isTabOverview(listOf(region("Search your tabs"), region("(3) inactive items"))))
+        assertFalse(ReaderContentFilter.isTabOverview(listOf(region("Search your tabs"))))
+        assertFalse(ReaderContentFilter.isTabOverview(listOf(region("HE HAS DWELLED ON GETTING HIS REVENGE"))))
+    }
 }
