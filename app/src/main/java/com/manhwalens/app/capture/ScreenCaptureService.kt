@@ -32,7 +32,6 @@ import com.manhwalens.app.pipeline.RegionKind
 import com.manhwalens.app.pipeline.SentenceReconstructor
 import com.manhwalens.app.pipeline.TextRegion
 import com.manhwalens.app.pipeline.TranslatedBlock
-import com.manhwalens.app.settings.SettingsRepository
 import com.manhwalens.app.translate.TranslationClient
 import com.manhwalens.app.util.downscaleTo
 import kotlinx.coroutines.CompletableDeferred
@@ -383,7 +382,6 @@ class ScreenCaptureService : Service() {
         image.close()
         BenchmarkTracker.setJourneyCounts(frame.width, frame.height, 0, 0)
 
-        val settings = (application as ManhwaLensApp).settingsRepository
         val history: HistoryStore = (application as ManhwaLensApp).historyStore
 
         val ocrBitmap = runCatching { frame.downscaleTo(OCR_MAX_DIMENSION) }.getOrDefault(frame)
