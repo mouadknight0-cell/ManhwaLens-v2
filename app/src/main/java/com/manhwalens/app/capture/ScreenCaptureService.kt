@@ -34,7 +34,6 @@ import com.manhwalens.app.pipeline.TextRegion
 import com.manhwalens.app.pipeline.TranslatedBlock
 import com.manhwalens.app.translate.TranslationClient
 import com.manhwalens.app.util.downscaleTo
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -109,9 +108,6 @@ class ScreenCaptureService : Service() {
     private var pipelineWidth = 0
     private var pipelineHeight = 0
     private var pipelineDensityDpi = 0
-
-    /** Next pending fresh-frame acquisition (owned by captureFrame only). */
-    private val pendingFrame = AtomicReference<CompletableDeferred<Image>?>(null)
 
     private val frameListener = ImageReader.OnImageAvailableListener { reader ->
         val image = runCatching { reader.acquireLatestImage() }.getOrElse {
@@ -206,7 +202,12 @@ class ScreenCaptureService : Service() {
         CaptureManager.setState(CaptureManager.CaptureState.Error(message, code))
         mainHandler.post {
             expectedProjectionStop = true
-            mediaProjection?.let { it.unregisterCallback(projectionCallback); it.stop() }
+            mediaProjection?.let { projection ->
+                runCatching { projection.unregisterCallback(projectionCallback) }
+                runCatching { projection.stop() }.onFailure {
+                    Diagnostics.warn("capture", "projection_release", "projection stop failed", throwable = it)
+                }
+            }
             mediaProjection = null
             teardownCapturePipeline()
             stopSelf()
@@ -384,7 +385,6 @@ class ScreenCaptureService : Service() {
     /** Releases VirtualDisplay → ImageReader. Safe to call repeatedly. */
     private fun teardownCapturePipeline() {
         latestFrame.getAndSet(null)?.close()
-        pendingFrame.getAndSet(null)?.completeExceptionally(IllegalStateException("pipeline torn down"))
         runCatching { virtualDisplay?.release() }
         virtualDisplay = null
         imageReader?.let { reader ->
@@ -522,9 +522,9 @@ class ScreenCaptureService : Service() {
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.READING))
         val tOcr = System.nanoTime()
         val regions = runCatching { textRecognition.recognize(ocrBitmap, OCR_SOURCE) }.getOrElse {
+            if (it is kotlinx.coroutines.CancellationException) throw it
             Diagnostics.error("ocr", "recognize", ErrorCodes.OCR_EXEC_FAILED,
                 "OCR execution failed", throwable = it, recovery = "journey aborted; user can retry")
-            if (it is kotlinx.coroutines.CancellationException) throw it
             BenchmarkTracker.finish("error", errorCode = ErrorCodes.OCR_EXEC_FAILED)
             CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_ocr_failed), ErrorCodes.OCR_EXEC_FAILED))
             return
@@ -621,7 +621,13 @@ class ScreenCaptureService : Service() {
         currentCoroutineContext().ensureActive()
         if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
         CaptureManager.setState(CaptureManager.CaptureState.Done(result))
-        if (liveEnabled) CaptureManager.setLive(CaptureManager.LiveStatus.READY)
+        if (liveEnabled) {
+            if (blocks.isNotEmpty() && blocks.all { it.errorCode != null }) {
+                liveEnabled = false
+                liveJob?.cancel()
+                CaptureManager.setLive(CaptureManager.LiveStatus.ERROR)
+            } else CaptureManager.setLive(CaptureManager.LiveStatus.READY)
+        }
         scope.launch {
             kotlinx.coroutines.delay(1500)
             BenchmarkTracker.finishIfActive(journeyId, if (blocks.any { it.errorCode != null }) "partial" else "ok")

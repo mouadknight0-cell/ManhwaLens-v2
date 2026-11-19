@@ -49,4 +49,9 @@ class NameShieldTest {
         assertEquals("hello world", masked.maskedText)
         assertEquals(0, masked.names.size)
     }
+    @org.junit.Test fun `does not mask a name inside another word`() {
+        val masked = NameShield.mask("Jin met Jinx.", listOf("Jin"))
+        org.junit.Assert.assertTrue(masked.maskedText.contains("Jinx"))
+        org.junit.Assert.assertEquals("Jin met Jinx.", NameShield.restore(masked.maskedText, masked.names))
+    }
 }

@@ -24,14 +24,22 @@ class TextRecognitionClient {
 
     suspend fun recognize(bitmap: Bitmap, sourceLanguage: String): List<TextRegion> {
         val scripts = LanguageMapper.scriptsFor(sourceLanguage)
-        val input = InputImage.fromBitmap(bitmap, 0)
 
         val detected = coroutineScope {
             scripts.map { script ->
                 async {
                     val recognizer = recognizerFor(script)
+                    val owned = bitmap.copy(Bitmap.Config.ARGB_8888, false)
+                    val task = try { recognizer.process(InputImage.fromBitmap(owned, 0)) }
+                    catch (failure: Exception) { owned.recycle(); recognizer.close(); throw failure }
+                    // Task cancellation is not exposed by ML Kit. Its private bitmap lives until
+                    // native completion, even when the caller's coroutine is cancelled by a swipe.
+                    task.addOnCompleteListener(java.util.concurrent.Executor { it.run() }) {
+                        owned.recycle()
+                        recognizer.close()
+                    }
                     try {
-                        recognizer.process(input).await().let { result ->
+                        task.await().let { result ->
                             result.textBlocks.flatMap { block ->
                                 RegionMerger.merge(RegionFilter.filter(block.lines.mapNotNull { line ->
                                     val box = line.boundingBox ?: return@mapNotNull null
@@ -48,8 +56,6 @@ class TextRecognitionClient {
                         }
                     } catch (t: Throwable) {
                         throw t
-                    } finally {
-                        recognizer.close()
                     }
                 }
             }.awaitAll().flatten()

@@ -19,4 +19,9 @@ class BenchmarkReportTest {
         assertNull(r.latencyMs("T2", "T11"))
         assertNull(r.latencyMs("M0", "M1"))
     }
+    @Test fun inferredEndIsNotReportedAsVisibility() {
+        val r = BenchmarkRecord("id", "trace", 0, false, "ok", t12Inferred=true,
+            marks=mapOf("T2" to 0L, "T11" to 2988000000L, "T10" to 4367000000L, "T12" to 2988000000L))
+        assertTrue(BenchmarkReport.format(listOf(r)).contains("Final visible from request: unconfirmed"))
+    }
 }
