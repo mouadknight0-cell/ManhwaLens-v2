@@ -110,3 +110,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Signing now requires the durable vault and pinned certificate; no temporary-key fallback.
 - New-key generation/public APK remain blocked until the owner provisions and privately backs up SIGNING_BACKUP_PASSWORD. New signer will NOT update v1.1.6 in place; no data deletion/migration is performed.
 - Add GitHub-run recovery, tamper, wrong-password and no-overwrite regression tests.
+
+## [1.1.9] - 2026-11-19
+- Surface safe, explicit initialization errors when the signing backup secret is missing/unavailable or too short.
+- GitHub initialization attempt confirmed the required secret was unavailable; no key was generated or replaced. Publication remains blocked pending the repository Actions secret.
