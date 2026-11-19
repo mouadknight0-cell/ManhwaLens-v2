@@ -31,6 +31,15 @@ jobs:
       - name: Verify Gradle boots (configuration smoke test)
         run: ./gradlew help --stacktrace --no-daemon
 
+      - name: Resolve dependency graph
+        run: ./gradlew :app:dependencies --configuration debugUnitTestCompileClasspath --no-daemon > /tmp/deps.txt 2>&1 || (cat /tmp/deps.txt && exit 1)
+
+      - name: Compile app sources
+        run: ./gradlew :app:compileDebugKotlin --stacktrace --no-daemon
+
+      - name: Compile test sources
+        run: ./gradlew :app:compileDebugUnitTestKotlin --stacktrace --no-daemon
+
       - name: Unit tests
         run: ./gradlew testDebugUnitTest --stacktrace --no-daemon
 
