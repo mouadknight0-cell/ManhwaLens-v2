@@ -27,4 +27,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag || 'v1.1.1' }}
-        run: python3 .github/scripts/sign_release.py
+        shell: bash
+        run: python3 .github/scripts/sign_release.py 2>&1 | tee /tmp/signing.log
+      - name: Surface signing failure
+        if: failure()
+        run: |
+          tail -25 /tmp/signing.log | while IFS= read -r line; do
+            line="${line//'%'/'%25'}"
+            echo "::error::$line"
+          done
