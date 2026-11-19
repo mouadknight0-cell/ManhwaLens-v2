@@ -3,6 +3,7 @@ package com.manhwalens.app.diagnostics
 import android.content.Context
 import android.util.Log
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentHashMap
@@ -121,8 +122,8 @@ object Diagnostics {
     fun info(component: String, operation: String, message: String, code: String = ErrorCodes.APP_INFO, stage: String? = null, durationMs: Long? = null, context: Map<String, String> = emptyMap(), traceId: String = currentTraceId) =
         log(LogLevel.INFO, code, component, operation, message, stage = stage, durationMs = durationMs, context = context, traceId = traceId)
 
-    fun warn(component: String, operation: String, message: String, code: String = ErrorCodes.APP_INFO, stage: String? = null, context: Map<String, String> = emptyMap(), recovery: String? = null, traceId: String = currentTraceId) =
-        log(LogLevel.WARN, code, component, operation, message, stage = stage, recovery = recovery, status = "recoverable", context = context, traceId = traceId)
+    fun warn(component: String, operation: String, message: String, code: String = ErrorCodes.APP_INFO, stage: String? = null, context: Map<String, String> = emptyMap(), recovery: String? = null, traceId: String = currentTraceId, throwable: Throwable? = null) =
+        log(LogLevel.WARN, code, component, operation, message, stage = stage, recovery = recovery, status = "recoverable", context = context, traceId = traceId, throwable = throwable)
 
     fun error(component: String, operation: String, code: String, message: String, stage: String? = null, throwable: Throwable? = null, recovery: String? = null, context: Map<String, String> = emptyMap(), traceId: String = currentTraceId) =
         log(LogLevel.ERROR, code, component, operation, message, stage = stage, recovery = recovery, status = "error", context = context, throwable = throwable, traceId = traceId)

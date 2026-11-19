@@ -174,7 +174,7 @@ class ScreenCaptureService : Service() {
 
         if (resultCode != android.app.Activity.RESULT_OK || resultData == null) {
             Diagnostics.error("capture", "start_session", ErrorCodes.CAPTURE_RESULT_MISSING,
-                "missing or invalid MediaProjection consent result", status = "error")
+                "missing or invalid MediaProjection consent result")
             CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_capture_denied), ErrorCodes.CAPTURE_RESULT_MISSING))
             stopSelf()
             return

@@ -1,6 +1,7 @@
 package com.manhwalens.app.names
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class NameShieldTest {
@@ -10,7 +11,8 @@ class NameShieldTest {
         val text = "Kim Jiwoo said hello to Zhang Sanfeng."
         val masked = NameShield.mask(text, listOf("Kim Jiwoo", "Zhang Sanfeng"))
         // Names replaced with sentinel digits
-        assert(!masked.maskedText.contains("Kim Jiwoo", ignoreCase = true))
+        assertFalse(masked.maskedText.contains("Kim Jiwoo", ignoreCase = true))
+        assertFalse(masked.maskedText.contains("Zhang Sanfeng", ignoreCase = true))
         val restored = NameShield.restore(masked.maskedText, masked.names)
         assertEquals("Kim Jiwoo said hello to Zhang Sanfeng.", restored)
     }

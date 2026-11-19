@@ -15,7 +15,7 @@ class NameGlossaryStore(context: Context) {
     private val file: File = File(File(context.filesDir, "glossary").apply { mkdirs() }, "names.json")
 
     @Synchronized
-    fun all(): List<String> = load().keys().asSequence().filter { it.isNotBlank() }.toList().sortedBy { it.lowercase() }
+    fun all(): List<String> = load().keys.filter { it.isNotBlank() }.sortedBy { it.lowercase() }
 
     @Synchronized
     fun snapshot(): List<Pair<String, String>> = load().entries.map { it.key to it.value }

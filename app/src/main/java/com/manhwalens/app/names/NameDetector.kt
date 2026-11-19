@@ -66,7 +66,7 @@ object NameDetector {
             var idx = 0
             while (true) {
                 val m = matchFrom(tokens, idx, parts) ?: break
-                hits.add(NameHit(text.substring(tokens[m.first].first, tokens[m.last].second), tokens[m.first].first, tokens[m.last].second, NameHit.Source.GLOSSARY))
+                hits.add(NameHit(text.substring(tokens[m.first].second, tokens[m.last].third), tokens[m.first].second, tokens[m.last].third, NameHit.Source.GLOSSARY))
                 idx = m.last + 1
             }
         }
