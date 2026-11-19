@@ -103,3 +103,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Skip recognized browser tab overview without revoking capture or claiming translation success.
 - Include complete sample rectangles and non-content failure context.
 - Added grouping/placement/chrome-filter regression tests; phone validation and contextual ML Kit limitations documented in docs/DIALOGUE-1.1.7.md.
+
+## [1.1.8] - 2026-11-19
+- Prepare an owner-authorized signing reset with durable AES-GCM encrypted recovery in Git and an independent GitHub Actions secret.
+- One-time initialization refuses overwriting an existing vault, requires owner backup acknowledgement, and verifies recovery before committing encrypted material.
+- Signing now requires the durable vault and pinned certificate; no temporary-key fallback.
+- New-key generation/public APK remain blocked until the owner provisions and privately backs up SIGNING_BACKUP_PASSWORD. New signer will NOT update v1.1.6 in place; no data deletion/migration is performed.
+- Add GitHub-run recovery, tamper, wrong-password and no-overwrite regression tests.

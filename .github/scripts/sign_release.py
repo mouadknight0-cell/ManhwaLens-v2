@@ -1,6 +1,5 @@
-"""One-run RSA envelope: no private key/password in Git, inputs or comments.
-Only a fresh public transport key and authenticated ciphertext cross GitHub API.
-The runner verifies the pinned APK signer before publishing; all plaintext is temporary.
+"""Sign from a durable encrypted vault; verify the pinned signer before publication.
+Plaintext key material exists only inside the runner's temporary directory.
 """
 import base64
 import hashlib
@@ -9,12 +8,8 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
-import time
 import urllib.request
 import zipfile
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 repo = os.environ['GITHUB_REPOSITORY']
 run = os.environ['GITHUB_RUN_ID']
@@ -32,25 +27,11 @@ def api(path, data=None):
 
 release = next(r for r in api('/releases?per_page=100') if r['tag_name'] == tag)
 assert release['draft'], 'Only drafts may be signed'
-private = rsa.generate_private_key(public_exponent=65537, key_size=3072)
-public = private.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo).decode()
-api('/issues/4/comments', {'body': 'SIGNING_REQUEST ' + run + '\nTag: ' + tag + '\n```\n' + public + '```'})
-prefix = 'SIGNING_ENVELOPE ' + run + '\n'
-envelope = None
-for _ in range(90):
-    comments = api('/issues/4/comments?per_page=100&sort=created&direction=desc')
-    for comment in reversed(comments):
-        if comment['body'].startswith(prefix):
-            envelope = json.loads(comment['body'][len(prefix):])
-            break
-    if envelope is not None:
-        break
-    time.sleep(10)
-assert envelope is not None, 'No encrypted signing envelope received within 15 minutes'
+# No ephemeral-envelope fallback: every new release must be recoverable from
+# the versioned ciphertext plus the independently retained repository secret.
+from signing_vault import load_material
+material = load_material()
 decode = base64.b64decode
-secret = private.decrypt(decode(envelope['wrapped']), padding.OAEP(mgf=padding.MGF1(hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
-plaintext = AESGCM(secret).decrypt(decode(envelope['nonce']), decode(envelope['ciphertext']), run.encode())
-material = json.loads(plaintext)
 # Never print material, password or keystore.
 with tempfile.TemporaryDirectory() as tmp:
     root = Path(tmp)
@@ -93,9 +74,9 @@ with tempfile.TemporaryDirectory() as tmp:
 Download **app-release.apk**. Built and unit-tested on GitHub Actions; APK signature verified against the pinned stable certificate.
 
 Future releases must use this same certificate, package ID `com.manhwalens.app`, and a higher versionCode to preserve update compatibility.
-This new certificate does NOT retroactively match old ephemeral debug-signed installations. Do not clear data or uninstall as an upgrade workaround.
+SIGNING RESET: this newly authorized identity does NOT match v1.1.1–v1.1.6 or older debug-signed installations. This APK cannot update those installations in place. Do NOT uninstall or clear their data as an automatic workaround. Data migration requires a separate, verified plan. Future releases must reuse this vault and certificate.
 
-Includes service-owned visual-motion Live Mode, stale-frame cancellation, wrong-source session invalidation, bounded native inference, explicit translation failures and corrected visibility benchmarks.
+Includes v1.1.7 dialogue reconstruction and collision avoidance, plus versioned encrypted signing recovery. Back up signing/release-key.enc.json and its independent password privately. No plaintext private key is committed.
 
 Physical-device behavior, performance improvements, and in-place upgrade/data preservation have not been tested. Live visual-motion thresholds, continuous reading and advanced bubble fitting require physical-device validation; contextual Arabic quality remains limited by ML Kit.
 ''')
