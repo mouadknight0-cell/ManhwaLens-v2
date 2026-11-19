@@ -5,8 +5,7 @@ val appVersionName: String = System.getenv("VERSION_NAME")?.takeIf { it.isNotBla
 val appVersionCode: Int = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
 // Stable release signing: CI decodes the keystore from the MANHWALENS_KEYSTORE_FILE secret.
-// If it is absent we fall back to debug signing so the APK is still installable,
-// but updates will require reinstalling until the stable key is configured.
+// Release assembly fails closed without this key: never publish ephemeral debug signing as a release.
 val releaseKeystorePath: String? = System.getenv("MANHWALENS_KEYSTORE_FILE")
 val hasReleaseKeystore: Boolean = !releaseKeystorePath.isNullOrBlank() && file(releaseKeystorePath).exists()
 
@@ -52,6 +51,7 @@ android {
         debug {
             isMinifyEnabled = false
             isDebuggable = true
+            if (hasReleaseKeystore) signingConfig = signingConfigs.getByName("release")
         }
         release {
             // Minification intentionally off for v1.0: maximum device compatibility.
@@ -59,7 +59,7 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = false
-            signingConfig = if (hasReleaseKeystore) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -110,4 +110,11 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.org.json)
     testImplementation(libs.kotlinx.coroutines.test)
+}
+
+// CI debug artifacts remain available for diagnostics; production releases require continuity.
+tasks.configureEach {
+    if (name == "preReleaseBuild") doFirst {
+        check(hasReleaseKeystore) { "Stable signing key missing. Refusing an incompatible release; restore the original signing key in GitHub secrets." }
+    }
 }

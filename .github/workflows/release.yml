@@ -30,7 +30,7 @@ jobs:
             VERSION_NAME="1.0.0-snapshot"
           fi
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_OUTPUT"
-          echo "VERSION_CODE=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "VERSION_CODE=$(( $(git show -s --format=%ct HEAD) - 1577836800 ))" >> "$GITHUB_OUTPUT"
           echo "Building ManhwaLens $VERSION_NAME (code ${{ github.run_number }})"
 
       - name: Set up JDK 17
@@ -55,6 +55,8 @@ jobs:
             echo "present=true" >> "$GITHUB_OUTPUT"
             echo "Release keystore decoded — APK will be signed with the stable key."
           else
+            echo "::error::Original stable signing key is required. Release blocked to protect in-place upgrades."
+            exit 1
             echo "present=false" >> "$GITHUB_OUTPUT"
             echo "::warning::MANHWALENS_KEYSTORE_BASE64 secret not set — the release APK will be signed with the ephemeral debug key. Updates over an existing install will require uninstalling first until the stable key secret is configured."
           fi

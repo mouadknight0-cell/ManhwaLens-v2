@@ -40,6 +40,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
@@ -227,11 +229,8 @@ class ScreenCaptureService : Service() {
             context = mapOf("width" to pipelineWidth.toString(), "height" to pipelineHeight.toString()))
 
         if (autoCapture) {
-            scope.launch {
-                // Give the first mirrored frame a moment to arrive, then capture.
-                kotlinx.coroutines.delay(350)
-                captureFrame()
-            }
+            launchCapture(delayMs = 350)
+
         }
     }
 
@@ -351,10 +350,16 @@ class ScreenCaptureService : Service() {
         launchCapture()
     }
 
-    private fun launchCapture() {
-        // One owner for the frame waiter, benchmark and ML clients at a time.
-        if (captureJob?.isActive == true) return
-        captureJob = scope.launch { captureFrame() }
+    private fun launchCapture(delayMs: Long = 0) {
+        // One owner for frame acquisition and benchmarks; newer requests supersede old ones.
+        val previous = captureJob
+        previous?.cancel()
+        captureJob = scope.launch {
+            previous?.join()
+            if (BenchmarkTracker.isActive()) BenchmarkTracker.finish("cancelled")
+            kotlinx.coroutines.delay(delayMs)
+            captureFrame()
+        }
     }
 
     private suspend fun captureFrame() {
@@ -461,6 +466,7 @@ class ScreenCaptureService : Service() {
                 }
             },
             onReady = { completed ->
+                currentCoroutineContext().ensureActive()
                 if (completed.any { it.translated != it.original }) BenchmarkTracker.mark("T9")
                 CaptureManager.setState(CaptureManager.CaptureState.Partial(CaptureResult(
                     id, System.currentTimeMillis(), OCR_SOURCE, TARGET, completed)))
@@ -491,6 +497,7 @@ class ScreenCaptureService : Service() {
 
         Diagnostics.info("capture", "journey_done", "capture journey complete",
             traceId = traceId, context = mapOf("blocks" to blocks.size.toString()))
+        currentCoroutineContext().ensureActive()
         CaptureManager.setState(CaptureManager.CaptureState.Done(result))
         // Note: T12 is marked by the UI when the final result is rendered; if it
         // never happens (e.g., app backgrounded without the bubble) the record
@@ -541,9 +548,10 @@ class ScreenCaptureService : Service() {
         val reader = imageReader ?: return null
         val deferred = CompletableDeferred<Image>()
         pendingFrame.set(deferred)
-        val image = withTimeoutOrNull(FRAME_WAIT_MS) {
-            // A torn-down pipeline completes the deferred exceptionally; treat as "no frame".
-            runCatching { deferred.await() }.getOrNull()
+        val image = try {
+            withTimeoutOrNull(FRAME_WAIT_MS) { deferred.await() }
+        } finally {
+            pendingFrame.compareAndSet(deferred, null)
         }
         if (image != null) return image
         pendingFrame.compareAndSet(deferred, null)

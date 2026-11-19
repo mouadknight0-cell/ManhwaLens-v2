@@ -225,6 +225,8 @@ class BubbleOverlayService : Service() {
         }
         // UI-post is a rendering proxy, not a hardware presentation timestamp.
         bubbleView?.post {
+            val current = CaptureManager.state.value
+            if (current !is CaptureManager.CaptureState.Partial && current !is CaptureManager.CaptureState.Done) return@post
             if (translationViews.isNotEmpty()) com.manhwalens.app.benchmarks.BenchmarkTracker.mark("T10")
             if (final) com.manhwalens.app.benchmarks.BenchmarkTracker.mark("T12")
         }
@@ -492,9 +494,11 @@ private class BubbleTouchListener(
                 if (!dragging && (abs(event.rawX - downRawX) > touchSlop || abs(event.rawY - downRawY) > touchSlop)) {
                     dragging = true
                 }
-                if (dragging) onDrag(dx, dy)
-                lastX = event.rawX
-                lastY = event.rawY
+                if (dragging) {
+                    onDrag(dx, dy)
+                    lastX += dx
+                    lastY += dy
+                }
                 true
             }
             MotionEvent.ACTION_UP -> {

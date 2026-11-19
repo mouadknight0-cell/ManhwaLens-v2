@@ -56,7 +56,9 @@ fun ResultBottomSheet(
     val context = LocalContext.current
 
     // T12 = full translation visible on screen; marks/finishes the benchmark journey.
-    LaunchedEffect(result.id, isFinal) {
+    LaunchedEffect(result.id, result.blocks.size, isFinal) {
+        androidx.compose.runtime.withFrameNanos { }
+        if (result.blocks.any { it.translated != it.original }) BenchmarkTracker.mark("T10")
         if (isFinal) BenchmarkTracker.mark("T12")
     }
 

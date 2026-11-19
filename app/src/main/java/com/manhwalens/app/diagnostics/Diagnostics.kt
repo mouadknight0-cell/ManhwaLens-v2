@@ -101,15 +101,15 @@ object Diagnostics {
             status = status,
             context = context.mapValues { sanitize(it.value) },
             exceptionType = throwable?.javaClass?.name,
-            stackTrace = throwable?.stackTraceToString(),
+            stackTrace = throwable?.let { error -> error.javaClass.name + "\n" + error.stackTrace.joinToString("\n") },
         )
         // Logcat
         val line = "[${event.timestampMs}] ${event.level.tag} ${event.code} ${event.component}.${event.operation} — ${event.message}"
         when (level) {
-            LogLevel.DEBUG -> Log.d(TAG, line, throwable)
-            LogLevel.INFO -> Log.i(TAG, line, throwable)
-            LogLevel.WARN -> Log.w(TAG, line, throwable)
-            LogLevel.ERROR, LogLevel.FATAL -> Log.e(TAG, line, throwable)
+            LogLevel.DEBUG -> Log.d(TAG, line)
+            LogLevel.INFO -> Log.i(TAG, line)
+            LogLevel.WARN -> Log.w(TAG, line)
+            LogLevel.ERROR, LogLevel.FATAL -> Log.e(TAG, line)
         }
         // Ring buffer
         ring.add(event)
