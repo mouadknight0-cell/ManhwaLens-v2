@@ -34,7 +34,7 @@ class BenchmarkStore(context: Context) {
 
     @Synchronized
     fun clear() {
-        runCatching { file.delete() }
+        if (file.exists()) check(file.delete()) { "Could not clear benchmark records" }
     }
 
     fun exportJson(): String = JSONArray().apply { readAll().forEach { put(encode(it)) } }.toString(2)
@@ -42,7 +42,10 @@ class BenchmarkStore(context: Context) {
     private fun writeAll(records: List<BenchmarkRecord>) {
         val array = JSONArray()
         records.forEach { array.put(encode(it)) }
-        runCatching { file.writeText(array.toString()) }
+        val atomic = android.util.AtomicFile(file)
+        val stream = atomic.startWrite()
+        try { stream.write(array.toString().toByteArray()); atomic.finishWrite(stream) }
+        catch (failure: Exception) { atomic.failWrite(stream); throw failure }
     }
 
     private fun encode(record: BenchmarkRecord): JSONObject = JSONObject().apply {

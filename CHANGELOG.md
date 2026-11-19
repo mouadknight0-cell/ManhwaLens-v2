@@ -80,3 +80,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Native OCR/translation concurrency guards; explicit block failures and stricter name/cache handling.
 - Remove fabricated final-visible timestamps and process-lifetime error durations.
 - Device verification and contextual model quality remain outstanding (docs/LIVE-1.1.3.md).
+
+## [1.1.4] - 2026-11-19
+
+- Explicit capture session phases and labeled floating Start/Stop controls.
+- Collapsible settings with everyday controls separated from diagnostics/advanced tools.
+- Independent confirmed Copy/Reset/View/Share for Benchmark, Translation, Errors and Bugs; lossless multipart clipboard support.
+- Preserve OCR line boundaries for dehyphenation; correct partial/cancelled benchmark error classification; record translation error/timing samples.
+- Device UI/permission/clipboard validation remains pending (docs/UX-1.1.4.md).
