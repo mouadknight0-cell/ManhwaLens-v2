@@ -39,7 +39,7 @@ class CaptureConsentActivity : ComponentActivity() {
             finish()
             return
         }
-        captureLauncher.launch(manager.createScreenCaptureIntent())
+        captureLauncher.launch(if (android.os.Build.VERSION.SDK_INT >= 34) manager.createScreenCaptureIntent(android.media.projection.MediaProjectionConfig.createConfigForDefaultDisplay()) else manager.createScreenCaptureIntent())
     }
 
     companion object {

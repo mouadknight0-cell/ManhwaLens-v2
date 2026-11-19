@@ -39,6 +39,7 @@ object BenchmarkTracker {
     fun processStartNs(): Long = appT0
     fun uiUsableNs(): Long = appT1
 
+    @Synchronized
     fun beginSession(traceId: String): String {
         // Close any stale journey first (e.g., previous run crashed before finishing).
         forceTimeoutIfStale(timeoutMs = 30_000)
@@ -51,6 +52,7 @@ object BenchmarkTracker {
     fun activeSessionId(): String? = active?.id
 
     /** Frame/block counts carried into the final record. */
+    @Synchronized
     fun setJourneyCounts(frameWidth: Int, frameHeight: Int, regionCount: Int, blockCount: Int) {
         active?.let {
             it.frameWidth = frameWidth
@@ -61,6 +63,7 @@ object BenchmarkTracker {
     }
 
     /** Returns false when no session is active (e.g., capture never started). Marking T12 auto-finishes the journey as ok. */
+    @Synchronized
     fun mark(checkpoint: String): Boolean {
         val s = active ?: return false
         if (s.marks.containsKey(checkpoint)) return true
@@ -74,6 +77,7 @@ object BenchmarkTracker {
     fun isActive(): Boolean = active != null
 
     /** Ends the session, computes the record, persists it and logs a summary. Safe to call twice. */
+    @Synchronized
     fun finish(
         status: String,
         errorCode: String? = null,
@@ -138,6 +142,7 @@ object BenchmarkTracker {
     }
 
     /** Watchdog: if a session is still open after [timeoutMs] since it began, close it as a timeout. */
+    @Synchronized
     fun forceTimeoutIfStale(timeoutMs: Long = 30_000) {
         val s = active ?: return
         val startNs = s.marks["T2"] ?: return

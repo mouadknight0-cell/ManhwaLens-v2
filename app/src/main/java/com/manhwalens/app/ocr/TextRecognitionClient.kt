@@ -47,7 +47,7 @@ class TextRecognitionClient {
                             }
                         }
                     } catch (t: Throwable) {
-                        emptyList()
+                        throw t
                     } finally {
                         recognizer.close()
                     }

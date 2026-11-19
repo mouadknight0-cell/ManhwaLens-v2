@@ -177,6 +177,8 @@ fun SettingsScreen(
             }
         }
 
+        DiagnosticTools()
+
         // Diagnostics & benchmarks
         SectionCard(title = stringResource(R.string.settings_diagnostics_section)) {
             Text(

@@ -65,11 +65,13 @@ import java.util.concurrent.atomic.AtomicReference
 class ScreenCaptureService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var captureJob: kotlinx.coroutines.Job? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var mediaProjection: android.media.projection.MediaProjection? = null
     private val projectionCallback = object : android.media.projection.MediaProjection.Callback() {
         override fun onStop() {
+            captureJob?.cancel()
             // Fires on user-initiated stop AND on system revocation.
             val expected = expectedProjectionStop
             expectedProjectionStop = false
@@ -135,6 +137,7 @@ class ScreenCaptureService : Service() {
             ACTION_CAPTURE -> handleCapture()
             ACTION_STOP -> {
                 Diagnostics.info("capture", "stop_requested", "stop requested by user or notification")
+                captureJob?.cancel()
                 expectedProjectionStop = true
                 teardownCapturePipeline()
                 CaptureManager.setSessionActive(false)
@@ -165,7 +168,7 @@ class ScreenCaptureService : Service() {
 
         if (mediaProjection != null && virtualDisplay != null) {
             Diagnostics.info("capture", "session_reuse", "capture session already active; reusing pipeline")
-            if (autoCapture) scope.launch { captureFrame() }
+            if (autoCapture) launchCapture()
             return
         }
 
@@ -319,8 +322,18 @@ class ScreenCaptureService : Service() {
                 "new" to "${metrics.first}x${metrics.second}@${metrics.third}",
             ),
             recovery = "pipeline recreated once")
-        teardownCapturePipeline()
-        return createCapturePipeline(projection)
+        val reader = ImageReader.newInstance(metrics.first, metrics.second, PixelFormat.RGBA_8888, MAX_BUFFERED_FRAMES)
+        reader.setOnImageAvailableListener(frameListener, mainHandler)
+        // Android 14 forbids a second createVirtualDisplay on the same consent token.
+        virtualDisplay?.resize(metrics.first, metrics.second, metrics.third)
+        virtualDisplay?.surface = reader.surface
+        imageReader?.setOnImageAvailableListener(null, null)
+        imageReader?.close()
+        imageReader = reader
+        pipelineWidth = metrics.first
+        pipelineHeight = metrics.second
+        pipelineDensityDpi = metrics.third
+        return true
     }
 
     // ── One capture journey ────────────────────────────────────────
@@ -335,7 +348,13 @@ class ScreenCaptureService : Service() {
             stopSelf()
             return
         }
-        scope.launch { captureFrame() }
+        launchCapture()
+    }
+
+    private fun launchCapture() {
+        // One owner for the frame waiter, benchmark and ML clients at a time.
+        if (captureJob?.isActive == true) return
+        captureJob = scope.launch { captureFrame() }
     }
 
     private suspend fun captureFrame() {
@@ -393,6 +412,7 @@ class ScreenCaptureService : Service() {
             Diagnostics.error("ocr", "recognize", ErrorCodes.OCR_EXEC_FAILED,
                 "OCR execution failed", throwable = it, recovery = "journey aborted; user can retry")
             releaseIfDifferent(frame, ocrBitmap)
+            if (it is kotlinx.coroutines.CancellationException) throw it
             BenchmarkTracker.finish("error", errorCode = ErrorCodes.OCR_EXEC_FAILED)
             CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_ocr_failed), ErrorCodes.OCR_EXEC_FAILED))
             return
@@ -403,7 +423,10 @@ class ScreenCaptureService : Service() {
             durationMs = ocrMs, context = mapOf("regions" to regions.size.toString()), traceId = traceId)
 
         // ── Reconstruction & grouping for translation quality ──
-        val prepared = prepareRegions(regions)
+        val scale = frame.width.toFloat() / ocrBitmap.width
+        val prepared = prepareRegions(regions.map { it.copy(
+            left = (it.left * scale).toInt(), top = (it.top * scale).toInt(),
+            right = (it.right * scale).toInt(), bottom = (it.bottom * scale).toInt()) })
         BenchmarkTracker.mark("T7")
         if (prepared.isEmpty()) {
             Diagnostics.warn("text", "reconstruct", "OCR produced no translatable text",
@@ -427,34 +450,22 @@ class ScreenCaptureService : Service() {
         }
 
         val id = UUID.randomUUID().toString()
-        val blocks = mutableListOf<TranslatedBlock>()
-        var firstSentenceMarked = false
-        for ((index, item) in prepared.withIndex()) {
-            val block = if (item.kind == RegionKind.SOUND_EFFECT) {
-                // Sound effects stay in the original lettering — translating them damages the page.
-                TranslatedBlock(item.region, item.region.text, item.region.text)
-            } else {
-                translation.translateBlock(item.region, learnedNames)
-            }
-            blocks.add(block)
-            if (!firstSentenceMarked) {
-                // First complete Arabic sentence is now available for display.
-                BenchmarkTracker.mark("T9")
-                firstSentenceMarked = true
-            }
-            val partial = CaptureResult(
-                id = id,
-                timestamp = System.currentTimeMillis(),
-                sourceLanguage = OCR_SOURCE,
-                targetLanguage = TARGET,
-                blocks = blocks.toList(),
-                thumbnailPath = null,
-            )
-            CaptureManager.setState(CaptureManager.CaptureState.Partial(partial))
-            if (blocks.size == 1) BenchmarkTracker.mark("T10")
-            Diagnostics.info("translate", "block_done", "block translated",
-                context = mapOf("index" to index.toString(), "total" to prepared.size.toString()), traceId = traceId)
-        }
+        val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
+            prepared.filter { it.kind != RegionKind.SOUND_EFFECT }.map { it.region },
+            translate = { region ->
+                val started = System.nanoTime()
+                translation.translateBlock(region, learnedNames).also {
+                    Diagnostics.info("translate", "block_complete", "local ML translation complete",
+                        durationMs = (System.nanoTime() - started) / 1_000_000,
+                        context = mapOf("chars" to region.text.length.toString()), traceId = traceId)
+                }
+            },
+            onReady = { completed ->
+                if (completed.any { it.translated != it.original }) BenchmarkTracker.mark("T9")
+                CaptureManager.setState(CaptureManager.CaptureState.Partial(CaptureResult(
+                    id, System.currentTimeMillis(), OCR_SOURCE, TARGET, completed)))
+            },
+        )
         BenchmarkTracker.mark("T11")
         BenchmarkTracker.setJourneyCounts(frame.width, frame.height, prepared.size, blocks.size)
 
@@ -629,8 +640,8 @@ class ScreenCaptureService : Service() {
             runCatching { projection.stop() }
         }
         mediaProjection = null
-        translation.close()
         scope.cancel()
+        translation.close()
         super.onDestroy()
     }
 

@@ -53,6 +53,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
                     "EN→AR model download timed out or failed")
             }
             ok
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (t: Throwable) {
             Diagnostics.error("translate", "model_download", ErrorCodes.TRANSLATE_DOWNLOAD_FAILED,
                 "EN→AR model download threw", throwable = t)
@@ -84,6 +86,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             withTimeoutOrNull(TRANSLATE_TIMEOUT_MS) {
                 translatorFor(SOURCE, TARGET).translate(maskResult.maskedText).await()
             }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (t: Throwable) {
             Diagnostics.error("translate", "translate", ErrorCodes.TRANSLATE_FAILED,
                 "translation failed; keeping original text", throwable = t,

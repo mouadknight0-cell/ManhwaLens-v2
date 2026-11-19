@@ -50,6 +50,22 @@ class BubbleOverlayService : Service() {
     private var bubbleView: View? = null
     private var bubbleParams: WindowManager.LayoutParams? = null
     private var panelView: View? = null
+    private val translationViews = mutableListOf<View>()
+    private var startJob: kotlinx.coroutines.Job? = null
+    private fun clearTranslations() {
+        translationViews.forEach { runCatching { windowManager.removeView(it) } }
+        translationViews.clear()
+    }
+    private fun availableBounds(): android.graphics.Rect {
+        if (Build.VERSION.SDK_INT >= 30) {
+            val metrics = windowManager.currentWindowMetrics
+            val insets = metrics.windowInsets.getInsetsIgnoringVisibility(
+                android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
+            return android.graphics.Rect(0, 0, metrics.bounds.width() - insets.left - insets.right,
+                metrics.bounds.height() - insets.top - insets.bottom)
+        }
+        return android.graphics.Rect(0, 0, resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels)
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -97,7 +113,7 @@ class BubbleOverlayService : Service() {
                     is CaptureManager.CaptureState.Partial -> showPanel(state.result, final = false)
                     is CaptureManager.CaptureState.Error -> showError(state.message)
                     is CaptureManager.CaptureState.Working -> showWorking(state.status)
-                    CaptureManager.CaptureState.Idle -> hidePanel()
+                    CaptureManager.CaptureState.Idle -> { hidePanel(); clearTranslations(); bubbleView?.alpha = 1f }
                 }
             }
         }
@@ -117,20 +133,28 @@ class BubbleOverlayService : Service() {
             size,
             size,
             overlayType(),
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.TOP or Gravity.END
-            y = dp(160)
+            gravity = Gravity.TOP or Gravity.LEFT
+            val saved = getSharedPreferences("bubble_position", MODE_PRIVATE)
+            x = saved.getInt("x", availableBounds().width() - size).coerceIn(0, (availableBounds().width() - size).coerceAtLeast(0))
+            y = saved.getInt("y", dp(160)).coerceIn(0, (availableBounds().height() - size).coerceAtLeast(0))
         }
 
         icon.setOnTouchListener(BubbleTouchListener(
             onDrag = { dx, dy ->
-                params.x = (params.x + dx).coerceIn(-size, resources.displayMetrics.widthPixels)
-                params.y = (params.y + dy).coerceIn(0, resources.displayMetrics.heightPixels - size)
+                params.x = (params.x + dx).coerceIn(0, (availableBounds().width() - size).coerceAtLeast(0))
+                params.y = (params.y + dy).coerceIn(0, (availableBounds().height() - size).coerceAtLeast(0))
                 windowManager.updateViewLayout(icon, params)
             },
             onTap = ::onBubbleTapped,
+            onRelease = {
+                val maxX = (availableBounds().width() - size).coerceAtLeast(0)
+                params.x = if (params.x < maxX / 2) 0 else maxX
+                windowManager.updateViewLayout(icon, params)
+                getSharedPreferences("bubble_position", MODE_PRIVATE).edit().putInt("x", params.x).putInt("y", params.y).apply()
+            },
         ))
 
         runCatching { windowManager.addView(icon, params) }
@@ -139,29 +163,70 @@ class BubbleOverlayService : Service() {
     }
 
     private fun onBubbleTapped() {
-        if (CaptureManager.sessionActive) {
-            ScreenCaptureService.captureNow(this)
-        } else {
-            CaptureConsentActivity.launch(this, autoCapture = true)
-        }
+        hidePanel()
+        val menu = basePanel()
+        menu.addView(panelHeader("Translation controls") { hidePanel() })
+        menu.addView(pillButton("Stop Translation • إيقاف الترجمة") {
+            startJob?.cancel()
+            ScreenCaptureService.stop(this)
+            clearTranslations()
+            hidePanel()
+            CaptureManager.reset()
+        })
+        menu.addView(pillButton("Start Translation • بدء الترجمة") {
+            hidePanel()
+            clearTranslations()
+            startJob?.cancel()
+            startJob = scope.launch {
+                bubbleView?.visibility = View.INVISIBLE
+                try {
+                    // Let removal reach the compositor before requesting a new frame.
+                    kotlinx.coroutines.delay(250)
+                    if (CaptureManager.sessionActive) ScreenCaptureService.captureNow(this@BubbleOverlayService)
+                    else CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true)
+                } finally { bubbleView?.visibility = View.VISIBLE }
+            }
+        })
+        menu.addView(pillButton("Open App • فتح التطبيق") {
+            hidePanel()
+            startActivity(Intent(this, com.manhwalens.app.MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        })
+        menu.addView(pillButton("Close Menu • إغلاق") { hidePanel() })
+        attachPanel(menu)
     }
 
     // ── Result panel ───────────────────────────────────────────────
 
     private fun showPanel(result: CaptureResult, final: Boolean) {
-        val existing = panelView as? LinearLayout
-        if (existing != null) {
-            // Progressive reveal: rebuild the panel content in place to avoid flicker.
-            existing.removeAllViews()
-            populatePanel(existing, result)
-        } else {
-            val root = basePanel()
-            populatePanel(root, result)
-            attachPanel(root)
+        hidePanel()
+        clearTranslations()
+        result.blocks.filter { it.translated != it.original }.forEach { block ->
+            val region = block.region
+            val text = TextView(this).apply {
+                this.text = block.translated
+                textSize = 14f
+                setTextColor(android.graphics.Color.BLACK)
+                setBackgroundColor(android.graphics.Color.WHITE)
+                gravity = Gravity.CENTER
+                textDirection = View.TEXT_DIRECTION_RTL
+                setPadding(dp(3), dp(2), dp(3), dp(2))
+            }
+            val width = region.width.coerceIn(1, resources.displayMetrics.widthPixels)
+            val params = WindowManager.LayoutParams(width, region.height.coerceAtLeast(dp(24)), overlayType(),
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT).apply {
+                gravity = Gravity.TOP or Gravity.LEFT
+                x = region.left.coerceIn(0, resources.displayMetrics.widthPixels - width)
+                y = region.top.coerceAtLeast(0)
+                alpha = 0.8f
+            }
+            if (runCatching { windowManager.addView(text, params) }.isSuccess) translationViews.add(text)
         }
-        if (final) {
-            // T12 = the full translation is on screen; finishes the journey and persists it.
-            com.manhwalens.app.benchmarks.BenchmarkTracker.mark("T12")
+        // UI-post is a rendering proxy, not a hardware presentation timestamp.
+        bubbleView?.post {
+            if (translationViews.isNotEmpty()) com.manhwalens.app.benchmarks.BenchmarkTracker.mark("T10")
+            if (final) com.manhwalens.app.benchmarks.BenchmarkTracker.mark("T12")
         }
     }
 
@@ -183,20 +248,8 @@ class BubbleOverlayService : Service() {
     }
 
     private fun showWorking(status: CaptureManager.Status) {
-        val message = when (status) {
-            CaptureManager.Status.PREPARING -> getString(R.string.status_preparing)
-            CaptureManager.Status.READING -> getString(R.string.status_reading)
-            CaptureManager.Status.TRANSLATING -> getString(R.string.status_translating)
-            CaptureManager.Status.DOWNLOADING_MODEL -> getString(R.string.status_downloading_model)
-        }
-        if (panelView == null) {
-            val root = basePanel()
-            root.addView(panelHeader(getString(R.string.result_title)) { hidePanel() })
-            root.addView(bodyText(message, secondary = false).apply { tag = TAG_WORKING_TEXT })
-            attachPanel(root)
-        } else {
-            panelView?.findViewWithTag<TextView>(TAG_WORKING_TEXT)?.text = message
-        }
+        // Do not put our own status text into the screen being OCR'd.
+        bubbleView?.alpha = 0.65f
     }
 
     private fun showError(message: String) {
@@ -366,6 +419,7 @@ class BubbleOverlayService : Service() {
 
     override fun onDestroy() {
         stateCollectorActive = false
+        clearTranslations()
         scope.cancel()
         hidePanel()
         bubbleView?.let { view -> runCatching { windowManager.removeView(view) } }
@@ -411,6 +465,7 @@ class BubbleOverlayService : Service() {
 private class BubbleTouchListener(
     private val onDrag: (dx: Int, dy: Int) -> Unit,
     private val onTap: () -> Unit,
+    private val onRelease: () -> Unit,
 ) : View.OnTouchListener {
 
     private var downRawX = 0f
@@ -418,11 +473,12 @@ private class BubbleTouchListener(
     private var lastX = 0f
     private var lastY = 0f
     private var dragging = false
-    private val touchSlop = 14f
+    private var touchSlop = 0f
 
     override fun onTouch(view: View, event: MotionEvent): Boolean {
-        return when (event.action) {
+        return when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                touchSlop = android.view.ViewConfiguration.get(view.context).scaledTouchSlop.toFloat()
                 downRawX = event.rawX
                 downRawY = event.rawY
                 lastX = event.rawX
@@ -442,10 +498,11 @@ private class BubbleTouchListener(
                 true
             }
             MotionEvent.ACTION_UP -> {
-                if (!dragging) onTap()
+                if (!dragging) onTap() else onRelease()
                 dragging = false
                 true
             }
+            MotionEvent.ACTION_CANCEL -> { dragging = false; onRelease(); true }
             else -> false
         }
     }
