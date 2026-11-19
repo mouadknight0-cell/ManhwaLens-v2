@@ -501,7 +501,7 @@ class ScreenCaptureService : Service() {
             context = mapOf("width" to image.width.toString(), "height" to image.height.toString()), traceId = traceId)
 
         val frame = try {
-            kotlinx.coroutines.withContext(Dispatchers.Main.immediate) { imageToBitmap(image) }
+            imageToBitmap(image)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: Exception) {
             val it = failure
@@ -587,6 +587,7 @@ class ScreenCaptureService : Service() {
                 currentCoroutineContext().ensureActive()
                 if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
                 if (completed.any { it.errorCode == null && it.translated != it.original }) BenchmarkTracker.mark("T9")
+                BenchmarkTracker.setJourneyCounts(frame.width, frame.height, prepared.size, completed.size)
                 CaptureManager.setState(CaptureManager.CaptureState.Partial(CaptureResult(
                     id, System.currentTimeMillis(), OCR_SOURCE, TARGET, completed)))
                 try { com.manhwalens.app.history.TranslationSamples.collect(id, traceId, completed) }
@@ -595,6 +596,7 @@ class ScreenCaptureService : Service() {
             },
         )
         BenchmarkTracker.mark("T11")
+        BenchmarkTracker.setOutcome(if (blocks.any { it.errorCode != null }) "partial" else "ok", blocks.firstNotNullOfOrNull { it.errorCode })
         BenchmarkTracker.setJourneyCounts(frame.width, frame.height, prepared.size, blocks.size)
 
         val thumbnailPath = runCatching { history.saveThumbnail(id, ocrBitmap) }.getOrElse {
@@ -648,7 +650,13 @@ class ScreenCaptureService : Service() {
      * Sound effects are kept (original shown, not translated); empty regions are dropped.
      */
     private fun prepareRegions(regions: List<TextRegion>): List<ClassifiedRegion> {
+        val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val insets = if (Build.VERSION.SDK_INT >= 30) wm.maximumWindowMetrics.windowInsets.getInsetsIgnoringVisibility(
+            android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout()) else null
+        val top = insets?.top ?: 0
+        val bottom = pipelineHeight - (insets?.bottom ?: 0)
         return regions.asSequence()
+            .filter { com.manhwalens.app.pipeline.ReaderContentFilter.keep(it, top, bottom) }
             .map { region ->
                 val cleaned = SentenceReconstructor.normalize(region.text)
                 if (cleaned == region.text) region else region.copy(text = cleaned)

@@ -21,6 +21,8 @@ object BenchmarkTracker {
 
     @Volatile private var store: BenchmarkStore? = null
     @Volatile private var active: Session? = null
+    private var completedOutcome: Pair<String, String?>? = null
+    @Synchronized fun setOutcome(status: String, errorCode: String?) { completedOutcome = status to errorCode }
 
     fun init(context: Context) {
         store = BenchmarkStore(context.applicationContext)
@@ -43,6 +45,7 @@ object BenchmarkTracker {
     fun beginSession(traceId: String, requestedAtNs: Long = System.nanoTime()): String {
         // Close any stale journey first (e.g., previous run crashed before finishing).
         if (active != null) finish("superseded")
+        completedOutcome = null
         val id = UUID.randomUUID().toString()
         active = Session(id = id, traceId = traceId, startedAtMs = System.currentTimeMillis(), marks = LinkedHashMap())
         active?.marks?.put("T2", requestedAtNs.coerceAtMost(System.nanoTime()))
@@ -80,7 +83,7 @@ object BenchmarkTracker {
         if (s.marks.containsKey(checkpoint)) return true
         s.marks[checkpoint] = System.nanoTime()
         if (checkpoint == "T12") {
-            finish("ok")
+            finish(completedOutcome?.first ?: "ok", completedOutcome?.second)
         }
         return true
     }
@@ -109,8 +112,8 @@ object BenchmarkTracker {
             traceId = s.traceId,
             startedAtMs = s.startedAtMs,
             coldStart = cold,
-            status = status,
-            errorCode = errorCode ?: if (status == "partial") ErrorCodes.TRANSLATE_FAILED else null,
+            status = if (status in listOf("cancelled", "superseded")) completedOutcome?.first ?: status else status,
+            errorCode = errorCode ?: completedOutcome?.second ?: if (status == "partial") ErrorCodes.TRANSLATE_FAILED else null,
             t12Inferred = t12Inferred,
             frameWidth = frameWidth.takeIf { it != 0 } ?: s.frameWidth,
             frameHeight = frameHeight.takeIf { it != 0 } ?: s.frameHeight,
@@ -122,7 +125,7 @@ object BenchmarkTracker {
         if (s.marks.containsKey("M1") || status == "ok") cold = false
 
         val summary = buildString {
-            append("bench status=$status")
+            append("bench status=${record.status}")
             record.latencyMs("T0", "T1")?.let { append(" t1_usable=${it.fmt()}ms") }
             record.latencyMs("T2", "T3")?.let { append(" session_init=${it.fmt()}ms") }
             record.latencyMs("T3", "T4")?.let { append(" first_frame=${it.fmt()}ms") }
@@ -141,12 +144,12 @@ object BenchmarkTracker {
                 .onFailure { Diagnostics.error("benchmarks", "persist", ErrorCodes.BENCHMARK_RECORD_FAILED, "failed to persist benchmark record", throwable = it) }
         }
         Diagnostics.log(
-            when (status) { "ok", "cancelled", "superseded" -> LogLevel.INFO; "partial" -> LogLevel.WARN; else -> LogLevel.ERROR },
-            record.errorCode ?: when (status) { "timeout" -> ErrorCodes.CAPTURE_TIMEOUT; "error" -> "APP-JOURNEY-FAILED"; else -> ErrorCodes.APP_INFO },
+            when (record.status) { "ok", "cancelled", "superseded" -> LogLevel.INFO; "partial" -> LogLevel.WARN; else -> LogLevel.ERROR },
+            record.errorCode ?: when (record.status) { "timeout" -> ErrorCodes.CAPTURE_TIMEOUT; "error" -> "APP-JOURNEY-FAILED"; else -> ErrorCodes.APP_INFO },
             "benchmarks", "journey",
             summary,
             durationMs = record.latencyMs("T2", "T11")?.toLong(),
-            status = status,
+            status = record.status,
             traceId = s.traceId,
         )
         return record

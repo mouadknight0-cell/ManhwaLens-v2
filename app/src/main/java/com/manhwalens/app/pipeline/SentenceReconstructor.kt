@@ -39,10 +39,8 @@ object SentenceReconstructor {
         // normalize ( spacing
         t = t.replace(Regex("\\(\\s+"), "(")
         t = t.replace(Regex("\\s+\\)"), ")")
-        // collapse exact word duplicates: "the the night" -> "the night"
-        t = t.replace(Regex("\\b(\\w+)\\s+\\1\\b", RegexOption.IGNORE_CASE), "$1")
-        // collapse duplicate punctuation: "!!!" -> "!", "??" -> "?"  (keep ellipses intact)
-        t = t.replace(Regex("([!?])\\1+"), "$1")
+        // Repetition and emphatic punctuation can encode hesitation/emotion. Only
+        // spatially duplicate OCR regions are deduplicated, never repeated words.
         return t.trim()
     }
 

@@ -21,9 +21,10 @@ class SentenceReconstructorTest {
     }
 
     @Test
-    fun `repeated words from overlapping OCR are collapsed`() {
-        assertEquals("the night", SentenceReconstructor.normalize("the the night"))
-        assertEquals("go away", SentenceReconstructor.normalize("go  go away"))
+    fun `intentional repetition and emotion are preserved`() {
+        assertEquals("the the night", SentenceReconstructor.normalize("the the night"))
+        assertEquals("go go away", SentenceReconstructor.normalize("go  go away"))
+        assertEquals("NO!!!", SentenceReconstructor.normalize("NO!!!"))
     }
 
     @Test

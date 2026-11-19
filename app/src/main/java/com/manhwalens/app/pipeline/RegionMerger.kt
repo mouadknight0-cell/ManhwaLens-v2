@@ -59,12 +59,12 @@ object RegionMerger {
         if (candidate.bottom < clusterTop - verticalGapPx) return false
 
         val horizontalOverlap = overlapLength(candidate.left, candidate.right, clusterLeft, clusterRight)
-        if (horizontalOverlap > 0) return true
 
         val minWidth = minOf(candidate.width, clusterRight - clusterLeft).coerceAtLeast(1)
         if (horizontalOverlap >= minWidth * horizontalOverlapRatio) return true
 
-        return horizontalDistance(candidate, clusterLeft, clusterRight) <= maxHorizontalDistancePx
+        // Adjacent balloons at the same height are different speakers, not wrapped lines.
+        return verticalGap >= 0 && horizontalDistance(candidate, clusterLeft, clusterRight) <= maxHorizontalDistancePx
     }
 
     private fun overlapLength(aLeft: Int, aRight: Int, bLeft: Int, bRight: Int): Int =

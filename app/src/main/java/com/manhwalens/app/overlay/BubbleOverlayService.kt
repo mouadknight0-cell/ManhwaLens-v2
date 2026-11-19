@@ -121,8 +121,8 @@ class BubbleOverlayService : Service() {
         running = true
         startJob = scope.launch {
             try {
-                bubbleView?.visibility = View.INVISIBLE
-                kotlinx.coroutines.delay(250)
+                // Keep a visible overlay and launch in the tap's main-thread turn.
+                // Hiding it before startActivity removes the visible-overlay BAL exemption.
                 if (CaptureManager.sessionActive) ScreenCaptureService.captureNow(this@BubbleOverlayService, requestedAtNs)
                 else CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true, requestedAtNs = requestedAtNs)
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
@@ -130,16 +130,20 @@ class BubbleOverlayService : Service() {
                 running = false
                 acceptResults = false
                 com.manhwalens.app.diagnostics.Diagnostics.error("overlay", "start_failed", "OVL-START", "floating start failed", throwable = failure)
-                showError("Unable to start capture. Open the app and check permissions.")
+                showError("تعذر بدء الالتقاط. تحقق من إذن النوافذ المنبثقة في الخلفية ثم أعد المحاولة من الفقاعة.")
             } finally { bubbleView?.visibility = View.VISIBLE }
         }
     }
 
     private val translationViews = mutableListOf<View>()
+    private var displayedResultId: String? = null
+    private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
     private fun clearTranslations() {
         translationViews.forEach { runCatching { windowManager.removeView(it) } }
         translationViews.clear()
+        displayedBlocks.clear()
+        displayedResultId = null
         translationRects.clear()
         publishBounds()
     }
@@ -316,7 +320,7 @@ class BubbleOverlayService : Service() {
                 setOnLongClickListener { Toast.makeText(this@BubbleOverlayService, description, Toast.LENGTH_SHORT).show(); true }
             }, LinearLayout.LayoutParams(buttonSize, dp(64)))
         }
-        action("▶\nبدء", "Start Capture Session / بدء جلسة الالتقاط") { startTranslation() }
+        action("▶\nترجمة", "Start Translation / بدء الترجمة") { startTranslation() }
         action("■\nإيقاف", "Stop Capture Session / إيقاف جلسة الالتقاط") { stopTranslation() }
         action("⊗\nإخفاء", "Disable Floating Icon / تعطيل الفقاعة") {
             stopTranslation()
@@ -369,39 +373,66 @@ class BubbleOverlayService : Service() {
         // StateFlow replays its last result to new subscribers: never render history over a different app.
         if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt) return
         hidePanel()
-        clearTranslations()
+        if (displayedResultId != result.id) { clearTranslations(); displayedResultId = result.id }
+        val bounds = if (Build.VERSION.SDK_INT >= 30) {
+            val metrics = windowManager.maximumWindowMetrics
+            val inset = metrics.windowInsets.getInsetsIgnoringVisibility(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
+            android.graphics.Rect(inset.left, inset.top, metrics.bounds.width() - inset.right, metrics.bounds.height() - inset.bottom)
+        } else availableBounds()
         result.blocks.filter { it.translated != it.original }.forEach { block ->
             val region = block.region
+            val key = "${region.left}:${region.top}:${region.right}:${region.bottom}:${block.translated}"
+            if (key in displayedBlocks) return@forEach
+            val width = (region.width + dp(16)).coerceIn(minOf(dp(100), bounds.width()), bounds.width())
             val text = TextView(this).apply {
                 this.text = block.translated
-                textSize = 14f
-                setAutoSizeTextTypeUniformWithConfiguration(10, 18, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
-                setTextColor(if (block.errorCode == null) android.graphics.Color.BLACK else android.graphics.Color.RED)
-                setBackgroundColor(android.graphics.Color.WHITE)
+                textSize = 16f
+                setTextColor(if (block.errorCode == null) android.graphics.Color.rgb(24, 24, 30) else android.graphics.Color.rgb(150, 30, 30))
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(android.graphics.Color.WHITE)
+                    cornerRadius = dp(10).toFloat()
+                    setStroke(dp(1), android.graphics.Color.rgb(210, 205, 220))
+                }
                 gravity = Gravity.CENTER
-                textDirection = View.TEXT_DIRECTION_RTL
-                setPadding(dp(3), dp(2), dp(3), dp(2))
+                textDirection = View.TEXT_DIRECTION_FIRST_STRONG_RTL
+                setLineSpacing(dp(2).toFloat(), 1.08f)
+                setPadding(dp(8), dp(6), dp(8), dp(6))
+                // Opaque windows must be touchable on Android 12+; otherwise touches
+                // behind them are blocked as untrusted. Tap to reveal the original.
+                contentDescription = "${block.translated}. اضغط لإظهار النص الأصلي"
             }
-            val width = region.width.coerceIn(1, resources.displayMetrics.widthPixels)
-            val params = WindowManager.LayoutParams(width, region.height.coerceAtLeast(dp(24)), overlayType(),
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            text.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(bounds.height(), View.MeasureSpec.AT_MOST))
+            val height = maxOf(text.measuredHeight, region.height + dp(8)).coerceAtMost(bounds.height())
+            val params = WindowManager.LayoutParams(width, height, overlayType(),
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT).apply {
                 gravity = Gravity.TOP or Gravity.LEFT
-                x = region.left.coerceIn(0, resources.displayMetrics.widthPixels - width)
-                y = region.top.coerceAtLeast(0)
-                alpha = 0.8f
+                x = (region.left - dp(8)).coerceIn(bounds.left, bounds.right - width)
+                y = (region.top - (height - region.height) / 2).coerceIn(bounds.top, bounds.bottom - height)
+                alpha = 1f
             }
-            translationRects.add(android.graphics.Rect(params.x, params.y, params.x + params.width, params.y + params.height))
-            publishBounds()
-            if (runCatching { windowManager.addView(text, params) }.isSuccess) translationViews.add(text)
+            val rect = android.graphics.Rect(params.x, params.y, params.x + width, params.y + height)
+            text.setOnClickListener {
+                runCatching { windowManager.removeView(text) }
+                translationViews.remove(text); translationRects.remove(rect); publishBounds()
+            }
+            if (runCatching { windowManager.addView(text, params) }.isSuccess) {
+                translationViews.add(text); translationRects.add(rect); displayedBlocks.add(key)
+                publishBounds()
+            }
         }
-        // UI-post is a rendering proxy, not a hardware presentation timestamp.
+        // Exact result identity prevents a queued callback marking a newer journey.
         bubbleView?.post {
             val current = CaptureManager.state.value
-            if (current !is CaptureManager.CaptureState.Partial && current !is CaptureManager.CaptureState.Done) return@post
+            val currentId = when (current) {
+                is CaptureManager.CaptureState.Partial -> current.result.id
+                is CaptureManager.CaptureState.Done -> current.result.id
+                else -> null
+            }
+            if (currentId != result.id || displayedResultId != result.id || translationViews.isEmpty()) return@post
             if (result.blocks.any { it.errorCode == null && it.translated != it.original }) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T10")
-            if (final && result.blocks.isNotEmpty() && result.blocks.all { it.errorCode == null }) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T12")
+            if (final) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T12")
         }
     }
 

@@ -18,7 +18,7 @@ object RegionFilter {
             .map { it.copy(text = it.text.trim()) }
             .filter { it.text.isNotEmpty() }
             .filter { it.height >= minHeightPx }
-            .filter { letterRatio(it.text) >= minLetterRatio }
+            .filter { letterRatio(it.text) >= minLetterRatio || (it.text.any { c -> c.isLetter() } && it.text.all { c -> c.isLetter() || c.isWhitespace() || c in "!?.,…'’\"-" }) }
             .distinctBy { DedupKey(it.text.lowercase(), it.left, it.top) }
             .toList()
 
