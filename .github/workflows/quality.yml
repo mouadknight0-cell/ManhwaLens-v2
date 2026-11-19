@@ -32,7 +32,7 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: chmod +x gradlew && ./gradlew connectedDebugAndroidTest --stacktrace
+          script: bash .github/scripts/android-quality.sh
       - name: Test evidence
         if: always()
         uses: actions/upload-artifact@v4
