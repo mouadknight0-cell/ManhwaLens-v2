@@ -6,7 +6,6 @@ import com.manhwalens.app.translate.DialogueLexicon
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
-import javax.imageio.ImageIO
 
 class QualityAndCircleTest {
     private fun r(text: String, bottom: Int = 400) = TextRegion(text, 100, bottom - 30, 300, bottom)
@@ -53,14 +52,16 @@ class QualityAndCircleTest {
         assertEquals(80, CircleGeometry.diameter(20, 20, 140, 80))
     }
     @Test fun realPhoneCropSeparatesLightGapFromInk() {
-        val image = ImageIO.read(javaClass.getResourceAsStream("/phone-report/conference-text.png"))
-        assertEquals(285, image.width)
+        val rowsOfPixels = javaClass.getResourceAsStream("/phone-report/conference-light.txt")!!.bufferedReader().use { it.readLines() }
+        val width = rowsOfPixels.first().length
+        val height = rowsOfPixels.size
+        assertEquals(285, width)
         val a = TextRegion("A", 40, 0, 230, 1)
-        fun light(x: Int, y: Int) = (image.getRGB(x, y) and 255) >= 225
-        val rows = (2 until image.height - 1)
+        fun light(x: Int, y: Int) = rowsOfPixels[y][x] == '1'
+        val rows = (2 until height - 1)
         val clear = rows.first { y -> (40 until 230).count { light(it, y) } > 185 }
         val ink = rows.first { y -> (40 until 230).count { light(it, y) } < 120 }
-        fun boundary(y: Int) = LightCorridor.isClear(a.copy(bottom = y), a.copy(top = y, bottom = y + 1), image.width, image.height, ::light)
+        fun boundary(y: Int) = LightCorridor.isClear(a.copy(bottom = y), a.copy(top = y, bottom = y + 1), width, height, ::light)
         assertTrue(boundary(clear))
         assertFalse(boundary(ink))
     }

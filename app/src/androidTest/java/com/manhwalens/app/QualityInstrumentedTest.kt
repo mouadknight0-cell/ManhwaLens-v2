@@ -34,7 +34,7 @@ class QualityInstrumentedTest {
         instrumentation.runOnMainSync {
             for (diameter in listOf(240, 420, 600)) {
                 val view = CircularTranslationView(instrumentation.targetContext, diameter,
-                    "هذه جملة عربية طويلة لاختبار وضوح النص وعدم اقتطاعه. ".repeat(20))
+                    "هذه جملة عربية طويلة لاختبار وضوح النص وعدم اقتطاعه. ".repeat(200))
                 val exact = View.MeasureSpec.makeMeasureSpec(diameter, View.MeasureSpec.EXACTLY)
                 view.measure(exact, exact)
                 view.layout(0, 0, diameter, diameter)
@@ -46,7 +46,7 @@ class QualityInstrumentedTest {
                 assertEquals(255, Color.alpha(bitmap.getPixel(diameter / 2, diameter / 2)))
                 val scroll = view.getChildAt(0) as ScrollView
                 val label = scroll.getChildAt(0) as TextView
-                assertTrue(label.height > scroll.height)
+                assertTrue("long content height=${label.height}, viewport=${scroll.height}, chars=${label.text.length}", label.height > scroll.height)
                 assertTrue(label.textSize >= 12 * view.resources.displayMetrics.scaledDensity - 0.1f)
                 var dismissed = false
                 view.setOnLongClickListener { dismissed = true; true }

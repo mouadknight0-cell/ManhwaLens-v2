@@ -60,7 +60,16 @@ jobs:
           exit 1
 
       - name: Compile test sources
-        run: ./gradlew :app:compileDebugUnitTestKotlin --stacktrace --no-daemon
+        id: compile-tests
+        shell: bash
+        run: ./gradlew :app:compileDebugUnitTestKotlin --stacktrace --no-daemon 2>&1 | tee /tmp/compile-tests.log
+
+      - name: Annotate test compiler errors
+        if: failure() && steps.compile-tests.outcome == 'failure'
+        run: |
+          grep -E 'e: |error:' /tmp/compile-tests.log | head -30 | while IFS= read -r line; do
+            echo "::error::${line//'%'/'%25'}"
+          done
 
       - name: Unit tests
         id: unit-tests
