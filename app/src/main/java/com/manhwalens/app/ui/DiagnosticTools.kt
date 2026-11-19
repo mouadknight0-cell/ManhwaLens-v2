@@ -26,6 +26,10 @@ import java.io.File
 fun DiagnosticTools() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val uiErrors = remember(context) { kotlinx.coroutines.CoroutineExceptionHandler { _, failure ->
+        com.manhwalens.app.diagnostics.Diagnostics.error("diagnostics_ui", "action_failed", "DIAG-UI", "diagnostic action failed", throwable = failure)
+        Toast.makeText(context, "Action failed. Check storage and retry.", Toast.LENGTH_SHORT).show()
+    } }
     val modelState by com.manhwalens.app.translate.LanguageModels.state.collectAsState()
     var report by remember { mutableStateOf("") }
     var saved by remember { mutableStateOf(emptyList<File>()) }
@@ -53,14 +57,14 @@ fun DiagnosticTools() {
         Text("File size / percentage: unavailable from ML Kit. Installation and a translation test are checked before Ready.")
         if (modelState.busy) androidx.compose.material3.LinearProgressIndicator()
         TextButton(enabled = !modelState.busy, onClick = {
-            scope.launch { com.manhwalens.app.translate.LanguageModels.ensureReady(forceProbe = true) }
+            scope.launch(uiErrors) { com.manhwalens.app.translate.LanguageModels.ensureReady(forceProbe = true) }
         }) { Text(if (modelState.ready) "Verify Language File" else "Download Language File / Retry") }
         Text("Translation samples are collected automatically on this device only (latest 200 pairs). Review before sharing; they may contain captured text.")
-        TextButton(onClick = { scope.launch {
+        TextButton(onClick = { scope.launch(uiErrors) {
             val samples = withContext(Dispatchers.IO) { com.manhwalens.app.history.TranslationSamples.export() }
             copy(if (samples.length <= 100000) samples else samples.take(100000) + "\n[Truncated for clipboard. Use Export Samples for the full file.]")
         } }) { Text("Copy Translated Text") }
-        TextButton(onClick = { scope.launch {
+        TextButton(onClick = { scope.launch(uiErrors) {
             val file = withContext(Dispatchers.IO) {
                 File(context.filesDir, "diagnostics/translation-samples.txt").apply {
                     parentFile?.mkdirs()
@@ -72,22 +76,22 @@ fun DiagnosticTools() {
                 type = "text/plain"; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }, "Export Translation Samples"))
         } }) { Text("Export Samples") }
-        TextButton(onClick = { scope.launch {
+        TextButton(onClick = { scope.launch(uiErrors) {
             withContext(Dispatchers.IO) { com.manhwalens.app.history.TranslationSamples.clear() }
             Toast.makeText(context, "Samples cleared", Toast.LENGTH_SHORT).show()
         } }) { Text("Clear Translation Samples") }
-        TextButton(onClick = { scope.launch {
+        TextButton(onClick = { scope.launch(uiErrors) {
             refresh()
             val bugs = withContext(Dispatchers.IO) { saved.take(20).joinToString("\n\n") { it.readText() } }
             copy(if (bugs.length <= 150000) bugs.ifBlank { "No saved bugs" } else bugs.take(150000) + "\n[Report truncated for clipboard; share individual TXT files for full content]")
         } }) { Text("Copy Bugs (latest 20)") }
-        TextButton(onClick = { scope.launch { refresh(); copy(report) } }) { Text("Copy Benchmark Results") }
-        TextButton(onClick = { scope.launch { refresh(); selected = report } }) { Text("View Benchmarks / Comparisons") }
+        TextButton(onClick = { scope.launch(uiErrors) { refresh(); copy(report) } }) { Text("Copy Benchmark Results") }
+        TextButton(onClick = { scope.launch(uiErrors) { refresh(); selected = report } }) { Text("View Benchmarks / Comparisons") }
         Text("Reports stay on this device. Do not enter credentials or private screen text.")
         OutlinedTextField(value = category, onValueChange = { category = it.take(100) }, label = { Text("Problem category") })
         OutlinedTextField(value = description, onValueChange = { description = it.take(2000) }, label = { Text("Optional description") })
         TextButton(onClick = {
-            scope.launch {
+            scope.launch(uiErrors) {
                 val ok = withContext(Dispatchers.IO) {
                     runCatching {
                         val file = ExportManager.exportAll(context) ?: error("Export failed")
@@ -107,8 +111,8 @@ fun DiagnosticTools() {
         Text("Saved issues (${saved.size})")
         saved.forEach { file ->
             Text(file.name)
-            TextButton(onClick = { scope.launch { selected = withContext(Dispatchers.IO) { file.readText() } } }) { Text("View") }
-            TextButton(onClick = { scope.launch { copy(withContext(Dispatchers.IO) { file.readText() }) } }) { Text("Copy report") }
+            TextButton(onClick = { scope.launch(uiErrors) { selected = withContext(Dispatchers.IO) { file.readText() } } }) { Text("View") }
+            TextButton(onClick = { scope.launch(uiErrors) { copy(withContext(Dispatchers.IO) { file.readText() }) } }) { Text("Copy report") }
             TextButton(onClick = {
                 val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                 context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {

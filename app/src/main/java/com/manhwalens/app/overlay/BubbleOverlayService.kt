@@ -76,7 +76,7 @@ class BubbleOverlayService : Service() {
         collapseActions()
         hidePanel()
         clearTranslations()
-        CaptureManager.reset()
+        CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.PREPARING))
         acceptResults = true
         requestedAt = System.currentTimeMillis()
         val requestedAtNs = System.nanoTime()
@@ -228,7 +228,7 @@ class BubbleOverlayService : Service() {
         val bubble = bubbleParams ?: return
         val bounds = availableBounds()
         val buttonSize = dp(48)
-        val width = buttonSize * 3
+        val width = buttonSize * 4
         val dock = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
@@ -242,7 +242,13 @@ class BubbleOverlayService : Service() {
                 setTextColor(if (enabled) PANEL_TEXT else PANEL_SECONDARY_TEXT)
                 isEnabled = enabled
                 isClickable = true
-                setOnClickListener { event(description); handler() }
+                setOnClickListener {
+                    event(description)
+                    try { handler() } catch (failure: Exception) {
+                        com.manhwalens.app.diagnostics.Diagnostics.error("overlay", "action_failed", "OVL-ACTION", "floating action failed", throwable = failure)
+                        Toast.makeText(this@BubbleOverlayService, "Action failed; check permissions in the app", Toast.LENGTH_SHORT).show()
+                    }
+                }
                 setOnLongClickListener { Toast.makeText(this@BubbleOverlayService, description, Toast.LENGTH_SHORT).show(); true }
             }, LinearLayout.LayoutParams(buttonSize, buttonSize))
         }
@@ -253,6 +259,12 @@ class BubbleOverlayService : Service() {
             (application as ManhwaLensApp).settingsRepository.setBubbleEnabled(false)
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
+        }
+        action("↗", "Open App / فتح التطبيق") {
+            collapseActions()
+            clearTranslations()
+            acceptResults = false
+            startActivity(Intent(this, com.manhwalens.app.MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
         val params = WindowManager.LayoutParams(width, buttonSize, overlayType(),
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
