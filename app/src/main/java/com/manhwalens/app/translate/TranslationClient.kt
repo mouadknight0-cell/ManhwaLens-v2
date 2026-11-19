@@ -74,6 +74,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             null
         }
         if (raw == null) {
+            LanguageModels.invalidate()
             Diagnostics.warn("translate", "translate_timeout", "translation timed out; keeping original text",
                 code = ErrorCodes.TRANSLATE_TIMEOUT,
                 context = mapOf("chars" to trimmed.length.toString()), recovery = "original shown")

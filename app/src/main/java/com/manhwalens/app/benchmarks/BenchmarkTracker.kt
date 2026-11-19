@@ -40,12 +40,12 @@ object BenchmarkTracker {
     fun uiUsableNs(): Long = appT1
 
     @Synchronized
-    fun beginSession(traceId: String): String {
+    fun beginSession(traceId: String, requestedAtNs: Long = System.nanoTime()): String {
         // Close any stale journey first (e.g., previous run crashed before finishing).
         if (active != null) finish("superseded")
         val id = UUID.randomUUID().toString()
         active = Session(id = id, traceId = traceId, startedAtMs = System.currentTimeMillis(), marks = LinkedHashMap())
-        mark("T2")
+        active?.marks?.put("T2", requestedAtNs.coerceAtMost(System.nanoTime()))
         return id
     }
 

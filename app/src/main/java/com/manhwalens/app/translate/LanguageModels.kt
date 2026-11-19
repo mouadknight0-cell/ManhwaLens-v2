@@ -18,6 +18,7 @@ object LanguageModels {
     private val mutable = MutableStateFlow(State())
     val state = mutable.asStateFlow()
     private val mutex = Mutex()
+    fun invalidate() { mutable.value = State("Translation failed. Verify the language file or retry.") }
 
     suspend fun ensureReady(forceProbe: Boolean = false): Boolean = mutex.withLock {
         val model = TranslateRemoteModel.Builder(TranslateLanguage.ARABIC).build()

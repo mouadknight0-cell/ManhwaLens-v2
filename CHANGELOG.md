@@ -64,3 +64,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Bubble direction fix, edge snapping and Start/Stop controls.
 - Bounded progressive region translation; Copy Benchmark and local issue reports.
 - Device validation and old-certificate migration remain unverified; see docs/DEVICE-FOLLOWUP-1.1.1.md.
+
+## [1.1.2] - 2026-11-19
+
+- Connected floating Start/Stop/Disable action dock; stale result and consent-generation guards.
+- Separate model verification timings, request-based latency and journey-bound render marks.
+- Verified language model download UI, automatic bounded bug reports and local translation samples.
+- Preserve OCR block boundaries and translate short uppercase dialogue rather than discarding it as SFX.
+- Physical-device verification remains pending; see docs/DEVICE-FOLLOWUP-1.1.2.md.

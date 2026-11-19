@@ -6,7 +6,8 @@ object BenchmarkReport {
         appendLine("T10/T12 are UI-post proxies, not measured hardware presentation.")
         appendLine("Cold = first successful journey of this process; not proof of a model download.")
         appendLine("M0→M1 = model availability / download / usability verification; T8→T11 = inference pipeline.")
-        records.distinctBy { it.id }.forEachIndexed { index, r ->
+        val unique = records.distinctBy { it.id }
+        unique.forEachIndexed { index, r ->
             appendLine("\nRun ${index + 1}: ${r.startedAtMs} | ${r.status} | cold=${r.coldStart}")
             appendLine("Trace ID: ${r.traceId} | Session: ${r.id}")
             appendLine("Frame: ${r.frameWidth}×${r.frameHeight}; regions=${r.regionCount}; blocks=${r.blockCount}")
@@ -26,7 +27,7 @@ object BenchmarkReport {
             appendLine("Process-to-result (includes user idle): ${r.totalMs()} ms")
             appendLine("Slowest measured stage: ${stages.filterValues { it != null }.maxByOrNull { it.value!! }?.key ?: "unavailable"}")
             appendLine("Raw monotonic marks (ns): ${r.marks}")
-            records.getOrNull(index + 1)?.let { previous ->
+            unique.getOrNull(index + 1)?.let { previous ->
                 val now = r.latencyMs("T2", "T11")
                 val old = previous.latencyMs("T2", "T11")
                 if (now != null && old != null) appendLine("Completion delta vs prior run: ${now - old} ms (different content may not be comparable)")

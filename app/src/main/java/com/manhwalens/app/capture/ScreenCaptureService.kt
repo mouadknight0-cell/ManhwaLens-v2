@@ -67,6 +67,7 @@ import java.util.concurrent.atomic.AtomicReference
 class ScreenCaptureService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var requestNs = 0L
     private var captureJob: kotlinx.coroutines.Job? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -134,6 +135,7 @@ class ScreenCaptureService : Service() {
     override fun onBind(intent: Intent?) = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        requestNs = intent?.getLongExtra("request_ns", System.nanoTime()) ?: System.nanoTime()
         when (intent?.action) {
             ACTION_START_SESSION -> handleStartSession(intent)
             ACTION_CAPTURE -> handleCapture()
@@ -381,7 +383,7 @@ class ScreenCaptureService : Service() {
 
         // A journey = one capture → Arabic on screen. Trace id chains every stage.
         val traceId = Diagnostics.newTrace()
-        val journeyId = BenchmarkTracker.beginSession(traceId)
+        val journeyId = BenchmarkTracker.beginSession(traceId, requestNs.takeIf { it > 0 } ?: System.nanoTime())
         Diagnostics.info("capture", "capture_start", "capture journey started", traceId = traceId,
             context = mapOf("journey_id" to journeyId))
         BenchmarkTracker.mark("T3") // session is active (projection + pipeline held)
@@ -698,9 +700,10 @@ class ScreenCaptureService : Service() {
         private const val MAX_BUFFERED_FRAMES = 3
         private const val VIRTUAL_DISPLAY_NAME = "ManhwaLensCapture"
 
-        fun startSession(context: Context, resultCode: Int, resultData: Intent, autoCapture: Boolean) {
+        fun startSession(context: Context, resultCode: Int, resultData: Intent, autoCapture: Boolean, requestedAtNs: Long = System.nanoTime()) {
             val intent = Intent(context, ScreenCaptureService::class.java).apply {
                 action = ACTION_START_SESSION
+                putExtra("request_ns", requestedAtNs)
                 putExtra(EXTRA_RESULT_CODE, resultCode)
                 putExtra(EXTRA_RESULT_DATA, resultData)
                 putExtra(EXTRA_AUTO_CAPTURE, autoCapture)
@@ -717,8 +720,8 @@ class ScreenCaptureService : Service() {
             }
         }
 
-        fun captureNow(context: Context) {
-            val intent = Intent(context, ScreenCaptureService::class.java).apply { action = ACTION_CAPTURE }
+        fun captureNow(context: Context, requestedAtNs: Long = System.nanoTime()) {
+            val intent = Intent(context, ScreenCaptureService::class.java).apply { action = ACTION_CAPTURE; putExtra("request_ns", requestedAtNs) }
             context.startService(intent)
         }
 

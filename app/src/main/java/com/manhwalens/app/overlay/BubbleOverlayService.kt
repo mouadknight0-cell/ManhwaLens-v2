@@ -79,13 +79,14 @@ class BubbleOverlayService : Service() {
         CaptureManager.reset()
         acceptResults = true
         requestedAt = System.currentTimeMillis()
+        val requestedAtNs = System.nanoTime()
         running = true
         startJob = scope.launch {
             try {
                 bubbleView?.visibility = View.INVISIBLE
                 kotlinx.coroutines.delay(250)
-                if (CaptureManager.sessionActive) ScreenCaptureService.captureNow(this@BubbleOverlayService)
-                else CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true)
+                if (CaptureManager.sessionActive) ScreenCaptureService.captureNow(this@BubbleOverlayService, requestedAtNs)
+                else CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true, requestedAtNs = requestedAtNs)
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (failure: Exception) {
                 running = false

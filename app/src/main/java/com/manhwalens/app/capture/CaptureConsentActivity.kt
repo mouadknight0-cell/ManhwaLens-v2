@@ -26,7 +26,7 @@ class CaptureConsentActivity : ComponentActivity() {
         }
         if (result.resultCode == RESULT_OK && data != null) {
             val autoCapture = intent.getBooleanExtra(ScreenCaptureService.EXTRA_AUTO_CAPTURE, true)
-            ScreenCaptureService.startSession(this, result.resultCode, data, autoCapture)
+            ScreenCaptureService.startSession(this, result.resultCode, data, autoCapture, intent.getLongExtra("request_ns", System.nanoTime()))
         } else {
             CaptureManager.setState(CaptureManager.CaptureState.Error(getString(com.manhwalens.app.R.string.error_capture_denied)))
         }
@@ -48,10 +48,11 @@ class CaptureConsentActivity : ComponentActivity() {
 
     companion object {
         /** autoCapture: immediately capture one frame once the session starts (bubble tap flow). */
-        fun launch(context: Context, autoCapture: Boolean = true) {
+        fun launch(context: Context, autoCapture: Boolean = true, requestedAtNs: Long = System.nanoTime()) {
             val intent = Intent(context, CaptureConsentActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                putExtra("request_ns", requestedAtNs)
                 putExtra("consent_generation", CaptureManager.consentGeneration.get())
                 putExtra(ScreenCaptureService.EXTRA_AUTO_CAPTURE, autoCapture)
             }
