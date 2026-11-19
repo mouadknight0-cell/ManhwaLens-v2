@@ -358,7 +358,17 @@ class ScreenCaptureService : Service() {
             previous?.join()
             if (BenchmarkTracker.isActive()) BenchmarkTracker.finish("cancelled")
             kotlinx.coroutines.delay(delayMs)
-            captureFrame()
+            try {
+                captureFrame()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                BenchmarkTracker.finish("cancelled")
+                throw cancelled
+            } catch (failure: Exception) {
+                Diagnostics.error("capture", "journey_failed", ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED,
+                    "capture journey failed", throwable = failure)
+                BenchmarkTracker.finish("error", errorCode = ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED)
+                CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_capture_generic)))
+            }
         }
     }
 
@@ -409,6 +419,7 @@ class ScreenCaptureService : Service() {
         val history: HistoryStore = (application as ManhwaLensApp).historyStore
 
         val ocrBitmap = runCatching { frame.downscaleTo(OCR_MAX_DIMENSION) }.getOrDefault(frame)
+        try {
         BenchmarkTracker.mark("T5")
 
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.READING))
@@ -416,7 +427,6 @@ class ScreenCaptureService : Service() {
         val regions = runCatching { textRecognition.recognize(ocrBitmap, OCR_SOURCE) }.getOrElse {
             Diagnostics.error("ocr", "recognize", ErrorCodes.OCR_EXEC_FAILED,
                 "OCR execution failed", throwable = it, recovery = "journey aborted; user can retry")
-            releaseIfDifferent(frame, ocrBitmap)
             if (it is kotlinx.coroutines.CancellationException) throw it
             BenchmarkTracker.finish("error", errorCode = ErrorCodes.OCR_EXEC_FAILED)
             CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_ocr_failed), ErrorCodes.OCR_EXEC_FAILED))
@@ -448,7 +458,6 @@ class ScreenCaptureService : Service() {
             Diagnostics.error("translate", "ensure_model", ErrorCodes.TRANSLATE_DOWNLOAD_FAILED,
                 "EN→AR model unavailable (download failed or network offline)",
                 recovery = "journey aborted; retry with network access")
-            releaseIfDifferent(frame, ocrBitmap)
             BenchmarkTracker.finish("error", errorCode = ErrorCodes.TRANSLATE_DOWNLOAD_FAILED)
             CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_translation_model), ErrorCodes.TRANSLATE_DOWNLOAD_FAILED))
             return
@@ -493,7 +502,6 @@ class ScreenCaptureService : Service() {
                 Diagnostics.warn("history", "add", "failed to persist capture result",
                     code = ErrorCodes.HISTORY_WRITE_FAILED, throwable = it, traceId = traceId)
             }
-        releaseIfDifferent(frame, ocrBitmap)
 
         Diagnostics.info("capture", "journey_done", "capture journey complete",
             traceId = traceId, context = mapOf("blocks" to blocks.size.toString()))
@@ -502,6 +510,9 @@ class ScreenCaptureService : Service() {
         // Note: T12 is marked by the UI when the final result is rendered; if it
         // never happens (e.g., app backgrounded without the bubble) the record
         // falls back to T11 with t12Inferred=true.
+        } finally {
+            releaseIfDifferent(frame, ocrBitmap)
+        }
     }
 
     /** A region with its dialogue/narration/sfx verdict. */
