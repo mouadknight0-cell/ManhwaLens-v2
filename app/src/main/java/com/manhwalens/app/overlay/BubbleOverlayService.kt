@@ -382,7 +382,7 @@ class BubbleOverlayService : Service() {
     private fun showPanel(result: CaptureResult, final: Boolean) {
         // StateFlow replays its last result to new subscribers: never render history over a different app.
         if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt || dismissedPanelId == result.id) return
-        if (readingPanelId == result.id) { showReadingPanel(result, final); return }
+        if (readingPanelId == result.id) { return }
         hidePanel()
         if (displayedResultId != result.id) { clearTranslations(); displayedResultId = result.id }
         val bounds = if (Build.VERSION.SDK_INT >= 30) {
@@ -397,11 +397,13 @@ class BubbleOverlayService : Service() {
             // Failure messages are indicators, not replacements for the OCR rectangle.
             // A spurious giant OCR box must never become a giant opaque error card.
             val failed = block.errorCode != null
-            val width = if (failed) minOf(dp(140), bounds.width(), bounds.height()) else
-                CircleGeometry.diameter(region.width + dp(16), region.height + dp(16),
-                    dp(140), minOf(dp(300), bounds.width(), bounds.height()))
+            val width = if (failed) minOf(dp(48), bounds.width(), bounds.height()) else
+                CircleGeometry.diameter(region.width + dp(8), region.height + dp(8),
+                    dp(64), minOf(dp(160), bounds.width(), bounds.height()))
             val height = width
-            val text = CircularTranslationView(this, width, block.translated, failed)
+            val text = CircularTranslationView(this, width, if (failed) "!" else block.translated, failed)
+            text.contentDescription = "${block.translated}. اضغط لعرض النص الأصلي والتفاصيل"
+            text.setOnClickListener { showReadingPanel(result.copy(blocks = listOf(block)), final) }
             val params = WindowManager.LayoutParams(width, height, overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT).apply {
@@ -418,14 +420,11 @@ class BubbleOverlayService : Service() {
             val placement = CardPlacement.place(CardPlacement.Box(params.x, params.y, params.x + width, params.y + height),
                 CardPlacement.Box(bounds.left, bounds.top, bounds.right, bounds.bottom), occupied, dp(6))
             if (placement == null || kotlin.math.abs(placement.top - params.y) > dp(100) || kotlin.math.abs(placement.left - params.x) > dp(100)) {
-                showReadingPanel(result, final)
+                showReadingLauncher(result, final)
                 return
             }
-            if (!failed && !CircleGeometry.covers(placement,
-                    CardPlacement.Box(region.left, region.top, region.right, region.bottom))) {
-                showReadingPanel(result, final)
-                return
-            }
+            // A circle cannot mask every elongated source rectangle without
+            // excessive growth. Never open a giant reader merely for coverage.
             params.x = placement.left; params.y = placement.top
             val card: View = text
             val rect = android.graphics.Rect(params.x, params.y, params.x + width, params.y + height)
@@ -442,6 +441,31 @@ class BubbleOverlayService : Service() {
             }
         }
         markRendered(result, final)
+    }
+
+    /** Crowding offers an explicit reader button; never automatically obscures the page. */
+    private fun showReadingLauncher(result: CaptureResult, final: Boolean) {
+        clearTranslations()
+        hidePanel()
+        displayedResultId = result.id
+        val bounds = availableBounds()
+        val size = minOf(dp(48), bounds.width(), bounds.height())
+        val launcher = CircularTranslationView(this, size, "≡")
+        launcher.contentDescription = "عرض ${result.blocks.size} ترجمات وتفاصيل الأخطاء"
+        launcher.setOnClickListener { showReadingPanel(result, final) }
+        launcher.setOnLongClickListener { dismissedPanelId = result.id; hidePanel(); true }
+        val params = WindowManager.LayoutParams(size, size, overlayType(),
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT).apply {
+            gravity = Gravity.TOP or Gravity.LEFT
+            x = bounds.left + dp(8).coerceAtMost(bounds.width() - size)
+            y = bounds.top + (bounds.height() - size) / 2
+        }
+        if (runCatching { windowManager.addView(launcher, params) }.isSuccess) {
+            panelView = launcher
+            launcher.post { publishBounds() }
+        }
+        // No T10/T12: a launcher is not a displayed translation.
     }
 
     private fun showReadingPanel(result: CaptureResult, final: Boolean) {

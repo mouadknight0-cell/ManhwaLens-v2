@@ -3,6 +3,14 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.14] - 2026-11-19
+
+- Add explicit opt-in unified TXT creation: save through Android document picker or share one UTF-8 attachment containing retained translations/history, benchmarks, errors, logs and bug reports. Automatic diagnostic bundles remain content-free.
+- Stop automatic giant circular reader fallback. Use smaller per-region circles, compact error buttons, and an explicit reader launcher on crowding; tap for details, long-press to dismiss.
+- Avoid labelling standalone numbers as OCR failures. Detect evidenced dark browser navigation bands only with a visible address; skip multi-marker loading pages and record exclusions.
+- Flag near-bottom truncated text using glyph-height tolerance rather than only three pixels. Preserve error/history evidence.
+- Semantic ML Kit limitations and physical-device performance remain unresolved; see docs/REPORT-1.1.14.md.
+
 ## [1.1.13] - 2026-11-19
 
 - True circular translation/error surfaces and bounded circular reader; inscribed text area, 12–18sp fitting, internal scrolling, long-press dismissal, and short entrance animation.

@@ -546,8 +546,9 @@ class ScreenCaptureService : Service() {
             invalidateSession("Wrong capture source. Session stopped. Open the reader and grant a NEW full-screen capture permission.", "CAP-WRONG-SOURCE")
             return
         }
-        if (com.manhwalens.app.pipeline.ReaderContentFilter.isTabOverview(regions)) {
-            Diagnostics.info("capture", "reader_skip", "tab overview skipped; waiting for reader content", traceId = traceId)
+        if (com.manhwalens.app.pipeline.ReaderContentFilter.isTabOverview(regions) ||
+            com.manhwalens.app.pipeline.ReaderContentFilter.isLoadingPage(regions)) {
+            Diagnostics.info("capture", "reader_skip", "browser overview or loading page skipped; waiting for reader content", traceId = traceId)
             CaptureManager.setState(CaptureManager.CaptureState.Done(CaptureResult(journeyId, System.currentTimeMillis(), OCR_SOURCE, TARGET, emptyList())))
             if (liveEnabled) CaptureManager.setLive(CaptureManager.LiveStatus.WAITING)
             BenchmarkTracker.finish("skipped", frameWidth = frame.width, frameHeight = frame.height, regionCount = regions.size)
@@ -555,7 +556,7 @@ class ScreenCaptureService : Service() {
         }
         val prepared = prepareRegions(regions.map { it.copy(
             left = (it.left * scale).toInt(), top = (it.top * scale).toInt(),
-            right = (it.right * scale).toInt(), bottom = (it.bottom * scale).toInt()) })
+            right = (it.right * scale).toInt(), bottom = (it.bottom * scale).toInt()) }, frame)
         BenchmarkTracker.mark("T7")
         if (prepared.isEmpty()) {
             Diagnostics.warn("text", "reconstruct", "OCR produced no translatable text",
@@ -589,10 +590,7 @@ class ScreenCaptureService : Service() {
                 val started = System.nanoTime()
                 val index = prepared.indexOfFirst { it.region == region }
                 val previousSource = prepared.getOrNull(index - 1)?.region?.text
-                val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                val bottomInset = if (Build.VERSION.SDK_INT >= 30) wm.maximumWindowMetrics.windowInsets.getInsetsIgnoringVisibility(
-                    android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout()).bottom else 0
-                val issue = com.manhwalens.app.pipeline.OcrInputQuality.issue(region, pipelineHeight - bottomInset)
+                val issue = com.manhwalens.app.pipeline.OcrInputQuality.issue(region, readerContentBottom)
                 val translated = if (issue == null) translation.translateBlock(region, learnedNames, previousSource) else {
                     Diagnostics.warn("ocr", "input_quality", "OCR input requires a clearer or complete frame", code = issue,
                         context = mapOf("bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
@@ -671,14 +669,24 @@ class ScreenCaptureService : Service() {
      * Line cleanup + classification + reading order.
      * Sound effects are kept (original shown, not translated); empty regions are dropped.
      */
-    private fun prepareRegions(regions: List<TextRegion>): List<ClassifiedRegion> {
+    private var readerContentBottom: Int = 0
+    private fun prepareRegions(regions: List<TextRegion>, bitmap: android.graphics.Bitmap): List<ClassifiedRegion> {
         val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val insets = if (Build.VERSION.SDK_INT >= 30) wm.maximumWindowMetrics.windowInsets.getInsetsIgnoringVisibility(
             android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout()) else null
         val top = insets?.top ?: 0
-        val bottom = pipelineHeight - (insets?.bottom ?: 0)
+        val systemBottom = (pipelineHeight - (insets?.bottom ?: 0)).coerceAtMost(bitmap.height)
+        val bottom = com.manhwalens.app.pipeline.BrowserChrome.bottomBarTop(bitmap.width, systemBottom,
+            com.manhwalens.app.pipeline.ReaderContentFilter.hasAddress(regions)) { x, y ->
+            val pixel = bitmap.getPixel(x, y)
+            android.graphics.Color.red(pixel) < 75 && android.graphics.Color.green(pixel) < 75 && android.graphics.Color.blue(pixel) < 75
+        }
+        readerContentBottom = bottom
+        if (bottom < systemBottom) Diagnostics.info("ocr", "browser_controls", "excluded evidenced browser bottom controls",
+            context = mapOf("top" to bottom.toString(), "bottom" to systemBottom.toString(),
+                "excluded_regions" to regions.count { it.top >= bottom }.toString()))
         return regions.asSequence()
-            .filter { com.manhwalens.app.pipeline.ReaderContentFilter.keep(it, top, bottom) }
+            .filter { com.manhwalens.app.pipeline.ReaderContentFilter.keep(it, top, systemBottom) && it.top < bottom }
             .map { region ->
                 val cleaned = SentenceReconstructor.normalize(region.text)
                 if (cleaned == region.text) region else region.copy(text = cleaned)

@@ -9,6 +9,12 @@ object ReaderContentFilter {
         return text.contains("search your tabs") &&
             (text.contains("inactive items") || text.contains("unused or duplicate tabs"))
     }
+    fun hasAddress(regions: List<TextRegion>): Boolean = regions.any { address.containsMatchIn(it.text) }
+    fun isLoadingPage(regions: List<TextRegion>): Boolean {
+        val text = regions.joinToString(" ") { it.text }.lowercase()
+        return text.contains("progressive image loading") &&
+            (text.contains("stay up to date") || text.contains("manga district"))
+    }
     fun keep(region: TextRegion, contentTop: Int, contentBottom: Int): Boolean {
         if (region.top < contentTop || region.bottom > contentBottom) return false
         return !address.containsMatchIn(region.text)

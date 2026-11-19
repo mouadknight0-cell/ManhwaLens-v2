@@ -47,6 +47,8 @@ class CircularTranslationView(context: Context, diameter: Int, message: String, 
         }
         scroller = scroll
         addView(scroll, LayoutParams(inner, inner, Gravity.CENTER))
+        label.setOnClickListener { performClick() }
+        scroll.setOnClickListener { performClick() }
         label.setOnLongClickListener { performLongClick() }
         scroll.setOnLongClickListener { performLongClick() }
     }

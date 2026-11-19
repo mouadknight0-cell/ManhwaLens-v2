@@ -48,6 +48,10 @@ class QualityInstrumentedTest {
                 val label = scroll.getChildAt(0) as TextView
                 assertTrue("long content height=${label.height}, viewport=${scroll.height}, chars=${label.text.length}", label.height > scroll.height)
                 assertTrue(label.textSize >= 12 * view.resources.displayMetrics.scaledDensity - 0.1f)
+                var opened = false
+                view.setOnClickListener { opened = true }
+                label.performClick()
+                assertTrue(opened)
                 var dismissed = false
                 view.setOnLongClickListener { dismissed = true; true }
                 label.performLongClick()
@@ -56,4 +60,27 @@ class QualityInstrumentedTest {
             }
         }
     }
+    @Test fun unifiedReportIsUtf8AndIncludesAllRetainedSections() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val history = (context.applicationContext as ManhwaLensApp).historyStore
+        val region = com.manhwalens.app.pipeline.TextRegion("REPORT_RAW", 10, 20, 100, 50)
+        val block = com.manhwalens.app.pipeline.TranslatedBlock(region, "REPORT_SOURCE", "نص التقرير الكامل")
+        val capture = com.manhwalens.app.pipeline.CaptureResult("report-fixture", 1L, "en", "ar", listOf(block))
+        history.add(capture)
+        com.manhwalens.app.history.TranslationSamples.collect(capture.id, "report-test-trace", listOf(block))
+        val file = com.manhwalens.app.diagnostics.CompleteReport.create(context)
+        try {
+            val text = file.readText(Charsets.UTF_8)
+            listOf("Translation history JSON", "Translation samples JSON", "Benchmarks readable",
+                "Benchmarks JSON", "Errors JSON", "Diagnostic ring JSON", "Rotated disk log JSONL", "END OF REPORT")
+                .forEach { assertTrue("Missing section $it", text.contains(it)) }
+            assertTrue(text.contains("REPORT_RAW"))
+            assertTrue(text.contains("REPORT_SOURCE"))
+            assertTrue(text.contains("نص التقرير الكامل"))
+            assertTrue(text.contains("report-test-trace"))
+            assertTrue(file.length() > 0)
+            assertFalse(com.manhwalens.app.diagnostics.DiagnosticFilePolicy.isBugFile(file.name))
+        } finally { file.delete(); history.delete(capture.id) }
+    }
+
 }

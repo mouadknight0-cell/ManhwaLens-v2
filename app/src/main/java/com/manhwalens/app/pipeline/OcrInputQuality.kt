@@ -4,8 +4,9 @@ package com.manhwalens.app.pipeline
 object OcrInputQuality {
     fun issue(region: TextRegion, contentBottom: Int): String? {
         val text = region.text.trim()
-        if (contentBottom > 0 && region.bottom >= contentBottom - 3 &&
+        if (contentBottom > 0 && region.bottom >= contentBottom - maxOf(3, minOf(24, region.height / 2)) &&
             !text.endsWith("?") && !text.endsWith("!") && !text.endsWith(".")) return "OCR-CLIPPED"
+        if (text.all { it.isDigit() || it.isWhitespace() }) return null
         if (text.count { it.isLetter() } <= 1 || Regex("(?i)o{2,}").matches(text)) return "OCR-UNCERTAIN"
         return null
     }
