@@ -6,6 +6,8 @@ package com.manhwalens.app.translate
  */
 object DialogueLexicon {
     private val entries = mapOf(
+        "i'll help you" to "سأساعدك",
+        "i will help you" to "سأساعدك",
         "that's a relief" to "هذا مطمئن",
         "what a relief" to "يا للراحة",
         "thank goodness" to "الحمد لله",

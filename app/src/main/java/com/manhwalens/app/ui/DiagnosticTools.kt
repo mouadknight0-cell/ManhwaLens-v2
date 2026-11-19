@@ -144,20 +144,47 @@ private fun CompleteReportTools() {
     var busy by remember { mutableStateOf(false) }
     var confirmation by remember { mutableStateOf<String?>(null) }
     var feedback by remember { mutableStateOf("") }
+    var pendingPath by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     fun runExport(destination: android.net.Uri?) {
         if (busy) return
         busy = true
         scope.launch {
             try {
-                val file = CompleteReport.create(context)
+                val file = if (destination != null) {
+                    pendingPath?.let(::File)?.takeIf { it.isFile && it.length() > 0 }
+                        ?: error("Prepared report missing; create a new report")
+                } else CompleteReport.create(context)
                 if (destination != null) {
                     withContext(Dispatchers.IO) {
                         context.contentResolver.openOutputStream(destination, "wt")?.use { out ->
                             file.inputStream().use { it.copyTo(out) }
                         } ?: error("Document provider did not open the file")
+                        // Reopen after close: never report success for an empty/partial provider document.
+                        context.contentResolver.openInputStream(destination)?.use { input ->
+                            val actual = java.security.MessageDigest.getInstance("SHA-256")
+                            val buffer = ByteArray(8192)
+                            var size = 0L
+                            while (true) {
+                                val n = input.read(buffer)
+                                if (n < 0) break
+                                actual.update(buffer, 0, n); size += n
+                            }
+                            val expected = java.security.MessageDigest.getInstance("SHA-256")
+                            file.inputStream().use { source ->
+                                while (true) {
+                                    val n = source.read(buffer)
+                                    if (n < 0) break
+                                    expected.update(buffer, 0, n)
+                                }
+                            }
+                            check(size == file.length() && actual.digest().contentEquals(expected.digest())) {
+                                "Saved document verification failed"
+                            }
+                        } ?: error("Cannot verify saved document")
                         file.delete()
                     }
-                    feedback = "تم حفظ التقرير الكامل TXT"
+                    pendingPath = null
+                    feedback = "تم حفظ التقرير الكامل TXT والتحقق من محتواه"
                 } else {
                     val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                     context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
@@ -178,6 +205,7 @@ private fun CompleteReportTools() {
     val save = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.CreateDocument("text/plain")) { uri ->
         if (uri != null) runExport(uri)
+        else { pendingPath?.let(::File)?.delete(); pendingPath = null }
     }
     SettingsGroup("التقرير الكامل TXT", "ملف واحد دون نسخ أجزاء") {
         Text("يضم جميع البيانات المحتفظ بها: سجل الترجمات، العينات، البنشمارك، الأخطاء، السجلات والبلاغات. لا يستعيد البيانات المحذوفة أو القديمة التي تجاوزت حدود الاحتفاظ.")
@@ -195,7 +223,21 @@ private fun CompleteReportTools() {
         text = { Text("يتضمن النصوص الأصلية والترجمات. قد تكون شخصية؛ راجع الملف قبل مشاركته. أوقف الالتقاط مؤقتًا للحصول على تقرير ثابت. لا تُرفق الصور أو مفاتيح الإعدادات.") },
         confirmButton = { TextButton(onClick = {
             confirmation = null
-            if (mode == "save") save.launch("ManhwaLens-full-report-${System.currentTimeMillis()}.txt") else runExport(null)
+            if (mode == "save" && !busy) {
+                busy = true
+                scope.launch {
+                    try {
+                        val file = CompleteReport.create(context)
+                        pendingPath?.let(::File)?.delete()
+                        pendingPath = file.absolutePath
+                        save.launch("ManhwaLens-full-report-${System.currentTimeMillis()}.txt")
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (failure: Exception) {
+                        feedback = "تعذّر تجهيز التقرير؛ استخدم المشاركة أو أعد المحاولة"
+                        Diagnostics.error("diagnostics_ui", "prepare_save", "DIAG-EXPORT", "report preparation failed", throwable = failure)
+                    } finally { busy = false }
+                }
+            } else if (mode == "share") runExport(null)
         }) { Text("متابعة") } },
         dismissButton = { TextButton(onClick = { confirmation = null }) { Text("إلغاء") } }) }
 }
