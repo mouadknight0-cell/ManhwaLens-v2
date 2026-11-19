@@ -38,28 +38,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
     /** Downloads the EN→AR model if needed. Returns false on network/timeout/unavailable. */
     suspend fun ensureModel(source: String = SOURCE, target: String = TARGET): Boolean {
-        val key = (normalize(source) to normalize(target)).let { (s, t) ->
-            if (s == "auto") "en" to t else s to t
-        }
-        if (key.first == key.second) return true
-        if (knownPairs.contains(key)) return true
-        return try {
-            val ok = withTimeoutOrNull(MODEL_DOWNLOAD_TIMEOUT_MS) {
-                translatorFor(key.first, key.second).downloadModelIfNeeded().await()
-                true
-            } ?: false
-            if (ok) knownPairs.add(key) else {
-                Diagnostics.error("translate", "model_download", ErrorCodes.TRANSLATE_DOWNLOAD_FAILED,
-                    "EN→AR model download timed out or failed")
-            }
-            ok
-        } catch (cancelled: kotlinx.coroutines.CancellationException) {
-            throw cancelled
-        } catch (t: Throwable) {
-            Diagnostics.error("translate", "model_download", ErrorCodes.TRANSLATE_DOWNLOAD_FAILED,
-                "EN→AR model download threw", throwable = t)
-            false
-        }
+        return LanguageModels.ensureReady()
     }
 
     /** Translates one region, applying the name shield. Never throws — original text on failure. */

@@ -50,6 +50,52 @@ class BubbleOverlayService : Service() {
     private var bubbleView: View? = null
     private var bubbleParams: WindowManager.LayoutParams? = null
     private var panelView: View? = null
+    private var actionDock: View? = null
+    private var acceptResults = false
+    private var requestedAt = Long.MAX_VALUE
+    private var running = false
+    private fun event(operation: String) = com.manhwalens.app.diagnostics.Diagnostics.info("overlay", operation, "floating control event")
+    private fun collapseActions() {
+        actionDock?.let { it.animate().cancel(); runCatching { windowManager.removeView(it) } }
+        actionDock = null
+    }
+    private fun stopTranslation() {
+        event("stop_click")
+        acceptResults = false
+        startJob?.cancel()
+        ScreenCaptureService.stop(this)
+        clearTranslations()
+        hidePanel()
+        running = false
+        bubbleView?.alpha = 1f
+        collapseActions()
+    }
+    private fun startTranslation() {
+        event("start_click")
+        if (running || startJob?.isActive == true) return
+        collapseActions()
+        hidePanel()
+        clearTranslations()
+        CaptureManager.reset()
+        acceptResults = true
+        requestedAt = System.currentTimeMillis()
+        running = true
+        startJob = scope.launch {
+            try {
+                bubbleView?.visibility = View.INVISIBLE
+                kotlinx.coroutines.delay(250)
+                if (CaptureManager.sessionActive) ScreenCaptureService.captureNow(this@BubbleOverlayService)
+                else CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (failure: Exception) {
+                running = false
+                acceptResults = false
+                com.manhwalens.app.diagnostics.Diagnostics.error("overlay", "start_failed", "OVL-START", "floating start failed", throwable = failure)
+                showError("Unable to start capture. Open the app and check permissions.")
+            } finally { bubbleView?.visibility = View.VISIBLE }
+        }
+    }
+
     private val translationViews = mutableListOf<View>()
     private var startJob: kotlinx.coroutines.Job? = null
     private fun clearTranslations() {
@@ -76,6 +122,7 @@ class BubbleOverlayService : Service() {
         when (intent?.action) {
             ACTION_START -> startBubble()
             ACTION_STOP -> {
+                stopTranslation()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
@@ -107,13 +154,18 @@ class BubbleOverlayService : Service() {
         if (stateCollectorActive) return
         stateCollectorActive = true
         scope.launch {
+            CaptureManager.appVisible.collect { visible ->
+                if (visible) { acceptResults = false; clearTranslations(); collapseActions() }
+            }
+        }
+        scope.launch {
             CaptureManager.state.collect { state ->
                 when (state) {
-                    is CaptureManager.CaptureState.Done -> showPanel(state.result, final = true)
+                    is CaptureManager.CaptureState.Done -> { running = false; bubbleView?.alpha = 1f; showPanel(state.result, final = true) }
                     is CaptureManager.CaptureState.Partial -> showPanel(state.result, final = false)
-                    is CaptureManager.CaptureState.Error -> showError(state.message)
-                    is CaptureManager.CaptureState.Working -> showWorking(state.status)
-                    CaptureManager.CaptureState.Idle -> { hidePanel(); clearTranslations(); bubbleView?.alpha = 1f }
+                    is CaptureManager.CaptureState.Error -> { running = false; bubbleView?.alpha = 1f; if (acceptResults) showError(state.message) }
+                    is CaptureManager.CaptureState.Working -> { running = true; showWorking(state.status) }
+                    CaptureManager.CaptureState.Idle -> { running = false; hidePanel(); clearTranslations(); bubbleView?.alpha = 1f }
                 }
             }
         }
@@ -144,12 +196,14 @@ class BubbleOverlayService : Service() {
 
         icon.setOnTouchListener(BubbleTouchListener(
             onDrag = { dx, dy ->
+                collapseActions()
                 params.x = (params.x + dx).coerceIn(0, (availableBounds().width() - size).coerceAtLeast(0))
                 params.y = (params.y + dy).coerceIn(0, (availableBounds().height() - size).coerceAtLeast(0))
                 windowManager.updateViewLayout(icon, params)
             },
             onTap = ::onBubbleTapped,
             onRelease = {
+                event("drag_release")
                 val maxX = (availableBounds().width() - size).coerceAtLeast(0)
                 params.x = if (params.x < maxX / 2) 0 else maxX
                 windowManager.updateViewLayout(icon, params)
@@ -157,47 +211,82 @@ class BubbleOverlayService : Service() {
             },
         ))
 
-        runCatching { windowManager.addView(icon, params) }
+        val added = runCatching { windowManager.addView(icon, params) }
+        if (added.isFailure) {
+            com.manhwalens.app.diagnostics.Diagnostics.error("overlay", "attach_bubble", "OVL-ATTACH", "bubble attachment failed", throwable = added.exceptionOrNull())
+            stopSelf()
+            return
+        }
         bubbleView = icon
         bubbleParams = params
     }
 
     private fun onBubbleTapped() {
-        hidePanel()
-        val menu = basePanel()
-        menu.addView(panelHeader("Translation controls") { hidePanel() })
-        menu.addView(pillButton("Stop Translation • إيقاف الترجمة") {
-            startJob?.cancel()
-            ScreenCaptureService.stop(this)
-            clearTranslations()
-            hidePanel()
-            CaptureManager.reset()
-        })
-        menu.addView(pillButton("Start Translation • بدء الترجمة") {
-            hidePanel()
-            clearTranslations()
-            startJob?.cancel()
-            startJob = scope.launch {
-                bubbleView?.visibility = View.INVISIBLE
-                try {
-                    // Let removal reach the compositor before requesting a new frame.
-                    kotlinx.coroutines.delay(250)
-                    if (CaptureManager.sessionActive) ScreenCaptureService.captureNow(this@BubbleOverlayService)
-                    else CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true)
-                } finally { bubbleView?.visibility = View.VISIBLE }
-            }
-        })
-        menu.addView(pillButton("Open App • فتح التطبيق") {
-            hidePanel()
-            startActivity(Intent(this, com.manhwalens.app.MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        })
-        menu.addView(pillButton("Close Menu • إغلاق") { hidePanel() })
-        attachPanel(menu)
+        event("bubble_tap")
+        if (actionDock != null) { collapseActions(); return }
+        val bubble = bubbleParams ?: return
+        val bounds = availableBounds()
+        val buttonSize = dp(48)
+        val width = buttonSize * 3
+        val dock = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            background = GradientDrawable().apply { cornerRadius = dp(24).toFloat(); setColor(PANEL_BACKGROUND); setStroke(dp(2), PANEL_ACCENT) }
+            elevation = dp(8).toFloat()
+        }
+        fun action(symbol: String, description: String, enabled: Boolean = true, handler: () -> Unit) {
+            dock.addView(TextView(this).apply {
+                text = symbol; textSize = 23f; gravity = Gravity.CENTER
+                contentDescription = description
+                setTextColor(if (enabled) PANEL_TEXT else PANEL_SECONDARY_TEXT)
+                isEnabled = enabled
+                isClickable = true
+                setOnClickListener { event(description); handler() }
+                setOnLongClickListener { Toast.makeText(this@BubbleOverlayService, description, Toast.LENGTH_SHORT).show(); true }
+            }, LinearLayout.LayoutParams(buttonSize, buttonSize))
+        }
+        action("▶", "Start Translation / بدء الترجمة", !running) { startTranslation() }
+        action("■", "Stop Translation / إيقاف الترجمة") { stopTranslation() }
+        action("⊗", "Disable Floating Icon / تعطيل الفقاعة") {
+            stopTranslation()
+            (application as ManhwaLensApp).settingsRepository.setBubbleEnabled(false)
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+        }
+        val params = WindowManager.LayoutParams(width, buttonSize, overlayType(),
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            PixelFormat.TRANSLUCENT).apply {
+            gravity = Gravity.TOP or Gravity.LEFT
+            x = (if (bubble.x > bounds.width() / 2) bubble.x - width else bubble.x + dp(BUBBLE_SIZE_DP))
+                .coerceIn(0, (bounds.width() - width).coerceAtLeast(0))
+            y = bubble.y.coerceIn(0, (bounds.height() - buttonSize).coerceAtLeast(0))
+        }
+        runCatching { windowManager.addView(dock, params) }.onSuccess {
+            actionDock = dock
+            dock.alpha = 0f; dock.scaleX = 0.85f; dock.scaleY = 0.85f
+            dock.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(140).start()
+            event("controls_expanded")
+        }.onFailure {
+            com.manhwalens.app.diagnostics.Diagnostics.error("overlay", "attach_controls", "OVL-CONTROLS", "floating controls attachment failed", throwable = it)
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        collapseActions()
+        clearTranslations()
+        acceptResults = false
+        val params = bubbleParams ?: return
+        params.x = params.x.coerceIn(0, (availableBounds().width() - dp(BUBBLE_SIZE_DP)).coerceAtLeast(0))
+        params.y = params.y.coerceIn(0, (availableBounds().height() - dp(BUBBLE_SIZE_DP)).coerceAtLeast(0))
+        bubbleView?.let { runCatching { windowManager.updateViewLayout(it, params) } }
     }
 
     // ── Result panel ───────────────────────────────────────────────
 
     private fun showPanel(result: CaptureResult, final: Boolean) {
+        // StateFlow replays its last result to new subscribers: never render history over a different app.
+        if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt) return
         hidePanel()
         clearTranslations()
         result.blocks.filter { it.translated != it.original }.forEach { block ->
@@ -205,6 +294,7 @@ class BubbleOverlayService : Service() {
             val text = TextView(this).apply {
                 this.text = block.translated
                 textSize = 14f
+                setAutoSizeTextTypeUniformWithConfiguration(10, 18, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
                 setTextColor(android.graphics.Color.BLACK)
                 setBackgroundColor(android.graphics.Color.WHITE)
                 gravity = Gravity.CENTER
@@ -227,8 +317,8 @@ class BubbleOverlayService : Service() {
         bubbleView?.post {
             val current = CaptureManager.state.value
             if (current !is CaptureManager.CaptureState.Partial && current !is CaptureManager.CaptureState.Done) return@post
-            if (translationViews.isNotEmpty()) com.manhwalens.app.benchmarks.BenchmarkTracker.mark("T10")
-            if (final) com.manhwalens.app.benchmarks.BenchmarkTracker.mark("T12")
+            if (translationViews.isNotEmpty()) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T10")
+            if (final) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T12")
         }
     }
 
@@ -421,6 +511,7 @@ class BubbleOverlayService : Service() {
 
     override fun onDestroy() {
         stateCollectorActive = false
+        collapseActions()
         clearTranslations()
         scope.cancel()
         hidePanel()

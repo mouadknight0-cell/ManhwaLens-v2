@@ -439,6 +439,12 @@ class ScreenCaptureService : Service() {
 
         // ── Reconstruction & grouping for translation quality ──
         val scale = frame.width.toFloat() / ocrBitmap.width
+        if (com.manhwalens.app.pipeline.SourceScreenGuard.isOwnInterface(regions)) {
+            Diagnostics.error("capture", "wrong_source", "CAP-WRONG-SOURCE", "captured ManhwaLens interface rather than reading content")
+            BenchmarkTracker.finish("error", errorCode = "CAP-WRONG-SOURCE")
+            CaptureManager.setState(CaptureManager.CaptureState.Error("Captured ManhwaLens instead of the page. Stop capture, open your reader and start a new full-screen session."))
+            return
+        }
         val prepared = prepareRegions(regions.map { it.copy(
             left = (it.left * scale).toInt(), top = (it.top * scale).toInt(),
             right = (it.right * scale).toInt(), bottom = (it.bottom * scale).toInt()) })
@@ -452,8 +458,9 @@ class ScreenCaptureService : Service() {
         val learnedNames = learnNames(prepared.filter { it.kind != RegionKind.SOUND_EFFECT }.map { it.region }, traceId)
 
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.TRANSLATING))
-        BenchmarkTracker.mark("T8")
+        BenchmarkTracker.mark("M0")
         val ensureOk = translation.ensureModel("en", "ar")
+        BenchmarkTracker.mark("M1")
         if (!ensureOk) {
             Diagnostics.error("translate", "ensure_model", ErrorCodes.TRANSLATE_DOWNLOAD_FAILED,
                 "EN→AR model unavailable (download failed or network offline)",
@@ -463,7 +470,8 @@ class ScreenCaptureService : Service() {
             return
         }
 
-        val id = UUID.randomUUID().toString()
+        BenchmarkTracker.mark("T8")
+        val id = journeyId
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.filter { it.kind != RegionKind.SOUND_EFFECT }.map { it.region },
             translate = { region ->
@@ -479,6 +487,9 @@ class ScreenCaptureService : Service() {
                 if (completed.any { it.translated != it.original }) BenchmarkTracker.mark("T9")
                 CaptureManager.setState(CaptureManager.CaptureState.Partial(CaptureResult(
                     id, System.currentTimeMillis(), OCR_SOURCE, TARGET, completed)))
+                try { com.manhwalens.app.history.TranslationSamples.collect(id, traceId, completed) }
+                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (failure: Exception) { Diagnostics.warn("samples", "save", "could not save translation sample", throwable = failure) }
             },
         )
         BenchmarkTracker.mark("T11")
@@ -507,6 +518,10 @@ class ScreenCaptureService : Service() {
             traceId = traceId, context = mapOf("blocks" to blocks.size.toString()))
         currentCoroutineContext().ensureActive()
         CaptureManager.setState(CaptureManager.CaptureState.Done(result))
+        scope.launch {
+            kotlinx.coroutines.delay(1500)
+            BenchmarkTracker.finishIfActive(journeyId)
+        }
         // Note: T12 is marked by the UI when the final result is rendered; if it
         // never happens (e.g., app backgrounded without the bubble) the record
         // falls back to T11 with t12Inferred=true.

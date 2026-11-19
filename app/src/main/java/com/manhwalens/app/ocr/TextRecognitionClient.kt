@@ -33,7 +33,7 @@ class TextRecognitionClient {
                     try {
                         recognizer.process(input).await().let { result ->
                             result.textBlocks.flatMap { block ->
-                                block.lines.mapNotNull { line ->
+                                RegionMerger.merge(RegionFilter.filter(block.lines.mapNotNull { line ->
                                     val box = line.boundingBox ?: return@mapNotNull null
                                     TextRegion(
                                         text = line.text,
@@ -43,7 +43,7 @@ class TextRecognitionClient {
                                         bottom = box.bottom,
                                         languageHint = LanguageMapper.autoLanguageFor(script),
                                     )
-                                }
+                                }))
                             }
                         }
                     } catch (t: Throwable) {
@@ -56,7 +56,7 @@ class TextRecognitionClient {
         }
 
         val filtered = RegionFilter.filter(detected)
-        return RegionMerger.merge(filtered)
+        return filtered // Keep recognizer block boundaries; never merge across speakers.
     }
 
     private fun recognizerFor(script: LanguageMapper.Script) = when (script) {

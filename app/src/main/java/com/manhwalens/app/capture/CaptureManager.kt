@@ -22,6 +22,10 @@ object CaptureManager {
 
     enum class Status { PREPARING, READING, TRANSLATING, DOWNLOADING_MODEL }
 
+    private val _appVisible = MutableStateFlow(false)
+    val appVisible = _appVisible.asStateFlow()
+    fun setAppVisible(visible: Boolean) { _appVisible.value = visible }
+
     private val _state = MutableStateFlow<CaptureState>(CaptureState.Idle)
     val state: StateFlow<CaptureState> = _state.asStateFlow()
 

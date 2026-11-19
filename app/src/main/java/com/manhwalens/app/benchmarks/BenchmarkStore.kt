@@ -14,6 +14,7 @@ class BenchmarkStore(context: Context) {
     @Synchronized
     fun add(record: BenchmarkRecord) {
         val records = readAll().toMutableList()
+        records.removeAll { it.id == record.id }
         records.add(0, record)
         writeAll(records.take(MAX_RECORDS))
     }

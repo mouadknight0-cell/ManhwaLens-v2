@@ -22,7 +22,7 @@ data class BenchmarkRecord(
     fun latencyMs(from: String, to: String): Double? {
         val a = marks[from] ?: return null
         val b = marks[to] ?: return null
-        return (b - a) / 1_000_000.0
+        return if (b >= a) (b - a) / 1_000_000.0 else null
     }
 
     /** Total end-to-end: T12-T0 (or T11 if T12 missing). */

@@ -17,7 +17,7 @@ object RegionClassifier {
         // Sound effects: short, mostly uppercase, no lowercase words.
         val letters = t.filter { it.isLetter() }
         val isMostlyUpper = letters.isNotEmpty() && letters.count { it.isUpperCase() }.toFloat() / letters.length >= 0.85f
-        if (t.length <= 28 && isMostlyUpper && (t.endsWith('!') || SFX_VERB_NOOK.matches(t) || letters.length <= 6)) {
+        if (t.length <= 28 && isMostlyUpper && SFX_VERB_NOOK.matches(t)) {
             return RegionKind.SOUND_EFFECT
         }
         // Dialogue with quotation marks

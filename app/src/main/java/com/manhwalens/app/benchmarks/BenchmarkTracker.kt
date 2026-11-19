@@ -42,11 +42,22 @@ object BenchmarkTracker {
     @Synchronized
     fun beginSession(traceId: String): String {
         // Close any stale journey first (e.g., previous run crashed before finishing).
-        forceTimeoutIfStale(timeoutMs = 30_000)
+        if (active != null) finish("superseded")
         val id = UUID.randomUUID().toString()
         active = Session(id = id, traceId = traceId, startedAtMs = System.currentTimeMillis(), marks = LinkedHashMap())
         mark("T2")
         return id
+    }
+
+    @Synchronized
+    fun markForResult(resultId: String, checkpoint: String): Boolean {
+        if (active?.id != resultId) return false
+        return mark(checkpoint)
+    }
+
+    @Synchronized
+    fun finishIfActive(resultId: String) {
+        if (active?.id == resultId) finish("ok")
     }
 
     fun activeSessionId(): String? = active?.id

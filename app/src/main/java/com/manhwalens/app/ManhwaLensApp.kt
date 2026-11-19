@@ -30,6 +30,7 @@ class ManhwaLensApp : Application() {
                 "application initialisation failed", throwable = it)
             throw it
         }
+        com.manhwalens.app.history.TranslationSamples.init(this)
         BenchmarkTracker.init(this)
         Diagnostics.info("app", "on_create", "ManhwaLensApp initialised")
     }

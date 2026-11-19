@@ -115,7 +115,10 @@ object Diagnostics {
         ring.add(event)
         while (ring.size > MAX_RING) ring.removeAt(0)
         // Disk (best effort)
-        if (initialized) appendToDisk(event)
+        if (initialized) {
+            appendToDisk(event)
+            if (level == LogLevel.ERROR || level == LogLevel.FATAL) BugArchive.save(appContext, event)
+        }
         counters.getOrPut(code) { AtomicLong() }.incrementAndGet()
     }
 
@@ -184,6 +187,7 @@ object Diagnostics {
 
     private fun diagnosticsDir(): File = File(appContext.filesDir, DIR).apply { mkdirs() }
 
+    @Synchronized
     private fun appendToDisk(event: LogEvent) {
         runCatching {
             val dir = diagnosticsDir()

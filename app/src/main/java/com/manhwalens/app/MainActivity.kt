@@ -68,6 +68,15 @@ import kotlinx.coroutines.launch
 private enum class Tab { HOME, HISTORY, SETTINGS }
 
 class MainActivity : ComponentActivity() {
+    override fun onStart() {
+        super.onStart()
+        CaptureManager.setAppVisible(true)
+    }
+    override fun onStop() {
+        CaptureManager.setAppVisible(false)
+        super.onStop()
+    }
+
 
     internal val settingsRepository: SettingsRepository get() = (application as ManhwaLensApp).settingsRepository
     internal val historyStore: HistoryStore get() = (application as ManhwaLensApp).historyStore
