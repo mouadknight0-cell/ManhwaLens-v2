@@ -395,7 +395,7 @@ private class BubbleTouchListener(
     private val touchSlop = 14f
 
     override fun onTouch(view: View, event: MotionEvent): Boolean {
-        when (event.action) {
+        return when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 downRawX = event.rawX
                 downRawY = event.rawY
