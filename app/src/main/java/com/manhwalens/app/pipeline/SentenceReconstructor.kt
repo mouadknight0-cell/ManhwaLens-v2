@@ -7,7 +7,7 @@ package com.manhwalens.app.pipeline
  *  - hyphenated line breaks ("trans-\nlation" -> "translation")
  *  - spaces before punctuation ("hello ,world" -> "hello, world")
  *  - missing space after punctuation ("Hi.Bye" -> "Hi. Bye")
- *  - duplicated words produced by overlapping recognitions ("the the" -> "the")
+ *  - preserves repeated words and emotional punctuation (spatial OCR dedup is upstream)
  *  - collapse of repeated whitespace and stray quotes
  *
  * Keeps dialogue punctuation and quotation marks intact and never alters
@@ -34,7 +34,7 @@ object SentenceReconstructor {
         // remove space before , . ; : ! ? % ) ] » ”
         t = t.replace(Regex("\\s+([,.;:!?%\\)\\]»”])"), "$1")
         // ensure space after , . ; : ! ? (but not between digits like 3.5)
-        t = t.replace(Regex("([,;:!?])([^\\s\\)\\]»”])"), "$1 $2")
+        t = t.replace(Regex("([,;:!?])([^\\s\\)\\]»”.!?])"), "$1 $2")
         t = t.replace(Regex("([.!?])([^\\d\\s\\)\\]»”.!?])"), "$1 $2")
         // normalize ( spacing
         t = t.replace(Regex("\\(\\s+"), "(")
