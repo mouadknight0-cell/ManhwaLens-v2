@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
+import android.os.Bundle
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
@@ -63,8 +64,8 @@ private enum class Tab { HOME, HISTORY, SETTINGS }
 
 class MainActivity : ComponentActivity() {
 
-    private val settingsRepository: SettingsRepository get() = (application as ManhwaLensApp).settingsRepository
-    private val historyStore: HistoryStore get() = (application as ManhwaLensApp).historyStore
+    internal val settingsRepository: SettingsRepository get() = (application as ManhwaLensApp).settingsRepository
+    internal val historyStore: HistoryStore get() = (application as ManhwaLensApp).historyStore
 
     private val projectionManager: MediaProjectionManager? by lazy {
         getSystemService(MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
