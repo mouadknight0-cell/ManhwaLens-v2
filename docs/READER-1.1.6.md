@@ -1,4 +1,4 @@
-# v1.1.5 evidence and implementation
+# v1.1.6 evidence and implementation
 
 ## Evidence
 User supplied four Xiaomi Android 14 screenshots of v1.1.4, timings and samples. Visible: translucent overlays bleed original English into Arabic; truncated red error over status bar; browser address translated; Starting/OFF visible without a consent dialog in that still; short `HE...!` untranslated; `NO`/`WAY` remain English amid Arabic. A still cannot establish whether an Activity was blocked or the user dismissed consent.
@@ -17,3 +17,5 @@ Records mix versions: many CAP-2014 entries and seven original samples predate 1
 
 ## Verification and limits
 Added JVM regressions for status bars/URLs, short dialogue, adjacent bubbles, uppercase name false positives and preserved repetition. GitHub runs unit tests and builds APK. No attached Android device/emulator: granted/denied/revoked OEM flows, upgrades, gesture handling, large-font/landscape rendering, long-card scrolling, thermal/battery behavior and before/after latency remain unverified. Reproduce supplied panels after upgrade, capture fresh per-version samples, and compare matched stationary scenes before making performance or translation accuracy claims.
+
+Release audit: v1.1.5 was an unsuccessful GitHub build, never signed/published. The additional punctuation-spacing regression fix ships as v1.1.6, leaving the failed tag unchanged.
