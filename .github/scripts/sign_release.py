@@ -75,21 +75,27 @@ with tempfile.TemporaryDirectory() as tmp:
     verification = subprocess.check_output([str(signer), 'verify', '--verbose', '--print-certs', str(apk)], text=True)
     assert 'Signer #1 certificate SHA-256 digest: ' + pin in verification, 'Signing certificate mismatch'
     print(verification)
+    aapt = Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0/aapt'
+    identity = subprocess.check_output([str(aapt), 'dump', 'badging', str(apk)], text=True).splitlines()[0]
+    assert "name='com.manhwalens.app'" in identity
+    assert "versionName='" + tag[1:] + "'" in identity
+    print(identity)
+    (root / 'APK-IDENTITY.txt').write_text(identity + '\n' + verification)
     key.unlink()
     password.unlink()
     (root / 'SHA256SUMS.txt').write_text(hashlib.sha256(apk.read_bytes()).hexdigest() + '  app-release.apk\n')
     (root / 'release-cert.sha256').write_text(pin + '\n')
-    subprocess.run(['gh', 'release', 'upload', tag, str(apk), str(root / 'SHA256SUMS.txt'), str(root / 'release-cert.sha256'), '--clobber'], check=True)
+    subprocess.run(['gh', 'release', 'upload', tag, str(apk), str(root / 'SHA256SUMS.txt'), str(root / 'release-cert.sha256'), str(root / 'APK-IDENTITY.txt'), '--clobber'], check=True)
     subprocess.run(['gh', 'release', 'delete-asset', tag, 'signing-input.zip', '--yes'], check=True)
     notes = root / 'notes.md'
-    notes.write_text('''## ManhwaLens 1.1.1 — stable signing baseline
+    notes.write_text(f'''## ManhwaLens {tag} — connected controls and verified language models
 
 Download **app-release.apk**. Built and unit-tested on GitHub Actions; APK signature verified against the pinned stable certificate.
 
 Future releases must use this same certificate, package ID `com.manhwalens.app`, and a higher versionCode to preserve update compatibility.
 This new certificate does NOT retroactively match old ephemeral debug-signed installations. Do not clear data or uninstall as an upgrade workaround.
 
-Includes corrected bubble dragging and Start/Stop controls, full-display capture consent, progressive spatial translation, Copy Benchmark and saved issue reports.
+Includes connected Start/Stop/Disable/Open controls, stale-result protection, model download and inference verification, request-based benchmarks, Copy Bugs and local source/translation samples.
 
 Physical-device behavior, performance improvements, and in-place upgrade/data preservation have not been tested. Continuous scroll tracking and advanced bubble fitting remain incomplete.
 ''')
