@@ -99,7 +99,6 @@ fun ResultBottomSheet(
 
             Column(
                 modifier = Modifier
-                    .weight(1f, fill = false)
                     .height(360.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
