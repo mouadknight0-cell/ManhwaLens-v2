@@ -69,7 +69,7 @@ with tempfile.TemporaryDirectory() as tmp:
     signer = Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0/apksigner'
     apk = root / 'app-release.apk'
     subprocess.run([str(signer), 'sign', '--ks', str(key), '--ks-key-alias', 'manhwalens',
-        '--ks-pass', 'file:' + str(password), '--key-pass', 'file:' + str(password),
+        '--ks-pass', 'file:' + str(password),
         '--v1-signing-enabled', 'true', '--v2-signing-enabled', 'true', '--v3-signing-enabled', 'true',
         '--out', str(apk), str(root / 'app-release-unsigned.apk')], check=True)
     verification = subprocess.check_output([str(signer), 'verify', '--verbose', '--print-certs', str(apk)], text=True)
