@@ -29,7 +29,7 @@ object RegionMerger {
         return clusters.map { cluster ->
             val ordered = cluster.sortedWith(compareBy({ it.top }, { it.left }))
             TextRegion(
-                text = ordered.joinToString(" ") { it.text },
+                text = SentenceReconstructor.joinLines(ordered.map { it.text }),
                 left = cluster.minOf { it.left },
                 top = cluster.minOf { it.top },
                 right = cluster.maxOf { it.right },

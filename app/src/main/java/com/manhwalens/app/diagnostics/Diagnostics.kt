@@ -149,6 +149,32 @@ object Diagnostics {
         }.toString(2)
     }
 
+    /** Current retained error events only; bug report snapshots are a separate archive. */
+    @Synchronized fun errorsJson(): String {
+        val disk = readDiskLog().lineSequence().mapNotNull { LogEvent.fromJson(it) }.toList()
+        val events = (disk + ring.toList()).filter { it.level == LogLevel.ERROR || it.level == LogLevel.FATAL }
+            .distinctBy { "${it.timestampMs}:${it.traceId}:${it.component}:${it.operation}:${it.code}" }
+        return JSONArray().apply { events.forEach { put(it.toJson()) } }.toString(2)
+    }
+
+    @Synchronized fun clearErrors() {
+        val cutoff = System.currentTimeMillis()
+        fun matches(event: LogEvent) = event.timestampMs <= cutoff && (event.level == LogLevel.ERROR || event.level == LogLevel.FATAL)
+        ring.removeIf { matches(it) }
+        listOf(PREVIOUS, CURRENT).forEach { name ->
+            val file = File(diagnosticsDir(), name)
+            if (file.exists()) {
+                val remaining = file.readLines().filter { line -> LogEvent.fromJson(line)?.let { !matches(it) } ?: true }
+                val atomic = android.util.AtomicFile(file)
+                val output = atomic.startWrite()
+                try { output.write(remaining.joinToString("\n", postfix = if (remaining.isEmpty()) "" else "\n").toByteArray()); atomic.finishWrite(output) }
+                catch (failure: Exception) { atomic.failWrite(output); throw failure }
+            }
+        }
+        counters.clear()
+        ring.forEach { counters.getOrPut(it.code) { AtomicLong() }.incrementAndGet() }
+    }
+
     fun clear() {
         ring.clear()
         counters.clear()

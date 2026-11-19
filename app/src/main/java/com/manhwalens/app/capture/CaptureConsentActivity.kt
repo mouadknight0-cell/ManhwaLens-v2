@@ -56,7 +56,12 @@ class CaptureConsentActivity : ComponentActivity() {
                 putExtra("consent_generation", CaptureManager.consentGeneration.get())
                 putExtra(ScreenCaptureService.EXTRA_AUTO_CAPTURE, autoCapture)
             }
-            context.startActivity(intent)
+            if (!CaptureManager.beginConsent()) return
+            try { context.startActivity(intent) }
+            catch (failure: Exception) {
+                CaptureManager.setState(CaptureManager.CaptureState.Error("Unable to open Android screen-capture permission. Retry from the floating controls.", "CAP-CONSENT-LAUNCH"))
+                com.manhwalens.app.diagnostics.Diagnostics.error("capture", "consent_launch", "CAP-CONSENT-LAUNCH", "consent activity launch failed", throwable = failure)
+            }
         }
     }
 }

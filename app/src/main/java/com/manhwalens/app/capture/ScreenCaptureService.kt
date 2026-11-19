@@ -230,7 +230,7 @@ class ScreenCaptureService : Service() {
                 endLive()
                 expectedProjectionStop = true
                 teardownCapturePipeline()
-                CaptureManager.setSessionActive(false)
+                CaptureManager.setSessionPhase(CaptureManager.SessionPhase.STOPPING)
                 CaptureManager.reset()
                 stopSelf()
             }
@@ -630,7 +630,7 @@ class ScreenCaptureService : Service() {
         }
         scope.launch {
             kotlinx.coroutines.delay(1500)
-            BenchmarkTracker.finishIfActive(journeyId, if (blocks.any { it.errorCode != null }) "partial" else "ok")
+            BenchmarkTracker.finishIfActive(journeyId, if (blocks.any { it.errorCode != null }) "partial" else "ok", blocks.firstNotNullOfOrNull { it.errorCode })
         }
         // Note: T12 is marked by the UI when the final result is rendered; if it
         // never happens (e.g., app backgrounded without the bubble) the record
@@ -829,6 +829,14 @@ class ScreenCaptureService : Service() {
 
         fun stop(context: Context) {
             CaptureManager.consentGeneration.incrementAndGet()
+            if (!CaptureManager.sessionActive && CaptureManager.sessionPhase.value != CaptureManager.SessionPhase.STOPPING) {
+                context.stopService(Intent(context, ScreenCaptureService::class.java))
+                CaptureManager.setSessionPhase(CaptureManager.SessionPhase.INACTIVE)
+                CaptureManager.setLive(CaptureManager.LiveStatus.OFF)
+                CaptureManager.reset()
+                return
+            }
+            CaptureManager.setSessionPhase(CaptureManager.SessionPhase.STOPPING)
             val intent = Intent(context, ScreenCaptureService::class.java).apply { action = ACTION_STOP }
             context.startService(intent)
         }

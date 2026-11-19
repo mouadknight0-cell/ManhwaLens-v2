@@ -231,7 +231,8 @@ private fun ManhwaLensRoot(
     var selectedResult by remember { mutableStateOf<CaptureResult?>(null) }
     var resultIsFinal by remember { mutableStateOf(true) }
     var workingStatus by remember { mutableStateOf<CaptureManager.Status?>(null) }
-    val sessionActive by CaptureManager.session.collectAsState()
+    val sessionPhase by CaptureManager.sessionPhase.collectAsState()
+    val sessionActive = sessionPhase == CaptureManager.SessionPhase.ACTIVE
     var learnedNames by remember { mutableStateOf(nameGlossary.all()) }
     var benchmarksRecorded by remember { mutableStateOf(BenchmarkTracker.records().size) }
     val snackbarHostState = remember { SnackbarHostState() }

@@ -45,7 +45,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     /** Translates one region, applying the name shield. Never throws — original text on failure. */
     suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList()): TranslatedBlock {
         val normalized = com.manhwalens.app.pipeline.SentenceReconstructor.normalize(region.text)
-        return try {
+        val began = System.nanoTime()
+        val block = try {
             val translated = translateText(normalized, glossaryNames)
             TranslatedBlock(region.copy(text = normalized), normalized, translated)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
@@ -53,12 +54,13 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             Diagnostics.error("translate", "block_failed", failure.code, "translation block failed; source retained, failure shown", throwable = failure)
             TranslatedBlock(region.copy(text = normalized), normalized, "تعذّرت الترجمة — أعد المحاولة", failure.code)
         }
+        return block.copy(durationMs = (System.nanoTime() - began) / 1_000_000)
     }
 
     /** Core translate path used for every complete utterance. */
     suspend fun translateText(text: String, glossaryNames: List<String> = emptyList()): String {
         val trimmed = text.trim()
-        if (trimmed.isBlank()) return trimmed
+        if (trimmed.isBlank() || trimmed.none { it.isLetter() }) return trimmed
 
         val identity = trimmed + "\u0000" + glossaryNames.sorted().joinToString("\u0000")
         val cacheKey = "en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
@@ -94,6 +96,9 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         }
         val restored = NameShield.restore(raw, protected)
         if (restored.isBlank() || (restored.none { it in '\u0600'..'\u06ff' } && protected.none { it.equals(trimmed, true) })) {
+            Diagnostics.warn("translate", "output_validation", "model output failed Arabic validation",
+                context = mapOf("source_chars" to trimmed.length.toString(), "output_chars" to restored.length.toString(),
+                    "source_latin_letters" to trimmed.count { it in 'a'..'z' || it in 'A'..'Z' }.toString()))
             throw TranslationFailure("TR-INVALID-OUTPUT")
         }
         if (protected.any { !restored.contains(it, ignoreCase = true) }) throw TranslationFailure("TR-NAME-LOST")

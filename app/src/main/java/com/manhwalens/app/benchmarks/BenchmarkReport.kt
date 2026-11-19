@@ -4,7 +4,7 @@ object BenchmarkReport {
     fun format(records: List<BenchmarkRecord>): String = buildString {
         appendLine("Capture latency uses T2 (request), not T0 (process launch).")
         appendLine("T10/T12 are UI-post proxies, not measured hardware presentation.")
-        appendLine("Cold = first successful journey of this process; not proof of a model download.")
+        appendLine("Cold tracks process warm-up (v1.1.4: until first model-ready journey; older records: first success). Not proof of a download.")
         appendLine("M0→M1 = model availability / download / usability verification; T8→T11 = inference pipeline.")
         val unique = records.distinctBy { it.id }
         unique.forEachIndexed { index, r ->

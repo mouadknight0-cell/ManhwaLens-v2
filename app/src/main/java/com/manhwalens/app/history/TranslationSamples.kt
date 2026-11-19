@@ -26,12 +26,14 @@ object TranslationSamples {
             val old = read()
             val all = (0 until old.length()).map { old.getJSONObject(it) }.toMutableList()
             for (block in blocks) {
-                if (block.original == block.translated || block.errorCode != null) continue
+                if (block.original == block.translated && block.errorCode == null) continue
                 val key = "$journey:${block.region.left}:${block.region.top}"
                 if (all.any { it.optString("id") == key }) continue
                 all.add(JSONObject().apply {
                     put("id", key); put("trace", trace); put("timestamp", System.currentTimeMillis())
-                    put("source", safe(block.original)); put("translation", safe(block.translated))
+                    put("source", safe(block.original)); put("translation", if (block.errorCode == null) safe(block.translated) else JSONObject.NULL)
+                    put("error_code", block.errorCode ?: JSONObject.NULL)
+                    put("duration_ms", block.durationMs ?: JSONObject.NULL)
                     put("pair", "en→ar"); put("method", "ML Kit on-device")
                     put("app_version", com.manhwalens.app.BuildConfig.VERSION_NAME)
                     put("review", "unreviewed"); put("left", block.region.left); put("top", block.region.top)

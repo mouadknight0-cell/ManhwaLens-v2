@@ -43,6 +43,7 @@ object HistoryJson {
                     put("o", block.original)
                     put("t", block.translated)
                     put("error", block.errorCode ?: JSONObject.NULL)
+                    put("duration_ms", block.durationMs ?: JSONObject.NULL)
                     put("l", block.region.left)
                     put("y", block.region.top)
                     put("r", block.region.right)
@@ -69,7 +70,7 @@ object HistoryJson {
                     right = b.optInt("r", 0),
                     bottom = b.optInt("b", 0),
                 )
-                add(TranslatedBlock(region = region, original = original, translated = b.optString("t", original), errorCode = if (b.isNull("error")) null else b.optString("error").ifBlank { null }))
+                add(TranslatedBlock(region = region, original = original, translated = b.optString("t", original), errorCode = if (b.isNull("error")) null else b.optString("error").ifBlank { null }, durationMs = if (b.isNull("duration_ms")) null else b.optLong("duration_ms")))
             }
         }
         return CaptureResult(

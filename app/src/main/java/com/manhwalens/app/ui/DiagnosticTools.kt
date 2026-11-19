@@ -5,18 +5,15 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import com.manhwalens.app.BuildConfig
-import com.manhwalens.app.benchmarks.BenchmarkReport
-import com.manhwalens.app.benchmarks.BenchmarkTracker
-import com.manhwalens.app.diagnostics.ExportManager
+import com.manhwalens.app.diagnostics.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,110 +21,116 @@ import java.io.File
 
 @Composable
 fun DiagnosticTools() {
+    DiagnosticSections.Kind.entries.forEach { kind -> DiagnosticSection(kind) }
+}
+
+@Composable
+private fun DiagnosticSection(kind: DiagnosticSections.Kind) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val uiErrors = remember(context) { kotlinx.coroutines.CoroutineExceptionHandler { _, failure ->
-        com.manhwalens.app.diagnostics.Diagnostics.error("diagnostics_ui", "action_failed", "DIAG-UI", "diagnostic action failed", throwable = failure)
-        Toast.makeText(context, "Action failed. Check storage and retry.", Toast.LENGTH_SHORT).show()
-    } }
-    val liveStatus by com.manhwalens.app.capture.CaptureManager.live.collectAsState()
-    val modelState by com.manhwalens.app.translate.LanguageModels.state.collectAsState()
-    var report by remember { mutableStateOf("") }
-    var saved by remember { mutableStateOf(emptyList<File>()) }
+    var busy by remember { mutableStateOf(false) }
+    var resetConfirm by remember { mutableStateOf(false) }
+    var selected by remember { mutableStateOf<String?>(null) }
+    var parts by remember { mutableStateOf(emptyList<String>()) }
+    var partIndex by remember { mutableIntStateOf(0) }
+    var fullCopy by remember { mutableStateOf("") }
+    var feedback by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Capture / Translation") }
-    var selected by remember { mutableStateOf<String?>(null) }
-    fun copy(text: String) {
-        (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
-            .setPrimaryClip(ClipData.newPlainText("ManhwaLens diagnostic report", text))
-        Toast.makeText(context, "Copied • تم النسخ", Toast.LENGTH_SHORT).show()
-    }
-    fun header() = "ManhwaLens ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n" +
-        "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}; Android ${android.os.Build.VERSION.RELEASE}\n"
-    suspend fun refresh() {
-        withContext(Dispatchers.IO) {
-            val benchmarks = header() + BenchmarkReport.format(BenchmarkTracker.records())
-            val files = File(context.filesDir, "diagnostics").listFiles()?.filter { (it.name.startsWith("issue-") || it.name.startsWith("bug-")) }?.sortedByDescending { it.name }.orEmpty()
-            withContext(Dispatchers.Main) { report = benchmarks; saved = files }
+    var archive by remember { mutableStateOf(emptyList<File>()) }
+    var showArchive by remember { mutableStateOf(false) }
+    fun notify(message: String) { feedback = message; Toast.makeText(context, message, Toast.LENGTH_SHORT).show() }
+    fun copyPart(text: String) {
+        try {
+            (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText(kind.title, text))
+            notify("تم النسخ · Copied")
+        } catch (failure: Exception) {
+            notify("تعذر النسخ؛ استخدم مشاركة TXT")
+            Diagnostics.warn("diagnostics_ui", "clipboard", "clipboard failed", throwable = failure)
         }
     }
-    LaunchedEffect(Unit) { refresh() }
-    Column {
-        Text("Live Translation: $liveStatus")
-        Text("EN → AR language model")
-        Text(modelState.phase)
-        Text("File size / percentage: unavailable from ML Kit. Installation and a translation test are checked before Ready.")
-        if (modelState.busy) androidx.compose.material3.LinearProgressIndicator()
-        TextButton(enabled = !modelState.busy, onClick = {
-            scope.launch(uiErrors) { com.manhwalens.app.translate.LanguageModels.ensureReady(forceProbe = true) }
-        }) { Text(if (modelState.ready) "Verify Language File" else "Download Language File / Retry") }
-        Text("Translation samples are collected automatically on this device only (latest 200 pairs). Review before sharing; they may contain captured text.")
-        TextButton(onClick = { scope.launch(uiErrors) {
-            val samples = withContext(Dispatchers.IO) { com.manhwalens.app.history.TranslationSamples.export() }
-            copy(if (samples.length <= 100000) samples else samples.take(100000) + "\n[Truncated for clipboard. Use Export Samples for the full file.]")
-        } }) { Text("Copy Translated Text") }
-        TextButton(onClick = { scope.launch(uiErrors) {
-            val file = withContext(Dispatchers.IO) {
-                File(context.filesDir, "diagnostics/translation-samples.txt").apply {
-                    parentFile?.mkdirs()
-                    writeText(com.manhwalens.app.history.TranslationSamples.export())
-                }
-            }
-            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }, "Export Translation Samples"))
-        } }) { Text("Export Samples") }
-        TextButton(onClick = { scope.launch(uiErrors) {
-            withContext(Dispatchers.IO) { com.manhwalens.app.history.TranslationSamples.clear() }
-            Toast.makeText(context, "Samples cleared", Toast.LENGTH_SHORT).show()
-        } }) { Text("Clear Translation Samples") }
-        TextButton(onClick = { scope.launch(uiErrors) {
-            refresh()
-            val bugs = withContext(Dispatchers.IO) { saved.take(20).joinToString("\n\n") { it.readText() } }
-            copy(if (bugs.length <= 150000) bugs.ifBlank { "No saved bugs" } else bugs.take(150000) + "\n[Report truncated for clipboard; share individual TXT files for full content]")
-        } }) { Text("Copy Bugs (latest 20)") }
-        TextButton(onClick = { scope.launch(uiErrors) { refresh(); copy(report) } }) { Text("Copy Benchmark Results") }
-        TextButton(onClick = { scope.launch(uiErrors) { refresh(); selected = report } }) { Text("View Benchmarks / Comparisons") }
-        Text("Reports stay on this device. Do not enter credentials or private screen text.")
-        OutlinedTextField(value = category, onValueChange = { category = it.take(100) }, label = { Text("Problem category") })
-        OutlinedTextField(value = description, onValueChange = { description = it.take(2000) }, label = { Text("Optional description") })
-        TextButton(onClick = {
-            scope.launch(uiErrors) {
-                val ok = withContext(Dispatchers.IO) {
-                    runCatching {
-                        val file = ExportManager.exportAll(context) ?: error("Export failed")
-                        val issue = File(file.parentFile, "issue-${System.currentTimeMillis()}.txt")
-                        // Explicit user-authored text, plus content-free structured diagnostics.
+    fun beginCopy(text: String) {
+        fullCopy = text
+        val chunks = ClipboardChunks.split(text)
+        if (chunks.size == 1) copyPart(chunks.first()) else {
+            parts = chunks; partIndex = 0; copyPart(parts.first())
+        }
+    }
+    suspend fun share(text: String) {
+        val file = withContext(Dispatchers.IO) { DiagnosticSections.export(context, kind, text) }
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }, kind.title))
+    }
+    fun action(block: suspend () -> Unit) {
+        if (busy) return
+        busy = true
+        scope.launch {
+            try { block() }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (failure: Exception) {
+                notify("تعذر تنفيذ العملية؛ تحقق من التخزين وأعد المحاولة")
+                Diagnostics.error("diagnostics_ui", "section_action", "DIAG-UI", "section operation failed", throwable = failure)
+            } finally { busy = false }
+        }
+    }
+    SettingsGroup(kind.title, kind.detail) {
+        Text("Copy ينسخ جميع البيانات المحتفظ بها. التقرير الطويل يُنسخ على أجزاء دون حذف محتوى، أو يُشارك كاملًا كملف TXT.", style = MaterialTheme.typography.bodySmall)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(enabled = !busy, onClick = { action { beginCopy(withContext(Dispatchers.IO) { DiagnosticSections.report(context, kind) }) } }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("Copy · نسخ") }
+            OutlinedButton(enabled = !busy, onClick = { resetConfirm = true }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("Reset · مسح", color = MaterialTheme.colorScheme.error) }
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(enabled = !busy, onClick = { action { selected = withContext(Dispatchers.IO) { DiagnosticSections.report(context, kind) } } }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("عرض") }
+            TextButton(enabled = !busy, onClick = { action { share(withContext(Dispatchers.IO) { DiagnosticSections.report(context, kind) }) } }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("مشاركة TXT") }
+        }
+        if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+        if (feedback.isNotEmpty()) Text(feedback, style = MaterialTheme.typography.bodySmall)
+        if (kind == DiagnosticSections.Kind.TRANSLATION) Text("العينات قد تحتوي نص الشاشة. لا تُدرج تلقائيًا في تقارير الأخطاء. المسح لا يحذف تفضيلاتك أو النموذج أو سجل القراءة.", style = MaterialTheme.typography.bodySmall)
+        if (kind == DiagnosticSections.Kind.BUGS) {
+            OutlinedTextField(value = category, onValueChange = { category = it.take(100) }, label = { Text("فئة المشكلة") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = description, onValueChange = { description = it.take(2000) }, label = { Text("وصف اختياري — لا تكتب أسرارًا") }, modifier = Modifier.fillMaxWidth())
+            OutlinedButton(enabled = !busy, onClick = { action {
+                withContext(Dispatchers.IO) {
+                    synchronized(BugArchive) {
+                        val export = ExportManager.exportAll(context) ?: error("Export failed")
+                        val file = File(export.parentFile, "issue-${System.currentTimeMillis()}-${java.util.UUID.randomUUID()}.txt")
                         val notes = (category + "\n" + description).replace(Regex("(?i)(password|token|api[_ -]?key|secret)\\s*[:=]\\s*\\S+"), "$1=[REDACTED]")
-                        issue.writeText("Category / description: $notes\nDate: ${java.util.Date()}\n" +
-                            "Capture active: ${com.manhwalens.app.capture.CaptureManager.sessionActive}\n" +
-                            header() + BenchmarkReport.format(BenchmarkTracker.records()) + "\n" + file.readText())
-                        file.delete()
-                    }.isSuccess
+                        file.writeText("Category / description:\n$notes\n" + export.readText())
+                        export.delete()
+                    }
                 }
-                refresh()
-                Toast.makeText(context, if (ok) "Issue saved locally" else "Could not save issue", Toast.LENGTH_SHORT).show()
-            }
-        }) { Text("Save Bugs / Report a Problem") }
-        Text("Saved issues (${saved.size})")
-        saved.forEach { file ->
-            Text(file.name)
-            TextButton(onClick = { scope.launch(uiErrors) { selected = withContext(Dispatchers.IO) { file.readText() } } }) { Text("View") }
-            TextButton(onClick = { scope.launch(uiErrors) { copy(withContext(Dispatchers.IO) { file.readText() }) } }) { Text("Copy report") }
-            TextButton(onClick = {
-                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"; putExtra(Intent.EXTRA_STREAM, uri)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }, "Share diagnostic TXT"))
-            }) { Text("Share TXT") }
+                notify("تم حفظ البلاغ محليًا")
+            } }, modifier = Modifier.fillMaxWidth()) { Text("Save Bugs · حفظ بلاغ") }
+            TextButton(enabled = !busy, onClick = { action {
+                archive = withContext(Dispatchers.IO) { DiagnosticSections.bugFiles(context) }; showArchive = true
+            } }) { Text("البلاغات المحفوظة") }
         }
     }
-    selected?.let { text ->
-        AlertDialog(onDismissRequest = { selected = null }, title = { Text("Diagnostic report") },
-            text = { androidx.compose.foundation.lazy.LazyColumn { item { Text(text) } } },
-            confirmButton = { TextButton(onClick = { copy(text) }) { Text("Copy") } },
-            dismissButton = { TextButton(onClick = { selected = null }) { Text("Close") } })
-    }
+    if (resetConfirm) AlertDialog(onDismissRequest = { resetConfirm = false }, title = { Text("مسح ${kind.title}؟") },
+        text = { Text(kind.detail + "\nلن تُحذف إعدادات التطبيق. قد تصل بيانات جديدة من جلسة نشطة بعد المسح.") },
+        confirmButton = { TextButton(onClick = {
+            resetConfirm = false
+            action {
+                withContext(Dispatchers.IO) { DiagnosticSections.reset(context, kind) }
+                selected = null; parts = emptyList(); fullCopy = ""; archive = emptyList(); showArchive = false
+                notify("تم مسح هذا القسم فقط")
+            }
+        }) { Text("مسح", color = MaterialTheme.colorScheme.error) } },
+        dismissButton = { TextButton(onClick = { resetConfirm = false }) { Text("إلغاء") } })
+    selected?.let { report -> AlertDialog(onDismissRequest = { selected = null }, title = { Text(kind.title) },
+        text = { LazyColumn { item { Text(report) } } },
+        confirmButton = { TextButton(onClick = { selected = null; beginCopy(report) }) { Text("Copy") } },
+        dismissButton = { TextButton(onClick = { selected = null }) { Text("إغلاق") } }) }
+    if (parts.isNotEmpty()) AlertDialog(onDismissRequest = { parts = emptyList() }, title = { Text("نسخ تقرير طويل") },
+        text = { Text("الجزء ${partIndex + 1} من ${parts.size}. الصق كل جزء بالترتيب ثم انسخ التالي. لا يُحذف أي محتوى.\nيمكن مشاركة التقرير كاملًا بدلًا من الأجزاء.") },
+        confirmButton = { TextButton(onClick = {
+            if (partIndex + 1 < parts.size) { partIndex++; copyPart(parts[partIndex]) } else parts = emptyList()
+        }) { Text(if (partIndex + 1 < parts.size) "نسخ الجزء التالي" else "تم") } },
+        dismissButton = { TextButton(onClick = { action { share(fullCopy); parts = emptyList() } }) { Text("مشاركة كاملًا") } })
+    if (showArchive) AlertDialog(onDismissRequest = { showArchive = false }, title = { Text("البلاغات (${archive.size})") },
+        text = { LazyColumn { items(archive.size) { i ->
+            TextButton(onClick = { action { selected = withContext(Dispatchers.IO) { archive[i].readText() }; showArchive = false } }) { Text(archive[i].name) }
+        } } }, confirmButton = { TextButton(onClick = { showArchive = false }) { Text("إغلاق") } })
 }

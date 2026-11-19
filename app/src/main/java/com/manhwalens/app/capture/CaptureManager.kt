@@ -39,12 +39,23 @@ object CaptureManager {
     val state: StateFlow<CaptureState> = _state.asStateFlow()
 
     /** True while the media projection session is held by [ScreenCaptureService]. */
-    private val _session = MutableStateFlow(false)
-    val session = _session.asStateFlow()
-    val sessionActive: Boolean get() = _session.value
-    internal fun setSessionActive(value: Boolean) { _session.value = value }
+    enum class SessionPhase { INACTIVE, STARTING, ACTIVE, STOPPING, FAILED }
+    private val _sessionPhase = MutableStateFlow(SessionPhase.INACTIVE)
+    val sessionPhase = _sessionPhase.asStateFlow()
+    val sessionActive: Boolean get() = _sessionPhase.value == SessionPhase.ACTIVE
+    @Synchronized internal fun beginConsent(): Boolean {
+        if (_sessionPhase.value in listOf(SessionPhase.STARTING, SessionPhase.ACTIVE, SessionPhase.STOPPING)) return false
+        _sessionPhase.value = SessionPhase.STARTING
+        return true
+    }
+    internal fun setSessionPhase(phase: SessionPhase) { _sessionPhase.value = phase }
+    internal fun setSessionActive(value: Boolean) {
+        if (value) _sessionPhase.value = SessionPhase.ACTIVE
+        else if (_sessionPhase.value != SessionPhase.FAILED) _sessionPhase.value = SessionPhase.INACTIVE
+    }
 
     fun setState(state: CaptureState) {
+        if (state is CaptureState.Error && !sessionActive && _sessionPhase.value != SessionPhase.STOPPING) _sessionPhase.value = SessionPhase.FAILED
         _state.value = state
     }
 

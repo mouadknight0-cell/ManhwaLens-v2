@@ -56,8 +56,8 @@ object BenchmarkTracker {
     }
 
     @Synchronized
-    fun finishIfActive(resultId: String, status: String = "ok") {
-        if (active?.id == resultId) finish(status)
+    fun finishIfActive(resultId: String, status: String = "ok", errorCode: String? = null) {
+        if (active?.id == resultId) finish(status, errorCode)
     }
 
     fun activeSessionId(): String? = active?.id
@@ -110,7 +110,7 @@ object BenchmarkTracker {
             startedAtMs = s.startedAtMs,
             coldStart = cold,
             status = status,
-            errorCode = errorCode,
+            errorCode = errorCode ?: if (status == "partial") ErrorCodes.TRANSLATE_FAILED else null,
             t12Inferred = t12Inferred,
             frameWidth = frameWidth.takeIf { it != 0 } ?: s.frameWidth,
             frameHeight = frameHeight.takeIf { it != 0 } ?: s.frameHeight,
@@ -119,7 +119,7 @@ object BenchmarkTracker {
             marks = s.marks.toMap(),
         )
         active = null
-        if (status == "ok" && cold) cold = false
+        if (s.marks.containsKey("M1") || status == "ok") cold = false
 
         val summary = buildString {
             append("bench status=$status")
@@ -141,8 +141,8 @@ object BenchmarkTracker {
                 .onFailure { Diagnostics.error("benchmarks", "persist", ErrorCodes.BENCHMARK_RECORD_FAILED, "failed to persist benchmark record", throwable = it) }
         }
         Diagnostics.log(
-            if (status == "ok") LogLevel.INFO else LogLevel.ERROR,
-            if (status == "ok") ErrorCodes.APP_INFO else (errorCode ?: ErrorCodes.CAPTURE_TIMEOUT),
+            when (status) { "ok", "cancelled", "superseded" -> LogLevel.INFO; "partial" -> LogLevel.WARN; else -> LogLevel.ERROR },
+            record.errorCode ?: when (status) { "timeout" -> ErrorCodes.CAPTURE_TIMEOUT; "error" -> "APP-JOURNEY-FAILED"; else -> ErrorCodes.APP_INFO },
             "benchmarks", "journey",
             summary,
             durationMs = record.latencyMs("T2", "T11")?.toLong(),
