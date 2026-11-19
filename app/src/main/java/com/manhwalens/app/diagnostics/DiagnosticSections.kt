@@ -15,7 +15,7 @@ object DiagnosticSections {
         ERRORS("Errors · الأخطاء", "أحداث الخطأ الحالية والمحفوظة. لا يغير حالة المحرك؛ الأخطاء الجديدة تُسجّل كالمعتاد."),
         BUGS("Bugs · البلاغات", "نسخ تقارير المشاكل المحفوظة يدويًا وتلقائيًا. منفصلة عن سجل الأخطاء الجاري.")
     }
-    fun isBugFile(name: String): Boolean = (name.startsWith("issue-") || name.startsWith("bug-")) && name.endsWith(".txt")
+    fun isBugFile(name: String): Boolean = DiagnosticFilePolicy.isBugFile(name)
     fun bugFiles(context: Context): List<File> = File(context.filesDir, "diagnostics").listFiles()
         ?.filter { it.isFile && isBugFile(it.name) }?.sortedByDescending { it.name }.orEmpty()
     private fun header(): String = "ManhwaLens ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n" +
@@ -33,7 +33,7 @@ object DiagnosticSections {
             Kind.TRANSLATION -> TranslationSamples.clear()
             Kind.ERRORS -> Diagnostics.clearErrors()
             Kind.BUGS -> synchronized(BugArchive) {
-                bugFiles(context).forEach { check(it.delete()) { "Could not delete ${it.name}" } }
+                DiagnosticFilePolicy.clearBugs(File(context.filesDir, "diagnostics"))
             }
         }
         File(context.filesDir, "diagnostics").listFiles()?.filter {

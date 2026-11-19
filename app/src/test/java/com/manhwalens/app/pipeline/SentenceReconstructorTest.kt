@@ -45,4 +45,11 @@ class SentenceReconstructorTest {
         val sentences = SentenceReconstructor.splitSentences("Version 3.5 is out. Great!")
         assertEquals(2, sentences.size)
     }
+    @org.junit.Test fun `region merger preserves OCR line break for hyphen repair`() {
+        val regions = listOf(
+            TextRegion("AND AFTER THE TER-", 0, 0, 200, 20),
+            TextRegion("RIBLE CAVE,", 0, 25, 160, 45))
+        org.junit.Assert.assertEquals("AND AFTER THE TERRIBLE CAVE,", RegionMerger.merge(regions).single().text)
+        org.junit.Assert.assertEquals("well-known", SentenceReconstructor.normalize("well-known"))
+    }
 }
