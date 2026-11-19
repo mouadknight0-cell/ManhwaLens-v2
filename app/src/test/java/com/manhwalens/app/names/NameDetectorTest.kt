@@ -55,4 +55,7 @@ class NameDetectorTest {
         assertEquals("KIM JIWOO", NameDetector.find("KIM JIWOO", listOf("Kim Jiwoo")).single().name)
         assertTrue(!NameDetector.safeAutomaticName("NO WAY"))
     }
+    @Test fun `known names are found after dialogue prefix`() {
+        assertEquals("ARTHUR", NameDetector.find("PLEASE HELP ARTHUR NOW", listOf("Arthur")).single().name)
+    }
 }

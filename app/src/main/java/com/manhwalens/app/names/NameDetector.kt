@@ -120,10 +120,11 @@ object NameDetector {
 
     private fun matchFrom(tokens: List<Triple<String, Int, Int>>, startIdx: Int, parts: List<String>): SpanRange? {
         if (startIdx + parts.size > tokens.size) return null
-        for (j in parts.indices) {
-            if (!tokens[startIdx + j].first.equals(parts[j], ignoreCase = true)) return null
+        for (candidate in startIdx..tokens.size - parts.size) {
+            if (parts.indices.all { tokens[candidate + it].first.equals(parts[it], ignoreCase = true) })
+                return SpanRange(candidate, candidate + parts.size - 1)
         }
-        return SpanRange(startIdx, startIdx + parts.size - 1)
+        return null
     }
 
     private fun dedupe(hits: List<NameHit>): List<NameHit> {

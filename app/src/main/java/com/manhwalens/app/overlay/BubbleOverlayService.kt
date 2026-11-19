@@ -65,7 +65,8 @@ class BubbleOverlayService : Service() {
             CaptureManager.SessionPhase.STOPPING -> "جارٍ الإيقاف / Stopping"
             CaptureManager.SessionPhase.FAILED -> "فشلت / Failed — أعد المحاولة"
         }
-        statusLabel?.text = "Capture: $label • ${CaptureManager.live.value}"
+        val work = (CaptureManager.state.value as? CaptureManager.CaptureState.Working)?.status
+        statusLabel?.text = "Capture: $label • ${work ?: CaptureManager.live.value}"
         bubbleView?.contentDescription = "Capture session: $label. Tap for Start and Stop controls."
         (bubbleView as? ImageView)?.setColorFilter(when (phase) {
             CaptureManager.SessionPhase.ACTIVE -> 0xFF86EFAC.toInt()
@@ -220,6 +221,7 @@ class BubbleOverlayService : Service() {
         }
         scope.launch {
             CaptureManager.state.collect { state ->
+                updateControlState()
                 when (state) {
                     is CaptureManager.CaptureState.Done -> { running = false; bubbleView?.alpha = 1f; showPanel(state.result, final = true) }
                     is CaptureManager.CaptureState.Partial -> showPanel(state.result, final = false)
