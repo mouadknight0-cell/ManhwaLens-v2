@@ -138,6 +138,7 @@ class ScreenCaptureService : Service() {
             ACTION_START_SESSION -> handleStartSession(intent)
             ACTION_CAPTURE -> handleCapture()
             ACTION_STOP -> {
+                CaptureManager.consentGeneration.incrementAndGet()
                 Diagnostics.info("capture", "stop_requested", "stop requested by user or notification")
                 captureJob?.cancel()
                 expectedProjectionStop = true
@@ -722,6 +723,7 @@ class ScreenCaptureService : Service() {
         }
 
         fun stop(context: Context) {
+            CaptureManager.consentGeneration.incrementAndGet()
             val intent = Intent(context, ScreenCaptureService::class.java).apply { action = ACTION_STOP }
             context.startService(intent)
         }

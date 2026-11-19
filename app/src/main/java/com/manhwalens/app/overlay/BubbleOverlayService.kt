@@ -197,15 +197,15 @@ class BubbleOverlayService : Service() {
         icon.setOnTouchListener(BubbleTouchListener(
             onDrag = { dx, dy ->
                 collapseActions()
-                params.x = (params.x + dx).coerceIn(0, (availableBounds().width() - size).coerceAtLeast(0))
-                params.y = (params.y + dy).coerceIn(0, (availableBounds().height() - size).coerceAtLeast(0))
+                params.x = FloatingGeometry.move(params.x, dx, availableBounds().width(), size)
+                params.y = FloatingGeometry.move(params.y, dy, availableBounds().height(), size)
                 windowManager.updateViewLayout(icon, params)
             },
             onTap = ::onBubbleTapped,
             onRelease = {
                 event("drag_release")
                 val maxX = (availableBounds().width() - size).coerceAtLeast(0)
-                params.x = if (params.x < maxX / 2) 0 else maxX
+                params.x = FloatingGeometry.snap(params.x, availableBounds().width(), size)
                 windowManager.updateViewLayout(icon, params)
                 getSharedPreferences("bubble_position", MODE_PRIVATE).edit().putInt("x", params.x).putInt("y", params.y).apply()
             },
@@ -318,7 +318,7 @@ class BubbleOverlayService : Service() {
             val current = CaptureManager.state.value
             if (current !is CaptureManager.CaptureState.Partial && current !is CaptureManager.CaptureState.Done) return@post
             if (translationViews.isNotEmpty()) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T10")
-            if (final) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T12")
+            if (final && translationViews.isNotEmpty()) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T12")
         }
     }
 

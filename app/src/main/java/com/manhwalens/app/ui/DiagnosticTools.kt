@@ -53,12 +53,25 @@ fun DiagnosticTools() {
         Text("File size / percentage: unavailable from ML Kit. Installation and a translation test are checked before Ready.")
         if (modelState.busy) androidx.compose.material3.LinearProgressIndicator()
         TextButton(enabled = !modelState.busy, onClick = {
-            scope.launch { com.manhwalens.app.translate.LanguageModels.ensureReady() }
+            scope.launch { com.manhwalens.app.translate.LanguageModels.ensureReady(forceProbe = true) }
         }) { Text(if (modelState.ready) "Verify Language File" else "Download Language File / Retry") }
         Text("Translation samples are collected automatically on this device only (latest 200 pairs). Review before sharing; they may contain captured text.")
         TextButton(onClick = { scope.launch {
-            copy(withContext(Dispatchers.IO) { com.manhwalens.app.history.TranslationSamples.export() })
+            val samples = withContext(Dispatchers.IO) { com.manhwalens.app.history.TranslationSamples.export() }
+            copy(if (samples.length <= 100000) samples else samples.take(100000) + "\n[Truncated for clipboard. Use Export Samples for the full file.]")
         } }) { Text("Copy Translated Text") }
+        TextButton(onClick = { scope.launch {
+            val file = withContext(Dispatchers.IO) {
+                File(context.filesDir, "diagnostics/translation-samples.txt").apply {
+                    parentFile?.mkdirs()
+                    writeText(com.manhwalens.app.history.TranslationSamples.export())
+                }
+            }
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }, "Export Translation Samples"))
+        } }) { Text("Export Samples") }
         TextButton(onClick = { scope.launch {
             withContext(Dispatchers.IO) { com.manhwalens.app.history.TranslationSamples.clear() }
             Toast.makeText(context, "Samples cleared", Toast.LENGTH_SHORT).show()

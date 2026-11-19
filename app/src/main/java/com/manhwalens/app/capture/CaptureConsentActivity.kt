@@ -20,6 +20,10 @@ class CaptureConsentActivity : ComponentActivity() {
 
     private val captureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val data = result.data
+        if (intent.getLongExtra("consent_generation", -1) != CaptureManager.consentGeneration.get()) {
+            finish()
+            return@registerForActivityResult
+        }
         if (result.resultCode == RESULT_OK && data != null) {
             val autoCapture = intent.getBooleanExtra(ScreenCaptureService.EXTRA_AUTO_CAPTURE, true)
             ScreenCaptureService.startSession(this, result.resultCode, data, autoCapture)
@@ -39,7 +43,7 @@ class CaptureConsentActivity : ComponentActivity() {
             finish()
             return
         }
-        captureLauncher.launch(if (android.os.Build.VERSION.SDK_INT >= 34) manager.createScreenCaptureIntent(android.media.projection.MediaProjectionConfig.createConfigForDefaultDisplay()) else manager.createScreenCaptureIntent())
+        if (savedInstanceState == null) captureLauncher.launch(if (android.os.Build.VERSION.SDK_INT >= 34) manager.createScreenCaptureIntent(android.media.projection.MediaProjectionConfig.createConfigForDefaultDisplay()) else manager.createScreenCaptureIntent())
     }
 
     companion object {
@@ -48,6 +52,7 @@ class CaptureConsentActivity : ComponentActivity() {
             val intent = Intent(context, CaptureConsentActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                putExtra("consent_generation", CaptureManager.consentGeneration.get())
                 putExtra(ScreenCaptureService.EXTRA_AUTO_CAPTURE, autoCapture)
             }
             context.startActivity(intent)

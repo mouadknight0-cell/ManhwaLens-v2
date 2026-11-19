@@ -19,15 +19,17 @@ object LanguageModels {
     val state = mutable.asStateFlow()
     private val mutex = Mutex()
 
-    suspend fun ensureReady(): Boolean = mutex.withLock {
+    suspend fun ensureReady(forceProbe: Boolean = false): Boolean = mutex.withLock {
         val model = TranslateRemoteModel.Builder(TranslateLanguage.ARABIC).build()
         val manager = RemoteModelManager.getInstance()
         val translator = Translation.getClient(TranslatorOptions.Builder()
             .setSourceLanguage(TranslateLanguage.ENGLISH).setTargetLanguage(TranslateLanguage.ARABIC).build())
+        val previouslyVerified = mutable.value.ready
         try {
             mutable.value = State("Checking installed Arabic model…", busy = true)
             withTimeout(120_000) {
                 val installed = manager.isModelDownloaded(model).await()
+                if (installed && previouslyVerified && !forceProbe) return@withTimeout
                 if (!installed) {
                     mutable.value = State("Downloading EN→AR language file… ML Kit does not expose percentage or size.", busy = true)
                 }

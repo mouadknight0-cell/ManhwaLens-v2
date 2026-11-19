@@ -22,6 +22,8 @@ object CaptureManager {
 
     enum class Status { PREPARING, READING, TRANSLATING, DOWNLOADING_MODEL }
 
+    val consentGeneration = java.util.concurrent.atomic.AtomicLong(0)
+
     private val _appVisible = MutableStateFlow(false)
     val appVisible = _appVisible.asStateFlow()
     fun setAppVisible(visible: Boolean) { _appVisible.value = visible }
