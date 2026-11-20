@@ -60,7 +60,12 @@ class BubbleOverlayService : Service() {
             CaptureManager.SessionPhase.FAILED -> "فشلت / Failed — أعد المحاولة"
         }
         val work = (CaptureManager.state.value as? CaptureManager.CaptureState.Working)?.status
-        statusLabel?.text = "Capture: $label • ${work ?: CaptureManager.live.value}"
+        statusLabel?.text = when {
+            phase == CaptureManager.SessionPhase.FAILED -> "تعذّر بدء الالتقاط — أعد المحاولة"
+            phase != CaptureManager.SessionPhase.ACTIVE -> "الالتقاط: ${label.substringBefore(" /")}"
+            CaptureManager.live.value == CaptureManager.LiveStatus.ERROR -> "الالتقاط متصل؛ تعذّرت معالجة الصفحة — أعد المحاولة"
+            else -> "الالتقاط متصل • ${work ?: CaptureManager.live.value}"
+        }
         bubbleView?.contentDescription = "Capture session: $label. Tap for Start and Stop controls."
         (bubbleView as? ImageView)?.setColorFilter(when (phase) {
             CaptureManager.SessionPhase.ACTIVE -> 0xFF86EFAC.toInt()

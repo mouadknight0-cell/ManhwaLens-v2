@@ -15,6 +15,22 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class QualityInstrumentedTest {
+    @Test fun xiaomiDarkDialogueCropsKeepOneRegionPerBalloon() = runBlocking {
+        val assets = InstrumentationRegistry.getInstrumentation().context.assets
+        for ((name, expected) in listOf("xiaomi-two-dark-dialogues.png" to 2, "xiaomi-three-lines.png" to 1)) {
+            val bitmap = assets.open(name).use { BitmapFactory.decodeStream(it) }
+            try {
+                val regions = TextRecognitionClient().recognize(bitmap, "en").sortedBy { it.top }
+                assertEquals("$name: $regions", expected, regions.size)
+                val last = regions.last()
+                if (expected == 2) {
+                    assertTrue("Separated greeting: $regions", regions.first().bottom < 130 && last.top in 530..600)
+                    assertTrue("Includes HOUSE line: $last", last.bottom >= 730)
+                } else assertTrue("Includes first and last lines: $last", last.top < 35 && last.bottom >= 130)
+            } finally { bitmap.recycle() }
+        }
+    }
+
     @Test fun realPhoneCropRunsThroughBundledOcr() = runBlocking {
         val assets = InstrumentationRegistry.getInstrumentation().context.assets
         val bitmap = assets.open("conference-text.png").use { BitmapFactory.decodeStream(it) }

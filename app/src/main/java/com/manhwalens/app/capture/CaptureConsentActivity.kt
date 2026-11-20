@@ -74,7 +74,7 @@ class CaptureConsentActivity : ComponentActivity() {
                         CaptureManager.sessionPhase.value == CaptureManager.SessionPhase.STARTING) {
                         CaptureManager.consentGeneration.incrementAndGet()
                         CaptureManager.setState(CaptureManager.CaptureState.Error(
-                            "منع النظام فتح الإذن. في إعدادات Xiaomi اسمح بالنوافذ المنبثقة أثناء العمل في الخلفية، ثم أعد المحاولة من الفقاعة.", "CAP-CONSENT-BLOCKED"))
+                            "لم تظهر نافذة الإذن. افتح التطبيق وابدأ الالتقاط من الإعدادات.", "CAP-CONSENT-BLOCKED"))
                         com.manhwalens.app.diagnostics.Diagnostics.warn("capture", "consent_blocked", "permission activity did not enter within 5 seconds", code = "CAP-CONSENT-BLOCKED")
                     }
                 }, 5000)
