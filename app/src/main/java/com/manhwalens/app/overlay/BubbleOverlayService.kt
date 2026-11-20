@@ -143,6 +143,7 @@ class BubbleOverlayService : Service() {
     private val translationViews = mutableListOf<View>()
     private var displayedResultId: String? = null
     private var readingPanelId: String? = null
+    private var readingRegion: com.manhwalens.app.pipeline.TextRegion? = null
     private var dismissedPanelId: String? = null
     private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
@@ -151,6 +152,7 @@ class BubbleOverlayService : Service() {
         translationViews.clear()
         if (readingPanelId != null) hidePanel()
         readingPanelId = null
+        readingRegion = null
         displayedBlocks.clear()
         displayedResultId = null
         translationRects.clear()
@@ -382,7 +384,15 @@ class BubbleOverlayService : Service() {
     private fun showPanel(result: CaptureResult, final: Boolean) {
         // StateFlow replays its last result to new subscribers: never render history over a different app.
         if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt || dismissedPanelId == result.id) return
-        if (readingPanelId == result.id) { return }
+        if (readingPanelId == result.id) {
+            val focus = readingRegion
+            val visible = if (focus == null) result else result.copy(blocks = result.blocks.filter {
+                val r = it.region
+                r.left == focus.left && r.top == focus.top && r.right == focus.right && r.bottom == focus.bottom
+            })
+            showReadingPanel(visible, final, focus)
+            return
+        }
         hidePanel()
         if (displayedResultId != result.id) { clearTranslations(); displayedResultId = result.id }
         val bounds = if (Build.VERSION.SDK_INT >= 30) {
@@ -403,7 +413,7 @@ class BubbleOverlayService : Service() {
             val height = width
             val text = CircularTranslationView(this, width, if (failed) "!" else block.translated, failed)
             text.contentDescription = "${block.translated}. اضغط لعرض النص الأصلي والتفاصيل"
-            text.setOnClickListener { showReadingPanel(result.copy(blocks = listOf(block)), final) }
+            text.setOnClickListener { showReadingPanel(result.copy(blocks = listOf(block)), final, block.region) }
             val params = WindowManager.LayoutParams(width, height, overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT).apply {
@@ -468,12 +478,13 @@ class BubbleOverlayService : Service() {
         // No T10/T12: a launcher is not a displayed translation.
     }
 
-    private fun showReadingPanel(result: CaptureResult, final: Boolean) {
+    private fun showReadingPanel(result: CaptureResult, final: Boolean, focus: com.manhwalens.app.pipeline.TextRegion? = null) {
         val oldScroll = if (readingPanelId == result.id) (panelView as? CircularTranslationView)?.scrollPosition() ?: 0 else 0
         clearTranslations()
         hidePanel()
         displayedResultId = result.id
         readingPanelId = result.id
+        readingRegion = focus
         // Bounded circular reader replaces the half-screen rectangular fallback.
         // Keep all sources/errors available; long content scrolls inside the circle.
         val bounds = availableBounds()

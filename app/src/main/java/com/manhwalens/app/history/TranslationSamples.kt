@@ -26,13 +26,14 @@ object TranslationSamples {
             val old = read()
             val all = (0 until old.length()).map { old.getJSONObject(it) }.toMutableList()
             for (block in blocks) {
-                if (block.original == block.translated && block.errorCode == null) continue
                 val key = "$journey:${block.region.left}:${block.region.top}"
                 if (all.any { it.optString("id") == key }) continue
                 all.add(JSONObject().apply {
                     put("id", key); put("trace", trace); put("timestamp", System.currentTimeMillis())
                     put("source", safe(block.original)); put("ocr_source", safe(block.region.text))
                     put("semantic_quality", "unverified")
+                    put("ocr_confidence", block.region.confidence.takeIf { it.isFinite() } ?: JSONObject.NULL)
+                    put("processing_status", if (block.method == "Sound effect preserved (not translated)") "preserved_not_translated" else if (block.errorCode != null) "error" else "translated_unverified")
                     put("translation", if (block.errorCode == null) safe(block.translated) else JSONObject.NULL)
                     put("error_code", block.errorCode ?: JSONObject.NULL)
                     put("duration_ms", block.durationMs ?: JSONObject.NULL)

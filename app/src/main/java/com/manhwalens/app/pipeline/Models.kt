@@ -10,7 +10,8 @@ data class TextRegion(
     val top: Int,
     val right: Int,
     val bottom: Int,
-    val confidence: Float = 1f,
+    /** Unknown is NaN, never an invented perfect confidence score. */
+    val confidence: Float = Float.NaN,
     /** BCP-47 hint derived from the recognizer that produced this region ("ko", "ja", "zh", "en"), or null if unknown. */
     val languageHint: String? = null,
 ) {

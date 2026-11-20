@@ -52,6 +52,7 @@ class TextRecognitionClient {
                                         top = box.top,
                                         right = box.right,
                                         bottom = box.bottom,
+                                        confidence = line.confidence ?: Float.NaN,
                                         languageHint = LanguageMapper.autoLanguageFor(script),
                                     )
                                 })

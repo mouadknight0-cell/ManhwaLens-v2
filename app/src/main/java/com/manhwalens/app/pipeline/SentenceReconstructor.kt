@@ -34,7 +34,11 @@ object SentenceReconstructor {
         // remove space before , . ; : ! ? % ) ] » ”
         t = t.replace(Regex("\\s+([,.;:!?%\\)\\]»”])"), "$1")
         // ensure space after , . ; : ! ? (but not between digits like 3.5)
-        t = t.replace(Regex("([,;:!?])([^\\s\\)\\]»”.!?])"), "$1 $2")
+        t = Regex("([,;:!?])([^\\s\\)\\]»”.!?])").replace(t) { match ->
+            val numericSeparator = match.groupValues[1] in listOf(",", ":") &&
+                t.getOrNull(match.range.first - 1)?.isDigit() == true && match.groupValues[2].first().isDigit()
+            if (numericSeparator) match.value else "${match.groupValues[1]} ${match.groupValues[2]}"
+        }
         t = t.replace(Regex("([.!?])([^\\d\\s\\)\\]»”.!?])"), "$1 $2")
         // normalize ( spacing
         t = t.replace(Regex("\\(\\s+"), "(")
@@ -59,7 +63,15 @@ object SentenceReconstructor {
         while (i < text.length) {
             val c = text[i]
             current.append(c)
+            if (c == '.' && text.getOrNull(i - 1)?.isDigit() == true && text.getOrNull(i + 1)?.isDigit() == true) {
+                i++
+                continue
+            }
             if (c in terminators) {
+                // Keep an ellipsis/emphatic run intact rather than inserting spaces.
+                while (i + 1 < text.length && text[i + 1] in terminators) {
+                    i++; current.append(text[i])
+                }
                 // swallow following closers: ." ) etc.
                 var j = i + 1
                 while (j < text.length && text[j] in closers) {

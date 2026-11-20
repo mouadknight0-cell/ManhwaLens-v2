@@ -73,7 +73,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
         val namesInText = NameDetector.find(trimmed, glossaryNames).map { it.name }
             .distinctBy { it.lowercase() }
-        val maskResult = NameShield.mask(trimmed, namesInText)
+        val maskResult = try { NameShield.mask(trimmed, namesInText) }
+            catch (failure: IllegalArgumentException) { throw TranslationFailure("TR-NAME-SHIELD") }
         val protected = maskResult.names
 
         val raw = try {
@@ -99,8 +100,9 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
                 context = mapOf("chars" to trimmed.length.toString()), recovery = "explicit failure shown")
             throw TranslationFailure(ErrorCodes.TRANSLATE_TIMEOUT)
         }
-        val restored = NameShield.restore(raw, protected)
-        if (restored.isBlank() || (restored.none { it in '\u0600'..'\u06ff' } && protected.none { it.equals(trimmed, true) })) {
+        if (!NameShield.preservesNames(raw, maskResult)) throw TranslationFailure("TR-NAME-LOST")
+        val restored = NameShield.restore(raw, maskResult)
+        if (restored.isBlank() || (!ArabicOutput.hasLetters(restored) && protected.none { it.equals(trimmed, true) })) {
             Diagnostics.warn("translate", "output_validation", "model output failed Arabic validation",
                 context = mapOf("source_chars" to trimmed.length.toString(), "output_chars" to restored.length.toString(),
                     "source_latin_letters" to trimmed.count { it in 'a'..'z' || it in 'A'..'Z' }.toString()))

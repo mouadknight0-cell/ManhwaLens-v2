@@ -536,7 +536,8 @@ class ScreenCaptureService : Service() {
             durationMs = ocrMs, context = mapOf("regions" to regions.size.toString()), traceId = traceId)
 
         // ── Reconstruction & grouping for translation quality ──
-        val scale = frame.width.toFloat() / ocrBitmap.width
+        val scaleX = frame.width.toFloat() / ocrBitmap.width
+        val scaleY = frame.height.toFloat() / ocrBitmap.height
         if (com.manhwalens.app.pipeline.SourceScreenGuard.isOwnInterface(regions)) {
             BenchmarkTracker.setJourneyCounts(frame.width, frame.height, regions.size, 0)
             CaptureManager.setSessionActive(false)
@@ -555,8 +556,8 @@ class ScreenCaptureService : Service() {
             return
         }
         val prepared = prepareRegions(regions.map { it.copy(
-            left = (it.left * scale).toInt(), top = (it.top * scale).toInt(),
-            right = (it.right * scale).toInt(), bottom = (it.bottom * scale).toInt()) }, frame)
+            left = (it.left * scaleX).toInt(), top = (it.top * scaleY).toInt(),
+            right = (it.right * scaleX).toInt(), bottom = (it.bottom * scaleY).toInt()) }, frame)
         BenchmarkTracker.mark("T7")
         if (prepared.isEmpty()) {
             Diagnostics.warn("text", "reconstruct", "OCR produced no translatable text",
@@ -585,13 +586,22 @@ class ScreenCaptureService : Service() {
         BenchmarkTracker.mark("T8")
         val id = journeyId
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
-            prepared.filter { it.kind != RegionKind.SOUND_EFFECT }.map { it.region },
+            prepared.map { it.region },
+            // Same words at the edge and in the center can have different input
+            // validity and preceding dialogue. Only the model-text cache may reuse.
+            identity = { it },
             translate = { region ->
                 val started = System.nanoTime()
                 val index = prepared.indexOfFirst { it.region == region }
-                val previousSource = prepared.getOrNull(index - 1)?.region?.text
+                val previousSource = prepared.getOrNull(index - 1)?.takeIf {
+                    it.kind != RegionKind.SOUND_EFFECT &&
+                        com.manhwalens.app.pipeline.OcrInputQuality.issue(it.region, readerContentBottom) == null
+                }?.region?.text
                 val issue = com.manhwalens.app.pipeline.OcrInputQuality.issue(region, readerContentBottom)
-                val translated = if (issue == null) translation.translateBlock(region, learnedNames, previousSource) else {
+                val translated = if (prepared.getOrNull(index)?.kind == RegionKind.SOUND_EFFECT && issue == null) {
+                    com.manhwalens.app.pipeline.TranslatedBlock(region, region.text, region.text,
+                        method = "Sound effect preserved (not translated)")
+                } else if (issue == null) translation.translateBlock(region, learnedNames, previousSource) else {
                     Diagnostics.warn("ocr", "input_quality", "OCR input requires a clearer or complete frame", code = issue,
                         context = mapOf("bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text,
