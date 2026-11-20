@@ -50,6 +50,10 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             return TranslatedBlock(region, region.text, "تعذّرت حماية الأسماء — راجع القاموس", "TR-NAME-SHIELD")
         }
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
+        if ((region.confidence.isFinite() && region.confidence < .5f) ||
+            com.manhwalens.app.pipeline.TranslationInput.unresolved(normalized, glossaryNames)) {
+            return TranslatedBlock(region, normalized, "", "OCR-NEEDS-REVIEW", method = "OCR input validation")
+        }
         val began = System.nanoTime()
         if (com.manhwalens.app.pipeline.OcrInputQuality.isNumericContent(normalized)) {
             return TranslatedBlock(region, normalized, normalized, durationMs = (System.nanoTime() - began) / 1_000_000,
@@ -57,7 +61,9 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         }
         val block = try {
             val reviewed = if (NameDetector.find(normalized, glossaryNames).isEmpty()) DialogueLexicon.translate(normalized, previous) else null
-            val translated = reviewed ?: translateText(normalized, glossaryNames)
+            val translated = reviewed ?: TranslationRetry.run(
+                retryable = { it is TranslationFailure && it.code == ErrorCodes.TRANSLATE_FAILED }
+            ) { translateText(normalized, glossaryNames) }
             TranslatedBlock(region, normalized, translated, method = if (reviewed == null) "ML Kit on-device" else "Reviewed dialogue lexicon v1")
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {
@@ -75,7 +81,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         if (trimmed.isBlank() || trimmed.none { it.isLetter() }) return trimmed
 
         val identity = trimmed + "\u0000" + glossaryNames.sorted().joinToString("\u0000")
-        val cacheKey = "validated-v2:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
+        val cacheKey = "validated-v3:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
         cache.get(cacheKey)?.let { return it }
 
         val namesInText = NameDetector.find(trimmed, glossaryNames)

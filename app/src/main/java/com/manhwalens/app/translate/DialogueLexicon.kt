@@ -6,6 +6,8 @@ package com.manhwalens.app.translate
  */
 object DialogueLexicon {
     private val entries = mapOf(
+        "there is no need to force yourself to make a sound" to "لا داعي لأن تُجبر نفسك على إصدار أي صوت",
+        "i am more than capable of hearing your inner voice" to "أستطيع سماع صوتك الداخلي بكل وضوح",
         "i'll help you" to "سأساعدك",
         "i will help you" to "سأساعدك",
         "that's a relief" to "هذا مطمئن",
@@ -40,6 +42,6 @@ object DialogueLexicon {
         val k = key(text)
         val value = if (k == "am i" && previous?.let(::key) == "where") "أنا" else entries[k] ?: return null
         val tail = text.trim().takeLastWhile { it in ".!?…" }
-        return value + tail.replace('?', '؟')
+        return value + tail.replace(Regex("\\.{2,}"), "…").replace('?', '؟')
     }
 }

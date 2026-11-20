@@ -82,7 +82,7 @@ class BubbleOverlayService : Service() {
     private var dockRect: android.graphics.Rect? = null
     private fun publishBounds() {
         val rectangles = translationRects.toMutableList()
-        bubbleView?.let { view ->
+        bubbleView?.takeIf { it.visibility == View.VISIBLE }?.let { view ->
             val xy = IntArray(2); view.getLocationOnScreen(xy)
             rectangles.add(android.graphics.Rect(xy[0], xy[1], xy[0] + dp(BUBBLE_SIZE_DP), xy[1] + dp(BUBBLE_SIZE_DP)))
         }
@@ -407,11 +407,12 @@ class BubbleOverlayService : Service() {
         data class Ready(val view: ReplacementTranslationView, val params: WindowManager.LayoutParams, val rect: android.graphics.Rect)
         val ready = mutableListOf<Ready>()
         var pixels = 0L
+        var deferred = false
         fun fallback(reason: String) {
+            deferred = true
             com.manhwalens.app.diagnostics.Diagnostics.warn("overlay", "replacement_rejected",
                 "Original preserved; full reader available", code = reason,
                 context = mapOf("result_id" to result.id, "blocks" to replacing.size.toString()))
-            showReadingLauncher(result, final)
         }
         for (block in replacing) {
             val region = block.region
@@ -420,12 +421,12 @@ class BubbleOverlayService : Service() {
             val issue = com.manhwalens.app.translate.ReplacementQuality.blockIssue(block)
             if (block.errorCode != null || issue != null || surface == null || !surface.reliable ||
                 (region.confidence.isFinite() && region.confidence < .5f)) {
-                fallback(block.errorCode ?: issue ?: "RENDER-UNSAFE-SURFACE-OR-OCR"); return
+                fallback(block.errorCode ?: issue ?: "RENDER-UNSAFE-SURFACE-OR-OCR"); continue
             }
             pixels += surface.width.toLong() * surface.height
             val rect = android.graphics.Rect(surface.left, surface.top, surface.right, surface.bottom)
             if (pixels > 4_000_000L || ready.any { android.graphics.Rect.intersects(it.rect, rect) }) {
-                fallback("RENDER-OVERLAP-OR-BUDGET"); return
+                fallback("RENDER-OVERLAP-OR-BUDGET"); continue
             }
             val text = runCatching {
                 ReplacementTranslationView(this, block.translated, surface).also {
@@ -434,7 +435,7 @@ class BubbleOverlayService : Service() {
                     it.layout(0, 0, surface.width, surface.height)
                 }
             }.getOrNull()
-            if (text == null || !text.replacementReady) { fallback("RENDER-NOT-FULLY-PREPARED"); return }
+            if (text == null || !text.replacementReady) { fallback("RENDER-NOT-FULLY-PREPARED"); continue }
             text.setOnClickListener { showReadingPanel(result.copy(blocks = listOf(block)), final, block.region) }
             val params = WindowManager.LayoutParams(surface.width, surface.height, overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
@@ -449,16 +450,17 @@ class BubbleOverlayService : Service() {
                 ReplacementCommit.eligible(result.id, CaptureManager.activeResultId, final) },
             attach = { windowManager.addView(it.view, it.params) },
             remove = { it.view.visibility = View.INVISIBLE; windowManager.removeViewImmediate(it.view) })
-        if (!committed) { fallback("RENDER-COMMIT-ROLLED-BACK"); return }
+        if (!committed) { showReadingLauncher(result, final); return }
         ready.forEach { translationViews.add(it.view); translationRects.add(it.rect) }
         displayedBlocks.add(result.id)
         publishBounds()
-        markRendered(result, final)
+        if (deferred) showReadingLauncher(result, final, keepTranslations = true)
+        if (ready.isNotEmpty()) markRendered(result, final && !deferred)
     }
 
     /** Crowding offers an explicit reader button; never automatically obscures the page. */
-    private fun showReadingLauncher(result: CaptureResult, final: Boolean) {
-        clearTranslations()
+    private fun showReadingLauncher(result: CaptureResult, final: Boolean, keepTranslations: Boolean = false) {
+        if (!keepTranslations) clearTranslations()
         hidePanel()
         displayedResultId = result.id
         val bounds = availableBounds()
@@ -491,29 +493,30 @@ class BubbleOverlayService : Service() {
     }
 
     private fun showReadingPanel(result: CaptureResult, final: Boolean, focus: com.manhwalens.app.pipeline.TextRegion? = null) {
-        val oldScroll = if (readingPanelId == result.id) (panelView as? CircularTranslationView)?.scrollPosition() ?: 0 else 0
+        val oldScroll = if (readingPanelId == result.id) (panelView as? ReadingPanelView)?.scrollPosition() ?: 0 else 0
         clearTranslations()
         hidePanel()
         displayedResultId = result.id
         readingPanelId = result.id
         readingRegion = focus
-        // Bounded circular reader replaces the half-screen rectangular fallback.
-        // Keep all sources/errors available; long content scrolls inside the circle.
         val bounds = availableBounds()
-        val diameter = minOf(bounds.width(), bounds.height(), dp(300))
-        val message = result.blocks.sortedWith(compareBy({ it.region.top }, { it.region.left }))
-            .joinToString("\n\n") { "${it.original}\n${it.translated}" }
-        val reader = CircularTranslationView(this, diameter, message)
-        val params = WindowManager.LayoutParams(diameter, diameter, overlayType(),
+        val width = minOf(bounds.width() - dp(16), dp(360)).coerceAtLeast(1)
+        val cap = minOf(dp(320), (bounds.width().toLong() * bounds.height() * .30 / width).toInt())
+        val reader = ReadingPanelView(this, result.blocks.sortedWith(compareBy({ it.region.top }, { it.region.left }))) {
+            dismissedPanelId = result.id; hidePanel()
+        }
+        val height = reader.desiredHeight(width,cap.coerceAtLeast(1))
+        val params = WindowManager.LayoutParams(width, height, overlayType(),
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT).apply {
             gravity = Gravity.TOP or Gravity.LEFT
-            x = bounds.left + (bounds.width() - diameter) / 2
-            y = bounds.top + (bounds.height() - diameter) / 2
+            x = bounds.left + (bounds.width() - width) / 2
+            y = bounds.top + (bounds.height() - height) / 2
         }
-        reader.setOnLongClickListener { dismissedPanelId = result.id; hidePanel(); true }
         if (runCatching { windowManager.addView(reader, params) }.isSuccess) {
             panelView = reader
+            collapseActions()
+            bubbleView?.visibility = if (ReaderContent.hideFloatingIcon(width,height,bounds.width(),bounds.height())) View.INVISIBLE else View.VISIBLE
             reader.restoreScroll(oldScroll)
             reader.post { publishBounds() }
         }
@@ -696,6 +699,7 @@ class BubbleOverlayService : Service() {
     private fun hidePanel() {
         panelView?.let { view -> runCatching { windowManager.removeView(view) } }
         panelView = null
+        bubbleView?.visibility = View.VISIBLE
         publishBounds()
     }
 

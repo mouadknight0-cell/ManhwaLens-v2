@@ -6,7 +6,7 @@ package com.manhwalens.app.pipeline
  */
 object FrameTranslationPlan {
     data class Input(val region: TextRegion, val kind: RegionKind)
-    data class Key(val text: String, val issue: String?, val previous: String?, val preserveSoundEffect: Boolean)
+    data class Key(val text: String, val issue: String?, val previous: String?, val preserveSoundEffect: Boolean, val lowConfidence: Boolean = false)
     data class Work(val input: Input, val key: Key)
 
     fun requiresModel(work: List<Work>): Boolean = work.any {
@@ -19,7 +19,7 @@ object FrameTranslationPlan {
             val previous = inputs.getOrNull(index - 1)?.takeIf {
                 it.kind != RegionKind.SOUND_EFFECT && issues[index - 1] == null
             }?.region?.text
-            Work(input, Key(input.region.text, issues[index], previous, input.kind == RegionKind.SOUND_EFFECT))
+            Work(input, Key(input.region.text, issues[index], previous, input.kind == RegionKind.SOUND_EFFECT, input.region.confidence.isFinite() && input.region.confidence < .5f))
         }
     }
 }
