@@ -34,3 +34,7 @@ node_modules/
 
 # Local image-fixture preparation environment
 .venv/
+
+# Python audit tooling bytecode
+__pycache__/
+*.pyc
