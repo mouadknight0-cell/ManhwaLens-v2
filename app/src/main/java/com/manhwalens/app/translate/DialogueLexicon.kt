@@ -6,6 +6,8 @@ package com.manhwalens.app.translate
  */
 object DialogueLexicon {
     private val entries = mapOf(
+        "it is useless" to "إنه بلا فائدة", "is that so" to "هل هذا صحيح", "that's impossible" to "هذا مستحيل",
+        "she's still alive" to "إنها ما زالت حيّة", "he's still alive" to "إنه ما زال حياً",
         "is everyone safe" to "هل الجميع بأمان", "i lost my way" to "ضللتُ طريقي",
         "are you okay" to "هل أنت بخير", "what is going on" to "ما الذي يحدث", "answer me" to "أجبني",
         "i came to get you, sister" to "جئت لآخذكِ يا {sister}",
@@ -54,16 +56,22 @@ object DialogueLexicon {
     private fun key(text: String) = text.trim().lowercase().replace('’', '\'')
         .trimEnd('.', '!', '?', '…', ' ').replace(Regex("\\s+"), " ")
     private val index=entries.keys.groupBy { it.substringBefore(' ') to it.length/4 }
+    private val byLength=entries.keys.groupBy { it.length/4 }
+    private val firstWords=entries.keys.mapTo(hashSetOf()) { it.substringBefore(' ') }
     private val ahead=Regex("^there's a ([a-z-]+) ahead$")
     private val justNow=Regex("^what was that ([a-z-]+) just now$")
     private val kin=Regex("^i came to get you, ([a-z-]+)$")
+    private val alive=Regex("^([a-z-]+)'s still alive$")
+    private val yes=Regex("(?i)^yes,? +(.{1,300})$")
     private val died=Regex("(?i)^as soon as ([a-z-]+) died,? (.{1,300})$")
     fun continuation(text:String,terms:Map<String,String>):Pair<String,String>? {
+        yes.matchEntire(text.trim())?.let { return "نعم، " to it.groupValues[1] }
         val m=died.matchEntire(text.trim()) ?: return null
         val reading=terms[m.groupValues[1].lowercase()] ?: return null
         return "فور موت $reading، " to m.groupValues[2]
     }
     private fun pattern(k:String,terms:Map<String,String>):String? {
+        alive.matchEntire(k)?.let { m -> terms[m.groupValues[1]]?.let { return "$it ما زال على قيد الحياة" } }
         ahead.matchEntire(k)?.let { return terms[it.groupValues[1]]?.let { term->"هناك $term أمامنا" } }
         justNow.matchEntire(k)?.let { return terms[it.groupValues[1]]?.let { term->"ما كان ذلك ${if(term.startsWith("ال")) term else "ال$term"} قبل قليل" } }
         kin.matchEntire(k)?.let { if(it.groupValues[1] in setOf("sister","brother")) return terms[it.groupValues[1]]?.let { term->"جئت لآخذك يا $term" } }
@@ -77,7 +85,7 @@ object DialogueLexicon {
         if(k.length !in 8..200) return null
         val words=k.split(' '); var best:String?=null;var score=0.0
         val margin=if(k.length<=40) 2 else k.length/7
-        for(bucket in (k.length-margin)/4..(k.length+margin)/4) for(candidate in index[words.first() to bucket].orEmpty()) {
+        for(bucket in (k.length-margin)/4..(k.length+margin)/4) for(candidate in (if(words.first() in firstWords) index[words.first() to bucket] else byLength[bucket]).orEmpty()) {
             if(System.nanoTime()>deadline) return null
             val cw=candidate.split(' '); if(words.size!=cw.size || words.count { it in negatives }!=cw.count { it in negatives }) continue
             val hit=if(k.length<=40) {val d=distance(k,candidate);if(d<=2) 1.0-d.toDouble()/k.length else 0.0}
