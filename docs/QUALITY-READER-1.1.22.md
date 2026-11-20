@@ -74,3 +74,7 @@ Same durable signing vault, no data clearing. PR9 stays open. Exact execution an
 - First cleanup microbenchmark (44756309324) exposed overhead: 1,000 utterances, prior 4,466,222µs vs new 8,113,302µs. Added no-op repair fast path and precompiled patterns.
 - Final same-run comparison (44757237032): prior **2,378,443µs total**, current **1,370,046µs total**, ~2.378ms vs ~1.370ms per utterance on this emulator. Shared-runner timing varies; do not compare absolute numbers across different runs or infer end-to-end speedup. Microbenchmark excludes the full confidence/non-word gate, OCR, model, rendering and retries. Xiaomi parity remains unverified.
 - Final release additionally runs the explicit `THEY SEVERED THEM.. PIECE BY PIECE.` valid-Arabic validator golden. No production app changes after the tested source except release metadata.
+
+## Published
+
+Release build/unit tests [44758047001](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44758047001) passed, including the added severed-dialogue validator golden. Durable-vault signing and version/certificate identity verification [44758664526](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44758664526) passed. Public signed APK: https://github.com/mouadknight0-cell/ManhwaLens-v2/releases/download/v1.1.22/app-release.apk . PR9 not merged; no signer change or data reset.

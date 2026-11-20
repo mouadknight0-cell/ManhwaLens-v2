@@ -1,6 +1,6 @@
 # ManhwaLens engineering state
 
-## Current work: v1.1.22 candidate
+## Current release: v1.1.22
 
 Branch: `arena/ae360a1c-manhwalens-v2`; PR9 open, not merged. Last public release at start of task: v1.1.21. Native Android / offline-first / ML Kit EN→AR unchanged. Existing durable signer reused; never regenerate it or clear user data.
 
@@ -22,4 +22,4 @@ No opaque mask before complete native layout and offscreen text+background prepa
 
 ## Verification
 
-App source `642d55c`: CI 44757237108 passed unit tests/build; Android14 44757237032 passed native reader/icon tests and existing regressions. Warm cleanup microbenchmark (1,000 utterances, same run): prior 2,378,443µs total, current 1,370,046µs total. This is not end-to-end latency or Xiaomi parity. An additional severed-dialogue validator golden is covered by the release unit-test gate. Signed publication pending below.
+App source `642d55c`: CI 44757237108 passed unit tests/build; Android14 44757237032 passed native reader/icon tests and existing regressions. Warm cleanup microbenchmark (1,000 utterances, same run): prior 2,378,443µs total, current 1,370,046µs total. This is not end-to-end latency or Xiaomi parity. An additional severed-dialogue validator golden is covered by the release unit-test gate. Release build/unit tests 44758047001 and durable-vault signing/identity check 44758664526 passed. Published v1.1.22: https://github.com/mouadknight0-cell/ManhwaLens-v2/releases/tag/v1.1.22 . Same signer; physical update not tested.
