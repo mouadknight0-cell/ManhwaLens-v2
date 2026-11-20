@@ -423,9 +423,9 @@ class BubbleOverlayService : Service() {
                 (region.confidence.isFinite() && region.confidence < .5f)) {
                 fallback(block.errorCode ?: issue ?: "RENDER-UNSAFE-SURFACE-OR-OCR"); continue
             }
-            pixels += surface.width.toLong() * surface.height
+            val candidatePixels = pixels + surface.width.toLong() * surface.height
             val rect = android.graphics.Rect(surface.left, surface.top, surface.right, surface.bottom)
-            if (pixels > 4_000_000L || ready.any { android.graphics.Rect.intersects(it.rect, rect) } ||
+            if (candidatePixels > 4_000_000L || ready.any { android.graphics.Rect.intersects(it.rect, rect) } ||
                 result.blocks.any { other -> other !== block && android.graphics.Rect.intersects(rect,
                     android.graphics.Rect(other.region.left,other.region.top,other.region.right,other.region.bottom)) }) {
                 fallback("RENDER-OVERLAP-OR-BUDGET"); continue
@@ -446,6 +446,7 @@ class BubbleOverlayService : Service() {
             }
             text.setOnLongClickListener { clearTranslations(); true }
             ready.add(Ready(text, params, rect))
+            pixels = candidatePixels
         }
         val committed = ReplacementCommit.commit(ready,
             current = { acceptResults && !CaptureManager.appVisible.value &&
