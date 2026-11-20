@@ -145,10 +145,14 @@ val packPhrases by tasks.registering {
         val output = packed.get().asFile
         output.parentFile.mkdirs()
         DataOutputStream(output.outputStream().buffered()).use { stream ->
-            stream.writeInt(rows.size)
-            for(row in rows){val en=row["en"] as String;val key=en.uppercase(Locale.ROOT).replace('’','\'').replace(Regex("\\b([A-Z]{1,3})-(?=\\1[A-Z'])"), "").replace(Regex("[^A-Z0-9']+")," ").trim()
-                stream.writeUTF(en);stream.writeUTF(row["ar"] as String);stream.writeUTF(row["type"] as String);stream.writeUTF((row["genre"] as List<*>).joinToString(","));stream.writeInt((row["priority"] as Number).toInt());stream.writeUTF(key)
+            val strings=linkedMapOf<String,Int>()
+            fun id(value:String)=strings.getOrPut(value){strings.size}
+            fun rank(row:Map<*,*>):Int {val g=row["genre"] as List<*>;return if("regression-test" in g)3 else if(g.any { it!="general" })2 else 1}
+            val records=rows.sortedWith(compareByDescending<Map<*,*>>{rank(it)}.thenByDescending{(it["priority"] as Number).toInt()}).map { row ->
+                val en=row["en"] as String;val key=en.uppercase(Locale.ROOT).replace('’','\'').replace(Regex("\\b([A-Z]{1,3})-(?=\\1[A-Z'])"), "").replace(Regex("[^A-Z0-9']+")," ").trim()
+                val words=key.split(' ');listOf(id(en),id(row["ar"] as String),id(row["type"] as String),id((row["genre"] as List<*>).joinToString(",")),(row["priority"] as Number).toInt(),id(key),words.size)+words.map(::id)
             }
+            val pool=strings.keys.joinToString("\u0000").toByteArray(Charsets.UTF_8);stream.writeInt(pool.size);stream.write(pool);stream.writeInt(records.size);records.forEach { r->r.forEach(stream::writeInt) }
         }
     }
 }

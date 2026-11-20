@@ -4,9 +4,9 @@ import java.util.Locale
 import kotlin.math.abs
 
 /** Immutable per settings/dictionary generation. No model or Android dependency. */
-data class Entry(val en:String,val ar:String,val type:String,val genres:Set<String>,val priority:Int,val normalized:String?=null)
+data class Entry(val en:String,val ar:String,val type:String,val genres:Set<String>,val priority:Int,val normalized:String?=null,val tokens:List<String>?=null)
 data class Hit(val text:String,val stage:String)
-class PhraseIndex(rows:List<Entry>,enabled:Set<String>) {
+class PhraseIndex(rows:List<Entry>,enabled:Set<String>,presorted:Boolean=false) {
     companion object {
         private val stutter=Regex("\\b([A-Z]{1,3})-(?=\\1[A-Z'])")
         private val separators=Regex("[^A-Z0-9']+")
@@ -19,11 +19,12 @@ class PhraseIndex(rows:List<Entry>,enabled:Set<String>) {
     private val trie=Node();private val exact=HashMap<String,Entry>();private val inverted=HashMap<String,MutableList<String>>();private val tokenSets=HashMap<String,Set<String>>();private val lengths=HashMap<Int,MutableList<String>>();private val templates=mutableListOf<Pair<Regex,Entry>>()
     init {
         fun rank(e:Entry)=when {"user" in e.genres->4;"regression-test" in e.genres->3;e.genres.any { it!="general" }->2;else->1}
-        val active=rows.filter { it.genres.any { g->g in enabled || g=="user" || g=="regression-test" } }.sortedWith(compareByDescending<Entry>{rank(it)}.thenByDescending { it.priority })
+        val allowed=rows.filter { it.genres.any { g->g in enabled || g=="user" || g=="regression-test" } }
+        val active=if(presorted)allowed else allowed.sortedWith(compareByDescending<Entry>{rank(it)}.thenByDescending { it.priority })
         for(e in active){if(e.type=="template"){val parts=e.en.split("{X}");if(parts.size==2)templates.add(Regex("^"+Regex.escape(key(parts[0]))+" +(.{1,180})"+(key(parts[1]).takeIf(String::isNotEmpty)?.let { " +"+Regex.escape(it) }?:"")+"$") to e);continue}
             val k=e.normalized?:key(e.en);if(k.isEmpty() || exact.putIfAbsent(k,e)!=null)continue
-            val words=k.split(' ');val set=words.toSet();tokenSets[k]=set;set.forEach { inverted.getOrPut(it){mutableListOf()}.add(k) };lengths.getOrPut(k.length){mutableListOf()}.add(k)
-            if(e.type in setOf("term","phrase")){var n=trie;for(w in words)n=n.next.getOrPut(w){Node()};n.end=e}
+            val words=e.tokens?:k.split(' ');val set=words.toSet();tokenSets[k]=set;set.forEach { inverted.getOrPut(it){mutableListOf()}.add(k) };lengths.getOrPut(k.length){mutableListOf()}.add(k)
+            if(e.type=="term" || e.type=="phrase"){var n=trie;for(w in words)n=n.next.getOrPut(w){Node()};n.end=e}
         }
     }
     private fun distance(a:String,b:String,limit:Int):Int {if(abs(a.length-b.length)>limit)return limit+1;var row=IntArray(b.length+1){it};var next=IntArray(row.size)

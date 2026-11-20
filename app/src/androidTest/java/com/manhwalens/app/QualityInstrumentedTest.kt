@@ -27,9 +27,9 @@ class QualityInstrumentedTest {
         val ctx=InstrumentationRegistry.getInstrumentation().targetContext
         val index=requireNotNull(com.manhwalens.app.phrasebook.PhraseLibrary.ready())
         // Estimate incremental Java heap on an otherwise idle instrumentation thread; never GC a live session.
-        fun heap():Long { Runtime.getRuntime().gc();return Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory() }
-        val before=heap();val duplicate=com.manhwalens.app.phrasebook.PhraseLibrary.loadAssets(ctx);val copy=com.manhwalens.app.phrasebook.PhraseIndex(duplicate,com.manhwalens.app.phrasebook.PhraseLibrary.packs.toSet());val delta=heap()-before
-        assertNotNull(copy.lookup("THIS SCENT"));android.util.Log.i("ManhwaLensFunnel","phrasebook startup_ms=${com.manhwalens.app.phrasebook.PhraseLibrary.startupMs} entries=${duplicate.size} approx_extra_heap_bytes=$delta emulator_only=true")
+        fun allocated()=android.os.Debug.getRuntimeStat("art.gc.bytes-allocated").toLong()
+        val before=allocated();val duplicate=com.manhwalens.app.phrasebook.PhraseLibrary.loadAssets(ctx);val copy=com.manhwalens.app.phrasebook.PhraseIndex(duplicate,com.manhwalens.app.phrasebook.PhraseLibrary.packs.toSet(),presorted=true);val bytes=allocated()-before
+        assertNotNull(copy.lookup("THIS SCENT"));android.util.Log.i("ManhwaLensFunnel","phrasebook startup_ms=${com.manhwalens.app.phrasebook.PhraseLibrary.startupMs} entries=${duplicate.size} process_java_bytes_allocated_during_extra_load=$bytes emulator_only=true")
         val narration=index.render("HAVE YOU FORGOTTEN? THOSE EYES OF YOURS, ONCE FULL OF PROFOUND WISDOM, WERE GOUGED OUT WITH RED-HOT IRON SKEWERS."){_,_->error("reviewed narration must not invoke MT")}
         assertTrue(narration!!.text.contains("بأسياخ"));val a=ctx.assets.open("phrasebook/phrasebook_seed.json").bufferedReader().use {org.json.JSONObject(it.readText()).getJSONArray("entries")}
         for(i in 0 until a.length()){val e=a.getJSONObject(i);if(!e.getJSONArray("genre").toString().contains("regression-test"))continue
