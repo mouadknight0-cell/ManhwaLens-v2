@@ -56,7 +56,7 @@ class ReplacementTranslationView(context: Context, val message: String,
             fitPasses++
             ink.textSize = size * resources.displayMetrics.scaledDensity
             return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
-                .setAlignment(if (com.manhwalens.app.pipeline.ArabicDisplay.isShort(message) || text == "…") Layout.Alignment.ALIGN_CENTER else Layout.Alignment.ALIGN_NORMAL)
+                .setAlignment(Layout.Alignment.ALIGN_CENTER)
                 .setTextDirection(if (com.manhwalens.app.pipeline.ArabicDisplay.isArabic(message)) TextDirectionHeuristics.RTL else TextDirectionHeuristics.FIRSTSTRONG_LTR)
                 .setIncludePad(true).setLineSpacing(0f, 1.04f)
                 .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)

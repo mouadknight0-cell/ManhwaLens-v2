@@ -81,20 +81,18 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         if (trimmed.isBlank() || trimmed.none { it.isLetter() }) return trimmed
 
         val identity = trimmed + "\u0000" + glossaryNames.sorted().joinToString("\u0000")
-        val cacheKey = "validated-v3:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
+        val cacheKey = "validated-v4:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
         cache.get(cacheKey)?.let { return it }
 
-        val namesInText = NameDetector.find(trimmed, glossaryNames)
-            .filter { it.source == com.manhwalens.app.names.NameHit.Source.GLOSSARY }.map { it.name }
-            .distinctBy { it.lowercase() }
-        val maskResult = try { NameShield.mask(trimmed, namesInText) }
+        val maskResult = try { NameShield.mask(trimmed, glossaryNames) }
             catch (failure: IllegalArgumentException) { throw TranslationFailure("TR-NAME-SHIELD") }
+        val modelInput = com.manhwalens.app.pipeline.TranslationInput.modelCase(maskResult.maskedText)
         val protected = maskResult.names
 
         val raw = try {
             withTimeoutOrNull(TRANSLATE_TIMEOUT_MS) {
                 nativePermits.acquire()
-                val task = try { translatorFor(SOURCE, TARGET).translate(maskResult.maskedText) }
+                val task = try { translatorFor(SOURCE, TARGET).translate(modelInput) }
                     catch (failure: Exception) { nativePermits.release(); throw failure }
                 task.addOnCompleteListener(java.util.concurrent.Executor { it.run() }) { nativePermits.release() }
                 task.await()

@@ -7,6 +7,20 @@ import com.manhwalens.app.names.NameShield
  * Collision-free sentinels remain internal; raw OCR stays in TextRegion.
  */
 object TranslationInput {
+    /** Apply only to all-caps dialogue after confirmed glossary spans became numeric tokens. */
+    fun modelCase(masked: String): String {
+        if (masked.none { it in 'A'..'Z' } || masked.any { it in 'a'..'z' }) return masked
+        var start = true
+        return buildString(masked.length) {
+            for (i in masked.indices) {
+                val c = masked[i]
+                val pronoun = c == 'I' && masked.getOrNull(i-1)?.isLetter() != true && masked.getOrNull(i+1)?.isLetter() != true
+                append(if (start || pronoun) c else c.lowercaseChar())
+                if (c.isLetterOrDigit()) start = false else if (c in ".!?") start = true
+            }
+        }
+    }
+
     fun prepare(text: String, glossaryNames: List<String>): String {
         val normalized = SentenceReconstructor.normalize(text)
         if (!OcrLexicon.needsCleanup(normalized)) return normalized

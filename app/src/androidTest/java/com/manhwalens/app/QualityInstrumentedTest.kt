@@ -166,6 +166,12 @@ class QualityInstrumentedTest {
             val paragraph = android.text.StaticLayout.Builder.obtain(display,0,display.length,paint,500)
                 .setTextDirection(android.text.TextDirectionHeuristics.RTL).build()
             assertEquals(-1, paragraph.getParagraphDirection(0))
+            val greeting = com.manhwalens.app.pipeline.ArabicDisplay.prepare("... تحياتي.")
+            val native = android.text.StaticLayout.Builder.obtain(greeting,0,greeting.length,paint,500)
+                .setTextDirection(android.text.TextDirectionHeuristics.RTL).build()
+            assertEquals('…',greeting.first())
+            assertTrue("Leading ellipsis is right of greeting", native.getPrimaryHorizontal(0) > native.getPrimaryHorizontal(1))
+            assertTrue("Final stop is on the left", native.getPrimaryHorizontal(greeting.length-1) > native.getPrimaryHorizontal(greeting.length))
             val latinStart = display.indexOf("Guardian")
             assertTrue("Latin name remains LTR inside RTL paragraph", paragraph.getPrimaryHorizontal(latinStart) < paragraph.getPrimaryHorizontal(latinStart + 7))
             for (scale in listOf(1f, 1.4f)) {

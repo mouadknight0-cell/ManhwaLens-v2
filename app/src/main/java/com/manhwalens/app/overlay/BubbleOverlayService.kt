@@ -382,7 +382,7 @@ class BubbleOverlayService : Service() {
         if (displayedBlocks.isNotEmpty()) return
         val replacing = result.blocks.filter { it.translated != it.original }
         if (replacing.isEmpty()) return
-        data class Ready(val view: ReplacementTranslationView, val params: WindowManager.LayoutParams, val rect: android.graphics.Rect)
+        data class Ready(val view: View, val params: WindowManager.LayoutParams, val rect: android.graphics.Rect)
         val ready = mutableListOf<Ready>()
         val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,bounds.bottom)
         val occupied = mutableListOf<ReplacementSurface>()
@@ -396,8 +396,10 @@ class BubbleOverlayService : Service() {
         }
         for (block in replacing) {
             if (block.errorCode != null || block.translated.isBlank()) continue
-            val source = SurfacePlacement.visible(block.region,screen) ?: continue
-            val prepared = runCatching { DirectTranslationLayout.prepare(this,block.translated,source,screen,occupied) }.getOrNull()
+            val source = SurfacePlacement.visible(block.region,screen)?.copy(oval = false) ?: continue
+            val others = result.blocks.filter { it !== block }.map { SurfacePlacement.source(it.region) }
+            val barriers = occupied + others
+            val prepared = runCatching { DirectTranslationLayout.prepare(this,block.translated,source,screen,barriers) }.getOrNull()
             if (prepared == null) {
                 com.manhwalens.app.diagnostics.Diagnostics.warn("overlay","screen_capacity","Original retained: complete text exceeds available display or rendering failed")
                 continue
@@ -411,6 +413,22 @@ class BubbleOverlayService : Service() {
                 gravity = Gravity.TOP or Gravity.LEFT; x = surface.left; y = surface.top; alpha = 1f
             }
             text.setOnLongClickListener { clearTranslations(); true }
+            // Cover only source ink left outside the text window. Keep masks in the
+            // same rollback/lifecycle transaction and never draw over the control.
+            val ink = SurfacePlacement.source(block.region, source.color)
+            val uncovered = android.graphics.Region(ink.left, ink.top, ink.right, ink.bottom)
+            uncovered.op(screen.left, screen.top, screen.right, screen.bottom, android.graphics.Region.Op.INTERSECT)
+            for (reserved in barriers + surface) uncovered.op(reserved.left, reserved.top, reserved.right, reserved.bottom, android.graphics.Region.Op.DIFFERENCE)
+            val pieces = android.graphics.RegionIterator(uncovered)
+            val piece = android.graphics.Rect()
+            while (pieces.next(piece)) {
+                val mask = View(this).apply { setBackgroundColor(source.color or (0xff shl 24)) }
+                val mp = WindowManager.LayoutParams().apply {
+                    copyFrom(params); x = piece.left; y = piece.top; width = piece.width(); height = piece.height()
+                    flags = flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                }
+                ready.add(Ready(mask, mp, android.graphics.Rect(piece)))
+            }
             ready.add(Ready(text, params, rect))
             occupied.add(surface)
         }

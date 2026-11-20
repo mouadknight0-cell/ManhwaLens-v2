@@ -27,7 +27,21 @@ object TonalCorridor {
             fun median(shift: Int) = colors.map { channel(it, shift) }.sorted()[colors.size / 2]
             val r = median(16); val g = median(8); val bl = median(0)
             if (reference == null) {
-                if (minOf(r,g,bl) < 150) return false
+                if (minOf(r,g,bl) < 150) {
+                    if (maxOf(r,g,bl) > 90 || (end-start+3L)*count > MAX_PROBES) return false
+                    val darkTone = (r shl 16) or (g shl 8) or bl
+                    // A black gutter between light balloons is not a black balloon.
+                    // Require the tone inside both OCR boxes as well as across every gap row.
+                    fun matches(y: Int, fraction: Int): Boolean {
+                        if (y !in 0 until height) return false
+                        var hits = 0
+                        for (x in left until right step step) if (difference(pixel(x,y), darkTone) <= 26) hits++
+                        return hits * 10 >= fraction * count
+                    }
+                    return colors.count { difference(it,darkTone) <= 26 } * 10 >= 8 * count &&
+                        matches(a.bottom-2,6) && matches(b.top+1,6) &&
+                        (start+1..end).all { matches(it,8) }
+                }
                 reference = (r shl 16) or (g shl 8) or bl
             }
             val tone = reference

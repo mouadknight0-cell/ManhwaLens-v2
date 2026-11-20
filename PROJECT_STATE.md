@@ -1,5 +1,9 @@
 # ManhwaLens engineering state
 
+## Current branch: bubble unit implementation (unreleased)
+
+Added bounded dark-tone bridge checks including both text-box interiors, glossary-first model casing, native RTL punctuation regression and source coverage for displaced translations. Neighboring dialogue is reserved during placement. Physical Xiaomi coverage, semantic output and end-to-end latency remain unverified. Separate balloons are not co-translated based on proximity. The investigation below records the prior checkpoint.
+
 ## Current investigation: bubble coherence and Xiaomi capture (v1.1.24 not released)
 
 Analyzed the newly supplied v1.1.23 phone report. Findings and evidence: `docs/BUBBLE-CAPTURE-1.1.24-INVESTIGATION.md`. Grouping is inconsistent across OCR blocks, and name corruption is present before inference; even a correctly grouped example has poor semantic output. Active + ERROR is directly explained by composing independent projection and translation statuses. Consent-entry timeout is recorded, but Xiaomi AppOps denial is not established by the report. Dark-background cross-block grouping is an identified code limitation needing pixel-level confirmation for this frame.
