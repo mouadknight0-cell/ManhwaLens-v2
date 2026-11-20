@@ -797,8 +797,13 @@ class ScreenCaptureService : Service() {
         Diagnostics.info("overlay", "surface_prepare", "bounded source-aligned surface detection",
             durationMs = (System.nanoTime() - began) / 1_000_000,
             context = mapOf("regions" to rendered.size.toString(), "ovals" to rendered.count { it.region.surface?.oval == true }.toString()))
-        val resolved = com.manhwalens.app.overlay.SurfacePlacement.resolveOverlaps(rendered.map { it.region })
-        return rendered.mapIndexed { index, item -> item.copy(region = resolved[index]) }
+        val comic=rendered.filter { item ->
+            (item.kind==RegionKind.SOUND_EFFECT || com.manhwalens.app.pipeline.ComicSurface.enclosed(item.region,bitmap.width,bitmap.height,bitmap::getPixel)).also { keep ->
+                if(!keep) Diagnostics.info("funnel","drop","page=${CaptureManager.activeResultId} bounds=${item.region.left},${item.region.top} reason=no_comic_surface")
+            }
+        }
+        val resolved = com.manhwalens.app.overlay.SurfacePlacement.resolveOverlaps(comic.map { it.region })
+        return comic.mapIndexed { index, item -> item.copy(region = resolved[index]) }
     }
 
     /** Detect CN/KR names, persist new surname-pattern detections, return glossary + fresh names. */
