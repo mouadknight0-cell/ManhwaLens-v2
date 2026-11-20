@@ -31,6 +31,7 @@ class ManhwaLensApp : Application() {
             throw it
         }
         com.manhwalens.app.history.TranslationSamples.init(this)
+        com.manhwalens.app.diagnostics.SessionScorecard.init(this)
         BenchmarkTracker.init(this)
         Diagnostics.info("app", "on_create", "ManhwaLensApp initialised")
     }

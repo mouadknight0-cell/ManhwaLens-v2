@@ -15,6 +15,14 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class QualityInstrumentedTest {
+    @Test fun scorecardDoesNotCountDuplicateAttachmentsOrFailedRetriesTwice(){
+        val score=com.manhwalens.app.diagnostics.SessionScorecard
+        val r=com.manhwalens.app.pipeline.TextRegion("Hello",20,20,120,80)
+        score.start();try {score.plan("unit",listOf(r));score.outcome("unit",r,"source_fit_or_obstruction");score.outcome("unit",r,"attached");score.outcome("unit",r,"attached")
+            val row=score.report().lines().last();assertTrue(row.contains("eligible=1 rendered=1 (100.0%)"));assertTrue(row.contains("source_fit_or_obstruction=0"))
+        } finally { score.end() }
+    }
+
     @Test fun report25RealCropsFunnel() = runBlocking {
         val inst=InstrumentationRegistry.getInstrumentation()
         for (sample in listOf("watching","voice","question")) {

@@ -10,10 +10,17 @@ class LiveFrameGate(private val settleMs: Long = 180) {
     var revision = 0L
         private set
 
-    @Synchronized fun observe(sample: IntArray, nowMs: Long): Boolean {
+    private var motionSince:Long?=null
+    @Synchronized fun observe(sample: IntArray, nowMs: Long, confirmMotion:Boolean=false): Boolean {
         val previous = anchor
         val changed = previous == null || previous.size != sample.size || significant(previous, sample)
+        if(!changed) motionSince=null
+        if(changed && previous!=null && confirmMotion) {
+            val first=motionSince ?: nowMs.also { motionSince=it }
+            if(nowMs-first<90) return false // a single compositor transition is not a scroll
+        }
         if (changed) {
+            motionSince=null
             anchor = sample.copyOf()
             changedAt = nowMs
             revision++
@@ -40,6 +47,6 @@ class LiveFrameGate(private val settleMs: Long = 180) {
         consumed = revision
         return revision
     }
-    @Synchronized fun reset() { anchor = null; consumed = -1; revision++; changedAt = 0 }
+    @Synchronized fun reset() { motionSince=null; anchor = null; consumed = -1; revision++; changedAt = 0 }
     @Synchronized fun retry(nowMs: Long) { consumed = -1; changedAt = nowMs }
 }

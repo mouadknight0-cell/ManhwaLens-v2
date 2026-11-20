@@ -2,6 +2,9 @@ package com.manhwalens.app.capture
 import org.junit.Assert.*
 import org.junit.Test
 class LiveFrameGateTest {
+    @Test fun oneChangedSampleDoesNotCancelActiveTranslation(){val g=LiveFrameGate();val a=IntArray(100){80};val b=IntArray(100){120}
+        g.observe(a,0);assertFalse(g.observe(b,200,true));assertFalse(g.observe(a,260,true));assertFalse(g.observe(b,330,true));assertTrue(g.observe(b,430,true))
+    }
     @Test fun stableScreenIsClaimedOnce() {
         val gate = LiveFrameGate()
         gate.observe(IntArray(100){100}, 0)

@@ -121,6 +121,7 @@ object BenchmarkTracker {
             blockCount = blockCount.takeIf { it != 0 } ?: s.blockCount,
             marks = s.marks.toMap(),
         )
+        com.manhwalens.app.diagnostics.SessionScorecard.cycle(record)
         active = null
         if (s.marks.containsKey("M1") || status == "ok") cold = false
 

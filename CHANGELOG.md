@@ -3,6 +3,13 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.28] - 2026-11-20
+
+- Live-only translation, incremental bubble commits, matched page-state reuse, motion confirmation and post-cycle backpressure.
+- Measured fit fallbacks, bounded full-surface OCR retries, 18k offline lexical scoring, and script-share validation.
+- Comic-surface filtering, indexed reviewed dialogue and editable post-translation corrections.
+- Added session outcome/latency scorecards to the full report. No new sensitive permission or model.
+
 ## [1.1.27] - 2026-11-20
 
 - Resize undersized OCR retry crops for ML Kit, retain per-block failures, process surface evidence beyond region 24, and add opt-in geometry/logcat diagnostics.

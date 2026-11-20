@@ -33,6 +33,7 @@ object CompleteReport {
                     "generated_at=${System.currentTimeMillis()}\nCapture=${CaptureManager.sessionPhase.value}; Live=${CaptureManager.live.value}\n" +
                     "Contains captured text. Share only with people you trust.\nAll RETAINED data; deleted/rotated data cannot be recovered. History limit=100; sample limit=200.\n" +
                     "Sections are collected sequentially; pause capture for a stable snapshot. Repeated traces across sections are not separate runs.")
+                ReportText.section(out, "Projection sessions (T2 to T11 for completed processing, not physical presentation)",SessionScorecard.report())
                 ReportText.section(out, "Translation history JSON (${history.size} captures)", HistoryJson.encode(history))
                 ReportText.section(out, "Translation samples JSON (includes partial captures)", samples)
                 ReportText.section(out, "Benchmarks readable (${benchmarks.size} records)", BenchmarkReport.format(benchmarks))

@@ -1,5 +1,9 @@
 # ManhwaLens engineering state
 
+## Current implementation — 1.1.28
+
+Live-only, incremental page-state processing, enhanced OCR and per-session reporting. See `docs/LIVE-1.1.28.md` for the eight stages, evidence, baseline and physical acceptance protocol. No matched post-change Xiaomi measurements.
+
 ## Current implementation — 1.1.27
 
 The supplied Redmi 1.1.26 report contains sub-32px retry boxes (HERE 18×13, JEONG-4H. 45×11), per-block exceptions, occlusions and independent fit failures. Not every failure has a retained stack trace. See `docs/REDMI-1.1.27.md`. Test-input translations and JVM/Android checks are not a physical reader-session test.

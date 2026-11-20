@@ -432,7 +432,10 @@ class BubbleOverlayService : Service() {
             val inset = metrics.windowInsets.getInsetsIgnoringVisibility(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
             android.graphics.Rect(inset.left, inset.top, metrics.bounds.width() - inset.right, metrics.bounds.height() - inset.bottom)
         } else availableBounds()
-        fun outcome(i: Int, reason: String) = com.manhwalens.app.diagnostics.Diagnostics.info("funnel", "render", "page=${result.id} block=$i outcome=$reason")
+        fun outcome(i:Int,reason:String){
+            if(reason=="attached" || reason=="source_fit_or_obstruction" || reason=="attach_failed_or_stale") com.manhwalens.app.diagnostics.SessionScorecard.outcome(result.id,result.blocks[i].region,reason)
+            com.manhwalens.app.diagnostics.Diagnostics.info("funnel","render","page=${result.id} block=$i outcome=$reason")
+        }
         val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,bounds.bottom)
         val occupied = translationRects.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }.toMutableList()
         val boxes=CaptureManager.currentBoxes?.takeIf { it.first==result.id }?.second.orEmpty()

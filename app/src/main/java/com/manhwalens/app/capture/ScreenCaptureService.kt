@@ -120,7 +120,7 @@ class ScreenCaptureService : Service() {
         if (liveEnabled && System.nanoTime() - lastSampleNs >= 70_000_000L) {
             lastSampleNs = System.nanoTime()
             val sample = sampleFrame(image)
-            if (liveGate.observe(sample, android.os.SystemClock.elapsedRealtime())) {
+            if (liveGate.observe(sample, android.os.SystemClock.elapsedRealtime(),captureJob?.isActive==true)) {
                 sceneRevision = liveGate.revision
                 CaptureManager.activeResultId = null
                 captureJob?.cancel()
@@ -178,7 +178,7 @@ class ScreenCaptureService : Service() {
                     // thread, where the listener owns/replaces it, to avoid closing races.
                     kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
                         latestFrame.get()?.let { image ->
-                            if (liveGate.observe(sampleFrame(image.image), android.os.SystemClock.elapsedRealtime())) {
+                            if (liveGate.observe(sampleFrame(image.image), android.os.SystemClock.elapsedRealtime(),captureJob?.isActive==true)) {
                                 sceneRevision = liveGate.revision
                                 CaptureManager.activeResultId = null
                                 captureJob?.cancel()
@@ -332,6 +332,7 @@ class ScreenCaptureService : Service() {
             return
         }
 
+        com.manhwalens.app.diagnostics.SessionScorecard.start()
         CaptureManager.setSessionActive(true)
         Diagnostics.info("capture", "session_active", "media projection held; pipeline ready",
             context = mapOf("width" to pipelineWidth.toString(), "height" to pipelineHeight.toString()))
@@ -609,6 +610,7 @@ class ScreenCaptureService : Service() {
         // Name learning: surname-pattern detections (Chinese/Korean) persist into the glossary.
         val learnedNames = learnNames(prepared.filter { it.kind != RegionKind.SOUND_EFFECT }.map { it.region }, traceId)
 
+        com.manhwalens.app.diagnostics.SessionScorecard.plan(journeyId,prepared.filterNot { it.kind==RegionKind.SOUND_EFFECT }.map { it.region })
         val plan = com.manhwalens.app.pipeline.FrameTranslationPlan.build(
             prepared.map { com.manhwalens.app.pipeline.FrameTranslationPlan.Input(it.region, it.kind) }, readerContentBottom)
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.TRANSLATING))
@@ -679,6 +681,7 @@ class ScreenCaptureService : Service() {
             onReady = { completed ->
                 currentCoroutineContext().ensureActive()
                 if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
+                completed.forEach { b->b.errorCode?.let { com.manhwalens.app.diagnostics.SessionScorecard.outcome(id,b.region,it) } }
                 if (completed.any { it.errorCode == null && it.translated != it.original }) BenchmarkTracker.mark("T9")
                 BenchmarkTracker.setJourneyCounts(frame.width, frame.height, prepared.size, completed.size)
                 CaptureManager.setState(CaptureManager.CaptureState.Partial(CaptureResult(
@@ -920,6 +923,7 @@ class ScreenCaptureService : Service() {
         mediaProjection = null
         scope.cancel()
         translation.close()
+        com.manhwalens.app.diagnostics.SessionScorecard.end()
         super.onDestroy()
     }
 
