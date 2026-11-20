@@ -28,6 +28,7 @@ Scope: real-image OCR replay is not the full reader, compositor or downloaded ML
 - `M	app/src/main/java/com/manhwalens/app/overlay/ReplacementSurface.kt`
 - `M	app/src/main/java/com/manhwalens/app/overlay/ReplacementTranslationView.kt`
 - `A	app/src/main/java/com/manhwalens/app/overlay/StrokePatch.kt`
+- `M	app/src/main/java/com/manhwalens/app/pipeline/OcrInputQuality.kt`
 - `M	app/src/main/java/com/manhwalens/app/pipeline/OcrLexicon.kt`
 - `M	app/src/main/java/com/manhwalens/app/pipeline/ProgressiveTranslation.kt`
 - `M	app/src/main/java/com/manhwalens/app/pipeline/RegionFilter.kt`
@@ -41,3 +42,14 @@ Scope: real-image OCR replay is not the full reader, compositor or downloaded ML
 - `A	docs/PAGE-FUNNEL-1.1.26.md`
 
 Paired evidence from the same page: `t-mwpaes7c-2` has WHO.. → Arabic and WHO A2E YOV2 → OCR-UNCERTAIN; `t-mwpaf4l4-b` has WHO ARE YOZ → Arabic and L CANNOT SEE! → OCR-UNCERTAIN. These are upstream failures, not proof of a missing window. Regression tests cover those exact damaged inputs. A truncated `1 CANNOT` with no final line is not a complete dialogue replacement. `pipeline/OcrInputQuality.kt` also changed to reject those incomplete fragments.
+
+### After: Android 14 emulator, tested implementation 331e0b1
+
+[CI](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44792981027) and [Android quality with diagnostic annotations](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44792980855) passed. Bundled ML Kit OCR on actual phone crops:
+
+| Crop | OCR blocks / lines | Filtered lines | Groups | Downstream evidence |
+|---|---:|---:|---:|---|
+| Inner voice | 1 / 3 | 3 | 1 | 0.62894 confidence; reviewed Arabic found; native prepared=true |
+| Watching | 1 / 3 | 3 | 1 | 0.61502 confidence, TONGVE in raw OCR; model path required, not run in replay |
+
+The question crop also passed the non-empty OCR assertion; do not infer final model output from that check. Forced one exception among six tasks: five unaffected outputs; failed task attempted twice, one terminal reason. Source-only geometry and button-conflict refusal tested on Android. Warm cleanup only: 3,399,078 vs 2,767,780 μs total for 1,000 utterances, not a comparison of end-to-end release latency. The old report did not record a complete line-to-window funnel, so retrospective physical-device counts would be fabricated. No real-device 1/2/3/5+ page matrix or OEM settings round-trip was performed.
