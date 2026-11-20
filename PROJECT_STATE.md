@@ -1,5 +1,9 @@
 # ManhwaLens engineering state
 
+## 1.1.29 — Android 14 checks passed; Xiaomi acceptance pending
+
+See [stage evidence and device protocol](docs/XIAOMI-1.1.29.md).
+
 ## Current implementation — 1.1.28
 
 Live-only, incremental page-state processing, enhanced OCR and per-session reporting. See `docs/LIVE-1.1.28.md` for the eight stages, evidence, baseline and physical acceptance protocol. No matched post-change Xiaomi measurements.
