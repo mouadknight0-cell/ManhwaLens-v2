@@ -46,6 +46,6 @@ jobs:
       - name: Surface test failures
         if: failure()
         run: |
-          find app/build/outputs/androidTest-results -name '*.xml' -exec grep -H -A 4 '<failure' {} \; | head -50 | while IFS= read -r line; do
+          find app/build/outputs/androidTest-results -name '*.xml' -exec grep -H -B 2 -A 14 '<failure' {} \; | head -50 | while IFS= read -r line; do
             echo "::error::${line//'%'/'%25'}"
           done
