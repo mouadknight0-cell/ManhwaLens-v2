@@ -148,7 +148,7 @@ class BubbleOverlayService : Service() {
     private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
     private fun clearTranslations() {
-        translationViews.forEach { runCatching { windowManager.removeView(it) } }
+        translationViews.forEach { it.visibility = View.INVISIBLE; runCatching { windowManager.removeView(it) } }
         translationViews.clear()
         if (readingPanelId != null) hidePanel()
         readingPanelId = null
@@ -448,7 +448,7 @@ class BubbleOverlayService : Service() {
             current = { acceptResults && !CaptureManager.appVisible.value &&
                 ReplacementCommit.eligible(result.id, CaptureManager.activeResultId, final) },
             attach = { windowManager.addView(it.view, it.params) },
-            remove = { windowManager.removeViewImmediate(it.view) })
+            remove = { it.view.visibility = View.INVISIBLE; windowManager.removeViewImmediate(it.view) })
         if (!committed) { fallback("RENDER-COMMIT-ROLLED-BACK"); return }
         ready.forEach { translationViews.add(it.view); translationRects.add(it.rect) }
         displayedBlocks.add(result.id)
@@ -559,11 +559,10 @@ class BubbleOverlayService : Service() {
     }
 
     private fun showError(message: String) {
+        clearTranslations()
         hidePanel()
-        val root = basePanel()
-        root.addView(panelHeader(getString(R.string.result_title)) { hidePanel() })
-        root.addView(bodyText(message, secondary = true))
-        attachPanel(root)
+        // An automatic error panel is not a valid replacement for captured dialogue.
+        android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show()
     }
 
     private fun basePanel(): LinearLayout {
