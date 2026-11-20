@@ -16,4 +16,4 @@ General ML Kit semantic quality, unknown-name handling, full English spell corre
 
 ## Verification
 
-Current tracked-tree removed-component/label search: zero matches at implementation checkpoint. GitHub tests in progress; final execution/publication IDs will be recorded after completion.
+Current tracked-tree removed-component/label search: zero matches at implementation checkpoint. CI 44767603972 and Android 14 regression 44767603849 passed at ffeb67d. Release build/signing pending.

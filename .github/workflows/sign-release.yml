@@ -5,7 +5,7 @@ on:
       tag:
         description: Existing unsigned draft tag (used for sign operation)
         required: true
-        default: v1.1.22
+        default: v1.1.23
       operation:
         description: Initialize only once, then sign for all subsequent releases
         type: choice

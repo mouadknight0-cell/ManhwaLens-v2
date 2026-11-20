@@ -3,6 +3,13 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.23] - 2026-11-19
+
+- Delete secondary translation launcher, manual reader, controls, thresholds and overflow branches; keep main capture control.
+- Render full translation immediately, expanding into measured rectangles excluding the main control, existing translations and failed source regions.
+- Fix false text-fit rejection caused by wrapped trailing whitespace; maintain 12sp minimum and preserve originals at genuine capacity limits.
+- Add native direct-render, edge/font-scale and explicit physical-capacity tests. Android emulator and CI passed; Xiaomi/latency/upgrade checks remain unexecuted.
+
 ## [1.1.22] - 2026-11-19
 
 - Add bounded unique digit-confusion dictionary repair and contraction cleanup behind confirmed-name shielding; flag unresolved noise/low confidence rather than transliterating corrupt input. Avoid no-op repair work and precompile patterns.

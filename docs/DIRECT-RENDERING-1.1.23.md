@@ -47,7 +47,7 @@ Device: Xiaomi 23106RN0DA, Android 14.
 
 ## Execution and publication
 
-Pending GitHub results below. No physical-device or end-to-end speed parity claim.
+GitHub CI 44767603972 passed (compile, unit tests, debug APK); Android 14 regression 44767603849 passed at ffeb67d. Release build/signing pending. No physical-device or end-to-end speed parity claim.
 
 ### Regression discovered during verification
 
