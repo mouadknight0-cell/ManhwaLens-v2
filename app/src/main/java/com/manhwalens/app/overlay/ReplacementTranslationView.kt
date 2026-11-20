@@ -89,10 +89,9 @@ class ReplacementTranslationView(context: Context, val message: String,
             prepared = runCatching {
                 rasterize(w, h) { canvas ->
                     if (surface.mask != null) {
-                        val m=surface.mask; val path=android.graphics.Path(); val d=m.step.toFloat()
-                        for(i in m.spans.indices step 3){ val y=m.spans[i]*d;path.addRect(m.spans[i+1]*d,y,m.spans[i+2]*d,y+d,android.graphics.Path.Direction.CW) }
-                        canvas.save(); canvas.clipPath(path)
-                        if(m.texture!=null){val tw=w/m.step;val th=h/m.step;canvas.save();canvas.scale(d,d);canvas.drawBitmap(m.texture,0,tw,0f,0f,tw,th,true,Paint(Paint.FILTER_BITMAP_FLAG));canvas.restore()}
+                        val m=surface.mask; val path=ContourPath.from(m); val d=m.step.toFloat()
+                        canvas.save()
+                        if(m.texture!=null && com.manhwalens.app.overlay.BubbleContours.luminance(surface.color)>.12){canvas.clipPath(path);val tw=w/m.step;val th=h/m.step;canvas.save();canvas.scale(d,d);canvas.drawBitmap(m.texture,0,tw,0f,0f,tw,th,true,Paint(Paint.FILTER_BITMAP_FLAG));canvas.restore()}
                         else canvas.drawPath(path,fill)
                         canvas.restore()
                     } else if (surface.patch != null) {

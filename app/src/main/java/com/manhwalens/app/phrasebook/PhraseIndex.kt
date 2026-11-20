@@ -16,13 +16,13 @@ class PhraseIndex(rows:List<Entry>,enabled:Set<String>) {
         private val neg=setOf("NOT","NEVER","NO","CAN'T","WON'T","DON'T","ISN'T","WASN'T")
     }
     private class Node { val next=HashMap<String,Node>();var end:Entry?=null }
-    private val trie=Node();private val exact=HashMap<String,Entry>();private val inverted=HashMap<String,MutableList<String>>();private val lengths=HashMap<Int,MutableList<String>>();private val templates=mutableListOf<Pair<Regex,Entry>>()
+    private val trie=Node();private val exact=HashMap<String,Entry>();private val inverted=HashMap<String,MutableList<String>>();private val tokenSets=HashMap<String,Set<String>>();private val lengths=HashMap<Int,MutableList<String>>();private val templates=mutableListOf<Pair<Regex,Entry>>()
     init {
         fun rank(e:Entry)=when {"user" in e.genres->4;"regression-test" in e.genres->3;e.genres.any { it!="general" }->2;else->1}
         val active=rows.filter { it.genres.any { g->g in enabled || g=="user" || g=="regression-test" } }.sortedWith(compareByDescending<Entry>{rank(it)}.thenByDescending { it.priority })
         for(e in active){if(e.type=="template"){val parts=e.en.split("{X}");if(parts.size==2)templates.add(Regex("^"+Regex.escape(key(parts[0]))+" +(.{1,180})"+(key(parts[1]).takeIf(String::isNotEmpty)?.let { " +"+Regex.escape(it) }?:"")+"$") to e);continue}
             val k=key(e.en);if(k.isEmpty() || exact.putIfAbsent(k,e)!=null)continue
-            val words=k.split(' ');words.distinct().forEach { inverted.getOrPut(it){mutableListOf()}.add(k) };lengths.getOrPut(k.length){mutableListOf()}.add(k)
+            val words=k.split(' ');val set=words.toSet();tokenSets[k]=set;set.forEach { inverted.getOrPut(it){mutableListOf()}.add(k) };lengths.getOrPut(k.length){mutableListOf()}.add(k)
             if(e.type in setOf("term","phrase")){var n=trie;for(w in words)n=n.next.getOrPut(w){Node()};n.end=e}
         }
     }
@@ -32,8 +32,8 @@ class PhraseIndex(rows:List<Entry>,enabled:Set<String>) {
         val words=k.split(' ').toSet();val candidates=linkedSetOf<String>();for(w in words.sortedBy { inverted[it]?.size?:0 })inverted[w]?.let(candidates::addAll)
         val limit=if(k.length<=15)1 else 2;if(words.size==1)for(n in k.length-limit..k.length+limit)lengths[n]?.let(candidates::addAll)
         var score=0.0;var best:Entry?=null
-        for(c in candidates){val cw=c.split(' ').toSet();if(words.intersect(neg)!=cw.intersect(neg) || words.filter { it.any(Char::isDigit) }!=cw.filter { it.any(Char::isDigit) })continue
-            val j=words.intersect(cw).size.toDouble()/words.union(cw).size;val d=distance(k,c,limit);val s=maxOf(if(j>=.85)j else 0.0,if(d<=limit)1-d.toDouble()/maxOf(c.length,k.length) else 0.0)
+        for(c in candidates){val cw=tokenSets.getValue(c);if(words.intersect(neg)!=cw.intersect(neg) || words.filter { it.any(Char::isDigit) }!=cw.filter { it.any(Char::isDigit) })continue
+            val common=words.count(cw::contains);val j=common.toDouble()/(words.size+cw.size-common);val d=distance(k,c,limit);val s=maxOf(if(j>=.85)j else 0.0,if(d<=limit)1-d.toDouble()/maxOf(c.length,k.length) else 0.0)
             if(s>score){score=s;best=exact[c]}else if(s==score && best?.ar!=exact[c]?.ar)best=null
         };return best?.let {Hit(it.ar,"fuzzy")}}
     data class Span(val range:IntRange,val ar:String)

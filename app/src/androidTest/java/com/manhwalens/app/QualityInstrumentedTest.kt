@@ -15,6 +15,14 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class QualityInstrumentedTest {
+    @Test fun iconDockHasTouchAndAccessibilityTargets(){val inst=InstrumentationRegistry.getInstrumentation();inst.runOnMainSync {
+        val ctx=inst.targetContext;val d=ctx.resources.displayMetrics.density
+        for(action in com.manhwalens.app.overlay.FloatingAction.entries){var clicked=false;val v=com.manhwalens.app.overlay.dockButton(ctx,action,Color.WHITE){clicked=true}
+            assertNotNull(v.drawable);assertTrue(v.contentDescription.isNotBlank());assertEquals(v.contentDescription,v.tooltipText);assertTrue(v.minimumWidth>=48*d-.5f);v.performClick();assertTrue(clicked)}
+    }}
+    @Test fun roomCorrectionInvalidatesWarmResult()=runBlocking {val lib=com.manhwalens.app.phrasebook.PhraseLibrary;lib.ready();val row=com.manhwalens.app.phrasebook.Correction("","THIS SCENT","رائحة الياسمين");val t=com.manhwalens.app.translate.TranslationClient();val region=com.manhwalens.app.pipeline.TextRegion("THIS SCENT",0,0,100,40,.85f)
+        try {val original=t.translateBlock(region).translated;lib.save(listOf(row));assertEquals(row.ar,t.translateBlock(region).translated);assertTrue(lib.export().contains(row.ar));lib.delete(row);assertEquals(original,t.translateBlock(region).translated)}finally{lib.delete(row);t.close()}
+    }
     @Test fun regressionPackIsAlwaysAvailable()=runBlocking {
         val ctx=InstrumentationRegistry.getInstrumentation().targetContext
         val index=requireNotNull(com.manhwalens.app.phrasebook.PhraseLibrary.ready());val a=ctx.assets.open("phrasebook/phrasebook_seed.json").bufferedReader().use {org.json.JSONObject(it.readText()).getJSONArray("entries")}

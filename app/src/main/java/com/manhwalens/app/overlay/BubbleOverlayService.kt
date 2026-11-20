@@ -320,18 +320,8 @@ class BubbleOverlayService : Service() {
             background = GradientDrawable().apply { cornerRadius = dp(18).toFloat(); setColor(PANEL_BACKGROUND) }
         }
         FloatingAction.entries.forEach { action ->
-            val button=ImageView(this).apply {
-                val (icon,label)=when(action){FloatingAction.START->R.drawable.ic_play to R.string.dock_start;FloatingAction.STOP->R.drawable.ic_stop_square to R.string.dock_stop;FloatingAction.CLOSE->R.drawable.ic_close to R.string.action_close}
-                setImageResource(icon);scaleType=ImageView.ScaleType.CENTER;setColorFilter(PANEL_TEXT)
-                contentDescription=getString(label);tooltipText=contentDescription
-                setOnClickListener {
-                    collapseActions()
-                    when(action) {
-                        FloatingAction.START -> startTranslation()
-                        FloatingAction.STOP -> stopTranslation()
-                        FloatingAction.CLOSE -> closeService()
-                    }
-                }
+            val button=dockButton(this,action,PANEL_TEXT){
+                collapseActions();when(action){FloatingAction.START->startTranslation();FloatingAction.STOP->stopTranslation();FloatingAction.CLOSE->closeService()}
             }
             if(action==FloatingAction.START) startControl=button
             if(action==FloatingAction.STOP) stopControl=button
@@ -350,7 +340,7 @@ class BubbleOverlayService : Service() {
             params.x=pos.first;params.y=pos.second
         }
         position()
-        dock.setOnApplyWindowInsetsListener { v,insets-> v.post { if(actionDock===dock){position();windowManager.updateViewLayout(dock,params)} };insets }
+        dock.setOnApplyWindowInsetsListener { v,insets-> v.post { if(actionDock===dock){val x=params.x;val y=params.y;position();if(params.x!=x || params.y!=y)windowManager.updateViewLayout(dock,params)} };insets }
         dock.setOnTouchListener { _,e -> if(e.actionMasked==MotionEvent.ACTION_OUTSIDE) { collapseActions(); true } else false }
         runCatching { windowManager.addView(dock, params) }.onSuccess {
             CaptureManager.dockVisible = true
