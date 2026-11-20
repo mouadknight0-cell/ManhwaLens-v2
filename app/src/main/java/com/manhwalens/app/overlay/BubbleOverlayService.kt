@@ -139,6 +139,7 @@ class BubbleOverlayService : Service() {
     }
 
     private val translationViews = mutableListOf<View>()
+    private var renderRetriedId: String? = null
     private var displayedResultId: String? = null
     private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
@@ -302,7 +303,7 @@ class BubbleOverlayService : Service() {
         val bounds = availableBounds()
         val buttonSize = ((bounds.width() - dp(BUBBLE_SIZE_DP)) / 4).coerceIn(dp(48), dp(60))
         val width = buttonSize * 4
-        val height = dp(94)
+        val height = dp(78)
         val dock = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -310,7 +311,7 @@ class BubbleOverlayService : Service() {
             elevation = dp(8).toFloat()
         }
         statusLabel = TextView(this).apply { textSize = 10f; setTextColor(PANEL_TEXT); gravity = Gravity.CENTER; setPadding(dp(4), dp(4), dp(4), dp(4)) }
-        dock.addView(statusLabel, LinearLayout.LayoutParams(width, dp(30)))
+        dock.addView(statusLabel, LinearLayout.LayoutParams(width, dp(26)))
         val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         dock.addView(actions)
         fun action(symbol: String, description: String, enabled: Boolean = true, handler: () -> Unit) {
@@ -329,7 +330,7 @@ class BubbleOverlayService : Service() {
                     }
                 }
                 setOnLongClickListener { Toast.makeText(this@BubbleOverlayService, description, Toast.LENGTH_SHORT).show(); true }
-            }, LinearLayout.LayoutParams(buttonSize, dp(64)))
+            }, LinearLayout.LayoutParams(buttonSize, dp(52)))
         }
         action("▶\nترجمة", "Start Translation / بدء الترجمة") { startTranslation() }
         action("■\nإيقاف", "Stop Capture Session / إيقاف جلسة الالتقاط") { stopTranslation() }
@@ -392,7 +393,7 @@ class BubbleOverlayService : Service() {
         } else availableBounds()
         fun outcome(i: Int, reason: String) = com.manhwalens.app.diagnostics.Diagnostics.info("funnel", "render", "page=${result.id} block=$i outcome=$reason")
         val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,bounds.bottom)
-        val occupied = mutableListOf<ReplacementSurface>()
+        val occupied = translationRects.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }.toMutableList()
         bubbleView?.let { button ->
             val xy=IntArray(2); button.getLocationOnScreen(xy)
             occupied.add(ReplacementSurface(xy[0],xy[1],xy[0]+button.width,xy[1]+button.height))
@@ -428,7 +429,13 @@ class BubbleOverlayService : Service() {
             } else { outcome(i,"attach_failed_or_stale"); renderFailure=true }
         }
         publishBounds()
-        if(renderFailure && result.id==CaptureManager.activeResultId) CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION)
+        if(renderFailure && result.id==CaptureManager.activeResultId) {
+            CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION)
+            if(renderRetriedId!=result.id) {
+                renderRetriedId=result.id
+                bubbleView?.postDelayed({ if(displayedResultId==result.id) showPanel(result,final) },120)
+            }
+        } else if(result.id==renderRetriedId && result.blocks.all { it.errorCode==null }) CaptureManager.setLive(CaptureManager.LiveStatus.READY)
         if(displayedBlocks.isNotEmpty()) markRendered(result,!renderFailure && result.blocks.none { it.errorCode!=null })
     }
 

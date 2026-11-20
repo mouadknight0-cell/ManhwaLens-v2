@@ -13,14 +13,21 @@ object RegionFilter {
         regions: List<TextRegion>,
         minHeightPx: Int = DEFAULT_MIN_HEIGHT_PX,
         minLetterRatio: Float = DEFAULT_MIN_LETTER_RATIO,
-    ): List<TextRegion> =
-        regions.asSequence()
-            .map { it.copy(text = it.text.trim()) }
-            .filter { it.text.isNotEmpty() }
-            .filter { it.height >= minHeightPx }
-            .filter { letterRatio(it.text) >= minLetterRatio || (it.text.any { c -> c.isLetter() } && it.text.all { c -> c.isLetter() || c.isWhitespace() || c in "!?.,…'’\"-" }) }
-            .distinctBy { DedupKey(it.text.lowercase(), it.left, it.top) }
-            .toList()
+        drop: (TextRegion,String)->Unit = { _,_ -> },
+    ): List<TextRegion> {
+        val seen=HashSet<DedupKey>()
+        return regions.mapNotNull { raw ->
+            val r=raw.copy(text=raw.text.trim())
+            val reason=when {
+                r.text.isEmpty() -> "empty"
+                r.height < minHeightPx -> "small_height"
+                letterRatio(r.text)<minLetterRatio && !(r.text.any(Char::isLetter) && r.text.all { c -> c.isLetter() || c.isWhitespace() || c in "!?.,…'’\"-" }) -> "symbol_noise"
+                !seen.add(DedupKey(r.text.lowercase(),r.left,r.top)) -> "same_text_same_position"
+                else -> null
+            }
+            if(reason==null) r else { drop(r,reason); null }
+        }
+    }
 
     /** Fraction of letters/digits in the string. Hangul, Han and kana all count as letters. */
     fun letterRatio(s: String): Float {

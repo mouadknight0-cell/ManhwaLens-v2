@@ -57,9 +57,7 @@ class TextRecognitionClient {
                                         languageHint = LanguageMapper.autoLanguageFor(script),
                                     )
                                 }.filter { line -> keepLine(line).also { if (!it) audit("drop occlusion ${line.left},${line.top}") } }
-                                RegionFilter.filter(raw).also { kept ->
-                                    (raw - kept.toSet()).filter { it.text == it.text.trim() }.forEach { audit("drop line_filter ${it.left},${it.top}") }
-                                }
+                                RegionFilter.filter(raw,drop={ r,reason -> audit("drop $reason ${r.left},${r.top}") })
                             }
                             audit("filtered lines=${linesByBlock.sumOf { it.size }}")
                             val owners = linesByBlock.flatMapIndexed { index, lines -> lines.map { it to index } }.toMap()
@@ -75,7 +73,7 @@ class TextRecognitionClient {
             }.awaitAll().flatten()
         }
 
-        val filtered = RegionFilter.filter(detected)
+        val filtered = RegionFilter.filter(detected,drop={r,reason -> audit("drop grouped $reason ${r.left},${r.top}")})
         return filtered
     }
 

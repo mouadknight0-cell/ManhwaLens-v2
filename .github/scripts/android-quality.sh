@@ -22,4 +22,5 @@ if [ -n "$measurement" ]; then
   echo "::notice::$measurement"
 fi
 adb logcat -d -s ManhwaLensFunnel:I '*:S' | tee app/build/reports/overlay-evidence/report25-funnel.txt
+grep "ManhwaLensFunnel:" app/build/reports/overlay-evidence/report25-funnel.txt | while read -r line; do echo "::notice::$line"; done
 exit "$status"

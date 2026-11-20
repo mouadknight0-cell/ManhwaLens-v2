@@ -468,6 +468,7 @@ class ScreenCaptureService : Service() {
                     endLive(CaptureManager.LiveStatus.ERROR)
                 }
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                Diagnostics.info("funnel","cancelled","journey superseded; stale work not attached")
                 BenchmarkTracker.finish("cancelled")
                 throw cancelled
             } catch (failure: Exception) {
@@ -506,7 +507,7 @@ class ScreenCaptureService : Service() {
         kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
             if (CaptureManager.hideControlsForFrame?.invoke() == true) latestFrame.getAndSet(null)?.close()
         }
-        val captured = acquireFreshFrame()
+        val captured = acquireFreshFrame() ?: acquireFreshFrame()
         if (captured == null) {
             Diagnostics.error("capture", "frame_wait", ErrorCodes.CAPTURE_NO_FRAME,
                 "no frame arrived within ${FRAME_WAIT_MS}ms", recovery = "journey aborted; user can retry")
@@ -632,6 +633,7 @@ class ScreenCaptureService : Service() {
                 }
                 val recovered = if (translated.errorCode == "OCR-UNCERTAIN" && region.width > 0 && region.height > 0 &&
                     region.area in 1..150000 && region.left >= 0 && region.top >= 0 && region.right <= frame.width && region.bottom <= frame.height) {
+                    Diagnostics.info("funnel","ocr_retry","page=$journeyId bounds=${region.left},${region.top} attempt=crop",traceId=traceId)
                     kotlinx.coroutines.delay(100)
                     val crop = Bitmap.createBitmap(frame,region.left,region.top,region.width,region.height)
                     try {
