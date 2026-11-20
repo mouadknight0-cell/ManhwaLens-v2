@@ -2,6 +2,8 @@
 
 ## Current implementation — 1.1.26
 
+Both 1.1.24 and 1.1.25 were published with the stable signer; older unreleased notes below describe historical checkpoints.
+
 See `docs/PAGE-FUNNEL-1.1.26.md` for report evidence, page-local retries and source-aligned rendering. This supersedes the older displaced-rectangle rendering design. No new physical-device or end-to-end latency verification.
 
 ## Current branch: bubble unit implementation (unreleased)

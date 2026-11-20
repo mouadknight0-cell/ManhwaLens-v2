@@ -10,3 +10,32 @@ Input: local 1.1.25 report, Xiaomi 23106RN0DA / Android 14; private report not c
 New tracing: frame acquisition and OCR-stage counts (blocks and lines are different units), occlusion/filter/group decisions, translation dispatch, block result code and per-region window attachment or preservation. Window attachment is not proof of physical visibility. Local OCR retry uses the affected source crop only; no full-page second pass. Translation workers isolate exceptions and retry eligible failed work once. Stale jobs must still cancel. In-place geometry never relocates to a free rectangle. Insufficient space, obstruction and unreliable reconstruction keep the source.
 
 Scope: real-image OCR replay is not the full reader, compositor or downloaded ML Kit translator. No new physical captures, OEM permission grant, revoked-token recovery or matched end-to-end timing available. Do not infer OEM denial from timeout. Cross-balloon semantic redistribution is not implemented. Textured reconstruction is a bounded local gradient approximation, not restoration of original art.
+
+### File manifest (relative to v1.1.25)
+
+- `M	.github/scripts/android-quality.sh`
+- `M	PROJECT_STATE.md`
+- `A	app/src/androidTest/assets/report25-question.png`
+- `A	app/src/androidTest/assets/report25-voice.png`
+- `A	app/src/androidTest/assets/report25-watching.png`
+- `M	app/src/androidTest/java/com/manhwalens/app/QualityInstrumentedTest.kt`
+- `M	app/src/main/java/com/manhwalens/app/capture/CaptureManager.kt`
+- `M	app/src/main/java/com/manhwalens/app/capture/ScreenCaptureService.kt`
+- `M	app/src/main/java/com/manhwalens/app/ocr/TextRecognitionClient.kt`
+- `M	app/src/main/java/com/manhwalens/app/overlay/BubbleOverlayService.kt`
+- `D	app/src/main/java/com/manhwalens/app/overlay/DirectPlacement.kt`
+- `M	app/src/main/java/com/manhwalens/app/overlay/DirectTranslationLayout.kt`
+- `M	app/src/main/java/com/manhwalens/app/overlay/ReplacementSurface.kt`
+- `M	app/src/main/java/com/manhwalens/app/overlay/ReplacementTranslationView.kt`
+- `A	app/src/main/java/com/manhwalens/app/overlay/StrokePatch.kt`
+- `M	app/src/main/java/com/manhwalens/app/pipeline/OcrLexicon.kt`
+- `M	app/src/main/java/com/manhwalens/app/pipeline/ProgressiveTranslation.kt`
+- `M	app/src/main/java/com/manhwalens/app/pipeline/RegionFilter.kt`
+- `M	app/src/main/java/com/manhwalens/app/translate/DialogueLexicon.kt`
+- `M	app/src/main/java/com/manhwalens/app/translate/TranslationClient.kt`
+- `M	app/src/main/java/com/manhwalens/app/ui/SettingsScreen.kt`
+- `A	app/src/main/java/com/manhwalens/app/ui/XiaomiSetup.kt`
+- `D	app/src/test/java/com/manhwalens/app/pipeline/DirectPlacementTest.kt`
+- `M	app/src/test/java/com/manhwalens/app/pipeline/ProgressiveTranslationTest.kt`
+- `M	app/src/test/java/com/manhwalens/app/pipeline/Xiaomi124Test.kt`
+- `A	docs/PAGE-FUNNEL-1.1.26.md`

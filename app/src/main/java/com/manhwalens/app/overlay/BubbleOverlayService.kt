@@ -62,7 +62,15 @@ class BubbleOverlayService : Service() {
         statusLabel?.text = when {
             phase == CaptureManager.SessionPhase.FAILED -> "تعذّر بدء الالتقاط — أعد المحاولة"
             phase != CaptureManager.SessionPhase.ACTIVE -> "الالتقاط: ${label.substringBefore(" /")}"
-            CaptureManager.live.value == CaptureManager.LiveStatus.NO_TRANSLATION -> "لم تُترجم الصفحة؛ اضغط ترجمة أو مرّر"
+            CaptureManager.live.value == CaptureManager.LiveStatus.NO_TRANSLATION -> {
+                val blocks=(CaptureManager.state.value as? CaptureManager.CaptureState.Done)?.result?.blocks.orEmpty()
+                when {
+                    blocks.isEmpty() -> "لم يُكتشف نص؛ اضغط ترجمة لإعادة القراءة"
+                    blocks.any { it.errorCode?.startsWith("OCR-")==true } -> "نص غير واضح أو مقطوع؛ مرّر قليلًا"
+                    blocks.any { it.errorCode!=null } -> "لم تكتمل ترجمة بعض النصوص؛ أعد المحاولة"
+                    else -> "لم يتسع موضع النص أو حجبه زر؛ حرّك الفقاعة"
+                }
+            }
             CaptureManager.live.value == CaptureManager.LiveStatus.ERROR -> "انقطعت معالجة الالتقاط؛ اضغط ترجمة لاستئنافها"
             else -> when (CaptureManager.live.value) {
                 CaptureManager.LiveStatus.PROCESSING -> "جارٍ قراءة الصفحة وترجمتها"
@@ -354,6 +362,27 @@ class BubbleOverlayService : Service() {
                 .coerceIn(0, (bounds.width() - width).coerceAtLeast(0))
             y = bubble.y.coerceIn(0, (bounds.height() - height).coerceAtLeast(0))
         }
+        val dialogue=(CaptureManager.state.value as? CaptureManager.CaptureState.Done)?.result?.blocks.orEmpty()
+        val maxY=(bounds.height()-height).coerceAtLeast(0)
+        val offset=if(Build.VERSION.SDK_INT>=30) windowManager.currentWindowMetrics.windowInsets.getInsets(android.view.WindowInsets.Type.statusBars()).top else 0
+        val candidates=listOf(params.y,0,maxY,maxY/2)
+        params.y=candidates.minByOrNull { y -> dialogue.sumOf { block ->
+            val r=block.region
+            (minOf(params.x+width,r.right)-maxOf(params.x,r.left)).coerceAtLeast(0).toLong()*
+                (minOf(y+offset+height,r.bottom)-maxOf(y+offset,r.top)).coerceAtLeast(0)
+        } } ?: params.y
+        var dx=0f; var dy=0f
+        statusLabel?.setOnTouchListener { _,e -> when(e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> { dx=params.x-e.rawX; dy=params.y-e.rawY; true }
+            MotionEvent.ACTION_MOVE -> {
+                params.x=(e.rawX+dx).toInt().coerceIn(0,(bounds.width()-width).coerceAtLeast(0))
+                params.y=(e.rawY+dy).toInt().coerceIn(0,maxY)
+                windowManager.updateViewLayout(dock,params)
+                dockRect=android.graphics.Rect(params.x,params.y+offset,params.x+width,params.y+offset+height)
+                publishBounds(); true
+            }
+            else -> true
+        } }
         runCatching { windowManager.addView(dock, params) }.onSuccess {
             actionDock = dock
             updateControlState()
