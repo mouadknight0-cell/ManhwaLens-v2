@@ -6,14 +6,14 @@ import com.manhwalens.app.pipeline.TextRegion
  * A clipped ellipse is not a new smaller ellipse; use the source rectangle instead.
  */
 object SurfacePlacement {
-    fun source(region: TextRegion, color: Int = -1) = ReplacementSurface(
-        region.left - 2, region.top - 2, region.right + 2, region.bottom + 2, color)
+    fun source(region: TextRegion, color: Int = -1, reliable: Boolean = false) = ReplacementSurface(
+        region.left - 2, region.top - 2, region.right + 2, region.bottom + 2, color, reliable = reliable)
 
     fun visible(region: TextRegion, bounds: ReplacementSurface): ReplacementSurface? {
         val evidence = region.surface
         val candidate = if (evidence != null && evidence.left >= bounds.left && evidence.top >= bounds.top &&
             evidence.right <= bounds.right && evidence.bottom <= bounds.bottom) evidence
-        else source(region, evidence?.color ?: -1)
+        else source(region, evidence?.color ?: -1, evidence?.reliable == true)
         val clipped = candidate.copy(left = maxOf(candidate.left, bounds.left), top = maxOf(candidate.top, bounds.top),
             right = minOf(candidate.right, bounds.right), bottom = minOf(candidate.bottom, bounds.bottom))
         return clipped.takeIf { it.width > 0 && it.height > 0 }
@@ -27,7 +27,7 @@ object SurfacePlacement {
         return regions.mapIndexed { index, region ->
             val surface = candidates[index]
             if (surface.oval && candidates.indices.any { other -> other != index && intersects(surface, candidates[other]) }) {
-                region.copy(surface = source(region, surface.color))
+                region.copy(surface = source(region, surface.color, surface.reliable))
             } else region
         }
     }

@@ -75,7 +75,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         if (trimmed.isBlank() || trimmed.none { it.isLetter() }) return trimmed
 
         val identity = trimmed + "\u0000" + glossaryNames.sorted().joinToString("\u0000")
-        val cacheKey = "en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
+        val cacheKey = "validated-v2:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
         cache.get(cacheKey)?.let { return it }
 
         val namesInText = NameDetector.find(trimmed, glossaryNames)

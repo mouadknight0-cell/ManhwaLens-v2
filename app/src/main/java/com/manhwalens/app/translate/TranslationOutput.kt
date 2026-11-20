@@ -20,6 +20,10 @@ object TranslationOutput {
         }
         if (!ArabicOutput.hasLetters(restored) && !(onlyNames(mask.maskedText) && onlyNames(raw)))
             return "TR-INVALID-OUTPUT"
+        if (ArabicOutput.hasLetters(restored)) {
+            ReplacementQuality.issue(mask.maskedText, raw)?.let { return it }
+            if (raw.any { it in 'a'..'z' || it in 'A'..'Z' }) return "TR-UNTRANSLATED"
+        }
         return null
     }
 }

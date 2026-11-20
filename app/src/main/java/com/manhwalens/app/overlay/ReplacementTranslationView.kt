@@ -12,9 +12,8 @@ import android.text.TextPaint
 import android.view.View
 import kotlin.math.min
 
-/** Source-aligned opaque replacement. Never displaces a mask or truncates dialogue.
- * If minimum readable text cannot fit, show a details marker (mode C) rather than
- * clipped/unreadably small translation. Full source/translation is available on tap.
+/** Prepared replacement: mask and COMPLETE text rasterize offscreen together.
+ * Unfit/error layouts are transparent, never an opaque ellipsis or scrolling slice.
  */
 class ReplacementTranslationView(context: Context, val message: String,
     private val surface: ReplacementSurface, private val failed: Boolean = false) : View(context) {
@@ -33,6 +32,12 @@ class ReplacementTranslationView(context: Context, val message: String,
             awakenScrollBars(); invalidate(); return true
         }
     })
+    private var prepared: android.graphics.Bitmap? = null
+    val replacementReady: Boolean get() = prepared != null
+    internal var rasterize: (Int, Int, (Canvas) -> Unit) -> android.graphics.Bitmap = { w, h, draw ->
+        val bitmap = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+        try { draw(Canvas(bitmap)); bitmap } catch (failure: Throwable) { bitmap.recycle(); throw failure }
+    }
     private var layout: StaticLayout? = null
     private var content = RectF()
     var needsDetails: Boolean = false
@@ -54,6 +59,7 @@ class ReplacementTranslationView(context: Context, val message: String,
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
+        prepared = null
         val padding = min(4 * resources.displayMetrics.density, min(w, h) * .08f)
         val insetX = if (surface.oval) w * .15f else 0f
         val insetY = if (surface.oval) h * .15f else 0f
@@ -84,19 +90,26 @@ class ReplacementTranslationView(context: Context, val message: String,
             val mid = (low + high) / 2
             if (fits(make(displayMessage, mid.toFloat()))) { chosen = mid; low = mid + 1 } else high = mid - 1
         }
-        ink.textSize = 12 * resources.displayMetrics.scaledDensity
-        val minimumLine = ink.fontMetrics.bottom - ink.fontMetrics.top
-        val minimumLayout = if (chosen == 0 && message.length <= 4000 && content.height() >= minimumLine && content.width() >= ink.textSize * 2)
-            make(displayMessage, 12f) else null
-        isScrollable = minimumLayout != null && wordsIntact(minimumLayout)
-        needsDetails = chosen == 0 && !isScrollable
-        fittedSp = if (needsDetails) min(12f, content.height() / resources.displayMetrics.scaledDensity / 2f).coerceAtLeast(1f) else if (isScrollable) 12f else chosen.toFloat()
+        isScrollable = false
+        needsDetails = chosen == 0
+        fittedSp = if (chosen == 0) 12f else chosen.toFloat()
         offsetY = 0f
-        layout = if (isScrollable) minimumLayout else make(if (needsDetails) "…" else displayMessage, fittedSp)
-        contentDescription = message + when {
-            needsDetails -> ". المساحة لا تكفي؛ اضغط لقراءة النص كاملًا"
-            isScrollable -> ". اسحب داخل النص لقراءة البقية أو اضغط للتفاصيل"
-            else -> ". اضغط لعرض النص الأصلي"
+        layout = if (needsDetails) null else make(displayMessage, fittedSp)
+        contentDescription = message + if (needsDetails) ". المساحة لا تكفي؛ اضغط لقراءة النص كاملًا" else ". اضغط لعرض النص الأصلي"
+        // A hard allocation budget. Unknown / oversized / failed layouts keep the source visible.
+        val text = layout
+        if (!failed && text != null && message.any { it.isLetterOrDigit() } && w.toLong() * h in 1..1_000_000L) {
+            prepared = runCatching {
+                rasterize(w, h) { canvas ->
+                    if (surface.oval) canvas.drawOval(0f, 0f, w.toFloat(), h.toFloat(), fill)
+                    else canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), fill)
+                    canvas.save()
+                    canvas.clipRect(content)
+                    canvas.translate(content.left, content.top + ((content.height() - text.height) / 2).coerceAtLeast(0f))
+                    text.draw(canvas)
+                    canvas.restore()
+                }
+            }.getOrNull()
         }
     }
 
@@ -109,14 +122,14 @@ class ReplacementTranslationView(context: Context, val message: String,
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        // Full opacity from first frame: a fade would expose English underneath.
-        if (surface.oval) canvas.drawOval(0f, 0f, width.toFloat(), height.toFloat(), fill)
-        else canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), fill)
-        val text = layout ?: return
-        canvas.save()
-        canvas.clipRect(content)
-        canvas.translate(content.left, content.top + ((content.height() - text.height) / 2).coerceAtLeast(0f) - offsetY)
-        text.draw(canvas)
-        canvas.restore()
+        val image = prepared ?: return // no independent background paint exists
+        try { canvas.drawBitmap(image, 0f, 0f, null) }
+        catch (failure: Exception) { prepared = null; postInvalidate() }
+    }
+
+    override fun onDetachedFromWindow() {
+        // Do not recycle a bitmap that RenderThread may still reference.
+        prepared = null
+        super.onDetachedFromWindow()
     }
 }

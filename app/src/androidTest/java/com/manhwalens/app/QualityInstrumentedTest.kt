@@ -122,7 +122,10 @@ class QualityInstrumentedTest {
             bitmap.recycle()
             val long = com.manhwalens.app.overlay.ReplacementTranslationView(context, "هذه ترجمة طويلة تحتاج مساحة كافية. ".repeat(80), surface)
             val tiny = render(long, 140, 60)
-            assertTrue(long.needsDetails || long.isScrollable)
+            assertTrue(long.needsDetails)
+            assertFalse(long.replacementReady)
+            for (y in 0 until tiny.height) for (x in 0 until tiny.width)
+                assertEquals("Unfit text must NOT mask the original", 0, Color.alpha(tiny.getPixel(x,y)))
             assertTrue(long.contentDescription.contains("اضغط"))
             assertTrue(long.fitPasses <= 6)
             var clicked = false
@@ -237,7 +240,7 @@ class QualityInstrumentedTest {
                 val view = com.manhwalens.app.overlay.ReplacementTranslationView(context, "في عام 2025، بدأت المقابر تظهر في أنحاء الأرض.", surface)
                 view.measure(View.MeasureSpec.makeMeasureSpec(surface.width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(surface.height,View.MeasureSpec.EXACTLY))
                 view.layout(0,0,surface.width,surface.height)
-                assertFalse("Grouped narration must show Arabic, not only an ellipsis", view.needsDetails)
+                assertEquals("Only full-fit layouts can replace the source", !view.needsDetails, view.replacementReady)
                 val output = bitmap.copy(Bitmap.Config.ARGB_8888, true)
                 val canvas = Canvas(output)
                 canvas.save(); canvas.translate(surface.left.toFloat(),surface.top.toFloat()); view.draw(canvas); canvas.restore()
@@ -286,6 +289,82 @@ class QualityInstrumentedTest {
             resize(500,300)
             assertFalse(short.needsDetails)
             assertEquals(largeSize,short.fittedSp,0f)
+        }
+    }
+
+    @Test fun failedUnfitAndUnpreparedOverlaysLeaveOriginalPixelsUntouched() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val context = instrumentation.targetContext
+            val surface = com.manhwalens.app.overlay.ReplacementSurface(0,0,345,38,Color.BLACK)
+            val original = Bitmap.createBitmap(345,38,Bitmap.Config.ARGB_8888)
+            original.eraseColor(Color.BLACK)
+            Canvas(original).drawText("I WILL TAKE THAT POWER!",2f,25f,android.graphics.Paint().apply { color=Color.WHITE; textSize=20f })
+            val message = "أفعل! سوف آخذ هذه القوة! سوف اغتنم هذه الفرصة!"
+            for (failed in listOf(false,true)) {
+                val view = com.manhwalens.app.overlay.ReplacementTranslationView(context,message,surface,failed)
+                val beforeLayout = original.copy(Bitmap.Config.ARGB_8888,true)
+                view.draw(Canvas(beforeLayout))
+                assertTrue(original.sameAs(beforeLayout))
+                view.measure(View.MeasureSpec.makeMeasureSpec(345,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(38,View.MeasureSpec.EXACTLY))
+                view.layout(0,0,345,38)
+                assertFalse(view.replacementReady)
+                val after = original.copy(Bitmap.Config.ARGB_8888,true)
+                view.draw(Canvas(after))
+                assertTrue("No ellipsis mask or partial line may replace original", original.sameAs(after))
+                after.recycle(); beforeLayout.recycle()
+            }
+            original.recycle()
+        }
+    }
+
+    @Test fun rasterFailureAfterBackgroundPaintNeverCommitsMask() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val view = com.manhwalens.app.overlay.ReplacementTranslationView(instrumentation.targetContext,"مرحبا",
+                com.manhwalens.app.overlay.ReplacementSurface(0,0,500,300))
+            view.rasterize = { w,h,draw ->
+                val temporary = Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888)
+                draw(Canvas(temporary))
+                temporary.recycle()
+                error("injected rendering failure AFTER mask and text preparation")
+            }
+            view.measure(View.MeasureSpec.makeMeasureSpec(500,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(300,View.MeasureSpec.EXACTLY))
+            view.layout(0,0,500,300)
+            assertFalse(view.replacementReady)
+            val original = Bitmap.createBitmap(500,300,Bitmap.Config.ARGB_8888).apply { eraseColor(Color.MAGENTA) }
+            val output = original.copy(Bitmap.Config.ARGB_8888,true)
+            view.draw(Canvas(output))
+            assertTrue(original.sameAs(output))
+            original.recycle(); output.recycle()
+        }
+    }
+
+    @Test fun fullReportDialogueOnDarkSurfaceIsCompleteOrTransparentAtEveryScale() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val base = instrumentation.targetContext
+            for (scale in listOf(1f,1.4f,2f)) for (height in listOf(38,84,180,400)) {
+                val config = android.content.res.Configuration(base.resources.configuration).apply { fontScale=scale }
+                val context = base.createConfigurationContext(config)
+                val view = com.manhwalens.app.overlay.ReplacementTranslationView(context,
+                    "أفعل! سوف آخذ هذه القوة! سوف اغتنم هذه الفرصة!",
+                    com.manhwalens.app.overlay.ReplacementSurface(0,0,345,height,Color.BLACK))
+                view.measure(View.MeasureSpec.makeMeasureSpec(345,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(height,View.MeasureSpec.EXACTLY))
+                view.layout(0,0,345,height)
+                assertFalse(view.isScrollable)
+                assertEquals(!view.needsDetails,view.replacementReady)
+                val pixels = Bitmap.createBitmap(345,height,Bitmap.Config.ARGB_8888)
+                view.draw(Canvas(pixels))
+                if (!view.replacementReady) {
+                    for (y in 0 until height) for(x in 0 until 345) assertEquals(0,Color.alpha(pixels.getPixel(x,y)))
+                } else {
+                    assertTrue(view.fittedSp >= 12f)
+                    assertEquals(Color.BLACK,pixels.getPixel(0,0))
+                    assertTrue((0 until height).any { y -> (0 until 345).any { x -> Color.red(pixels.getPixel(x,y)) > 200 } })
+                }
+                pixels.recycle()
+            }
         }
     }
 

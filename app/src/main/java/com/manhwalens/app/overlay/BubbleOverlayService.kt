@@ -384,6 +384,7 @@ class BubbleOverlayService : Service() {
     private fun showPanel(result: CaptureResult, final: Boolean) {
         // StateFlow replays its last result to new subscribers: never render history over a different app.
         if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt || dismissedPanelId == result.id) return
+        if (!ReplacementCommit.eligible(result.id, CaptureManager.activeResultId, final)) return
         if (readingPanelId == result.id) {
             val focus = readingRegion
             val visible = if (focus == null) result else result.copy(blocks = result.blocks.filter {
@@ -400,38 +401,52 @@ class BubbleOverlayService : Service() {
             val inset = metrics.windowInsets.getInsetsIgnoringVisibility(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
             android.graphics.Rect(inset.left, inset.top, metrics.bounds.width() - inset.right, metrics.bounds.height() - inset.bottom)
         } else availableBounds()
-        result.blocks.filter { it.translated != it.original }.forEach { block ->
+        if (displayedBlocks.isNotEmpty()) return
+        val replacing = result.blocks.filter { it.translated != it.original }
+        if (replacing.isEmpty()) return
+        data class Ready(val view: ReplacementTranslationView, val params: WindowManager.LayoutParams, val rect: android.graphics.Rect)
+        val ready = mutableListOf<Ready>()
+        var pixels = 0L
+        for (block in replacing) {
             val region = block.region
-            val key = "${region.left}:${region.top}:${region.right}:${region.bottom}:${block.translated}"
-            if (key in displayedBlocks) return@forEach
-            val failed = block.errorCode != null
             val surface = SurfacePlacement.visible(region,
-                ReplacementSurface(bounds.left, bounds.top, bounds.right, bounds.bottom)) ?: return@forEach
-            val width = surface.width
-            val height = surface.height
-            val text = ReplacementTranslationView(this, block.translated, surface, failed)
+                ReplacementSurface(bounds.left, bounds.top, bounds.right, bounds.bottom))
+            val issue = com.manhwalens.app.translate.ReplacementQuality.issue(block.original, block.translated)
+            if (block.errorCode != null || issue != null || surface == null || !surface.reliable ||
+                (region.confidence.isFinite() && region.confidence < .5f)) {
+                showReadingLauncher(result, final); return
+            }
+            pixels += surface.width.toLong() * surface.height
+            val rect = android.graphics.Rect(surface.left, surface.top, surface.right, surface.bottom)
+            if (pixels > 4_000_000L || ready.any { android.graphics.Rect.intersects(it.rect, rect) }) {
+                showReadingLauncher(result, final); return
+            }
+            val text = runCatching {
+                ReplacementTranslationView(this, block.translated, surface).also {
+                    it.measure(View.MeasureSpec.makeMeasureSpec(surface.width, View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(surface.height, View.MeasureSpec.EXACTLY))
+                    it.layout(0, 0, surface.width, surface.height)
+                }
+            }.getOrNull()
+            if (text == null || !text.replacementReady) { showReadingLauncher(result, final); return }
             text.setOnClickListener { showReadingPanel(result.copy(blocks = listOf(block)), final, block.region) }
-            val params = WindowManager.LayoutParams(width, height, overlayType(),
+            val params = WindowManager.LayoutParams(surface.width, surface.height, overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT).apply {
-                gravity = Gravity.TOP or Gravity.LEFT
-                x = surface.left; y = surface.top
-                alpha = 1f
+                gravity = Gravity.TOP or Gravity.LEFT; x = surface.left; y = surface.top; alpha = 1f
             }
-            // Source replacement must not be moved by collision avoidance: doing
-            // so exposes the original lettering. Difficult text opens details on tap.
-            val card: View = text
-            val rect = android.graphics.Rect(params.x, params.y, params.x + width, params.y + height)
-            text.setOnLongClickListener {
-                runCatching { windowManager.removeView(card) }
-                translationViews.remove(card); translationRects.remove(rect); publishBounds()
-                true
-            }
-            if (runCatching { windowManager.addView(card, params) }.isSuccess) {
-                translationViews.add(card); translationRects.add(rect); displayedBlocks.add(key)
-                publishBounds()
-            }
+            text.setOnLongClickListener { clearTranslations(); true }
+            ready.add(Ready(text, params, rect))
         }
+        val committed = ReplacementCommit.commit(ready,
+            current = { acceptResults && !CaptureManager.appVisible.value &&
+                ReplacementCommit.eligible(result.id, CaptureManager.activeResultId, final) },
+            attach = { windowManager.addView(it.view, it.params) },
+            remove = { windowManager.removeViewImmediate(it.view) })
+        if (!committed) { showReadingLauncher(result, final); return }
+        ready.forEach { translationViews.add(it.view); translationRects.add(it.rect) }
+        displayedBlocks.add(result.id)
+        publishBounds()
         markRendered(result, final)
     }
 
@@ -442,6 +457,15 @@ class BubbleOverlayService : Service() {
         displayedResultId = result.id
         val bounds = availableBounds()
         val size = minOf(dp(48), bounds.width(), bounds.height())
+        val spot = sequence {
+            for (y in bounds.top..(bounds.bottom - size).coerceAtLeast(bounds.top) step size.coerceAtLeast(1)) {
+                yield(bounds.left to y)
+                yield((bounds.right - size) to y)
+            }
+        }.firstOrNull { (x, y) -> result.blocks.none {
+            val r = it.region
+            x < r.right + 4 && x + size > r.left - 4 && y < r.bottom + 4 && y + size > r.top - 4
+        } } ?: return // no safe launcher position: preserve the original
         val launcher = CircularTranslationView(this, size, "≡")
         launcher.contentDescription = "عرض ${result.blocks.size} ترجمات وتفاصيل الأخطاء"
         launcher.setOnClickListener { showReadingPanel(result, final) }
@@ -450,8 +474,8 @@ class BubbleOverlayService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT).apply {
             gravity = Gravity.TOP or Gravity.LEFT
-            x = bounds.left + dp(8).coerceAtMost(bounds.width() - size)
-            y = bounds.top + (bounds.height() - size) / 2
+            x = spot.first
+            y = spot.second
         }
         if (runCatching { windowManager.addView(launcher, params) }.isSuccess) {
             panelView = launcher
@@ -523,6 +547,7 @@ class BubbleOverlayService : Service() {
     }
 
     private fun showWorking(status: CaptureManager.Status) {
+        if (status == CaptureManager.Status.PREPARING) { clearTranslations(); hidePanel() }
         // Do not put our own status text into the screen being OCR'd.
         bubbleView?.alpha = 0.65f
     }

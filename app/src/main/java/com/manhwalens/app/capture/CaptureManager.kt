@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * Both the in-app UI and the floating bubble panel observe this flow.
  */
 object CaptureManager {
+    @Volatile var activeResultId: String? = null
 
     sealed interface CaptureState {
         data object Idle : CaptureState
@@ -60,6 +61,7 @@ object CaptureManager {
     }
 
     fun reset() {
+        activeResultId = null
         _state.value = CaptureState.Idle
     }
 }

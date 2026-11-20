@@ -482,6 +482,7 @@ class ScreenCaptureService : Service() {
         // A journey = one capture → Arabic on screen. Trace id chains every stage.
         val traceId = Diagnostics.newTrace()
         val journeyId = BenchmarkTracker.beginSession(traceId, requestNs.takeIf { it > 0 } ?: System.nanoTime())
+        CaptureManager.activeResultId = journeyId
         Diagnostics.info("capture", "capture_start", "capture journey started", traceId = traceId,
             context = mapOf("journey_id" to journeyId))
         BenchmarkTracker.mark("T3") // session is active (projection + pipeline held)
@@ -726,7 +727,7 @@ class ScreenCaptureService : Service() {
                 }
                 val surface = if (overlapsAnother) com.manhwalens.app.overlay.ReplacementSurface(
                     (item.region.left - 2).coerceAtLeast(0), (item.region.top - 2).coerceAtLeast(0),
-                    (item.region.right + 2).coerceAtMost(bitmap.width), (item.region.bottom + 2).coerceAtMost(bitmap.height), detected.color)
+                    (item.region.right + 2).coerceAtMost(bitmap.width), (item.region.bottom + 2).coerceAtMost(bitmap.height), detected.color, reliable = detected.reliable)
                 else detected
                 item.copy(region = item.region.copy(surface = surface))
             }
