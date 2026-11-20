@@ -585,20 +585,18 @@ class ScreenCaptureService : Service() {
 
         BenchmarkTracker.mark("T8")
         val id = journeyId
+        val plan = com.manhwalens.app.pipeline.FrameTranslationPlan.build(
+            prepared.map { com.manhwalens.app.pipeline.FrameTranslationPlan.Input(it.region, it.kind) }, readerContentBottom)
+        val workByRegion = plan.associateBy { it.input.region }
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.map { it.region },
-            // Same words at the edge and in the center can have different input
-            // validity and preceding dialogue. Only the model-text cache may reuse.
-            identity = { it },
+            identity = { workByRegion.getValue(it).key },
             translate = { region ->
                 val started = System.nanoTime()
-                val index = prepared.indexOfFirst { it.region == region }
-                val previousSource = prepared.getOrNull(index - 1)?.takeIf {
-                    it.kind != RegionKind.SOUND_EFFECT &&
-                        com.manhwalens.app.pipeline.OcrInputQuality.issue(it.region, readerContentBottom) == null
-                }?.region?.text
-                val issue = com.manhwalens.app.pipeline.OcrInputQuality.issue(region, readerContentBottom)
-                val translated = if (prepared.getOrNull(index)?.kind == RegionKind.SOUND_EFFECT && issue == null) {
+                val work = workByRegion.getValue(region)
+                val previousSource = work.key.previous
+                val issue = work.key.issue
+                val translated = if (work.key.preserveSoundEffect && issue == null) {
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text, region.text,
                         method = "Sound effect preserved (not translated)")
                 } else if (issue == null) translation.translateBlock(region, learnedNames, previousSource) else {
@@ -608,9 +606,10 @@ class ScreenCaptureService : Service() {
                         com.manhwalens.app.pipeline.OcrInputQuality.message(issue, region.text), issue, method = "OCR input validation")
                 }
                 translated.also {
-                    Diagnostics.info("translate", "block_complete", "local ML translation complete",
+                    Diagnostics.info("translate", "block_complete", "block processing complete",
                         durationMs = (System.nanoTime() - started) / 1_000_000,
-                        context = mapOf("chars" to region.text.length.toString()), traceId = traceId)
+                        context = mapOf("chars" to region.text.length.toString(), "method" to it.method,
+                            "status" to (it.errorCode ?: "processed_semantics_unverified")), traceId = traceId)
                 }
             },
             onReady = { completed ->

@@ -20,7 +20,12 @@ object SentenceReconstructor {
         if (lines.isEmpty()) return ""
         var text = lines.joinToString("\n").trim()
         // 1. hyphen at line end: "trans-\nlation" -> "translation"
-        text = text.replace(Regex("-\\s*\n\\s*"), "")
+        text = Regex("(?<![A-Za-z0-9])([A-Za-z]+)-[ \\t]*\n[ \\t]*([A-Za-z]+)(?![A-Za-z0-9])").replace(text) { match ->
+            val left = match.groupValues[1]
+            val right = match.groupValues[2]
+            // A single-letter hesitation is not a broken word (I- / I, W- / WHAT).
+            if (left.length == 1) "$left-$right" else left + right
+        }
         // 2. remaining newlines -> single space
         text = text.replace(Regex("\\s*\n\\s*"), " ")
         return normalize(text)
