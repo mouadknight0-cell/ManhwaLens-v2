@@ -71,3 +71,7 @@ PR9 remains open; no merge is authorised by this audit request. Signing vault/ce
 - Android 14 [44720117448](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44720117448): instrumentation **passed**, including existing actual OCR/grey crop, Arabic bidi/font-scale, scroll tests and both new instrumentation methods.
 - Attempted download of `android-quality-results` returned EOF at GitHub's Azure artifact host. Thus generated PNGs were **not manually visually inspected** in this audit; passing assertions are the evidence, not a claimed visual review of new rendering.
 - `git diff --check` passed. Older superseded work-in-progress jobs were cancelled, not counted as tests passing. Release metadata changes after `6107f06` do not change app/test source.
+
+## Published build
+
+v1.1.20: GitHub release build/unit tests [44720920650](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44720920650) and durable-vault signing/version identity verification [44721385779](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44721385779) passed. Public signed APK: https://github.com/mouadknight0-cell/ManhwaLens-v2/releases/download/v1.1.20/app-release.apk . Signing material unchanged. PR9 remains open.
