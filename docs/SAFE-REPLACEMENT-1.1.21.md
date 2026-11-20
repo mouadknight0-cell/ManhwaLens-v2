@@ -68,7 +68,7 @@ New JVM `ReplacementSafetyTest`:
 
 New native Android tests:
 
-- Render before layout and valid-but-unfit full dialogue on a 345×38 black region leave the original bitmap **pixel-identical**; error case also preserves pixels.
+- Render before layout and valid-but-unfit repeated dialogue on a 345×38 black region leave the original bitmap **pixel-identical**; error case also preserves pixels.
 - Inject raster failure after background/text preparation: no committed bitmap and original pixels unchanged.
 - Exact full report reference dialogue across heights 38/84/180/400 and font scales 1.0/1.4/2.0: complete fit or fully transparent, never scrolling partial output; check readable font and drawn ink.
 - Existing overflow test strengthened to require every fallback pixel be transparent. Existing grey-reference assertion now accepts only full-fit replacement or transparent fallback, no longer a scrollable partial paragraph. Prior bidi, glyph, resize, real OCR and cancellation tests retained.
@@ -86,3 +86,7 @@ General semantic quality, speaker/pronoun context, OCR recovery, idioms and flue
 ## Verification / publication
 
 Execution results are recorded after GitHub tests finish. Same signing vault and certificate; no data reset. PR9 remains open; this task does not merge it.
+
+### Verification correction
+
+CI 44745299751 passed. Android runs 44745299837 and 44746056238 exposed a faulty new fixture assumption: the short full Arabic reference can fit 345×38 at the emulator density, so `assertFalse(replacementReady)` was incorrect. The guaranteed-overflow pixel-preservation test now uses a repeated long paragraph; the separate exact-reference matrix still tests the actual dialogue, allowing only complete fit or transparency. No production fit threshold was weakened. Full GitHub rerun required below.

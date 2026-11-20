@@ -300,7 +300,10 @@ class QualityInstrumentedTest {
             val original = Bitmap.createBitmap(345,38,Bitmap.Config.ARGB_8888)
             original.eraseColor(Color.BLACK)
             Canvas(original).drawText("I WILL TAKE THAT POWER!",2f,25f,android.graphics.Paint().apply { color=Color.WHITE; textSize=20f })
-            val message = "أفعل! سوف آخذ هذه القوة! سوف اغتنم هذه الفرصة!"
+            // 345x38 CAN fit the short reference on an mdpi emulator. Use a
+            // genuinely overflowing paragraph here; exact reference/scale cases
+            // below deliberately allow either a full fit or transparent fallback.
+            val message = "أفعل! سوف آخذ هذه القوة! سوف اغتنم هذه الفرصة! ".repeat(8)
             for (failed in listOf(false,true)) {
                 val view = com.manhwalens.app.overlay.ReplacementTranslationView(context,message,surface,failed)
                 val beforeLayout = original.copy(Bitmap.Config.ARGB_8888,true)
