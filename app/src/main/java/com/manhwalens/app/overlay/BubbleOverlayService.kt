@@ -441,7 +441,7 @@ class BubbleOverlayService : Service() {
         }
         var renderFailure = false
         result.blocks.forEachIndexed { i,block ->
-            val key="${result.id}:$i"
+            val key="${result.id}:${com.manhwalens.app.pipeline.PageState.id(block.region)}"
             if (key in displayedBlocks) return@forEachIndexed
             val reason=when {
                 block.errorCode!=null -> block.errorCode
@@ -476,7 +476,7 @@ class BubbleOverlayService : Service() {
             } else { outcome(i,"attach_failed_or_stale"); renderFailure=true }
         }
         publishBounds()
-        if(renderFailure && result.id==CaptureManager.activeResultId) {
+        if(final && renderFailure && result.id==CaptureManager.activeResultId) {
             CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION)
             if(renderRetriedId!=result.id) {
                 renderRetriedId=result.id
@@ -494,7 +494,7 @@ class BubbleOverlayService : Service() {
                 runCatching { windowManager.addView(outline,lp) }.onSuccess { debugView=outline }
             }
         }
-        if(displayedBlocks.isNotEmpty()) markRendered(result,!renderFailure && result.blocks.none { it.errorCode!=null })
+        if(displayedBlocks.isNotEmpty()) markRendered(result,final && !renderFailure && result.blocks.none { it.errorCode!=null })
     }
 
     private fun markRendered(result: CaptureResult, final: Boolean) {

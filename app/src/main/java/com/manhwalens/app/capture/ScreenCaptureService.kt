@@ -152,6 +152,8 @@ class ScreenCaptureService : Service() {
         }
     }
 
+    private val pageState=com.manhwalens.app.pipeline.PageState()
+    @Volatile private var nextCaptureMs=0L
     private fun startLive() {
         if (liveEnabled && liveJob?.isActive == true) {
             if (captureJob?.isActive != true) liveGate.retry(android.os.SystemClock.elapsedRealtime())
@@ -185,9 +187,9 @@ class ScreenCaptureService : Service() {
                         }
                     }
                     if (CaptureManager.refreshPage.get() && captureJob?.isActive != true && !CaptureManager.dockVisible) {
-                        translation.clearCache(); liveGate.retry(android.os.SystemClock.elapsedRealtime()-250)
+                        pageState.clear(); translation.clearCache(); liveGate.retry(android.os.SystemClock.elapsedRealtime()-250)
                     }
-                    if (!CaptureManager.dockVisible && (!CaptureManager.pausePages || CaptureManager.refreshPage.get()) && captureJob?.isActive != true && liveGate.claim(android.os.SystemClock.elapsedRealtime()) != null) {
+                    if (!CaptureManager.dockVisible && (!CaptureManager.pausePages || CaptureManager.refreshPage.get()) && captureJob?.isActive != true && android.os.SystemClock.elapsedRealtime()>=nextCaptureMs && liveGate.claim(android.os.SystemClock.elapsedRealtime()) != null) {
                         CaptureManager.refreshPage.set(false)
                         requestNs = System.nanoTime()
                         CaptureManager.setLive(CaptureManager.LiveStatus.PROCESSING)
@@ -205,6 +207,7 @@ class ScreenCaptureService : Service() {
     }
 
     private fun endLive(status: CaptureManager.LiveStatus = CaptureManager.LiveStatus.OFF) {
+        pageState.clear()
         liveEnabled = false
         liveJob?.cancel()
         liveJob = null
@@ -461,7 +464,7 @@ class ScreenCaptureService : Service() {
         // One owner for frame acquisition and benchmarks; newer requests supersede old ones.
         val previous = captureJob
         CaptureManager.activeResultId = null
-        previous?.cancel()
+        if(previous?.isActive==true) return
         captureJob = scope.launch {
             previous?.join()
             if (BenchmarkTracker.isActive()) BenchmarkTracker.finish("cancelled")
@@ -481,7 +484,7 @@ class ScreenCaptureService : Service() {
                 BenchmarkTracker.finish("error", errorCode = ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED)
                 CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_capture_generic)))
                 endLive(CaptureManager.LiveStatus.ERROR)
-            }
+            } finally { nextCaptureMs=android.os.SystemClock.elapsedRealtime()+250 }
         }
     }
 
@@ -623,6 +626,7 @@ class ScreenCaptureService : Service() {
 
         BenchmarkTracker.mark("T8")
         val id = journeyId
+        val dictionaryContext=learnedNames.toList() to (application as ManhwaLensApp).settingsRepository.readings.value
         val workByRegion = plan.associateBy { it.input.region }
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.map { it.region },
@@ -631,6 +635,8 @@ class ScreenCaptureService : Service() {
             translate = { region ->
                 val started = System.nanoTime()
                 val work = workByRegion.getValue(region)
+                val contextKey=work.key to dictionaryContext
+                pageState.find(region,contextKey)?.let { return@progressiveTranslation it }
                 val previousSource = work.key.previous
                 val issue = work.key.issue
                 Diagnostics.info("funnel", "dispatch", "page=$journeyId bounds=${region.left},${region.top} action=${issue ?: if(work.key.preserveSoundEffect) "preserve_sfx" else "translate"}", traceId = traceId)
@@ -662,6 +668,7 @@ class ScreenCaptureService : Service() {
                         } else translated
                     } finally { if (crop !== frame) crop.recycle() }
                 } else translated
+                pageState.save(region,contextKey,recovered)
                 recovered.also {
                     Diagnostics.info("translate", "block_complete", "block processing complete",
                         durationMs = (System.nanoTime() - started) / 1_000_000,

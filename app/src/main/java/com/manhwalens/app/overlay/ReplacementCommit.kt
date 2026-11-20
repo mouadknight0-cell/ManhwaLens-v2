@@ -4,7 +4,7 @@ package com.manhwalens.app.overlay
  * if attachment fails or request identity changes during commit.
  */
 object ReplacementCommit {
-    fun eligible(id: String, activeId: String?, complete: Boolean) = complete && id == activeId
+    fun eligible(id: String, activeId: String?, complete: Boolean) = id == activeId
     fun <T> commit(items: List<T>, current: () -> Boolean, attach: (T) -> Unit, remove: (T) -> Unit): Boolean {
         if (!current()) return false
         val attempted = mutableListOf<T>()

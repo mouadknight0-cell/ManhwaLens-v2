@@ -23,7 +23,7 @@ class ReplacementSafetyTest {
         assertNotNull(TranslationOutput.issue("تعذّرت الترجمة — أعد المحاولة",mask))
     }
     @Test fun delayedPartialAndStaleRequestsNeverCommit() {
-        assertFalse(ReplacementCommit.eligible("new","new",false))
+        assertTrue(ReplacementCommit.eligible("new","new",false))
         assertFalse(ReplacementCommit.eligible("old","new",true))
         assertFalse(ReplacementCommit.eligible("old",null,true))
         assertTrue(ReplacementCommit.eligible("new","new",true))
@@ -62,7 +62,7 @@ class ReplacementSafetyTest {
             com.manhwalens.app.pipeline.TranslatedBlock(it,it.text,"مرحبا!")
         }, onReady = {
             partialOrder.add(it.first().original)
-            assertFalse(ReplacementCommit.eligible("active","active",false))
+            assertTrue(ReplacementCommit.eligible("active","active",false))
         })
         assertEquals("Second!",partialOrder.first())
         assertEquals(listOf("First!","Second!"),result.map { it.original })

@@ -32,7 +32,7 @@ class LiveFrameGate(private val settleMs: Long = 180) {
             total += delta
             if (delta >= 10) changed++
         }
-        return compared > 0 && (changed.toDouble() / compared >= 0.025 || total.toDouble() / compared >= 2.5)
+        return compared > 0 && (changed.toDouble() / compared >= 0.015 || total.toDouble() / compared >= 2.5)
     }
     @Synchronized fun ready(nowMs: Long): Boolean = anchor != null && consumed != revision && nowMs - changedAt >= settleMs
     @Synchronized fun claim(nowMs: Long): Long? {
