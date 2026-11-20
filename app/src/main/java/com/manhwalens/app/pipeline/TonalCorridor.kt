@@ -11,8 +11,8 @@ object TonalCorridor {
     fun isClear(a: TextRegion, b: TextRegion, width: Int, height: Int, pixel: (Int, Int) -> Int): Boolean {
         val left = maxOf(a.left, b.left)
         val right = minOf(a.right, b.right)
-        val start = a.bottom + 1
-        val end = b.top - 1
+        val start = minOf(a.bottom + 1, b.top - 1)
+        val end = maxOf(start, b.top - 1)
         if (left < 0 || right > width || left >= right || start < 0 || end >= height || end < start) return false
         val step = maxOf(1, (right - left) / 32)
         val count = (right - left + step - 1) / step
@@ -38,9 +38,19 @@ object TonalCorridor {
                         for (x in left until right step step) if (difference(pixel(x,y), darkTone) <= 26) hits++
                         return hits * 10 >= fraction * count
                     }
-                    return colors.count { difference(it,darkTone) <= 26 } * 10 >= 8 * count &&
-                        matches(a.bottom-2,6) && matches(b.top+1,6) &&
-                        (start+1..end).all { matches(it,8) }
+                    val firstClear = colors.count { difference(it,darkTone) <= 26 } * 10 >= 8 * count
+                    if (firstClear && matches(a.bottom-2,6) && matches(b.top+1,6) &&
+                        (start+1..end).all { matches(it,8) }) return true
+                    // Short dark gap with glyphs intruding into the edge rows. Inspect
+                    // the outer rails through both lines, and veto an interior separator.
+                    val gap = b.top-a.bottom
+                    if (gap !in 0..minOf(a.height,b.height)/3) return false
+                    val l = minOf(a.left,b.left)-2; val h = maxOf(a.right,b.right)+1
+                    val rows = (a.bottom-3)..(b.top+2)
+                    if (l < 0 || h >= width || rows.first < 0 || rows.last >= height ||
+                        (2L*(end-start+3)*count + 2*rows.count()) > MAX_PROBES) return false
+                    return rows.all { y -> difference(pixel(l,y),darkTone)<=26 && difference(pixel(h,y),darkTone)<=26 } &&
+                        (start..end).all { matches(it,5) }
                 }
                 reference = (r shl 16) or (g shl 8) or bl
             }

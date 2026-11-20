@@ -23,7 +23,7 @@ object CaptureManager {
 
     enum class Status { PREPARING, READING, TRANSLATING, DOWNLOADING_MODEL }
 
-    enum class LiveStatus { OFF, WAITING, SCROLLING, PROCESSING, READY, PAUSED_APP, ERROR }
+    enum class LiveStatus { OFF, WAITING, SCROLLING, PROCESSING, READY, NO_TRANSLATION, PAUSED_APP, ERROR }
     private val _live = MutableStateFlow(LiveStatus.OFF)
     val live = _live.asStateFlow()
     internal fun setLive(status: LiveStatus) { _live.value = status }

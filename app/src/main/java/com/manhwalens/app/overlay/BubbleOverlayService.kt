@@ -63,6 +63,7 @@ class BubbleOverlayService : Service() {
         statusLabel?.text = when {
             phase == CaptureManager.SessionPhase.FAILED -> "تعذّر بدء الالتقاط — أعد المحاولة"
             phase != CaptureManager.SessionPhase.ACTIVE -> "الالتقاط: ${label.substringBefore(" /")}"
+            CaptureManager.live.value == CaptureManager.LiveStatus.NO_TRANSLATION -> "لم تُترجم الصفحة؛ اضغط ترجمة أو مرّر"
             CaptureManager.live.value == CaptureManager.LiveStatus.ERROR -> "الالتقاط متصل؛ تعذّرت معالجة الصفحة — أعد المحاولة"
             else -> "الالتقاط متصل • ${work ?: CaptureManager.live.value}"
         }
@@ -74,7 +75,7 @@ class BubbleOverlayService : Service() {
             else -> PANEL_TEXT
         })
         startControl?.isEnabled = phase !in listOf(CaptureManager.SessionPhase.STARTING, CaptureManager.SessionPhase.STOPPING) &&
-            (phase != CaptureManager.SessionPhase.ACTIVE || CaptureManager.live.value in listOf(CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR))
+            (phase != CaptureManager.SessionPhase.ACTIVE || CaptureManager.live.value in listOf(CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR, CaptureManager.LiveStatus.NO_TRANSLATION))
         startControl?.alpha = if (startControl?.isEnabled == true) 1f else 0.45f
     }
     private val translationRects = mutableListOf<android.graphics.Rect>()
@@ -109,7 +110,7 @@ class BubbleOverlayService : Service() {
     }
     private fun startTranslation() {
         event("start_click")
-        if (CaptureManager.live.value !in listOf(CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR) || startJob?.isActive == true) return
+        if (CaptureManager.live.value !in listOf(CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR, CaptureManager.LiveStatus.NO_TRANSLATION) || startJob?.isActive == true) return
         collapseActions()
         clearTranslations()
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.PREPARING))

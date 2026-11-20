@@ -153,7 +153,10 @@ class ScreenCaptureService : Service() {
     }
 
     private fun startLive() {
-        if (liveEnabled && liveJob?.isActive == true) return
+        if (liveEnabled && liveJob?.isActive == true) {
+            if (CaptureManager.live.value == CaptureManager.LiveStatus.NO_TRANSLATION) liveGate.retry(android.os.SystemClock.elapsedRealtime())
+            return
+        }
         liveEnabled = true
         liveGate.reset()
         CaptureManager.setLive(CaptureManager.LiveStatus.WAITING)
@@ -579,6 +582,7 @@ class ScreenCaptureService : Service() {
             Diagnostics.warn("text", "reconstruct", "OCR produced no translatable text",
                 code = ErrorCodes.OCR_EMPTY, recovery = "empty result shown to user")
             CaptureManager.setState(CaptureManager.CaptureState.Done(CaptureResult(journeyId, System.currentTimeMillis(), OCR_SOURCE, TARGET, emptyList())))
+            if (liveEnabled) CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION)
             BenchmarkTracker.finish("empty", frameWidth = frame.width, frameHeight = frame.height, regionCount = 0)
             return
         }
@@ -669,11 +673,8 @@ class ScreenCaptureService : Service() {
         if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
         CaptureManager.setState(CaptureManager.CaptureState.Done(result))
         if (liveEnabled) {
-            if (blocks.isNotEmpty() && blocks.all { it.errorCode != null && !it.errorCode.startsWith("OCR-") }) {
-                liveEnabled = false
-                liveJob?.cancel()
-                CaptureManager.setLive(CaptureManager.LiveStatus.ERROR)
-            } else CaptureManager.setLive(CaptureManager.LiveStatus.READY)
+            val translated = blocks.any { it.errorCode == null && it.translated.isNotBlank() && it.original != it.translated }
+            CaptureManager.setLive(if (translated) CaptureManager.LiveStatus.READY else CaptureManager.LiveStatus.NO_TRANSLATION)
         }
         scope.launch {
             kotlinx.coroutines.delay(1500)

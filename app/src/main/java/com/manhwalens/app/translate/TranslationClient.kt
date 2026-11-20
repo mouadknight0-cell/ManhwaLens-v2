@@ -50,7 +50,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             return TranslatedBlock(region, region.text, "تعذّرت حماية الأسماء — راجع القاموس", "TR-NAME-SHIELD")
         }
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
-        if ((region.confidence.isFinite() && region.confidence < .5f) ||
+        val reviewed = if (NameDetector.find(normalized, glossaryNames).isEmpty()) DialogueLexicon.translate(normalized, previous) else null
+        if ((reviewed == null && region.confidence.isFinite() && region.confidence < .5f) ||
             com.manhwalens.app.pipeline.TranslationInput.unresolved(normalized, glossaryNames)) {
             return TranslatedBlock(region, normalized, "", "OCR-UNCERTAIN", method = "OCR input validation")
         }
@@ -60,7 +61,6 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
                 method = "Numeric content preserved (not translated)")
         }
         val block = try {
-            val reviewed = if (NameDetector.find(normalized, glossaryNames).isEmpty()) DialogueLexicon.translate(normalized, previous) else null
             val translated = reviewed ?: TranslationRetry.run(
                 retryable = { it is TranslationFailure && it.code == ErrorCodes.TRANSLATE_FAILED }
             ) { translateText(normalized, glossaryNames) }

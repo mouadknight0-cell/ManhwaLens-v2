@@ -33,6 +33,7 @@ object DialogueLexicon {
         "we'd better end this sooner rather than later" to "من الأفضل أن ننهي هذا في أقرب وقت",
         "where" to "أين",
         "why" to "لماذا",
+        "who are you" to "من أنت",
         "who" to "مَن",
         "what" to "ماذا"
     )
