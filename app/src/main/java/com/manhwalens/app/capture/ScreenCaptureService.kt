@@ -70,8 +70,10 @@ class ScreenCaptureService : Service() {
     private val liveGate = LiveFrameGate()
     private var liveJob: kotlinx.coroutines.Job? = null
     private data class CapturedFrame(val image: Image, val dockVisible: Boolean, val occlusions: List<com.manhwalens.app.pipeline.CapturedOcclusion>) {
+        var sample: IntArray? = null // listener and sampler both run on the main looper
         fun close() = image.close()
     }
+    private val power by lazy { getSystemService(android.os.PowerManager::class.java) }
     private val latestFrame = AtomicReference<CapturedFrame?>(null)
     private var lastSampleNs = 0L
     @Volatile private var sceneRevision = 0L
@@ -137,9 +139,13 @@ class ScreenCaptureService : Service() {
             Diagnostics.error("capture", "frame_acquire", ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED, "frame acquisition failed", throwable = it)
             null
         } ?: return@OnImageAvailableListener
+        if (!power.isInteractive || CaptureManager.appVisible.value) {
+            image.close();latestFrame.getAndSet(null)?.close();return@OnImageAvailableListener
+        }
+        var sampled:IntArray?=null
         if (liveEnabled && System.nanoTime() - lastSampleNs >= 70_000_000L) {
             lastSampleNs = System.nanoTime()
-            val sample = sampleFrame(image)
+            val sample = sampleFrame(image).also {sampled=it}
             val now=android.os.SystemClock.elapsedRealtime()
             val motion=liveGate.observe(sample,now,captureJob?.isActive==true)
             if ((application as ManhwaLensApp).settingsRepository.debug.value) com.manhwalens.app.diagnostics.SessionScorecard.gate(now,liveGate.fraction,motion,liveGate.ready(now))
@@ -156,7 +162,7 @@ class ScreenCaptureService : Service() {
         val occlusions = CaptureManager.overlayBounds.map {
             com.manhwalens.app.pipeline.CapturedOcclusion(it.left, it.top, it.right, it.bottom)
         }
-        latestFrame.getAndSet(CapturedFrame(image, CaptureManager.dockVisible, occlusions))?.close()
+        latestFrame.getAndSet(CapturedFrame(image, CaptureManager.dockVisible, occlusions).also {it.sample=sampled})?.close()
     }
 
     private fun sampleFrame(image: Image): IntArray {
@@ -193,7 +199,7 @@ class ScreenCaptureService : Service() {
             try {
             var pausedForApp = false
             while (liveEnabled && mediaProjection != null) {
-                if (CaptureManager.appVisible.value) {
+                if (!power.isInteractive || CaptureManager.appVisible.value) {
                     CaptureManager.activeResultId = null
                     captureJob?.cancel()
                     pausedForApp = true
@@ -204,7 +210,7 @@ class ScreenCaptureService : Service() {
                     // thread, where the listener owns/replaces it, to avoid closing races.
                     kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
                         latestFrame.get()?.let { image ->
-                            if (liveGate.observe(sampleFrame(image.image), android.os.SystemClock.elapsedRealtime(),captureJob?.isActive==true) && !(captureJob?.isActive==true && unchanged(image.image))) {
+                            if (liveGate.observe(image.sample ?: sampleFrame(image.image).also {image.sample=it}, android.os.SystemClock.elapsedRealtime(),captureJob?.isActive==true) && !(captureJob?.isActive==true && unchanged(image.image))) {
                                 trackFrame(image.image,true)
                                 sceneRevision = liveGate.revision
                                 CaptureManager.activeResultId = null
@@ -219,7 +225,7 @@ class ScreenCaptureService : Service() {
                         launchCapture()
                     }
                 }
-                kotlinx.coroutines.delay(80) // sampling cadence; settle gate, not an OCR retry delay
+                kotlinx.coroutines.delay(if(pausedForApp) 250L else 80L) // sampling cadence; settle gate, not an OCR retry delay
             }
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (failure: Exception) {
