@@ -5,6 +5,7 @@ on:
     branches: [arena/ae360a1c-manhwalens-v2]
     paths:
       - '.github/workflows/quality.yml'
+      - '.github/scripts/android-quality.sh'
       - 'app/src/**'
       - 'app/build.gradle.kts'
 permissions:
