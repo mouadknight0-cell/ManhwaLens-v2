@@ -102,7 +102,7 @@ class ScreenCaptureService : Service() {
     }
 
     private val textRecognition by lazy { TextRecognitionClient() }
-    private val translation by lazy { TranslationClient(readings={ (application as ManhwaLensApp).settingsRepository.readings.value }) }
+    private val translation by lazy { TranslationClient(debug={ (application as ManhwaLensApp).settingsRepository.debug.value },readings={ (application as ManhwaLensApp).settingsRepository.readings.value }) }
     private val nameGlossary by lazy { NameGlossaryStore(applicationContext) }
 
     // ── Persistent capture pipeline ────────────────────────────────
@@ -628,6 +628,7 @@ class ScreenCaptureService : Service() {
         BenchmarkTracker.mark("T8")
         val id = journeyId
         val dictionaryContext=learnedNames.toList() to (application as ManhwaLensApp).settingsRepository.readings.value
+        val attempted=java.util.concurrent.ConcurrentHashMap.newKeySet<TextRegion>()
         val workByRegion = plan.associateBy { it.input.region }
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.map { it.region },
@@ -638,13 +639,14 @@ class ScreenCaptureService : Service() {
                 val work = workByRegion.getValue(region)
                 val contextKey=work.key to dictionaryContext
                 pageState.find(region,contextKey)?.let { return@progressiveTranslation it }
+                val retryCase=!attempted.add(region)
                 val previousSource = work.key.previous
                 val issue = work.key.issue
                 Diagnostics.info("funnel", "dispatch", "page=$journeyId bounds=${region.left},${region.top} action=${issue ?: if(work.key.preserveSoundEffect) "preserve_sfx" else "translate"}", traceId = traceId)
                 val translated = if (work.key.preserveSoundEffect && issue == null) {
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text, region.text,
                         method = "Sound effect preserved (not translated)")
-                } else if (issue == null) translation.translateBlock(region, learnedNames, previousSource) else {
+                } else if (issue == null) translation.translateBlock(region, learnedNames, previousSource,retryCase=retryCase) else {
                     Diagnostics.warn("ocr", "input_quality", "OCR input requires a clearer or complete frame", code = issue,
                         context = mapOf("bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text,

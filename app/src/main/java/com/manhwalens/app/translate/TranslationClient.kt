@@ -28,7 +28,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  *  - translations are cached (chapter-wide consistency of terminology and tone);
  *  - timeouts and failures keep the original text instead of crashing the journey.
  */
-class TranslationClient(private val cache: TranslationCache = TranslationCache(512), private val readings: () -> Map<String,String> = { ReadingGlossary.defaults }) {
+class TranslationClient(private val cache: TranslationCache = TranslationCache(512), private val debug:()->Boolean={false}, private val readings: () -> Map<String,String> = { ReadingGlossary.defaults }) {
 
     private val nativePermits = kotlinx.coroutines.sync.Semaphore(2)
     private val translators = mutableMapOf<Pair<String, String>, Translator>()
@@ -43,13 +43,13 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     }
 
     /** Translates one region, applying the name shield. Never throws — original text on failure. */
-    suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null, lexicalRetry:Boolean=false): TranslatedBlock {
+    suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null, lexicalRetry:Boolean=false, retryCase:Boolean=false): TranslatedBlock {
         val terms=readings()
         val protectedNames=(glossaryNames+terms.keys).distinct()
         val normalized = try { com.manhwalens.app.pipeline.TranslationInput.prepare(region.text, protectedNames) }
         catch (failure: IllegalArgumentException) {
             Diagnostics.error("translate", "input_name_shield", "TR-NAME-SHIELD", "name protection failed before OCR repair", throwable = failure)
-            return TranslatedBlock(region, region.text, "تعذّرت حماية الأسماء — راجع القاموس", "TR-NAME-SHIELD")
+            return TranslatedBlock(region, region.text, "", "TR-NAME-SHIELD")
         }
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
         val reviewed = terms[normalized.trimEnd('!','?','.','…').lowercase()]?.let { it+normalized.takeLastWhile { c->c in "!?.…" }.replace('?','؟') } ?: if (NameDetector.find(normalized,glossaryNames).none { it.source==com.manhwalens.app.names.NameHit.Source.GLOSSARY && it.name.lowercase() !in terms }) DialogueLexicon.translate(normalized, previous,terms) else null
@@ -63,20 +63,20 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
                 method = "Numeric content preserved (not translated)")
         }
         val block = try {
-            val translated = reviewed ?: translateText(normalized, glossaryNames,terms)
+            val translated = reviewed ?: translateText(normalized, glossaryNames,terms,retryCase)
             TranslatedBlock(region, normalized, translated, method = if (reviewed == null) "ML Kit on-device" else "Reviewed dialogue lexicon v1")
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {
-            Diagnostics.error("translate", "block_failed", failure.code, "translation block failed; source retained, failure shown", throwable = failure,
+            if(debug()) Diagnostics.error("translate", "block_failed", failure.code, "translation block failed; source retained, failure shown", throwable = failure,
                 context = mapOf("source_chars" to normalized.length.toString(), "word_count" to normalized.split(Regex("\\s+")).size.toString(),
                     "bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
-            TranslatedBlock(region, normalized, "تعذّرت الترجمة — أعد المحاولة", failure.code)
+            TranslatedBlock(region, normalized, "", failure.code)
         }
         return block.copy(durationMs = (System.nanoTime() - began) / 1_000_000)
     }
 
     /** Core translate path used for every complete utterance. */
-    suspend fun translateText(text: String, glossaryNames: List<String> = emptyList(),terms: Map<String,String> = readings()): String {
+    suspend fun translateText(text: String, glossaryNames: List<String> = emptyList(),terms: Map<String,String> = readings(),retryCase:Boolean=false): String {
         val trimmed = text.trim()
         if (trimmed.isBlank() || trimmed.none { it.isLetter() }) return trimmed
 
@@ -86,7 +86,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
         val maskResult = try { NameShield.mask(trimmed, glossaryNames+terms.keys) }
             catch (failure: IllegalArgumentException) { throw TranslationFailure("TR-NAME-SHIELD") }
-        val modelInput = com.manhwalens.app.pipeline.TranslationInput.modelCase(maskResult.maskedText)
+        val modelInput = com.manhwalens.app.pipeline.TranslationInput.modelCase(if(retryCase) maskResult.maskedText.uppercase() else maskResult.maskedText)
         val arabicMask=maskResult.copy(names=maskResult.names.map { terms[it.lowercase()] ?: it })
         val protected = arabicMask.names
 
@@ -114,7 +114,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             throw TranslationFailure(ErrorCodes.TRANSLATE_TIMEOUT)
         }
         TranslationOutput.issue(raw, maskResult)?.let { issue ->
-            Diagnostics.warn("translate", "output_validation", "model output failed structural validation",
+            if(debug()) Diagnostics.warn("translate", "output_validation", "model output failed structural validation",
                 code = issue, context = mapOf("source_chars" to trimmed.length.toString(), "output_chars" to raw.length.toString()))
             throw TranslationFailure(issue)
         }

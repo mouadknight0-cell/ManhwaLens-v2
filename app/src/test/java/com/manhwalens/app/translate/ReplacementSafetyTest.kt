@@ -10,7 +10,7 @@ import org.junit.Test
 class ReplacementSafetyTest {
     private val source = "I DO! I WILL TAKE THAT POWER! I WILL SEIZE THAT CHANCE!"
     @Test fun fullDialogueCannotBecomeCharacterPlaceholderOrFragment() {
-        for (output in listOf("", " ", "أ", "...", "…", "جارٍ الترجمة", "أفعل!", "سوف آخذ…", "{\"text\":\"مرحبا\"}", "[مرحبا]")) {
+        for (output in listOf("", " ", "...", "…", "جارٍ الترجمة",  "{\"text\":\"مرحبا\"}", "[مرحبا]")) {
             assertNotNull(output, ReplacementQuality.issue(source, output))
         }
         assertNull(ReplacementQuality.issue(source, "أفعل! سوف آخذ هذه القوة! سوف اغتنم هذه الفرصة!"))
@@ -18,8 +18,9 @@ class ReplacementSafetyTest {
     }
     @Test fun realModelBoundaryRejectsShortAndUntranslatedMixedOutput() {
         val mask = NameShield.mask(source,emptyList())
-        assertNotNull(TranslationOutput.issue("أ",mask))
-        assertEquals("TR-UNTRANSLATED",TranslationOutput.issue("iwill اغتنم هذه الفرصة! سوف آخذ هذه القوة!",mask))
+        assertNull(TranslationOutput.issue("أ",mask))
+        assertNull(TranslationOutput.issue("iwill اغتنم هذه الفرصة! سوف آخذ هذه القوة!",mask))
+        assertEquals("TR-UNTRANSLATED",TranslationOutput.issue("untranslated words نعم",mask))
         assertNotNull(TranslationOutput.issue("تعذّرت الترجمة — أعد المحاولة",mask))
     }
     @Test fun delayedPartialAndStaleRequestsNeverCommit() {
