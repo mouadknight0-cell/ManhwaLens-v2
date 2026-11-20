@@ -11,7 +11,7 @@ object OcrLexicon {
         val raw = match.value
         if (raw.none { it.isLetter() } || raw.none { it in "012" }) raw else {
             val candidate = raw.replace('0','O').replace('2','R').replace('1','I')
-            val alternate = candidate.replace('I','L')
+            val alternate = raw.replace('0','O').replace('2','R').replace('1','L')
             val matches = listOf(candidate,alternate).distinct().filter { it.lowercase() in dictionary }
             if(matches.size == 1) matches.single() else raw
         }

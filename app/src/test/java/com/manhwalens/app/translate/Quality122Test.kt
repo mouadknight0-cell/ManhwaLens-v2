@@ -11,6 +11,7 @@ import org.junit.Test
 class Quality122Test {
     @Test fun confusionCandidatesAreBoundedAndNamesAreProtected() {
         assertEquals("I'M STARTING TO REMEMBER",TranslationInput.prepare("IM STARTING TO 2EMEMBER",emptyList()))
+        assertEquals("LIFE INNER",TranslationInput.prepare("1IFE 1NNER",emptyList()))
         assertEquals("DONT is here",TranslationInput.prepare("DONT is here",listOf("DONT")))
         assertEquals("2EMEMBER",TranslationInput.prepare("2EMEMBER",listOf("2EMEMBER")))
         assertFalse(TranslationInput.unresolved("HIN",listOf("HIN")))
