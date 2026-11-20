@@ -64,3 +64,10 @@ Historical phone baseline only, extracted from the supplied report. Median and n
 ## Release gate
 
 PR9 remains open; no merge is authorised by this audit request. Signing vault/certificate must remain unchanged. Publish only after GitHub build and instrumentation checks complete; report unresolved semantic and physical-device gaps explicitly.
+
+## Executed checks (app/test source `6107f06`)
+
+- GitHub CI [44720117374](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44720117374): compilation, JVM tests and debug APK **passed**.
+- Android 14 [44720117448](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44720117448): instrumentation **passed**, including existing actual OCR/grey crop, Arabic bidi/font-scale, scroll tests and both new instrumentation methods.
+- Attempted download of `android-quality-results` returned EOF at GitHub's Azure artifact host. Thus generated PNGs were **not manually visually inspected** in this audit; passing assertions are the evidence, not a claimed visual review of new rendering.
+- `git diff --check` passed. Older superseded work-in-progress jobs were cancelled, not counted as tests passing. Release metadata changes after `6107f06` do not change app/test source.

@@ -3,6 +3,15 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.20] - 2026-11-19
+
+- Snapshot own floating-window occlusions with each captured image and reject intersecting OCR lines before grouping (scaled coordinates), instead of translating the app's own status controls.
+- Preserve adaptive mask color at clipped screen edges; skip fully offscreen regions; reject collisions between expanded oval surfaces without moving source masks.
+- Reject native emergency intra-word wrapping in source overlays; use explicit full-details fallback when no readable intact word fits. Recalculate correctly after resize.
+- Protect confirmed glossary names before OCR repair. Validate malformed responses and name-token integrity while accepting legitimate name-only dialogue with punctuation.
+- Skip model readiness when all work is numeric preservation, preserved SFX or OCR input errors; no new inference/cloud/heavier model.
+- Add 10 JVM and 2 Android regression methods. See docs/INDEPENDENT-QUALITY-AUDIT.md for root causes, evidence and unresolved semantic/physical-device limits.
+
 ## [1.1.19] - 2026-11-19
 
 - Bundle licensed Noto Sans Arabic across native overlays/readers and Compose typography, with cached native loading and safe font fallback.
