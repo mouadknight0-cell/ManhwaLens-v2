@@ -9,7 +9,7 @@ import com.manhwalens.app.R
 object ArabicTypeface {
     @Volatile private var cached: Typeface? = null
     fun get(context: Context): Typeface = cached ?: synchronized(this) {
-        cached ?: (ResourcesCompat.getFont(context.applicationContext, R.font.noto_sans_arabic)
+        cached ?: (runCatching { ResourcesCompat.getFont(context.applicationContext, R.font.noto_sans_arabic) }.getOrNull()
             ?: Typeface.create("sans-serif", Typeface.NORMAL)).also { cached = it }
     }
 }

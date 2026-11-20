@@ -30,7 +30,7 @@ class ReplacementTranslationView(context: Context, val message: String,
         override fun onLongPress(e: android.view.MotionEvent) { performLongClick() }
         override fun onScroll(e1: android.view.MotionEvent?, e2: android.view.MotionEvent, distanceX: Float, distanceY: Float): Boolean {
             offsetY = (offsetY + distanceY).coerceIn(0f, ((layout?.height ?: 0) - content.height()).coerceAtLeast(0f))
-            invalidate(); return true
+            awakenScrollBars(); invalidate(); return true
         }
     })
     private var layout: StaticLayout? = null
@@ -43,6 +43,8 @@ class ReplacementTranslationView(context: Context, val message: String,
         private set
 
     init {
+        isVerticalScrollBarEnabled = true
+        scrollBarStyle = SCROLLBARS_INSIDE_OVERLAY
         isClickable = true
         isLongClickable = true
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
@@ -92,6 +94,10 @@ class ReplacementTranslationView(context: Context, val message: String,
             else -> ". اضغط لعرض النص الأصلي"
         }
     }
+
+    override fun computeVerticalScrollRange(): Int = if (isScrollable) layout?.height ?: height else height
+    override fun computeVerticalScrollOffset(): Int = offsetY.toInt()
+    override fun computeVerticalScrollExtent(): Int = if (isScrollable) content.height().toInt() else height
 
     override fun onTouchEvent(event: android.view.MotionEvent): Boolean =
         if (isScrollable) gestures.onTouchEvent(event) else super.onTouchEvent(event)
