@@ -48,8 +48,8 @@ class BubbleOverlayService : Service() {
     private var acceptResults = false
     private var requestedAt = Long.MAX_VALUE
     private var running = false
-    private var stopControl: TextView? = null
-    private var startControl: TextView? = null
+    private var stopControl: ImageView? = null
+    private var startControl: ImageView? = null
     private fun updateControlState() {
         val phase = CaptureManager.sessionPhase.value
         val label = when (phase) {
@@ -69,6 +69,7 @@ class BubbleOverlayService : Service() {
         startControl?.isEnabled = phase in listOf(CaptureManager.SessionPhase.INACTIVE, CaptureManager.SessionPhase.FAILED)
         stopControl?.isEnabled = phase == CaptureManager.SessionPhase.ACTIVE
         stopControl?.alpha = if (stopControl?.isEnabled == true) 1f else 0.45f
+        startControl?.setColorFilter(if(phase==CaptureManager.SessionPhase.ACTIVE) PANEL_ACCENT else PANEL_TEXT)
         startControl?.alpha = if (startControl?.isEnabled == true) 1f else 0.45f
     }
     private val translationRects = mutableListOf<android.graphics.Rect>()
@@ -301,9 +302,9 @@ class BubbleOverlayService : Service() {
     private fun onBubbleTapped() {
         event("bubble_tap")
         if (actionDock != null) { collapseActions(); return }
-        val bubble = bubbleParams ?: return
+        val bubble = bubbleView ?: return
         val bounds = availableBounds()
-        val buttonSize = (bounds.width()/3).coerceIn(dp(48),dp(110))
+        val buttonSize = dp(48)
         val width = buttonSize * 3
         val height = dp(52)
         val dock = LinearLayout(this).apply {
@@ -312,11 +313,10 @@ class BubbleOverlayService : Service() {
             background = GradientDrawable().apply { cornerRadius = dp(18).toFloat(); setColor(PANEL_BACKGROUND) }
         }
         FloatingAction.entries.forEach { action ->
-            val button=TextView(this).apply {
-                text=if(action==FloatingAction.CLOSE)getString(R.string.action_close) else action.label
-                if(action==FloatingAction.CLOSE){contentDescription=text;setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_close,0,0,0)}
-                 gravity=Gravity.CENTER; textSize=14f; maxLines=1
-                ellipsize=android.text.TextUtils.TruncateAt.END; setTextColor(PANEL_TEXT)
+            val button=ImageView(this).apply {
+                val (icon,label)=when(action){FloatingAction.START->R.drawable.ic_play to R.string.dock_start;FloatingAction.STOP->R.drawable.ic_stop_square to R.string.dock_stop;FloatingAction.CLOSE->R.drawable.ic_close to R.string.action_close}
+                setImageResource(icon);scaleType=ImageView.ScaleType.CENTER;setColorFilter(PANEL_TEXT)
+                contentDescription=getString(label);tooltipText=contentDescription
                 setOnClickListener {
                     collapseActions()
                     when(action) {
@@ -334,19 +334,16 @@ class BubbleOverlayService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT).apply {
             gravity = Gravity.TOP or Gravity.LEFT
-            x = (if (bubble.x > bounds.width() / 2) bubble.x - width else bubble.x + dp(BUBBLE_SIZE_DP))
-                .coerceIn(0, (bounds.width() - width).coerceAtLeast(0))
-            y = bubble.y.coerceIn(0, (bounds.height() - height).coerceAtLeast(0))
         }
-        val dialogue=(CaptureManager.state.value as? CaptureManager.CaptureState.Done)?.result?.blocks.orEmpty()
-        val maxY=(bounds.height()-height).coerceAtLeast(0)
-        val offset=if(Build.VERSION.SDK_INT>=30) windowManager.currentWindowMetrics.windowInsets.getInsets(android.view.WindowInsets.Type.statusBars()).top else 0
-        val candidates=listOf(params.y,0,maxY,maxY/2)
-        params.y=candidates.minByOrNull { y -> dialogue.sumOf { block ->
-            val r=block.region
-            (minOf(params.x+width,r.right)-maxOf(params.x,r.left)).coerceAtLeast(0).toLong()*
-                (minOf(y+offset+height,r.bottom)-maxOf(y+offset,r.top)).coerceAtLeast(0)
-        } } ?: params.y
+        fun position(){
+            val xy=IntArray(2);bubble.getLocationOnScreen(xy)
+            val frame=android.graphics.Rect();bubble.getWindowVisibleDisplayFrame(frame)
+            if(frame.isEmpty)frame.set(0,0,bounds.width(),bounds.height())
+            val pos=DockPosition.place(xy[0]-frame.left,xy[1]-frame.top,bubble.width,bubble.height,width,height,frame.width(),frame.height())
+            params.x=pos.first;params.y=pos.second
+        }
+        position()
+        dock.setOnApplyWindowInsetsListener { v,insets-> v.post { if(actionDock===dock){position();windowManager.updateViewLayout(dock,params)} };insets }
         dock.setOnTouchListener { _,e -> if(e.actionMasked==MotionEvent.ACTION_OUTSIDE) { collapseActions(); true } else false }
         runCatching { windowManager.addView(dock, params) }.onSuccess {
             CaptureManager.dockVisible = true

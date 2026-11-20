@@ -121,4 +121,26 @@
     <string name="ok">حسناً</string>
     <string name="delete">حذف</string>
     <string name="action_close">إغلاق</string>
+    <string name="dock_start">تشغيل الترجمة</string>
+    <string name="dock_stop">إيقاف الترجمة</string>
+    <string name="phrase_settings">دليل العبارات والقاموس</string>
+    <string name="phrase_series">السلسلة (اتركها فارغة للقاموس العام)</string>
+    <string name="phrase_en">النص الإنجليزي</string>
+    <string name="phrase_ar">التصحيح العربي</string>
+    <string name="phrase_save">حفظ</string>
+    <string name="phrase_del">حذف</string>
+    <string name="phrase_import">استيراد JSON</string>
+    <string name="phrase_export">تصدير JSON</string>
+    <string name="phrase_done">تم الحفظ</string>
+    <string name="phrase_error">تعذّر إتمام العملية</string>
+    <string name="phrase_report">تصحيح الترجمة</string>
+    <string name="phrase_cancel">إلغاء</string>
+    <string name="phrase_general">عام</string>
+    <string name="phrase_murim">موريم</string>
+    <string name="phrase_hunter">صيادون</string>
+    <string name="phrase_regression">عودة بالزمن</string>
+    <string name="phrase_fantasy">خيال</string>
+    <string name="phrase_romance">رومانسية</string>
+    <string name="phrase_school">مدرسي</string>
+    <string name="phrase_business">تجارة</string>
 </resources>

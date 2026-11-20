@@ -658,7 +658,7 @@ class ScreenCaptureService : Service() {
                 val started = System.nanoTime()
                 val work = workByRegion.getValue(region)
                 contextParts[region]?.let { return@progressiveTranslation com.manhwalens.app.pipeline.TranslatedBlock(region,region.text,it,method="Connected dialogue") }
-                val contextKey=work.key to dictionaryContext
+                val contextKey=Triple(work.key,dictionaryContext,com.manhwalens.app.phrasebook.PhraseLibrary.version)
                 pageState.find(region,contextKey)?.let { return@progressiveTranslation it }
                 val retryCase=!attempted.add(region)
                 val previousSource = work.key.previous
@@ -671,7 +671,7 @@ class ScreenCaptureService : Service() {
                     Diagnostics.warn("ocr", "input_quality", "OCR input requires a clearer or complete frame", code = issue,
                         context = mapOf("bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text,
-                        com.manhwalens.app.pipeline.OcrInputQuality.message(issue, region.text), issue, method = "OCR input validation")
+                        "", issue, method = "OCR input validation")
                 }
                 val recovered = if ((translated.errorCode == "OCR-UNCERTAIN" || (!retryCase && region.confidence < .55f && translated.errorCode in setOf("TR-INVALID-OUTPUT","TR-UNTRANSLATED"))) && region.width > 0 && region.height > 0 &&
                     region.area in 1..150000 && region.left >= 0 && region.top >= 0 && region.right <= frame.width && region.bottom <= frame.height) {

@@ -35,7 +35,7 @@ object LanguageModels {
                     mutable.value = State("Downloading EN→AR language file… ML Kit does not expose percentage or size.", busy = true)
                 }
                 // Idempotent: ML Kit skips valid installed model files.
-                translator.downloadModelIfNeeded().await()
+                if(!installed){check(forceProbe) { "Install the Arabic model explicitly in Settings before offline reading" };translator.downloadModelIfNeeded().await()}
                 mutable.value = State("Verifying installation and running a translation test…", busy = true)
                 check(manager.isModelDownloaded(model).await()) { "Arabic model installation not confirmed" }
                 val probe = withTimeout(15_000) { translator.translate("Hello.").await() }

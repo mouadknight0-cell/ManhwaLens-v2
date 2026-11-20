@@ -37,7 +37,9 @@ object TranslationInput {
         val alias=if(glossaryNames.any { it.equals("Jeong-ah",true) }) normalized.replace(Regex("\\bjeong-4h\\b",RegexOption.IGNORE_CASE),"Jeong-ah") else normalized
         if (!OcrLexicon.needsCleanup(alias) && alias.none(Char::isUpperCase)) return alias
         val masked = NameShield.mask(alias, glossaryNames)
-        return NameShield.restore(ReadingEnglish.repair(OcrLexicon.repair(EnglishOcrRepair.repair(masked.maskedText))), masked)
+        val letters=masked.maskedText.filter(Char::isLetter)
+        val fixed=if(letters.isNotEmpty() && letters.count(Char::isUpperCase)*5>=letters.length*3)masked.maskedText.uppercase() else masked.maskedText
+        return NameShield.restore(ReadingEnglish.repair(OcrLexicon.repair(EnglishOcrRepair.repair(fixed))), masked)
     }
     fun unresolved(text: String, glossaryNames: List<String>): Boolean =
         OcrLexicon.unresolved(text) && OcrLexicon.unresolved(NameShield.mask(text, glossaryNames).maskedText)

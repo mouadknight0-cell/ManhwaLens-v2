@@ -21,6 +21,7 @@ class ManhwaLensApp : Application() {
         BenchmarkTracker.markProcessStart()
         super.onCreate()
         Diagnostics.init(this)
+        com.manhwalens.app.phrasebook.PhraseLibrary.start(this)
         runCatching {
             settingsRepository = SettingsRepository(this)
             historyStore = HistoryStore(this)

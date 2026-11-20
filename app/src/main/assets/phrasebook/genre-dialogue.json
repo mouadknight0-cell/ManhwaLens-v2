@@ -1,0 +1,8321 @@
+{
+ "version": 1,
+ "entries": [
+  {
+   "en": "TRAINING HALL",
+   "ar": "قاعة التدريب",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE TRAINING HALL",
+   "ar": "أين قاعة التدريب؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE TRAINING HALL",
+   "ar": "قابلني عند قاعة التدريب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE TRAINING HALL",
+   "ar": "اتجه إلى قاعة التدريب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE TRAINING HALL",
+   "ar": "ابتعد عن قاعة التدريب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE TRAINING HALL",
+   "ar": "انتظرني عند قاعة التدريب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE TRAINING HALL",
+   "ar": "جئت من قاعة التدريب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE TRAINING HALL",
+   "ar": "فتّش قاعة التدريب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE TRAINING HALL",
+   "ar": "ذهبوا إلى قاعة التدريب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE TRAINING HALL",
+   "ar": "اختبئ في قاعة التدريب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE TRAINING HALL",
+   "ar": "علينا الوصول إلى قاعة التدريب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ANCESTRAL SHRINE",
+   "ar": "مزار الأسلاف",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ANCESTRAL SHRINE",
+   "ar": "أين مزار الأسلاف؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ANCESTRAL SHRINE",
+   "ar": "قابلني عند مزار الأسلاف.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ANCESTRAL SHRINE",
+   "ar": "اتجه إلى مزار الأسلاف.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ANCESTRAL SHRINE",
+   "ar": "ابتعد عن مزار الأسلاف.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ANCESTRAL SHRINE",
+   "ar": "انتظرني عند مزار الأسلاف.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ANCESTRAL SHRINE",
+   "ar": "جئت من مزار الأسلاف.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ANCESTRAL SHRINE",
+   "ar": "فتّش مزار الأسلاف.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ANCESTRAL SHRINE",
+   "ar": "ذهبوا إلى مزار الأسلاف.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ANCESTRAL SHRINE",
+   "ar": "اختبئ في مزار الأسلاف.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ANCESTRAL SHRINE",
+   "ar": "علينا الوصول إلى مزار الأسلاف.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "INNER COURTYARD",
+   "ar": "الفناء الداخلي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE INNER COURTYARD",
+   "ar": "أين الفناء الداخلي؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE INNER COURTYARD",
+   "ar": "قابلني عند الفناء الداخلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE INNER COURTYARD",
+   "ar": "اتجه إلى الفناء الداخلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE INNER COURTYARD",
+   "ar": "ابتعد عن الفناء الداخلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE INNER COURTYARD",
+   "ar": "انتظرني عند الفناء الداخلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE INNER COURTYARD",
+   "ar": "جئت من الفناء الداخلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE INNER COURTYARD",
+   "ar": "فتّش الفناء الداخلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE INNER COURTYARD",
+   "ar": "ذهبوا إلى الفناء الداخلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE INNER COURTYARD",
+   "ar": "اختبئ في الفناء الداخلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE INNER COURTYARD",
+   "ar": "علينا الوصول إلى الفناء الداخلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEDICINE PAVILION",
+   "ar": "جناح الطب",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE MEDICINE PAVILION",
+   "ar": "أين جناح الطب؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE MEDICINE PAVILION",
+   "ar": "قابلني عند جناح الطب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE MEDICINE PAVILION",
+   "ar": "اتجه إلى جناح الطب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE MEDICINE PAVILION",
+   "ar": "ابتعد عن جناح الطب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE MEDICINE PAVILION",
+   "ar": "انتظرني عند جناح الطب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE MEDICINE PAVILION",
+   "ar": "جئت من جناح الطب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE MEDICINE PAVILION",
+   "ar": "فتّش جناح الطب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE MEDICINE PAVILION",
+   "ar": "ذهبوا إلى جناح الطب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE MEDICINE PAVILION",
+   "ar": "اختبئ في جناح الطب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE MEDICINE PAVILION",
+   "ar": "علينا الوصول إلى جناح الطب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MOUNTAIN PASS",
+   "ar": "الممر الجبلي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE MOUNTAIN PASS",
+   "ar": "أين الممر الجبلي؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE MOUNTAIN PASS",
+   "ar": "قابلني عند الممر الجبلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE MOUNTAIN PASS",
+   "ar": "اتجه إلى الممر الجبلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE MOUNTAIN PASS",
+   "ar": "ابتعد عن الممر الجبلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE MOUNTAIN PASS",
+   "ar": "انتظرني عند الممر الجبلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE MOUNTAIN PASS",
+   "ar": "جئت من الممر الجبلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE MOUNTAIN PASS",
+   "ar": "فتّش الممر الجبلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE MOUNTAIN PASS",
+   "ar": "ذهبوا إلى الممر الجبلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE MOUNTAIN PASS",
+   "ar": "اختبئ في الممر الجبلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE MOUNTAIN PASS",
+   "ar": "علينا الوصول إلى الممر الجبلي.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "DISCIPLES' QUARTERS",
+   "ar": "مسكن التلاميذ",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE DISCIPLES' QUARTERS",
+   "ar": "أين مسكن التلاميذ؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE DISCIPLES' QUARTERS",
+   "ar": "قابلني عند مسكن التلاميذ.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE DISCIPLES' QUARTERS",
+   "ar": "اتجه إلى مسكن التلاميذ.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE DISCIPLES' QUARTERS",
+   "ar": "ابتعد عن مسكن التلاميذ.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE DISCIPLES' QUARTERS",
+   "ar": "انتظرني عند مسكن التلاميذ.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE DISCIPLES' QUARTERS",
+   "ar": "جئت من مسكن التلاميذ.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE DISCIPLES' QUARTERS",
+   "ar": "فتّش مسكن التلاميذ.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE DISCIPLES' QUARTERS",
+   "ar": "ذهبوا إلى مسكن التلاميذ.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE DISCIPLES' QUARTERS",
+   "ar": "اختبئ في مسكن التلاميذ.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE DISCIPLES' QUARTERS",
+   "ar": "علينا الوصول إلى مسكن التلاميذ.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SECT TREASURY",
+   "ar": "خزانة الطائفة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE SECT TREASURY",
+   "ar": "أين خزانة الطائفة؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE SECT TREASURY",
+   "ar": "قابلني عند خزانة الطائفة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE SECT TREASURY",
+   "ar": "اتجه إلى خزانة الطائفة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE SECT TREASURY",
+   "ar": "ابتعد عن خزانة الطائفة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE SECT TREASURY",
+   "ar": "انتظرني عند خزانة الطائفة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE SECT TREASURY",
+   "ar": "جئت من خزانة الطائفة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE SECT TREASURY",
+   "ar": "فتّش خزانة الطائفة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE SECT TREASURY",
+   "ar": "ذهبوا إلى خزانة الطائفة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE SECT TREASURY",
+   "ar": "اختبئ في خزانة الطائفة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE SECT TREASURY",
+   "ar": "علينا الوصول إلى خزانة الطائفة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "DUELING GROUND",
+   "ar": "ساحة المبارزة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE DUELING GROUND",
+   "ar": "أين ساحة المبارزة؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE DUELING GROUND",
+   "ar": "قابلني عند ساحة المبارزة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE DUELING GROUND",
+   "ar": "اتجه إلى ساحة المبارزة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE DUELING GROUND",
+   "ar": "ابتعد عن ساحة المبارزة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE DUELING GROUND",
+   "ar": "انتظرني عند ساحة المبارزة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE DUELING GROUND",
+   "ar": "جئت من ساحة المبارزة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE DUELING GROUND",
+   "ar": "فتّش ساحة المبارزة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE DUELING GROUND",
+   "ar": "ذهبوا إلى ساحة المبارزة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE DUELING GROUND",
+   "ar": "اختبئ في ساحة المبارزة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE DUELING GROUND",
+   "ar": "علينا الوصول إلى ساحة المبارزة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEALED CAVE",
+   "ar": "الكهف المختوم",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE SEALED CAVE",
+   "ar": "أين الكهف المختوم؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE SEALED CAVE",
+   "ar": "قابلني عند الكهف المختوم.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE SEALED CAVE",
+   "ar": "اتجه إلى الكهف المختوم.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE SEALED CAVE",
+   "ar": "ابتعد عن الكهف المختوم.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE SEALED CAVE",
+   "ar": "انتظرني عند الكهف المختوم.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE SEALED CAVE",
+   "ar": "جئت من الكهف المختوم.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE SEALED CAVE",
+   "ar": "فتّش الكهف المختوم.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE SEALED CAVE",
+   "ar": "ذهبوا إلى الكهف المختوم.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE SEALED CAVE",
+   "ar": "اختبئ في الكهف المختوم.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE SEALED CAVE",
+   "ar": "علينا الوصول إلى الكهف المختوم.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "CLAN LIBRARY",
+   "ar": "مكتبة العشيرة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE CLAN LIBRARY",
+   "ar": "أين مكتبة العشيرة؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE CLAN LIBRARY",
+   "ar": "قابلني عند مكتبة العشيرة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE CLAN LIBRARY",
+   "ar": "اتجه إلى مكتبة العشيرة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE CLAN LIBRARY",
+   "ar": "ابتعد عن مكتبة العشيرة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE CLAN LIBRARY",
+   "ar": "انتظرني عند مكتبة العشيرة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE CLAN LIBRARY",
+   "ar": "جئت من مكتبة العشيرة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE CLAN LIBRARY",
+   "ar": "فتّش مكتبة العشيرة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE CLAN LIBRARY",
+   "ar": "ذهبوا إلى مكتبة العشيرة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE CLAN LIBRARY",
+   "ar": "اختبئ في مكتبة العشيرة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE CLAN LIBRARY",
+   "ar": "علينا الوصول إلى مكتبة العشيرة.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MAIN GATE",
+   "ar": "البوابة الرئيسية",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE MAIN GATE",
+   "ar": "أين البوابة الرئيسية؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE MAIN GATE",
+   "ar": "قابلني عند البوابة الرئيسية.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE MAIN GATE",
+   "ar": "اتجه إلى البوابة الرئيسية.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE MAIN GATE",
+   "ar": "ابتعد عن البوابة الرئيسية.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE MAIN GATE",
+   "ar": "انتظرني عند البوابة الرئيسية.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE MAIN GATE",
+   "ar": "جئت من البوابة الرئيسية.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE MAIN GATE",
+   "ar": "فتّش البوابة الرئيسية.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE MAIN GATE",
+   "ar": "ذهبوا إلى البوابة الرئيسية.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE MAIN GATE",
+   "ar": "اختبئ في البوابة الرئيسية.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE MAIN GATE",
+   "ar": "علينا الوصول إلى البوابة الرئيسية.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HERB GARDEN",
+   "ar": "حديقة الأعشاب",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE HERB GARDEN",
+   "ar": "أين حديقة الأعشاب؟",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE HERB GARDEN",
+   "ar": "قابلني عند حديقة الأعشاب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE HERB GARDEN",
+   "ar": "اتجه إلى حديقة الأعشاب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE HERB GARDEN",
+   "ar": "ابتعد عن حديقة الأعشاب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE HERB GARDEN",
+   "ar": "انتظرني عند حديقة الأعشاب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE HERB GARDEN",
+   "ar": "جئت من حديقة الأعشاب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE HERB GARDEN",
+   "ar": "فتّش حديقة الأعشاب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE HERB GARDEN",
+   "ar": "ذهبوا إلى حديقة الأعشاب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE HERB GARDEN",
+   "ar": "اختبئ في حديقة الأعشاب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE HERB GARDEN",
+   "ar": "علينا الوصول إلى حديقة الأعشاب.",
+   "type": "sentence",
+   "genre": [
+    "murim"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "DUNGEON ENTRANCE",
+   "ar": "مدخل الدهليز",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE DUNGEON ENTRANCE",
+   "ar": "أين مدخل الدهليز؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE DUNGEON ENTRANCE",
+   "ar": "قابلني عند مدخل الدهليز.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE DUNGEON ENTRANCE",
+   "ar": "اتجه إلى مدخل الدهليز.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE DUNGEON ENTRANCE",
+   "ar": "ابتعد عن مدخل الدهليز.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE DUNGEON ENTRANCE",
+   "ar": "انتظرني عند مدخل الدهليز.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE DUNGEON ENTRANCE",
+   "ar": "جئت من مدخل الدهليز.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE DUNGEON ENTRANCE",
+   "ar": "فتّش مدخل الدهليز.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE DUNGEON ENTRANCE",
+   "ar": "ذهبوا إلى مدخل الدهليز.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE DUNGEON ENTRANCE",
+   "ar": "اختبئ في مدخل الدهليز.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE DUNGEON ENTRANCE",
+   "ar": "علينا الوصول إلى مدخل الدهليز.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "GUILD COUNTER",
+   "ar": "مكتب النقابة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE GUILD COUNTER",
+   "ar": "أين مكتب النقابة؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE GUILD COUNTER",
+   "ar": "قابلني عند مكتب النقابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE GUILD COUNTER",
+   "ar": "اتجه إلى مكتب النقابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE GUILD COUNTER",
+   "ar": "ابتعد عن مكتب النقابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE GUILD COUNTER",
+   "ar": "انتظرني عند مكتب النقابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE GUILD COUNTER",
+   "ar": "جئت من مكتب النقابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE GUILD COUNTER",
+   "ar": "فتّش مكتب النقابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE GUILD COUNTER",
+   "ar": "ذهبوا إلى مكتب النقابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE GUILD COUNTER",
+   "ar": "اختبئ في مكتب النقابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE GUILD COUNTER",
+   "ar": "علينا الوصول إلى مكتب النقابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "AWAKENING CENTER",
+   "ar": "مركز الإيقاظ",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE AWAKENING CENTER",
+   "ar": "أين مركز الإيقاظ؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE AWAKENING CENTER",
+   "ar": "قابلني عند مركز الإيقاظ.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE AWAKENING CENTER",
+   "ar": "اتجه إلى مركز الإيقاظ.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE AWAKENING CENTER",
+   "ar": "ابتعد عن مركز الإيقاظ.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE AWAKENING CENTER",
+   "ar": "انتظرني عند مركز الإيقاظ.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE AWAKENING CENTER",
+   "ar": "جئت من مركز الإيقاظ.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE AWAKENING CENTER",
+   "ar": "فتّش مركز الإيقاظ.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE AWAKENING CENTER",
+   "ar": "ذهبوا إلى مركز الإيقاظ.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE AWAKENING CENTER",
+   "ar": "اختبئ في مركز الإيقاظ.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE AWAKENING CENTER",
+   "ar": "علينا الوصول إلى مركز الإيقاظ.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "PORTAL CHAMBER",
+   "ar": "حجرة البوابة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE PORTAL CHAMBER",
+   "ar": "أين حجرة البوابة؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE PORTAL CHAMBER",
+   "ar": "قابلني عند حجرة البوابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE PORTAL CHAMBER",
+   "ar": "اتجه إلى حجرة البوابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE PORTAL CHAMBER",
+   "ar": "ابتعد عن حجرة البوابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE PORTAL CHAMBER",
+   "ar": "انتظرني عند حجرة البوابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE PORTAL CHAMBER",
+   "ar": "جئت من حجرة البوابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE PORTAL CHAMBER",
+   "ar": "فتّش حجرة البوابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE PORTAL CHAMBER",
+   "ar": "ذهبوا إلى حجرة البوابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE PORTAL CHAMBER",
+   "ar": "اختبئ في حجرة البوابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE PORTAL CHAMBER",
+   "ar": "علينا الوصول إلى حجرة البوابة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "BOSS ROOM",
+   "ar": "غرفة الزعيم",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE BOSS ROOM",
+   "ar": "أين غرفة الزعيم؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE BOSS ROOM",
+   "ar": "قابلني عند غرفة الزعيم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE BOSS ROOM",
+   "ar": "اتجه إلى غرفة الزعيم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE BOSS ROOM",
+   "ar": "ابتعد عن غرفة الزعيم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE BOSS ROOM",
+   "ar": "انتظرني عند غرفة الزعيم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE BOSS ROOM",
+   "ar": "جئت من غرفة الزعيم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE BOSS ROOM",
+   "ar": "فتّش غرفة الزعيم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE BOSS ROOM",
+   "ar": "ذهبوا إلى غرفة الزعيم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE BOSS ROOM",
+   "ar": "اختبئ في غرفة الزعيم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE BOSS ROOM",
+   "ar": "علينا الوصول إلى غرفة الزعيم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "EQUIPMENT SHOP",
+   "ar": "متجر المعدات",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE EQUIPMENT SHOP",
+   "ar": "أين متجر المعدات؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE EQUIPMENT SHOP",
+   "ar": "قابلني عند متجر المعدات.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE EQUIPMENT SHOP",
+   "ar": "اتجه إلى متجر المعدات.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE EQUIPMENT SHOP",
+   "ar": "ابتعد عن متجر المعدات.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE EQUIPMENT SHOP",
+   "ar": "انتظرني عند متجر المعدات.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE EQUIPMENT SHOP",
+   "ar": "جئت من متجر المعدات.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE EQUIPMENT SHOP",
+   "ar": "فتّش متجر المعدات.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE EQUIPMENT SHOP",
+   "ar": "ذهبوا إلى متجر المعدات.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE EQUIPMENT SHOP",
+   "ar": "اختبئ في متجر المعدات.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE EQUIPMENT SHOP",
+   "ar": "علينا الوصول إلى متجر المعدات.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "EVACUATION ZONE",
+   "ar": "منطقة الإخلاء",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE EVACUATION ZONE",
+   "ar": "أين منطقة الإخلاء؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE EVACUATION ZONE",
+   "ar": "قابلني عند منطقة الإخلاء.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE EVACUATION ZONE",
+   "ar": "اتجه إلى منطقة الإخلاء.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE EVACUATION ZONE",
+   "ar": "ابتعد عن منطقة الإخلاء.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE EVACUATION ZONE",
+   "ar": "انتظرني عند منطقة الإخلاء.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE EVACUATION ZONE",
+   "ar": "جئت من منطقة الإخلاء.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE EVACUATION ZONE",
+   "ar": "فتّش منطقة الإخلاء.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE EVACUATION ZONE",
+   "ar": "ذهبوا إلى منطقة الإخلاء.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE EVACUATION ZONE",
+   "ar": "اختبئ في منطقة الإخلاء.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE EVACUATION ZONE",
+   "ar": "علينا الوصول إلى منطقة الإخلاء.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "RAID CAMP",
+   "ar": "معسكر الغارة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE RAID CAMP",
+   "ar": "أين معسكر الغارة؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE RAID CAMP",
+   "ar": "قابلني عند معسكر الغارة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE RAID CAMP",
+   "ar": "اتجه إلى معسكر الغارة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE RAID CAMP",
+   "ar": "ابتعد عن معسكر الغارة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE RAID CAMP",
+   "ar": "انتظرني عند معسكر الغارة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE RAID CAMP",
+   "ar": "جئت من معسكر الغارة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE RAID CAMP",
+   "ar": "فتّش معسكر الغارة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE RAID CAMP",
+   "ar": "ذهبوا إلى معسكر الغارة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE RAID CAMP",
+   "ar": "اختبئ في معسكر الغارة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE RAID CAMP",
+   "ar": "علينا الوصول إلى معسكر الغارة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "RECOVERY WARD",
+   "ar": "جناح التعافي",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE RECOVERY WARD",
+   "ar": "أين جناح التعافي؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE RECOVERY WARD",
+   "ar": "قابلني عند جناح التعافي.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE RECOVERY WARD",
+   "ar": "اتجه إلى جناح التعافي.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE RECOVERY WARD",
+   "ar": "ابتعد عن جناح التعافي.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE RECOVERY WARD",
+   "ar": "انتظرني عند جناح التعافي.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE RECOVERY WARD",
+   "ar": "جئت من جناح التعافي.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE RECOVERY WARD",
+   "ar": "فتّش جناح التعافي.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE RECOVERY WARD",
+   "ar": "ذهبوا إلى جناح التعافي.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE RECOVERY WARD",
+   "ar": "اختبئ في جناح التعافي.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE RECOVERY WARD",
+   "ar": "علينا الوصول إلى جناح التعافي.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "OBSERVATION POST",
+   "ar": "موقع المراقبة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE OBSERVATION POST",
+   "ar": "أين موقع المراقبة؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE OBSERVATION POST",
+   "ar": "قابلني عند موقع المراقبة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE OBSERVATION POST",
+   "ar": "اتجه إلى موقع المراقبة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE OBSERVATION POST",
+   "ar": "ابتعد عن موقع المراقبة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE OBSERVATION POST",
+   "ar": "انتظرني عند موقع المراقبة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE OBSERVATION POST",
+   "ar": "جئت من موقع المراقبة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE OBSERVATION POST",
+   "ar": "فتّش موقع المراقبة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE OBSERVATION POST",
+   "ar": "ذهبوا إلى موقع المراقبة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE OBSERVATION POST",
+   "ar": "اختبئ في موقع المراقبة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE OBSERVATION POST",
+   "ar": "علينا الوصول إلى موقع المراقبة.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SUPPLY DEPOT",
+   "ar": "مستودع المؤن",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE SUPPLY DEPOT",
+   "ar": "أين مستودع المؤن؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE SUPPLY DEPOT",
+   "ar": "قابلني عند مستودع المؤن.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE SUPPLY DEPOT",
+   "ar": "اتجه إلى مستودع المؤن.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE SUPPLY DEPOT",
+   "ar": "ابتعد عن مستودع المؤن.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE SUPPLY DEPOT",
+   "ar": "انتظرني عند مستودع المؤن.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE SUPPLY DEPOT",
+   "ar": "جئت من مستودع المؤن.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE SUPPLY DEPOT",
+   "ar": "فتّش مستودع المؤن.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE SUPPLY DEPOT",
+   "ar": "ذهبوا إلى مستودع المؤن.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE SUPPLY DEPOT",
+   "ar": "اختبئ في مستودع المؤن.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE SUPPLY DEPOT",
+   "ar": "علينا الوصول إلى مستودع المؤن.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ASSESSMENT HALL",
+   "ar": "قاعة التقييم",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ASSESSMENT HALL",
+   "ar": "أين قاعة التقييم؟",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ASSESSMENT HALL",
+   "ar": "قابلني عند قاعة التقييم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ASSESSMENT HALL",
+   "ar": "اتجه إلى قاعة التقييم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ASSESSMENT HALL",
+   "ar": "ابتعد عن قاعة التقييم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ASSESSMENT HALL",
+   "ar": "انتظرني عند قاعة التقييم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ASSESSMENT HALL",
+   "ar": "جئت من قاعة التقييم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ASSESSMENT HALL",
+   "ar": "فتّش قاعة التقييم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ASSESSMENT HALL",
+   "ar": "ذهبوا إلى قاعة التقييم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ASSESSMENT HALL",
+   "ar": "اختبئ في قاعة التقييم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ASSESSMENT HALL",
+   "ar": "علينا الوصول إلى قاعة التقييم.",
+   "type": "sentence",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "OLD CAPITAL",
+   "ar": "العاصمة القديمة",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE OLD CAPITAL",
+   "ar": "أين العاصمة القديمة؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE OLD CAPITAL",
+   "ar": "قابلني عند العاصمة القديمة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE OLD CAPITAL",
+   "ar": "اتجه إلى العاصمة القديمة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE OLD CAPITAL",
+   "ar": "ابتعد عن العاصمة القديمة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE OLD CAPITAL",
+   "ar": "انتظرني عند العاصمة القديمة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE OLD CAPITAL",
+   "ar": "جئت من العاصمة القديمة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE OLD CAPITAL",
+   "ar": "فتّش العاصمة القديمة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE OLD CAPITAL",
+   "ar": "ذهبوا إلى العاصمة القديمة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE OLD CAPITAL",
+   "ar": "اختبئ في العاصمة القديمة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE OLD CAPITAL",
+   "ar": "علينا الوصول إلى العاصمة القديمة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "RUINED TOWER",
+   "ar": "البرج المدمر",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE RUINED TOWER",
+   "ar": "أين البرج المدمر؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE RUINED TOWER",
+   "ar": "قابلني عند البرج المدمر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE RUINED TOWER",
+   "ar": "اتجه إلى البرج المدمر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE RUINED TOWER",
+   "ar": "ابتعد عن البرج المدمر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE RUINED TOWER",
+   "ar": "انتظرني عند البرج المدمر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE RUINED TOWER",
+   "ar": "جئت من البرج المدمر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE RUINED TOWER",
+   "ar": "فتّش البرج المدمر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE RUINED TOWER",
+   "ar": "ذهبوا إلى البرج المدمر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE RUINED TOWER",
+   "ar": "اختبئ في البرج المدمر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE RUINED TOWER",
+   "ar": "علينا الوصول إلى البرج المدمر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDDEN ARCHIVE",
+   "ar": "الأرشيف المخفي",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE HIDDEN ARCHIVE",
+   "ar": "أين الأرشيف المخفي؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE HIDDEN ARCHIVE",
+   "ar": "قابلني عند الأرشيف المخفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE HIDDEN ARCHIVE",
+   "ar": "اتجه إلى الأرشيف المخفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE HIDDEN ARCHIVE",
+   "ar": "ابتعد عن الأرشيف المخفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE HIDDEN ARCHIVE",
+   "ar": "انتظرني عند الأرشيف المخفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE HIDDEN ARCHIVE",
+   "ar": "جئت من الأرشيف المخفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE HIDDEN ARCHIVE",
+   "ar": "فتّش الأرشيف المخفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE HIDDEN ARCHIVE",
+   "ar": "ذهبوا إلى الأرشيف المخفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE HIDDEN ARCHIVE",
+   "ar": "اختبئ في الأرشيف المخفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE HIDDEN ARCHIVE",
+   "ar": "علينا الوصول إلى الأرشيف المخفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ORPHANAGE",
+   "ar": "دار الأيتام",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ORPHANAGE",
+   "ar": "أين دار الأيتام؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ORPHANAGE",
+   "ar": "قابلني عند دار الأيتام.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ORPHANAGE",
+   "ar": "اتجه إلى دار الأيتام.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ORPHANAGE",
+   "ar": "ابتعد عن دار الأيتام.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ORPHANAGE",
+   "ar": "انتظرني عند دار الأيتام.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ORPHANAGE",
+   "ar": "جئت من دار الأيتام.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ORPHANAGE",
+   "ar": "فتّش دار الأيتام.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ORPHANAGE",
+   "ar": "ذهبوا إلى دار الأيتام.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ORPHANAGE",
+   "ar": "اختبئ في دار الأيتام.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ORPHANAGE",
+   "ar": "علينا الوصول إلى دار الأيتام.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ROYAL VILLA",
+   "ar": "الفيلا الملكية",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ROYAL VILLA",
+   "ar": "أين الفيلا الملكية؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ROYAL VILLA",
+   "ar": "قابلني عند الفيلا الملكية.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ROYAL VILLA",
+   "ar": "اتجه إلى الفيلا الملكية.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ROYAL VILLA",
+   "ar": "ابتعد عن الفيلا الملكية.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ROYAL VILLA",
+   "ar": "انتظرني عند الفيلا الملكية.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ROYAL VILLA",
+   "ar": "جئت من الفيلا الملكية.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ROYAL VILLA",
+   "ar": "فتّش الفيلا الملكية.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ROYAL VILLA",
+   "ar": "ذهبوا إلى الفيلا الملكية.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ROYAL VILLA",
+   "ar": "اختبئ في الفيلا الملكية.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ROYAL VILLA",
+   "ar": "علينا الوصول إلى الفيلا الملكية.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "BANQUET HALL",
+   "ar": "قاعة الولائم",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE BANQUET HALL",
+   "ar": "أين قاعة الولائم؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE BANQUET HALL",
+   "ar": "قابلني عند قاعة الولائم.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE BANQUET HALL",
+   "ar": "اتجه إلى قاعة الولائم.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE BANQUET HALL",
+   "ar": "ابتعد عن قاعة الولائم.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE BANQUET HALL",
+   "ar": "انتظرني عند قاعة الولائم.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE BANQUET HALL",
+   "ar": "جئت من قاعة الولائم.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE BANQUET HALL",
+   "ar": "فتّش قاعة الولائم.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE BANQUET HALL",
+   "ar": "ذهبوا إلى قاعة الولائم.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE BANQUET HALL",
+   "ar": "اختبئ في قاعة الولائم.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE BANQUET HALL",
+   "ar": "علينا الوصول إلى قاعة الولائم.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "PALACE BALCONY",
+   "ar": "شرفة القصر",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE PALACE BALCONY",
+   "ar": "أين شرفة القصر؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE PALACE BALCONY",
+   "ar": "قابلني عند شرفة القصر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE PALACE BALCONY",
+   "ar": "اتجه إلى شرفة القصر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE PALACE BALCONY",
+   "ar": "ابتعد عن شرفة القصر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE PALACE BALCONY",
+   "ar": "انتظرني عند شرفة القصر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE PALACE BALCONY",
+   "ar": "جئت من شرفة القصر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE PALACE BALCONY",
+   "ar": "فتّش شرفة القصر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE PALACE BALCONY",
+   "ar": "ذهبوا إلى شرفة القصر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE PALACE BALCONY",
+   "ar": "اختبئ في شرفة القصر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE PALACE BALCONY",
+   "ar": "علينا الوصول إلى شرفة القصر.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "DUCHESS'S ESTATE",
+   "ar": "ضيعة الدوقة",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE DUCHESS'S ESTATE",
+   "ar": "أين ضيعة الدوقة؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE DUCHESS'S ESTATE",
+   "ar": "قابلني عند ضيعة الدوقة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE DUCHESS'S ESTATE",
+   "ar": "اتجه إلى ضيعة الدوقة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE DUCHESS'S ESTATE",
+   "ar": "ابتعد عن ضيعة الدوقة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE DUCHESS'S ESTATE",
+   "ar": "انتظرني عند ضيعة الدوقة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE DUCHESS'S ESTATE",
+   "ar": "جئت من ضيعة الدوقة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE DUCHESS'S ESTATE",
+   "ar": "فتّش ضيعة الدوقة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE DUCHESS'S ESTATE",
+   "ar": "ذهبوا إلى ضيعة الدوقة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE DUCHESS'S ESTATE",
+   "ar": "اختبئ في ضيعة الدوقة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE DUCHESS'S ESTATE",
+   "ar": "علينا الوصول إلى ضيعة الدوقة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ABANDONED CHAPEL",
+   "ar": "المصلى المهجور",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ABANDONED CHAPEL",
+   "ar": "أين المصلى المهجور؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ABANDONED CHAPEL",
+   "ar": "قابلني عند المصلى المهجور.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ABANDONED CHAPEL",
+   "ar": "اتجه إلى المصلى المهجور.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ABANDONED CHAPEL",
+   "ar": "ابتعد عن المصلى المهجور.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ABANDONED CHAPEL",
+   "ar": "انتظرني عند المصلى المهجور.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ABANDONED CHAPEL",
+   "ar": "جئت من المصلى المهجور.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ABANDONED CHAPEL",
+   "ar": "فتّش المصلى المهجور.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ABANDONED CHAPEL",
+   "ar": "ذهبوا إلى المصلى المهجور.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ABANDONED CHAPEL",
+   "ar": "اختبئ في المصلى المهجور.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ABANDONED CHAPEL",
+   "ar": "علينا الوصول إلى المصلى المهجور.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "CLOCK TOWER",
+   "ar": "برج الساعة",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE CLOCK TOWER",
+   "ar": "أين برج الساعة؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE CLOCK TOWER",
+   "ar": "قابلني عند برج الساعة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE CLOCK TOWER",
+   "ar": "اتجه إلى برج الساعة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE CLOCK TOWER",
+   "ar": "ابتعد عن برج الساعة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE CLOCK TOWER",
+   "ar": "انتظرني عند برج الساعة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE CLOCK TOWER",
+   "ar": "جئت من برج الساعة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE CLOCK TOWER",
+   "ar": "فتّش برج الساعة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE CLOCK TOWER",
+   "ar": "ذهبوا إلى برج الساعة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE CLOCK TOWER",
+   "ar": "اختبئ في برج الساعة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE CLOCK TOWER",
+   "ar": "علينا الوصول إلى برج الساعة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "FAMILY TOMB",
+   "ar": "مدفن العائلة",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE FAMILY TOMB",
+   "ar": "أين مدفن العائلة؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE FAMILY TOMB",
+   "ar": "قابلني عند مدفن العائلة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE FAMILY TOMB",
+   "ar": "اتجه إلى مدفن العائلة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE FAMILY TOMB",
+   "ar": "ابتعد عن مدفن العائلة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE FAMILY TOMB",
+   "ar": "انتظرني عند مدفن العائلة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE FAMILY TOMB",
+   "ar": "جئت من مدفن العائلة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE FAMILY TOMB",
+   "ar": "فتّش مدفن العائلة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE FAMILY TOMB",
+   "ar": "ذهبوا إلى مدفن العائلة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE FAMILY TOMB",
+   "ar": "اختبئ في مدفن العائلة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE FAMILY TOMB",
+   "ar": "علينا الوصول إلى مدفن العائلة.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SUMMER PALACE",
+   "ar": "القصر الصيفي",
+   "type": "term",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE SUMMER PALACE",
+   "ar": "أين القصر الصيفي؟",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE SUMMER PALACE",
+   "ar": "قابلني عند القصر الصيفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE SUMMER PALACE",
+   "ar": "اتجه إلى القصر الصيفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE SUMMER PALACE",
+   "ar": "ابتعد عن القصر الصيفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE SUMMER PALACE",
+   "ar": "انتظرني عند القصر الصيفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE SUMMER PALACE",
+   "ar": "جئت من القصر الصيفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE SUMMER PALACE",
+   "ar": "فتّش القصر الصيفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE SUMMER PALACE",
+   "ar": "ذهبوا إلى القصر الصيفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE SUMMER PALACE",
+   "ar": "اختبئ في القصر الصيفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE SUMMER PALACE",
+   "ar": "علينا الوصول إلى القصر الصيفي.",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ENCHANTED FOREST",
+   "ar": "الغابة المسحورة",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ENCHANTED FOREST",
+   "ar": "أين الغابة المسحورة؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ENCHANTED FOREST",
+   "ar": "قابلني عند الغابة المسحورة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ENCHANTED FOREST",
+   "ar": "اتجه إلى الغابة المسحورة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ENCHANTED FOREST",
+   "ar": "ابتعد عن الغابة المسحورة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ENCHANTED FOREST",
+   "ar": "انتظرني عند الغابة المسحورة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ENCHANTED FOREST",
+   "ar": "جئت من الغابة المسحورة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ENCHANTED FOREST",
+   "ar": "فتّش الغابة المسحورة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ENCHANTED FOREST",
+   "ar": "ذهبوا إلى الغابة المسحورة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ENCHANTED FOREST",
+   "ar": "اختبئ في الغابة المسحورة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ENCHANTED FOREST",
+   "ar": "علينا الوصول إلى الغابة المسحورة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MAGE TOWER",
+   "ar": "برج السحرة",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE MAGE TOWER",
+   "ar": "أين برج السحرة؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE MAGE TOWER",
+   "ar": "قابلني عند برج السحرة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE MAGE TOWER",
+   "ar": "اتجه إلى برج السحرة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE MAGE TOWER",
+   "ar": "ابتعد عن برج السحرة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE MAGE TOWER",
+   "ar": "انتظرني عند برج السحرة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE MAGE TOWER",
+   "ar": "جئت من برج السحرة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE MAGE TOWER",
+   "ar": "فتّش برج السحرة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE MAGE TOWER",
+   "ar": "ذهبوا إلى برج السحرة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE MAGE TOWER",
+   "ar": "اختبئ في برج السحرة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE MAGE TOWER",
+   "ar": "علينا الوصول إلى برج السحرة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "DRAGON LAIR",
+   "ar": "عرين التنين",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE DRAGON LAIR",
+   "ar": "أين عرين التنين؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE DRAGON LAIR",
+   "ar": "قابلني عند عرين التنين.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE DRAGON LAIR",
+   "ar": "اتجه إلى عرين التنين.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE DRAGON LAIR",
+   "ar": "ابتعد عن عرين التنين.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE DRAGON LAIR",
+   "ar": "انتظرني عند عرين التنين.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE DRAGON LAIR",
+   "ar": "جئت من عرين التنين.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE DRAGON LAIR",
+   "ar": "فتّش عرين التنين.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE DRAGON LAIR",
+   "ar": "ذهبوا إلى عرين التنين.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE DRAGON LAIR",
+   "ar": "اختبئ في عرين التنين.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE DRAGON LAIR",
+   "ar": "علينا الوصول إلى عرين التنين.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "CRYSTAL MINE",
+   "ar": "منجم البلور",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE CRYSTAL MINE",
+   "ar": "أين منجم البلور؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE CRYSTAL MINE",
+   "ar": "قابلني عند منجم البلور.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE CRYSTAL MINE",
+   "ar": "اتجه إلى منجم البلور.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE CRYSTAL MINE",
+   "ar": "ابتعد عن منجم البلور.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE CRYSTAL MINE",
+   "ar": "انتظرني عند منجم البلور.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE CRYSTAL MINE",
+   "ar": "جئت من منجم البلور.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE CRYSTAL MINE",
+   "ar": "فتّش منجم البلور.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE CRYSTAL MINE",
+   "ar": "ذهبوا إلى منجم البلور.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE CRYSTAL MINE",
+   "ar": "اختبئ في منجم البلور.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE CRYSTAL MINE",
+   "ar": "علينا الوصول إلى منجم البلور.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "FLOATING ISLAND",
+   "ar": "الجزيرة العائمة",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE FLOATING ISLAND",
+   "ar": "أين الجزيرة العائمة؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE FLOATING ISLAND",
+   "ar": "قابلني عند الجزيرة العائمة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE FLOATING ISLAND",
+   "ar": "اتجه إلى الجزيرة العائمة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE FLOATING ISLAND",
+   "ar": "ابتعد عن الجزيرة العائمة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE FLOATING ISLAND",
+   "ar": "انتظرني عند الجزيرة العائمة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE FLOATING ISLAND",
+   "ar": "جئت من الجزيرة العائمة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE FLOATING ISLAND",
+   "ar": "فتّش الجزيرة العائمة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE FLOATING ISLAND",
+   "ar": "ذهبوا إلى الجزيرة العائمة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE FLOATING ISLAND",
+   "ar": "اختبئ في الجزيرة العائمة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE FLOATING ISLAND",
+   "ar": "علينا الوصول إلى الجزيرة العائمة.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ROYAL COURT",
+   "ar": "البلاط الملكي",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ROYAL COURT",
+   "ar": "أين البلاط الملكي؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ROYAL COURT",
+   "ar": "قابلني عند البلاط الملكي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ROYAL COURT",
+   "ar": "اتجه إلى البلاط الملكي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ROYAL COURT",
+   "ar": "ابتعد عن البلاط الملكي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ROYAL COURT",
+   "ar": "انتظرني عند البلاط الملكي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ROYAL COURT",
+   "ar": "جئت من البلاط الملكي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ROYAL COURT",
+   "ar": "فتّش البلاط الملكي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ROYAL COURT",
+   "ar": "ذهبوا إلى البلاط الملكي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ROYAL COURT",
+   "ar": "اختبئ في البلاط الملكي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ROYAL COURT",
+   "ar": "علينا الوصول إلى البلاط الملكي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ANCIENT TEMPLE",
+   "ar": "المعبد القديم",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ANCIENT TEMPLE",
+   "ar": "أين المعبد القديم؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ANCIENT TEMPLE",
+   "ar": "قابلني عند المعبد القديم.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ANCIENT TEMPLE",
+   "ar": "اتجه إلى المعبد القديم.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ANCIENT TEMPLE",
+   "ar": "ابتعد عن المعبد القديم.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ANCIENT TEMPLE",
+   "ar": "انتظرني عند المعبد القديم.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ANCIENT TEMPLE",
+   "ar": "جئت من المعبد القديم.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ANCIENT TEMPLE",
+   "ar": "فتّش المعبد القديم.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ANCIENT TEMPLE",
+   "ar": "ذهبوا إلى المعبد القديم.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ANCIENT TEMPLE",
+   "ar": "اختبئ في المعبد القديم.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ANCIENT TEMPLE",
+   "ar": "علينا الوصول إلى المعبد القديم.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "UNDERGROUND LAKE",
+   "ar": "البحيرة الجوفية",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE UNDERGROUND LAKE",
+   "ar": "أين البحيرة الجوفية؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE UNDERGROUND LAKE",
+   "ar": "قابلني عند البحيرة الجوفية.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE UNDERGROUND LAKE",
+   "ar": "اتجه إلى البحيرة الجوفية.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE UNDERGROUND LAKE",
+   "ar": "ابتعد عن البحيرة الجوفية.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE UNDERGROUND LAKE",
+   "ar": "انتظرني عند البحيرة الجوفية.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE UNDERGROUND LAKE",
+   "ar": "جئت من البحيرة الجوفية.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE UNDERGROUND LAKE",
+   "ar": "فتّش البحيرة الجوفية.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE UNDERGROUND LAKE",
+   "ar": "ذهبوا إلى البحيرة الجوفية.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE UNDERGROUND LAKE",
+   "ar": "اختبئ في البحيرة الجوفية.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE UNDERGROUND LAKE",
+   "ar": "علينا الوصول إلى البحيرة الجوفية.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MERCHANT QUARTER",
+   "ar": "حي التجار",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE MERCHANT QUARTER",
+   "ar": "أين حي التجار؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE MERCHANT QUARTER",
+   "ar": "قابلني عند حي التجار.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE MERCHANT QUARTER",
+   "ar": "اتجه إلى حي التجار.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE MERCHANT QUARTER",
+   "ar": "ابتعد عن حي التجار.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE MERCHANT QUARTER",
+   "ar": "انتظرني عند حي التجار.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE MERCHANT QUARTER",
+   "ar": "جئت من حي التجار.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE MERCHANT QUARTER",
+   "ar": "فتّش حي التجار.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE MERCHANT QUARTER",
+   "ar": "ذهبوا إلى حي التجار.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE MERCHANT QUARTER",
+   "ar": "اختبئ في حي التجار.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE MERCHANT QUARTER",
+   "ar": "علينا الوصول إلى حي التجار.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STONE BRIDGE",
+   "ar": "الجسر الحجري",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE STONE BRIDGE",
+   "ar": "أين الجسر الحجري؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE STONE BRIDGE",
+   "ar": "قابلني عند الجسر الحجري.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE STONE BRIDGE",
+   "ar": "اتجه إلى الجسر الحجري.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE STONE BRIDGE",
+   "ar": "ابتعد عن الجسر الحجري.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE STONE BRIDGE",
+   "ar": "انتظرني عند الجسر الحجري.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE STONE BRIDGE",
+   "ar": "جئت من الجسر الحجري.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE STONE BRIDGE",
+   "ar": "فتّش الجسر الحجري.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE STONE BRIDGE",
+   "ar": "ذهبوا إلى الجسر الحجري.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE STONE BRIDGE",
+   "ar": "اختبئ في الجسر الحجري.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE STONE BRIDGE",
+   "ar": "علينا الوصول إلى الجسر الحجري.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "BORDER FORTRESS",
+   "ar": "الحصن الحدودي",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE BORDER FORTRESS",
+   "ar": "أين الحصن الحدودي؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE BORDER FORTRESS",
+   "ar": "قابلني عند الحصن الحدودي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE BORDER FORTRESS",
+   "ar": "اتجه إلى الحصن الحدودي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE BORDER FORTRESS",
+   "ar": "ابتعد عن الحصن الحدودي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE BORDER FORTRESS",
+   "ar": "انتظرني عند الحصن الحدودي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE BORDER FORTRESS",
+   "ar": "جئت من الحصن الحدودي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE BORDER FORTRESS",
+   "ar": "فتّش الحصن الحدودي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE BORDER FORTRESS",
+   "ar": "ذهبوا إلى الحصن الحدودي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE BORDER FORTRESS",
+   "ar": "اختبئ في الحصن الحدودي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE BORDER FORTRESS",
+   "ar": "علينا الوصول إلى الحصن الحدودي.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ALCHEMY WORKSHOP",
+   "ar": "ورشة الخيمياء",
+   "type": "term",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ALCHEMY WORKSHOP",
+   "ar": "أين ورشة الخيمياء؟",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ALCHEMY WORKSHOP",
+   "ar": "قابلني عند ورشة الخيمياء.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ALCHEMY WORKSHOP",
+   "ar": "اتجه إلى ورشة الخيمياء.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ALCHEMY WORKSHOP",
+   "ar": "ابتعد عن ورشة الخيمياء.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ALCHEMY WORKSHOP",
+   "ar": "انتظرني عند ورشة الخيمياء.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ALCHEMY WORKSHOP",
+   "ar": "جئت من ورشة الخيمياء.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ALCHEMY WORKSHOP",
+   "ar": "فتّش ورشة الخيمياء.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ALCHEMY WORKSHOP",
+   "ar": "ذهبوا إلى ورشة الخيمياء.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ALCHEMY WORKSHOP",
+   "ar": "اختبئ في ورشة الخيمياء.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ALCHEMY WORKSHOP",
+   "ar": "علينا الوصول إلى ورشة الخيمياء.",
+   "type": "sentence",
+   "genre": [
+    "fantasy"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "CLASSROOM",
+   "ar": "غرفة الصف",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE CLASSROOM",
+   "ar": "أين غرفة الصف؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE CLASSROOM",
+   "ar": "قابلني عند غرفة الصف.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE CLASSROOM",
+   "ar": "اتجه إلى غرفة الصف.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE CLASSROOM",
+   "ar": "ابتعد عن غرفة الصف.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE CLASSROOM",
+   "ar": "انتظرني عند غرفة الصف.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE CLASSROOM",
+   "ar": "جئت من غرفة الصف.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE CLASSROOM",
+   "ar": "فتّش غرفة الصف.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE CLASSROOM",
+   "ar": "ذهبوا إلى غرفة الصف.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE CLASSROOM",
+   "ar": "اختبئ في غرفة الصف.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE CLASSROOM",
+   "ar": "علينا الوصول إلى غرفة الصف.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SCIENCE LAB",
+   "ar": "مختبر العلوم",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE SCIENCE LAB",
+   "ar": "أين مختبر العلوم؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE SCIENCE LAB",
+   "ar": "قابلني عند مختبر العلوم.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE SCIENCE LAB",
+   "ar": "اتجه إلى مختبر العلوم.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE SCIENCE LAB",
+   "ar": "ابتعد عن مختبر العلوم.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE SCIENCE LAB",
+   "ar": "انتظرني عند مختبر العلوم.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE SCIENCE LAB",
+   "ar": "جئت من مختبر العلوم.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE SCIENCE LAB",
+   "ar": "فتّش مختبر العلوم.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE SCIENCE LAB",
+   "ar": "ذهبوا إلى مختبر العلوم.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE SCIENCE LAB",
+   "ar": "اختبئ في مختبر العلوم.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE SCIENCE LAB",
+   "ar": "علينا الوصول إلى مختبر العلوم.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SCHOOL LIBRARY",
+   "ar": "مكتبة المدرسة",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE SCHOOL LIBRARY",
+   "ar": "أين مكتبة المدرسة؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE SCHOOL LIBRARY",
+   "ar": "قابلني عند مكتبة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE SCHOOL LIBRARY",
+   "ar": "اتجه إلى مكتبة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE SCHOOL LIBRARY",
+   "ar": "ابتعد عن مكتبة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE SCHOOL LIBRARY",
+   "ar": "انتظرني عند مكتبة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE SCHOOL LIBRARY",
+   "ar": "جئت من مكتبة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE SCHOOL LIBRARY",
+   "ar": "فتّش مكتبة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE SCHOOL LIBRARY",
+   "ar": "ذهبوا إلى مكتبة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE SCHOOL LIBRARY",
+   "ar": "اختبئ في مكتبة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE SCHOOL LIBRARY",
+   "ar": "علينا الوصول إلى مكتبة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "PRINCIPAL'S OFFICE",
+   "ar": "مكتب المدير",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE PRINCIPAL'S OFFICE",
+   "ar": "أين مكتب المدير؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE PRINCIPAL'S OFFICE",
+   "ar": "قابلني عند مكتب المدير.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE PRINCIPAL'S OFFICE",
+   "ar": "اتجه إلى مكتب المدير.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE PRINCIPAL'S OFFICE",
+   "ar": "ابتعد عن مكتب المدير.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE PRINCIPAL'S OFFICE",
+   "ar": "انتظرني عند مكتب المدير.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE PRINCIPAL'S OFFICE",
+   "ar": "جئت من مكتب المدير.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE PRINCIPAL'S OFFICE",
+   "ar": "فتّش مكتب المدير.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE PRINCIPAL'S OFFICE",
+   "ar": "ذهبوا إلى مكتب المدير.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE PRINCIPAL'S OFFICE",
+   "ar": "اختبئ في مكتب المدير.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE PRINCIPAL'S OFFICE",
+   "ar": "علينا الوصول إلى مكتب المدير.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "GYMNASIUM",
+   "ar": "الصالة الرياضية",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE GYMNASIUM",
+   "ar": "أين الصالة الرياضية؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE GYMNASIUM",
+   "ar": "قابلني عند الصالة الرياضية.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE GYMNASIUM",
+   "ar": "اتجه إلى الصالة الرياضية.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE GYMNASIUM",
+   "ar": "ابتعد عن الصالة الرياضية.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE GYMNASIUM",
+   "ar": "انتظرني عند الصالة الرياضية.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE GYMNASIUM",
+   "ar": "جئت من الصالة الرياضية.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE GYMNASIUM",
+   "ar": "فتّش الصالة الرياضية.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE GYMNASIUM",
+   "ar": "ذهبوا إلى الصالة الرياضية.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE GYMNASIUM",
+   "ar": "اختبئ في الصالة الرياضية.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE GYMNASIUM",
+   "ar": "علينا الوصول إلى الصالة الرياضية.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MUSIC ROOM",
+   "ar": "غرفة الموسيقى",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE MUSIC ROOM",
+   "ar": "أين غرفة الموسيقى؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE MUSIC ROOM",
+   "ar": "قابلني عند غرفة الموسيقى.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE MUSIC ROOM",
+   "ar": "اتجه إلى غرفة الموسيقى.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE MUSIC ROOM",
+   "ar": "ابتعد عن غرفة الموسيقى.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE MUSIC ROOM",
+   "ar": "انتظرني عند غرفة الموسيقى.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE MUSIC ROOM",
+   "ar": "جئت من غرفة الموسيقى.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE MUSIC ROOM",
+   "ar": "فتّش غرفة الموسيقى.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE MUSIC ROOM",
+   "ar": "ذهبوا إلى غرفة الموسيقى.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE MUSIC ROOM",
+   "ar": "اختبئ في غرفة الموسيقى.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE MUSIC ROOM",
+   "ar": "علينا الوصول إلى غرفة الموسيقى.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "LOCKER ROOM",
+   "ar": "غرفة تبديل الملابس",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE LOCKER ROOM",
+   "ar": "أين غرفة تبديل الملابس؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE LOCKER ROOM",
+   "ar": "قابلني عند غرفة تبديل الملابس.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE LOCKER ROOM",
+   "ar": "اتجه إلى غرفة تبديل الملابس.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE LOCKER ROOM",
+   "ar": "ابتعد عن غرفة تبديل الملابس.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE LOCKER ROOM",
+   "ar": "انتظرني عند غرفة تبديل الملابس.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE LOCKER ROOM",
+   "ar": "جئت من غرفة تبديل الملابس.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE LOCKER ROOM",
+   "ar": "فتّش غرفة تبديل الملابس.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE LOCKER ROOM",
+   "ar": "ذهبوا إلى غرفة تبديل الملابس.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE LOCKER ROOM",
+   "ar": "اختبئ في غرفة تبديل الملابس.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE LOCKER ROOM",
+   "ar": "علينا الوصول إلى غرفة تبديل الملابس.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SCHOOL GATE",
+   "ar": "بوابة المدرسة",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE SCHOOL GATE",
+   "ar": "أين بوابة المدرسة؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE SCHOOL GATE",
+   "ar": "قابلني عند بوابة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE SCHOOL GATE",
+   "ar": "اتجه إلى بوابة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE SCHOOL GATE",
+   "ar": "ابتعد عن بوابة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE SCHOOL GATE",
+   "ar": "انتظرني عند بوابة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE SCHOOL GATE",
+   "ar": "جئت من بوابة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE SCHOOL GATE",
+   "ar": "فتّش بوابة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE SCHOOL GATE",
+   "ar": "ذهبوا إلى بوابة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE SCHOOL GATE",
+   "ar": "اختبئ في بوابة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE SCHOOL GATE",
+   "ar": "علينا الوصول إلى بوابة المدرسة.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SWIMMING POOL",
+   "ar": "المسبح",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE SWIMMING POOL",
+   "ar": "أين المسبح؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE SWIMMING POOL",
+   "ar": "قابلني عند المسبح.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE SWIMMING POOL",
+   "ar": "اتجه إلى المسبح.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE SWIMMING POOL",
+   "ar": "ابتعد عن المسبح.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE SWIMMING POOL",
+   "ar": "انتظرني عند المسبح.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE SWIMMING POOL",
+   "ar": "جئت من المسبح.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE SWIMMING POOL",
+   "ar": "فتّش المسبح.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE SWIMMING POOL",
+   "ar": "ذهبوا إلى المسبح.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE SWIMMING POOL",
+   "ar": "اختبئ في المسبح.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE SWIMMING POOL",
+   "ar": "علينا الوصول إلى المسبح.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "CLUB ROOM",
+   "ar": "غرفة النادي",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE CLUB ROOM",
+   "ar": "أين غرفة النادي؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE CLUB ROOM",
+   "ar": "قابلني عند غرفة النادي.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE CLUB ROOM",
+   "ar": "اتجه إلى غرفة النادي.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE CLUB ROOM",
+   "ar": "ابتعد عن غرفة النادي.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE CLUB ROOM",
+   "ar": "انتظرني عند غرفة النادي.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE CLUB ROOM",
+   "ar": "جئت من غرفة النادي.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE CLUB ROOM",
+   "ar": "فتّش غرفة النادي.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE CLUB ROOM",
+   "ar": "ذهبوا إلى غرفة النادي.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE CLUB ROOM",
+   "ar": "اختبئ في غرفة النادي.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE CLUB ROOM",
+   "ar": "علينا الوصول إلى غرفة النادي.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ASSEMBLY HALL",
+   "ar": "قاعة الاجتماعات",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ASSEMBLY HALL",
+   "ar": "أين قاعة الاجتماعات؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ASSEMBLY HALL",
+   "ar": "قابلني عند قاعة الاجتماعات.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ASSEMBLY HALL",
+   "ar": "اتجه إلى قاعة الاجتماعات.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ASSEMBLY HALL",
+   "ar": "ابتعد عن قاعة الاجتماعات.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ASSEMBLY HALL",
+   "ar": "انتظرني عند قاعة الاجتماعات.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ASSEMBLY HALL",
+   "ar": "جئت من قاعة الاجتماعات.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ASSEMBLY HALL",
+   "ar": "فتّش قاعة الاجتماعات.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ASSEMBLY HALL",
+   "ar": "ذهبوا إلى قاعة الاجتماعات.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ASSEMBLY HALL",
+   "ar": "اختبئ في قاعة الاجتماعات.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ASSEMBLY HALL",
+   "ar": "علينا الوصول إلى قاعة الاجتماعات.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "RUNNING TRACK",
+   "ar": "مضمار الجري",
+   "type": "term",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE RUNNING TRACK",
+   "ar": "أين مضمار الجري؟",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE RUNNING TRACK",
+   "ar": "قابلني عند مضمار الجري.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE RUNNING TRACK",
+   "ar": "اتجه إلى مضمار الجري.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE RUNNING TRACK",
+   "ar": "ابتعد عن مضمار الجري.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE RUNNING TRACK",
+   "ar": "انتظرني عند مضمار الجري.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE RUNNING TRACK",
+   "ar": "جئت من مضمار الجري.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE RUNNING TRACK",
+   "ar": "فتّش مضمار الجري.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE RUNNING TRACK",
+   "ar": "ذهبوا إلى مضمار الجري.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE RUNNING TRACK",
+   "ar": "اختبئ في مضمار الجري.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE RUNNING TRACK",
+   "ar": "علينا الوصول إلى مضمار الجري.",
+   "type": "sentence",
+   "genre": [
+    "school"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "FLOWER SHOP",
+   "ar": "متجر الزهور",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE FLOWER SHOP",
+   "ar": "أين متجر الزهور؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE FLOWER SHOP",
+   "ar": "قابلني عند متجر الزهور.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE FLOWER SHOP",
+   "ar": "اتجه إلى متجر الزهور.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE FLOWER SHOP",
+   "ar": "ابتعد عن متجر الزهور.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE FLOWER SHOP",
+   "ar": "انتظرني عند متجر الزهور.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE FLOWER SHOP",
+   "ar": "جئت من متجر الزهور.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE FLOWER SHOP",
+   "ar": "فتّش متجر الزهور.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE FLOWER SHOP",
+   "ar": "ذهبوا إلى متجر الزهور.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE FLOWER SHOP",
+   "ar": "اختبئ في متجر الزهور.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE FLOWER SHOP",
+   "ar": "علينا الوصول إلى متجر الزهور.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "TRAIN STATION",
+   "ar": "محطة القطار",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE TRAIN STATION",
+   "ar": "أين محطة القطار؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE TRAIN STATION",
+   "ar": "قابلني عند محطة القطار.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE TRAIN STATION",
+   "ar": "اتجه إلى محطة القطار.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE TRAIN STATION",
+   "ar": "ابتعد عن محطة القطار.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE TRAIN STATION",
+   "ar": "انتظرني عند محطة القطار.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE TRAIN STATION",
+   "ar": "جئت من محطة القطار.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE TRAIN STATION",
+   "ar": "فتّش محطة القطار.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE TRAIN STATION",
+   "ar": "ذهبوا إلى محطة القطار.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE TRAIN STATION",
+   "ar": "اختبئ في محطة القطار.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE TRAIN STATION",
+   "ar": "علينا الوصول إلى محطة القطار.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WEDDING HALL",
+   "ar": "قاعة الزفاف",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE WEDDING HALL",
+   "ar": "أين قاعة الزفاف؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE WEDDING HALL",
+   "ar": "قابلني عند قاعة الزفاف.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE WEDDING HALL",
+   "ar": "اتجه إلى قاعة الزفاف.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE WEDDING HALL",
+   "ar": "ابتعد عن قاعة الزفاف.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE WEDDING HALL",
+   "ar": "انتظرني عند قاعة الزفاف.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE WEDDING HALL",
+   "ar": "جئت من قاعة الزفاف.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE WEDDING HALL",
+   "ar": "فتّش قاعة الزفاف.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE WEDDING HALL",
+   "ar": "ذهبوا إلى قاعة الزفاف.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE WEDDING HALL",
+   "ar": "اختبئ في قاعة الزفاف.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE WEDDING HALL",
+   "ar": "علينا الوصول إلى قاعة الزفاف.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "RIVERBANK",
+   "ar": "ضفة النهر",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE RIVERBANK",
+   "ar": "أين ضفة النهر؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE RIVERBANK",
+   "ar": "قابلني عند ضفة النهر.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE RIVERBANK",
+   "ar": "اتجه إلى ضفة النهر.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE RIVERBANK",
+   "ar": "ابتعد عن ضفة النهر.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE RIVERBANK",
+   "ar": "انتظرني عند ضفة النهر.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE RIVERBANK",
+   "ar": "جئت من ضفة النهر.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE RIVERBANK",
+   "ar": "فتّش ضفة النهر.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE RIVERBANK",
+   "ar": "ذهبوا إلى ضفة النهر.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE RIVERBANK",
+   "ar": "اختبئ في ضفة النهر.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE RIVERBANK",
+   "ar": "علينا الوصول إلى ضفة النهر.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "TOWN SQUARE",
+   "ar": "ساحة البلدة",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE TOWN SQUARE",
+   "ar": "أين ساحة البلدة؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE TOWN SQUARE",
+   "ar": "قابلني عند ساحة البلدة.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE TOWN SQUARE",
+   "ar": "اتجه إلى ساحة البلدة.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE TOWN SQUARE",
+   "ar": "ابتعد عن ساحة البلدة.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE TOWN SQUARE",
+   "ar": "انتظرني عند ساحة البلدة.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE TOWN SQUARE",
+   "ar": "جئت من ساحة البلدة.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE TOWN SQUARE",
+   "ar": "فتّش ساحة البلدة.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE TOWN SQUARE",
+   "ar": "ذهبوا إلى ساحة البلدة.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE TOWN SQUARE",
+   "ar": "اختبئ في ساحة البلدة.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE TOWN SQUARE",
+   "ar": "علينا الوصول إلى ساحة البلدة.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ROOFTOP GARDEN",
+   "ar": "حديقة السطح",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ROOFTOP GARDEN",
+   "ar": "أين حديقة السطح؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ROOFTOP GARDEN",
+   "ar": "قابلني عند حديقة السطح.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ROOFTOP GARDEN",
+   "ar": "اتجه إلى حديقة السطح.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ROOFTOP GARDEN",
+   "ar": "ابتعد عن حديقة السطح.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ROOFTOP GARDEN",
+   "ar": "انتظرني عند حديقة السطح.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ROOFTOP GARDEN",
+   "ar": "جئت من حديقة السطح.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ROOFTOP GARDEN",
+   "ar": "فتّش حديقة السطح.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ROOFTOP GARDEN",
+   "ar": "ذهبوا إلى حديقة السطح.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ROOFTOP GARDEN",
+   "ar": "اختبئ في حديقة السطح.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ROOFTOP GARDEN",
+   "ar": "علينا الوصول إلى حديقة السطح.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "CORNER CAFÉ",
+   "ar": "مقهى الزاوية",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE CORNER CAFÉ",
+   "ar": "أين مقهى الزاوية؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE CORNER CAFÉ",
+   "ar": "قابلني عند مقهى الزاوية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE CORNER CAFÉ",
+   "ar": "اتجه إلى مقهى الزاوية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE CORNER CAFÉ",
+   "ar": "ابتعد عن مقهى الزاوية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE CORNER CAFÉ",
+   "ar": "انتظرني عند مقهى الزاوية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE CORNER CAFÉ",
+   "ar": "جئت من مقهى الزاوية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE CORNER CAFÉ",
+   "ar": "فتّش مقهى الزاوية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE CORNER CAFÉ",
+   "ar": "ذهبوا إلى مقهى الزاوية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE CORNER CAFÉ",
+   "ar": "اختبئ في مقهى الزاوية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE CORNER CAFÉ",
+   "ar": "علينا الوصول إلى مقهى الزاوية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "ART GALLERY",
+   "ar": "معرض الفن",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE ART GALLERY",
+   "ar": "أين معرض الفن؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE ART GALLERY",
+   "ar": "قابلني عند معرض الفن.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE ART GALLERY",
+   "ar": "اتجه إلى معرض الفن.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE ART GALLERY",
+   "ar": "ابتعد عن معرض الفن.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE ART GALLERY",
+   "ar": "انتظرني عند معرض الفن.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE ART GALLERY",
+   "ar": "جئت من معرض الفن.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE ART GALLERY",
+   "ar": "فتّش معرض الفن.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE ART GALLERY",
+   "ar": "ذهبوا إلى معرض الفن.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE ART GALLERY",
+   "ar": "اختبئ في معرض الفن.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE ART GALLERY",
+   "ar": "علينا الوصول إلى معرض الفن.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "OLD THEATER",
+   "ar": "المسرح القديم",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE OLD THEATER",
+   "ar": "أين المسرح القديم؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE OLD THEATER",
+   "ar": "قابلني عند المسرح القديم.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE OLD THEATER",
+   "ar": "اتجه إلى المسرح القديم.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE OLD THEATER",
+   "ar": "ابتعد عن المسرح القديم.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE OLD THEATER",
+   "ar": "انتظرني عند المسرح القديم.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE OLD THEATER",
+   "ar": "جئت من المسرح القديم.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE OLD THEATER",
+   "ar": "فتّش المسرح القديم.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE OLD THEATER",
+   "ar": "ذهبوا إلى المسرح القديم.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE OLD THEATER",
+   "ar": "اختبئ في المسرح القديم.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE OLD THEATER",
+   "ar": "علينا الوصول إلى المسرح القديم.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEASIDE PARK",
+   "ar": "الحديقة الساحلية",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE SEASIDE PARK",
+   "ar": "أين الحديقة الساحلية؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE SEASIDE PARK",
+   "ar": "قابلني عند الحديقة الساحلية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE SEASIDE PARK",
+   "ar": "اتجه إلى الحديقة الساحلية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE SEASIDE PARK",
+   "ar": "ابتعد عن الحديقة الساحلية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE SEASIDE PARK",
+   "ar": "انتظرني عند الحديقة الساحلية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE SEASIDE PARK",
+   "ar": "جئت من الحديقة الساحلية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE SEASIDE PARK",
+   "ar": "فتّش الحديقة الساحلية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE SEASIDE PARK",
+   "ar": "ذهبوا إلى الحديقة الساحلية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE SEASIDE PARK",
+   "ar": "اختبئ في الحديقة الساحلية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE SEASIDE PARK",
+   "ar": "علينا الوصول إلى الحديقة الساحلية.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "BUS STOP",
+   "ar": "موقف الحافلات",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE BUS STOP",
+   "ar": "أين موقف الحافلات؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE BUS STOP",
+   "ar": "قابلني عند موقف الحافلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE BUS STOP",
+   "ar": "اتجه إلى موقف الحافلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE BUS STOP",
+   "ar": "ابتعد عن موقف الحافلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE BUS STOP",
+   "ar": "انتظرني عند موقف الحافلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE BUS STOP",
+   "ar": "جئت من موقف الحافلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE BUS STOP",
+   "ar": "فتّش موقف الحافلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE BUS STOP",
+   "ar": "ذهبوا إلى موقف الحافلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE BUS STOP",
+   "ar": "اختبئ في موقف الحافلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE BUS STOP",
+   "ar": "علينا الوصول إلى موقف الحافلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "CONCERT HALL",
+   "ar": "قاعة الحفلات",
+   "type": "term",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE CONCERT HALL",
+   "ar": "أين قاعة الحفلات؟",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE CONCERT HALL",
+   "ar": "قابلني عند قاعة الحفلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE CONCERT HALL",
+   "ar": "اتجه إلى قاعة الحفلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE CONCERT HALL",
+   "ar": "ابتعد عن قاعة الحفلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE CONCERT HALL",
+   "ar": "انتظرني عند قاعة الحفلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE CONCERT HALL",
+   "ar": "جئت من قاعة الحفلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE CONCERT HALL",
+   "ar": "فتّش قاعة الحفلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE CONCERT HALL",
+   "ar": "ذهبوا إلى قاعة الحفلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE CONCERT HALL",
+   "ar": "اختبئ في قاعة الحفلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE CONCERT HALL",
+   "ar": "علينا الوصول إلى قاعة الحفلات.",
+   "type": "sentence",
+   "genre": [
+    "romance"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAREHOUSE",
+   "ar": "المستودع",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE WAREHOUSE",
+   "ar": "أين المستودع؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE WAREHOUSE",
+   "ar": "قابلني عند المستودع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE WAREHOUSE",
+   "ar": "اتجه إلى المستودع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE WAREHOUSE",
+   "ar": "ابتعد عن المستودع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE WAREHOUSE",
+   "ar": "انتظرني عند المستودع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE WAREHOUSE",
+   "ar": "جئت من المستودع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE WAREHOUSE",
+   "ar": "فتّش المستودع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE WAREHOUSE",
+   "ar": "ذهبوا إلى المستودع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE WAREHOUSE",
+   "ar": "اختبئ في المستودع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE WAREHOUSE",
+   "ar": "علينا الوصول إلى المستودع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEETING ROOM",
+   "ar": "قاعة الاجتماع",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE MEETING ROOM",
+   "ar": "أين قاعة الاجتماع؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE MEETING ROOM",
+   "ar": "قابلني عند قاعة الاجتماع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE MEETING ROOM",
+   "ar": "اتجه إلى قاعة الاجتماع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE MEETING ROOM",
+   "ar": "ابتعد عن قاعة الاجتماع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE MEETING ROOM",
+   "ar": "انتظرني عند قاعة الاجتماع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE MEETING ROOM",
+   "ar": "جئت من قاعة الاجتماع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE MEETING ROOM",
+   "ar": "فتّش قاعة الاجتماع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE MEETING ROOM",
+   "ar": "ذهبوا إلى قاعة الاجتماع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE MEETING ROOM",
+   "ar": "اختبئ في قاعة الاجتماع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE MEETING ROOM",
+   "ar": "علينا الوصول إلى قاعة الاجتماع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD OFFICE",
+   "ar": "المقر الرئيسي",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE HEAD OFFICE",
+   "ar": "أين المقر الرئيسي؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE HEAD OFFICE",
+   "ar": "قابلني عند المقر الرئيسي.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE HEAD OFFICE",
+   "ar": "اتجه إلى المقر الرئيسي.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE HEAD OFFICE",
+   "ar": "ابتعد عن المقر الرئيسي.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE HEAD OFFICE",
+   "ar": "انتظرني عند المقر الرئيسي.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE HEAD OFFICE",
+   "ar": "جئت من المقر الرئيسي.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE HEAD OFFICE",
+   "ar": "فتّش المقر الرئيسي.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE HEAD OFFICE",
+   "ar": "ذهبوا إلى المقر الرئيسي.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE HEAD OFFICE",
+   "ar": "اختبئ في المقر الرئيسي.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE HEAD OFFICE",
+   "ar": "علينا الوصول إلى المقر الرئيسي.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "AUCTION HOUSE",
+   "ar": "دار المزادات",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE AUCTION HOUSE",
+   "ar": "أين دار المزادات؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE AUCTION HOUSE",
+   "ar": "قابلني عند دار المزادات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE AUCTION HOUSE",
+   "ar": "اتجه إلى دار المزادات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE AUCTION HOUSE",
+   "ar": "ابتعد عن دار المزادات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE AUCTION HOUSE",
+   "ar": "انتظرني عند دار المزادات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE AUCTION HOUSE",
+   "ar": "جئت من دار المزادات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE AUCTION HOUSE",
+   "ar": "فتّش دار المزادات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE AUCTION HOUSE",
+   "ar": "ذهبوا إلى دار المزادات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE AUCTION HOUSE",
+   "ar": "اختبئ في دار المزادات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE AUCTION HOUSE",
+   "ar": "علينا الوصول إلى دار المزادات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "LOADING DOCK",
+   "ar": "رصيف التحميل",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE LOADING DOCK",
+   "ar": "أين رصيف التحميل؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE LOADING DOCK",
+   "ar": "قابلني عند رصيف التحميل.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE LOADING DOCK",
+   "ar": "اتجه إلى رصيف التحميل.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE LOADING DOCK",
+   "ar": "ابتعد عن رصيف التحميل.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE LOADING DOCK",
+   "ar": "انتظرني عند رصيف التحميل.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE LOADING DOCK",
+   "ar": "جئت من رصيف التحميل.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE LOADING DOCK",
+   "ar": "فتّش رصيف التحميل.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE LOADING DOCK",
+   "ar": "ذهبوا إلى رصيف التحميل.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE LOADING DOCK",
+   "ar": "اختبئ في رصيف التحميل.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE LOADING DOCK",
+   "ar": "علينا الوصول إلى رصيف التحميل.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "BANK BRANCH",
+   "ar": "فرع المصرف",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE BANK BRANCH",
+   "ar": "أين فرع المصرف؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE BANK BRANCH",
+   "ar": "قابلني عند فرع المصرف.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE BANK BRANCH",
+   "ar": "اتجه إلى فرع المصرف.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE BANK BRANCH",
+   "ar": "ابتعد عن فرع المصرف.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE BANK BRANCH",
+   "ar": "انتظرني عند فرع المصرف.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE BANK BRANCH",
+   "ar": "جئت من فرع المصرف.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE BANK BRANCH",
+   "ar": "فتّش فرع المصرف.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE BANK BRANCH",
+   "ar": "ذهبوا إلى فرع المصرف.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE BANK BRANCH",
+   "ar": "اختبئ في فرع المصرف.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE BANK BRANCH",
+   "ar": "علينا الوصول إلى فرع المصرف.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "POLICE STATION",
+   "ar": "مركز الشرطة",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE POLICE STATION",
+   "ar": "أين مركز الشرطة؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE POLICE STATION",
+   "ar": "قابلني عند مركز الشرطة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE POLICE STATION",
+   "ar": "اتجه إلى مركز الشرطة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE POLICE STATION",
+   "ar": "ابتعد عن مركز الشرطة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE POLICE STATION",
+   "ar": "انتظرني عند مركز الشرطة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE POLICE STATION",
+   "ar": "جئت من مركز الشرطة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE POLICE STATION",
+   "ar": "فتّش مركز الشرطة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE POLICE STATION",
+   "ar": "ذهبوا إلى مركز الشرطة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE POLICE STATION",
+   "ar": "اختبئ في مركز الشرطة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE POLICE STATION",
+   "ar": "علينا الوصول إلى مركز الشرطة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "COURTROOM",
+   "ar": "قاعة المحكمة",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE COURTROOM",
+   "ar": "أين قاعة المحكمة؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE COURTROOM",
+   "ar": "قابلني عند قاعة المحكمة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE COURTROOM",
+   "ar": "اتجه إلى قاعة المحكمة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE COURTROOM",
+   "ar": "ابتعد عن قاعة المحكمة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE COURTROOM",
+   "ar": "انتظرني عند قاعة المحكمة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE COURTROOM",
+   "ar": "جئت من قاعة المحكمة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE COURTROOM",
+   "ar": "فتّش قاعة المحكمة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE COURTROOM",
+   "ar": "ذهبوا إلى قاعة المحكمة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE COURTROOM",
+   "ar": "اختبئ في قاعة المحكمة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE COURTROOM",
+   "ar": "علينا الوصول إلى قاعة المحكمة.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "RECORDS OFFICE",
+   "ar": "مكتب السجلات",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE RECORDS OFFICE",
+   "ar": "أين مكتب السجلات؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE RECORDS OFFICE",
+   "ar": "قابلني عند مكتب السجلات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE RECORDS OFFICE",
+   "ar": "اتجه إلى مكتب السجلات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE RECORDS OFFICE",
+   "ar": "ابتعد عن مكتب السجلات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE RECORDS OFFICE",
+   "ar": "انتظرني عند مكتب السجلات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE RECORDS OFFICE",
+   "ar": "جئت من مكتب السجلات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE RECORDS OFFICE",
+   "ar": "فتّش مكتب السجلات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE RECORDS OFFICE",
+   "ar": "ذهبوا إلى مكتب السجلات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE RECORDS OFFICE",
+   "ar": "اختبئ في مكتب السجلات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE RECORDS OFFICE",
+   "ar": "علينا الوصول إلى مكتب السجلات.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "CUSTOMS OFFICE",
+   "ar": "مكتب الجمارك",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE CUSTOMS OFFICE",
+   "ar": "أين مكتب الجمارك؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE CUSTOMS OFFICE",
+   "ar": "قابلني عند مكتب الجمارك.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE CUSTOMS OFFICE",
+   "ar": "اتجه إلى مكتب الجمارك.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE CUSTOMS OFFICE",
+   "ar": "ابتعد عن مكتب الجمارك.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE CUSTOMS OFFICE",
+   "ar": "انتظرني عند مكتب الجمارك.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE CUSTOMS OFFICE",
+   "ar": "جئت من مكتب الجمارك.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE CUSTOMS OFFICE",
+   "ar": "فتّش مكتب الجمارك.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE CUSTOMS OFFICE",
+   "ar": "ذهبوا إلى مكتب الجمارك.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE CUSTOMS OFFICE",
+   "ar": "اختبئ في مكتب الجمارك.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE CUSTOMS OFFICE",
+   "ar": "علينا الوصول إلى مكتب الجمارك.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "FACTORY FLOOR",
+   "ar": "صالة المصنع",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE FACTORY FLOOR",
+   "ar": "أين صالة المصنع؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE FACTORY FLOOR",
+   "ar": "قابلني عند صالة المصنع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE FACTORY FLOOR",
+   "ar": "اتجه إلى صالة المصنع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE FACTORY FLOOR",
+   "ar": "ابتعد عن صالة المصنع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE FACTORY FLOOR",
+   "ar": "انتظرني عند صالة المصنع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE FACTORY FLOOR",
+   "ar": "جئت من صالة المصنع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE FACTORY FLOOR",
+   "ar": "فتّش صالة المصنع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE FACTORY FLOOR",
+   "ar": "ذهبوا إلى صالة المصنع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE FACTORY FLOOR",
+   "ar": "اختبئ في صالة المصنع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE FACTORY FLOOR",
+   "ar": "علينا الوصول إلى صالة المصنع.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SHIPPING OFFICE",
+   "ar": "مكتب الشحن",
+   "type": "term",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WHERE IS THE SHIPPING OFFICE",
+   "ar": "أين مكتب الشحن؟",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "MEET ME AT THE SHIPPING OFFICE",
+   "ar": "قابلني عند مكتب الشحن.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HEAD FOR THE SHIPPING OFFICE",
+   "ar": "اتجه إلى مكتب الشحن.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "STAY AWAY FROM THE SHIPPING OFFICE",
+   "ar": "ابتعد عن مكتب الشحن.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WAIT FOR ME AT THE SHIPPING OFFICE",
+   "ar": "انتظرني عند مكتب الشحن.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "I CAME FROM THE SHIPPING OFFICE",
+   "ar": "جئت من مكتب الشحن.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "SEARCH THE SHIPPING OFFICE",
+   "ar": "فتّش مكتب الشحن.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "THEY WENT TO THE SHIPPING OFFICE",
+   "ar": "ذهبوا إلى مكتب الشحن.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "HIDE IN THE SHIPPING OFFICE",
+   "ar": "اختبئ في مكتب الشحن.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  },
+  {
+   "en": "WE HAVE TO REACH THE SHIPPING OFFICE",
+   "ar": "علينا الوصول إلى مكتب الشحن.",
+   "type": "sentence",
+   "genre": [
+    "business"
+   ],
+   "priority": 48
+  }
+ ]
+}

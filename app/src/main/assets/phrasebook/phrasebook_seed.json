@@ -1,0 +1,4303 @@
+{
+ "version": 1,
+ "lang": "en-ar",
+ "note": "Seed phrasebook. Keys are matched after uppercasing and stripping punctuation except apostrophes. Expand with more entries.",
+ "entries": [
+  {
+   "en": "HM",
+   "ar": "هم؟",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HMM",
+   "ar": "همم...",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HUH",
+   "ar": "هاه؟",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HAH",
+   "ar": "ها!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HA",
+   "ar": "ها!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HEH",
+   "ar": "هه",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HEH HEH",
+   "ar": "هه هه",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "UGH",
+   "ar": "آخ",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "URGH",
+   "ar": "آخ...",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "UGH...",
+   "ar": "آخ...",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "GAH",
+   "ar": "غاه!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "GRR",
+   "ar": "غررر",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "TCH",
+   "ar": "تسك",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "TSK",
+   "ar": "تسك",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "SIGH",
+   "ar": "هاه... (تنهيدة)",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "PFFT",
+   "ar": "بفف",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "WOW",
+   "ar": "واو!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "OH",
+   "ar": "أوه",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "AH",
+   "ar": "آه",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "AAH",
+   "ar": "آاه",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "AAAH",
+   "ar": "آآآه!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "EEK",
+   "ar": "إييك!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HIC",
+   "ar": "هِك",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "COUGH",
+   "ar": "سعال",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "COUGH COUGH",
+   "ar": "كُح كُح",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "GASP",
+   "ar": "شهقة",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HUFF HUFF",
+   "ar": "لهاث",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "PANT PANT",
+   "ar": "لهاث",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "GULP",
+   "ar": "غلوب",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "NGH",
+   "ar": "نغ...",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HNGH",
+   "ar": "هنغ...",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "AGH",
+   "ar": "آغ!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "OW",
+   "ar": "آي!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "OUCH",
+   "ar": "آه! يؤلم",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "YIKES",
+   "ar": "يا للهول!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HEY",
+   "ar": "هيه!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HEY YOU",
+   "ar": "أنت! أنت هناك",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HELLO",
+   "ar": "مرحباً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HI",
+   "ar": "مرحباً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "YES",
+   "ar": "نعم",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "NO",
+   "ar": "لا",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "NOPE",
+   "ar": "كلا",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "YEAH",
+   "ar": "أجل",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "YEP",
+   "ar": "أجل",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "OKAY",
+   "ar": "حسناً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "OK",
+   "ar": "حسناً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "ALRIGHT",
+   "ar": "حسناً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "I SEE",
+   "ar": "فهمت",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "UNDERSTOOD",
+   "ar": "مفهوم",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "SERIOUSLY",
+   "ar": "حقاً؟",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "REALLY",
+   "ar": "حقاً؟",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "IMPOSSIBLE",
+   "ar": "مستحيل!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "NO WAY",
+   "ar": "مستحيل!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "WAIT",
+   "ar": "انتظر",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "WAIT A MINUTE",
+   "ar": "مهلاً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "STOP",
+   "ar": "توقف!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "STOP IT",
+   "ar": "كفّ عن هذا!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "RUN",
+   "ar": "اهرب!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "LET GO",
+   "ar": "أفلتني",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "LET ME GO",
+   "ar": "دعني أذهب",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HELP",
+   "ar": "النجدة!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HELP ME",
+   "ar": "ساعدني!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "SAVE ME",
+   "ar": "أنقذني!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "PLEASE",
+   "ar": "أرجوك",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "THANK YOU",
+   "ar": "شكراً لك",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "THANKS",
+   "ar": "شكراً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "SORRY",
+   "ar": "آسف",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "I AM SORRY",
+   "ar": "أنا آسف",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "I'M SORRY",
+   "ar": "أنا آسف",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "FORGIVE ME",
+   "ar": "سامحني",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "EXCUSE ME",
+   "ar": "المعذرة",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "PARDON",
+   "ar": "عفواً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "WELCOME",
+   "ar": "أهلاً بك",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "GOODBYE",
+   "ar": "وداعاً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "SEE YOU LATER",
+   "ar": "أراك لاحقاً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "GOOD LUCK",
+   "ar": "بالتوفيق",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "CONGRATULATIONS",
+   "ar": "تهانينا",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "THAT'S",
+   "ar": "ذلك...",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "WHAT",
+   "ar": "ماذا؟",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "WHO",
+   "ar": "من؟",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "WHY",
+   "ar": "لماذا؟",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "HOW",
+   "ar": "كيف؟",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "WHERE",
+   "ar": "أين؟",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "WHEN",
+   "ar": "متى؟",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "YOU",
+   "ar": "أنت...",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "DAMN",
+   "ar": "تباً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "DAMN IT",
+   "ar": "تباً!",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "SHIT",
+   "ar": "تباً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "CRAP",
+   "ar": "تباً",
+   "type": "interj",
+   "genre": [
+    "general"
+   ],
+   "priority": 80
+  },
+  {
+   "en": "WHO ARE YOU",
+   "ar": "من أنت؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHAT DID YOU SAY",
+   "ar": "ماذا قلت؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "SAY THAT AGAIN",
+   "ar": "أعد ما قلته",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHAT ARE YOU LOOKING AT",
+   "ar": "على ماذا تنظر؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHAT'S WRONG",
+   "ar": "ما الخطب؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHAT HAPPENED",
+   "ar": "ماذا حدث؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHAT IS THIS",
+   "ar": "ما هذا؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHAT'S GOING ON",
+   "ar": "ما الذي يحدث؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHAT ARE YOU DOING",
+   "ar": "ماذا تفعل؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHAT DO YOU WANT",
+   "ar": "ماذا تريد؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHERE ARE YOU GOING",
+   "ar": "إلى أين تذهب؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHERE IS HE",
+   "ar": "أين هو؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHERE AM I",
+   "ar": "أين أنا؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHO'S THERE",
+   "ar": "من هناك؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHO DID THIS",
+   "ar": "من فعل هذا؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHY ARE YOU HERE",
+   "ar": "لماذا أنت هنا؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WHY DID YOU DO THIS",
+   "ar": "لماذا فعلت هذا؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I DON'T UNDERSTAND",
+   "ar": "لا أفهم",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I DON'T KNOW",
+   "ar": "لا أعرف",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I KNOW",
+   "ar": "أعرف",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I KNEW IT",
+   "ar": "كنت أعلم",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I CAN'T BELIEVE IT",
+   "ar": "لا أصدّق ذلك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "IT CAN'T BE",
+   "ar": "لا يمكن أن يكون ذلك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "THAT'S IMPOSSIBLE",
+   "ar": "هذا مستحيل",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "THAT'S RIGHT",
+   "ar": "هذا صحيح",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "THAT'S WRONG",
+   "ar": "هذا خطأ",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "THAT'S ENOUGH",
+   "ar": "هذا يكفي",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "THAT'S IT",
+   "ar": "هذا كل شيء",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "ENOUGH",
+   "ar": "كفى",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "LET'S GO",
+   "ar": "هيا بنا",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "LET'S GO HOME",
+   "ar": "لنعد إلى البيت",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "FOLLOW ME",
+   "ar": "اتبعني",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "COME HERE",
+   "ar": "تعال إلى هنا",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "COME WITH ME",
+   "ar": "تعال معي",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WAIT FOR ME",
+   "ar": "انتظرني",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "HURRY UP",
+   "ar": "أسرع",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "QUICKLY",
+   "ar": "بسرعة",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "BE CAREFUL",
+   "ar": "كن حذراً",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WATCH OUT",
+   "ar": "احذر!",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "LOOK OUT",
+   "ar": "احذر!",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "BEHIND YOU",
+   "ar": "خلفك!",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I'M FINE",
+   "ar": "أنا بخير",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "ARE YOU OKAY",
+   "ar": "هل أنت بخير؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "ARE YOU ALL RIGHT",
+   "ar": "هل أنت بخير؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "DON'T WORRY",
+   "ar": "لا تقلق",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "DON'T CRY",
+   "ar": "لا تبكِ",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I'LL PROTECT YOU",
+   "ar": "سأحميك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I WILL PROTECT YOU",
+   "ar": "سأحميك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "LEAVE IT TO ME",
+   "ar": "اتركه لي",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "TRUST ME",
+   "ar": "ثق بي",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I'M BACK",
+   "ar": "لقد عدت",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "WELCOME BACK",
+   "ar": "مرحباً بعودتك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "LONG TIME NO SEE",
+   "ar": "لم أرَك منذ زمن",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "IT'S BEEN A WHILE",
+   "ar": "مرّ وقت طويل",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I GIVE UP",
+   "ar": "أستسلم",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I SURRENDER",
+   "ar": "أستسلم",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "YOU LOSE",
+   "ar": "لقد خسرت",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "IT'S OVER",
+   "ar": "انتهى الأمر",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "THE END",
+   "ar": "النهاية",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "TO BE CONTINUED",
+   "ar": "يُتبع...",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "DON'T LEAVE ME",
+   "ar": "لا تتركني",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "STAY WITH ME",
+   "ar": "ابقَ معي",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I LIKE YOU",
+   "ar": "أنا معجب بك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I LOVE YOU",
+   "ar": "أحبك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I MISSED YOU",
+   "ar": "اشتقت إليك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "PLEASE SPARE ME",
+   "ar": "أرجوك، اعفُ عني",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "SPARE MY LIFE",
+   "ar": "أبقِ على حياتي",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "DON'T KILL ME",
+   "ar": "لا تقتلني",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I'LL DO ANYTHING",
+   "ar": "سأفعل أي شيء",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "HAVE MERCY",
+   "ar": "ارحمني",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "KILL HIM",
+   "ar": "اقتلوه!",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "KILL THEM ALL",
+   "ar": "اقتلوهم جميعاً!",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "FALL BACK",
+   "ar": "تراجعوا!",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "DON'T TOUCH ME",
+   "ar": "لا تلمسني",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "DON'T COME NEAR ME",
+   "ar": "لا تقترب مني",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "STAY AWAY FROM ME",
+   "ar": "ابتعد عني",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "GET OUT",
+   "ar": "اخرج!",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "GET LOST",
+   "ar": "ابتعد عن وجهي",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "GET OUT OF MY SIGHT",
+   "ar": "اغرب عن وجهي",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "GO TO HELL",
+   "ar": "اذهب إلى الجحيم",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I'LL KILL YOU",
+   "ar": "سأقتلك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I WILL KILL YOU",
+   "ar": "سأقتلك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I'M GOING TO KILL YOU",
+   "ar": "سأقتلك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "YOU'RE DEAD",
+   "ar": "أنت ميت",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "I'LL MAKE YOU PAY",
+   "ar": "سأجعلك تدفع الثمن",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "YOU'LL PAY FOR THIS",
+   "ar": "ستدفع ثمن هذا",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "YOU WILL PAY FOR THIS",
+   "ar": "ستدفع ثمن هذا",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "HOW DARE YOU",
+   "ar": "كيف تجرؤ؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "DO YOU KNOW WHO I AM",
+   "ar": "هل تعرف من أكون؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "YOU HAVE NO IDEA WHO YOU'RE DEALING WITH",
+   "ar": "ليس لديك فكرة مع من تتعامل",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "DON'T MAKE ME LAUGH",
+   "ar": "لا تجعلني أضحك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "DON'T LOOK DOWN ON ME",
+   "ar": "لا تستخفّ بي",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "HOW DARE YOU LOOK DOWN ON ME",
+   "ar": "كيف تجرؤ على الاستخفاف بي؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "KNOW YOUR PLACE",
+   "ar": "اعرف مكانك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "SHUT UP",
+   "ar": "اصمت",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "SHUT YOUR MOUTH",
+   "ar": "أغلق فمك",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "STOP TALKING",
+   "ar": "كفّ عن الكلام",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "STOP TALKING NONSENSE",
+   "ar": "كفّ عن هذا الهراء",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "STOP TALKING NONSENSE ONCE HE LEAVES",
+   "ar": "كفّ عن هذا الهراء بعد أن يرحل",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "DON'T MAKE ME REPEAT MYSELF",
+   "ar": "لا تجعلني أكرر كلامي",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "ARE YOU DEAF",
+   "ar": "هل أنت أصم؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "YOU'RE CRAZY",
+   "ar": "أنت مجنون",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "ARE YOU CRAZY",
+   "ar": "هل جننت؟",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "THIS ISN'T IT",
+   "ar": "ليس هذا هو المطلوب",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "THIS ISN'T ENOUGH",
+   "ar": "هذا لا يكفي",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "THIS SHOULD BE ENOUGH",
+   "ar": "يجب أن يكون هذا كافياً",
+   "type": "sentence",
+   "genre": [
+    "general"
+   ],
+   "priority": 90
+  },
+  {
+   "en": "BASTARD",
+   "ar": "وغد",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "BASTARDS",
+   "ar": "أوغاد",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "YOU BASTARD",
+   "ar": "أيها الوغد",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "YOU BASTARDS",
+   "ar": "أيها الأوغاد",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "WHICH BASTARD",
+   "ar": "أي وغد هذا؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "YOU DAMN BASTARD",
+   "ar": "أيها الوغد اللعين",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "YOU FILTHY LEECHES",
+   "ar": "أيها الطفيليون القذرون...!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "LEECHES",
+   "ar": "طفيليون",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "SCUM",
+   "ar": "حثالة",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "YOU SCUM",
+   "ar": "أيها الحثالة",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "TRASH",
+   "ar": "حقير",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "YOU TRASH",
+   "ar": "أيها الحقير",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "BRAT",
+   "ar": "صغير وقح",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "BRATS",
+   "ar": "صغار",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "YOU BRAT",
+   "ar": "أيها الصغير الوقح",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "FOOL",
+   "ar": "أحمق",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "YOU FOOL",
+   "ar": "أيها الأحمق",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "IDIOT",
+   "ar": "غبي",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "YOU IDIOT",
+   "ar": "أيها الغبي",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MORON",
+   "ar": "أبله",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "STUPID",
+   "ar": "غبي",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MADMAN",
+   "ar": "مجنون",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "YOU MADMAN",
+   "ar": "أيها المجنون",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "WRETCH",
+   "ar": "بائس",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "VERMIN",
+   "ar": "حشرات",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "INSECT",
+   "ar": "حشرة",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "WORM",
+   "ar": "دودة",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "BEAST",
+   "ar": "وحش",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MONSTER",
+   "ar": "وحش",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "NONSENSE",
+   "ar": "هراء",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "BULLSHIT",
+   "ar": "هراء",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "RIP US OFF",
+   "ar": "خداعنا",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "RIP YOU OFF",
+   "ar": "خداعك",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "RIP ME OFF",
+   "ar": "خداعي",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "TRY TO RIP US OFF",
+   "ar": "محاولة خداعنا",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "HOW DARE YOU TRY TO",
+   "ar": "كيف تجرؤ على محاولة",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "HOW DARE YOU TRY TO RIP US OFF",
+   "ar": "كيف تجرؤون على محاولة خداعنا..؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "FRESH YOUNG BRATS",
+   "ar": "صغارك الطازجون",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "OLD WRINKLY BODY",
+   "ar": "جسد عجوز متغضّن",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "TURN A PROFIT",
+   "ar": "تحقيق ربح",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "LOOK LIKE A JOKE TO YOU",
+   "ar": "بدا لكم كمزحة",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "SELL OFF",
+   "ar": "بيع",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "SELL YOU OFF",
+   "ar": "سأبيعك",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MY LIFE",
+   "ar": "حياتي",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MY FAMILY",
+   "ar": "عائلتي",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MY WIFE",
+   "ar": "زوجتي",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MY HUSBAND",
+   "ar": "زوجي",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MY SON",
+   "ar": "ابني",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MY DAUGHTER",
+   "ar": "ابنتي",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "TEN TIMES",
+   "ar": "عشرة أضعاف",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "TEN TIMES THE PRINCIPAL",
+   "ar": "عشرة أضعاف أصل الدين",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "PRINCIPAL",
+   "ar": "أصل الدين",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "INTEREST",
+   "ar": "الفائدة",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "DEBT",
+   "ar": "دَين",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "PAY BACK",
+   "ar": "سداد",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "PAY ME BACK",
+   "ar": "سدّد لي ديني",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "LOAN SHARK",
+   "ar": "مُرابٍ",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MONEYLENDER",
+   "ar": "مُقرِض",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "COLLATERAL",
+   "ar": "ضمان",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "SLAVE",
+   "ar": "عبد",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "SLAVE TRADER",
+   "ar": "تاجر عبيد",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "IDENTITY PLAQUE",
+   "ar": "لوحة الهوية",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "IDENTITY TOKEN",
+   "ar": "رمز الهوية",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "HUNGRY GHOST",
+   "ar": "شبح جائع",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "FROM HELL",
+   "ar": "من الجحيم",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "HUNGRY GHOST FROM HELL",
+   "ar": "شبح جائع من الجحيم",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MURIM",
+   "ar": "عالم المورِم",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MARTIAL ARTS",
+   "ar": "الفنون القتالية",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MARTIAL WORLD",
+   "ar": "عالم الفنون القتالية",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "JIANGHU",
+   "ar": "الجيانغهو",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ORTHODOX FACTION",
+   "ar": "الفصيل المستقيم",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "HEAVENLY DEMON",
+   "ar": "الشيطان السماوي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DEMONIC CULT",
+   "ar": "الطائفة الشيطانية",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "HEAVENLY DEMON CULT",
+   "ar": "طائفة الشيطان السماوي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MURIM ALLIANCE",
+   "ar": "تحالف المورِم",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ALLIANCE LEADER",
+   "ar": "زعيم التحالف",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SECT",
+   "ar": "طائفة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SECT LEADER",
+   "ar": "زعيم الطائفة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SECT MASTER",
+   "ar": "سيد الطائفة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "BLACK BONE SECT",
+   "ar": "طائفة العظم الأسود",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "CLAN",
+   "ar": "عشيرة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "CLAN HEAD",
+   "ar": "رئيس العشيرة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "PATRIARCH",
+   "ar": "كبير العشيرة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "FAMILY HEAD",
+   "ar": "رب العائلة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ELDER",
+   "ar": "الشيخ",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ELDERS",
+   "ar": "الشيوخ",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "GRAND ELDER",
+   "ar": "الشيخ الأعظم",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DISCIPLE",
+   "ar": "تلميذ",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DISCIPLES",
+   "ar": "التلاميذ",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SENIOR BROTHER",
+   "ar": "الأخ الأكبر",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "JUNIOR BROTHER",
+   "ar": "الأخ الأصغر",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SENIOR SISTER",
+   "ar": "الأخت الكبرى",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "JUNIOR SISTER",
+   "ar": "الأخت الصغرى",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MASTER",
+   "ar": "المعلّم",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "GRANDMASTER",
+   "ar": "المعلّم الأكبر",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "YOUNG MASTER",
+   "ar": "السيد الشاب",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ELDEST YOUNG MASTER",
+   "ar": "السيد الشاب الأكبر",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "YOUNG LADY",
+   "ar": "الآنسة الشابة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MISS",
+   "ar": "الآنسة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MADAM",
+   "ar": "سيدتي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MY LORD",
+   "ar": "سيدي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "YOUR MAJESTY",
+   "ar": "جلالتك",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "YOUR HIGHNESS",
+   "ar": "سموّك",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "YOUR EXCELLENCY",
+   "ar": "سعادتك",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SIR",
+   "ar": "سيدي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SWORD HOUSE",
+   "ar": "بيت السيف",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "LUOYANG",
+   "ar": "لوه يانغ",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "LUOYANG SWORD HOUSE",
+   "ar": "بيت السيف في لوه يانغ",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ELDEST YOUNG MASTER OF THE LUOYANG SWORD HOUSE",
+   "ar": "السيد الشاب الأكبر لبيت السيف في لوه يانغ",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SWORD SAINT",
+   "ar": "قديس السيف",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SWORD MASTER",
+   "ar": "سيد السيف",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SWORD GOD",
+   "ar": "إله السيف",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SWORDSMAN",
+   "ar": "سيّاف",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SWORD TECHNIQUE",
+   "ar": "تقنية السيف",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SWORD ART",
+   "ar": "فن السيف",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SWORD INTENT",
+   "ar": "نية السيف",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SWORD QI",
+   "ar": "طاقة السيف",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "QI",
+   "ar": "التشي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "INNER QI",
+   "ar": "الطاقة الداخلية",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "INTERNAL ENERGY",
+   "ar": "الطاقة الداخلية",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "INTERNAL STRENGTH",
+   "ar": "القوة الداخلية",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DANTIAN",
+   "ar": "الدانتيان",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "LOWER DANTIAN",
+   "ar": "الدانتيان السفلي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MERIDIANS",
+   "ar": "المسارات الطاقية",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ACUPOINT",
+   "ar": "نقطة الوخز",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ACUPOINTS",
+   "ar": "نقاط الوخز",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "QI DEVIATION",
+   "ar": "انحراف التشي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "CULTIVATION",
+   "ar": "الزراعة الروحية",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "CULTIVATOR",
+   "ar": "مزارع روحي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "CULTIVATION BASE",
+   "ar": "أساس الزراعة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "BREAKTHROUGH",
+   "ar": "اختراق",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "REALM",
+   "ar": "المرتبة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MARTIAL ARTIST",
+   "ar": "فنان قتالي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "FIRST-RATE MASTER",
+   "ar": "خبير من الدرجة الأولى",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "HIDDEN WEAPON",
+   "ar": "سلاح خفي",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "POISON",
+   "ar": "سمّ",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ANTIDOTE",
+   "ar": "ترياق",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "CRIPPLED",
+   "ar": "مشلول",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MARTIAL ARTS TOURNAMENT",
+   "ar": "بطولة الفنون القتالية",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "BEGGARS' SECT",
+   "ar": "طائفة المتسولين",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SHAOLIN",
+   "ar": "شاولين",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "WUDANG",
+   "ar": "وودانغ",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MOUNT HUA SECT",
+   "ar": "طائفة جبل هوا",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "HEAVEN AND EARTH",
+   "ar": "السماء والأرض",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "EMPEROR",
+   "ar": "الإمبراطور",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "EMPRESS",
+   "ar": "الإمبراطورة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "PRINCE",
+   "ar": "الأمير",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "PRINCESS",
+   "ar": "الأميرة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "KING",
+   "ar": "الملك",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "QUEEN",
+   "ar": "الملكة",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "GENERAL",
+   "ar": "الجنرال",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DUKE",
+   "ar": "الدوق",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "KNIGHT",
+   "ar": "فارس",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "NOBLE",
+   "ar": "نبيل",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "NOBLES",
+   "ar": "النبلاء",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "HEIR",
+   "ar": "الوريث",
+   "type": "term",
+   "genre": [
+    "murim"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "HUNTER",
+   "ar": "صيّاد",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "HUNTERS ASSOCIATION",
+   "ar": "رابطة الصيّادين",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "GATE",
+   "ar": "البوابة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DUNGEON",
+   "ar": "الزنزانة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DUNGEON BREAK",
+   "ar": "انفجار الزنزانة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "RAID",
+   "ar": "غارة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "RAID PARTY",
+   "ar": "فريق الغارة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "BOSS MONSTER",
+   "ar": "وحش الزعيم",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MAGIC STONE",
+   "ar": "حجر سحري",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MANA STONE",
+   "ar": "حجر المانا",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MANA",
+   "ar": "المانا",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MANA CORE",
+   "ar": "نواة المانا",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "AURA",
+   "ar": "الأورا",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "AWAKENED",
+   "ar": "المستيقظ",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "AWAKENING",
+   "ar": "اليقظة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "RANK",
+   "ar": "الرتبة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "S-RANK",
+   "ar": "الرتبة S",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "A-RANK",
+   "ar": "الرتبة A",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "E-RANK",
+   "ar": "الرتبة E",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SKILL",
+   "ar": "مهارة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "PASSIVE SKILL",
+   "ar": "مهارة سلبية",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ACTIVE SKILL",
+   "ar": "مهارة نشطة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "LEVEL UP",
+   "ar": "ارتفع المستوى",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "LEVEL",
+   "ar": "المستوى",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "STATS",
+   "ar": "الإحصائيات",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "STATUS WINDOW",
+   "ar": "نافذة الحالة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "STATUS",
+   "ar": "الحالة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SYSTEM",
+   "ar": "النظام",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "QUEST",
+   "ar": "مهمة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "QUEST COMPLETE",
+   "ar": "اكتملت المهمة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "QUEST FAILED",
+   "ar": "فشلت المهمة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "REWARD",
+   "ar": "المكافأة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "PENALTY",
+   "ar": "العقوبة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "INVENTORY",
+   "ar": "الحقيبة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "EXP",
+   "ar": "الخبرة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SHADOW",
+   "ar": "ظلّ",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SHADOW SOLDIER",
+   "ar": "جندي الظل",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DEMON LORD",
+   "ar": "ملك الشياطين",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DEMON KING",
+   "ar": "ملك الشياطين",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DEMON REALM",
+   "ar": "عالم الشياطين",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DEMON",
+   "ar": "شيطان",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ANGEL",
+   "ar": "ملاك",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "DRAGON",
+   "ar": "تنين",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "GOD",
+   "ar": "إله",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "GODS",
+   "ar": "الآلهة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SAINT",
+   "ar": "القديسة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "HOLY",
+   "ar": "مقدس",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "CURSE",
+   "ar": "لعنة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "CURSED",
+   "ar": "ملعون",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "BLESSING",
+   "ar": "بركة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "CONTRACT",
+   "ar": "عقد",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SUMMON",
+   "ar": "استدعاء",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SPIRIT",
+   "ar": "روح",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "SPIRIT BEAST",
+   "ar": "وحش روحي",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MAGIC",
+   "ar": "سحر",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "MAGE",
+   "ar": "ساحر",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "WIZARD",
+   "ar": "ساحر",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ARCHMAGE",
+   "ar": "الساحر الأعظم",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "TOWER",
+   "ar": "البرج",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "ACADEMY",
+   "ar": "الأكاديمية",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "GENIUS",
+   "ar": "عبقري",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "TALENT",
+   "ar": "موهبة",
+   "type": "term",
+   "genre": [
+    "hunter"
+   ],
+   "priority": 50
+  },
+  {
+   "en": "REGRESSION",
+   "ar": "الارتداد",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "REGRESSOR",
+   "ar": "المرتدّ",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "I'VE REGRESSED",
+   "ar": "لقد ارتددتُ بالزمن",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "I RETURNED TO THE PAST",
+   "ar": "عدتُ إلى الماضي",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "REINCARNATED",
+   "ar": "وُلدتُ من جديد",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "REINCARNATION",
+   "ar": "التناسخ",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "TRANSMIGRATED",
+   "ar": "انتقلتُ إلى عالم آخر",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "SECOND LIFE",
+   "ar": "حياة ثانية",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "THIS TIME",
+   "ar": "هذه المرة",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "THIS TIME I WILL PROTECT EVERYONE",
+   "ar": "هذه المرة سأحمي الجميع",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "THIS TIME I WON'T LET IT HAPPEN AGAIN",
+   "ar": "هذه المرة لن أدع ذلك يحدث مجدداً",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "I WON'T LET IT HAPPEN AGAIN",
+   "ar": "لن أدع ذلك يحدث مجدداً",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "I'LL CHANGE THE FUTURE",
+   "ar": "سأغيّر المستقبل",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "THE FUTURE I KNOW",
+   "ar": "المستقبل الذي أعرفه",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "IN MY PREVIOUS LIFE",
+   "ar": "في حياتي السابقة",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "IN MY PAST LIFE",
+   "ar": "في حياتي السابقة",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "THE ORIGINAL STORY",
+   "ar": "القصة الأصلية",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "VILLAIN",
+   "ar": "الشرير",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "VILLAINESS",
+   "ar": "الشريرة",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "PROTAGONIST",
+   "ar": "البطل",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "HERO",
+   "ar": "البطل",
+   "type": "sentence",
+   "genre": [
+    "regression"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "A HUNGRY GHOST FROM HELL",
+   "ar": "شبح جائع من الجحيم!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "A HUNGRY GHOST FROM HELL HAS APPEARED",
+   "ar": "لقد ظهر شبح جائع من الجحيم!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "HAVE I TRULY BECOME A HUNGRY GHOST FROM HELL",
+   "ar": "هل أصبحتُ حقاً شبحاً جائعاً من الجحيم؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "HM THIS SCENT",
+   "ar": "هم؟ هذه الرائحة؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "HM IS THAT WHISTLING",
+   "ar": "هم؟ هل هذا... صفير؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "THIS SCENT",
+   "ar": "هذه الرائحة...!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "IS HE REALLY A GHOST",
+   "ar": "هل هو شبح حقاً؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "PLEASE TAKE CARE MY LORD",
+   "ar": "اعتنِ بنفسك يا سيدي",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "AND THAT WASN'T ALL",
+   "ar": "ولم يكن هذا كل شيء.",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "HAVE YOU FORGOTTEN",
+   "ar": "هل نسيت؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "THOSE EYES OF YOURS ONCE FULL OF PROFOUND WISDOM",
+   "ar": "تلك العينان اللتان كانتا يوماً مليئتين بحكمة عميقة،",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "WERE GOUGED OUT WITH RED-HOT IRON SKEWERS",
+   "ar": "اقتُلعتا بأسياخ حديد محمّاة.",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "YOUR DELICATE HANDS THAT HAD NEVER KNOWN A DAY'S HARD LABOR",
+   "ar": "يداك الرقيقتان اللتان لم تعرفا يوماً عملاً شاقاً...",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "I CANNOT SEE",
+   "ar": "لا أستطيع الرؤية!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "PARDON ME SIR BUT WE'RE COMPLETELY FULL TODAY",
+   "ar": "المعذرة يا سيدي، لكننا ممتلئون تماماً اليوم!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "SIR YOU CAN'T GO IN",
+   "ar": "سيدي، لا يمكنك الدخول! سيدي!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "I'M TELLING YOU I CLEARLY SAW AN EMPTY SEAT",
+   "ar": "أقول لك إنني رأيت مقعداً فارغاً بوضوح...",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "WHAT DO YOU MEAN THERE ARE CLEARLY SEATS RIGHT OVER THERE",
+   "ar": "ماذا تقصد؟ هناك مقاعد واضحة هناك.",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "OR MAYBE I'LL JUST HAVE THEM FOR MYSELF",
+   "ar": "أو ربما أحتفظ بهم لنفسي..؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "LET'S SEE HOW MUCH YOUR FRESH YOUNG BRATS WILL SELL FOR SHALL WE",
+   "ar": "لنرَ بكم سيُباع صغارك الطازجون، أليس كذلك؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "YOU SHOULD'VE PAID THE MONEY BACK ON TIME THEN",
+   "ar": "كان عليك سداد المال في موعده إذن.",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "DO YOU THINK SELLING THAT OLD WRINKLY BODY OF YOURS WOULD EVEN TURN A PROFIT",
+   "ar": "أتظن أن بيع جسدك العجوز المتغضّن هذا سيدرّ ربحاً أصلاً؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "PLEASE JUST TAKE ME INSTEAD NOT MY FAMILY",
+   "ar": "أرجوك، خذني أنا بدلاً منهم، لا عائلتي...!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "WITH JUST THIS ONE THING",
+   "ar": "بهذا الشيء الوحيد فقط،",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "I CAN SELL OFF EVERYTHING FROM YOUR SHOP TO EVEN YOUR WIFE AND KIDS",
+   "ar": "أستطيع بيع كل شيء، من متجرك حتى زوجتك وأطفالك!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "ISN'T IT A TRULY WONDERFUL WORLD",
+   "ar": "أليس عالماً رائعاً حقاً؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "ENOUGH LET'S JUST GRAB HIS IDENTITY PLAQUE AND GO",
+   "ar": "كفى! لنأخذ لوحة هويته ونذهب!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "YOU BASTARDS TEN TIMES THE PRINCIPAL IN INTEREST IS ABSURD",
+   "ar": "أيها الأوغاد! فائدة بعشرة أضعاف أصل الدين أمر سخيف...!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "DID OUR BLACK BONE SECT LOOK LIKE A JOKE TO YOU",
+   "ar": "هل بدت لكم طائفة العظم الأسود مزحة؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "STRANGE HOW STRANGE",
+   "ar": "غريب... كم هو غريب.",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "EVEN AFTER EATING ALL THAT MY HUNGER STILL ISN'T SATISFIED",
+   "ar": "حتى بعد أكل كل ذلك، ما زال جوعي لم يُشبَع...",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "THEN WHAT AM I SUPPOSED TO SATISFY THIS HUNGER WITH",
+   "ar": "فبماذا يُفترض بي أن أُشبع هذا الجوع إذن؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "THIS ISN'T IT THIS ISN'T ENOUGH THIS ISN'T IT",
+   "ar": "ليس هذا هو المطلوب... هذا لا يكفي. ليس هذا هو المطلوب.",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "HOW MUCH WAS IT",
+   "ar": "كم كان المبلغ؟",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "HOW DARE YOU {X}",
+   "ar": "كيف تجرؤ على {X}",
+   "type": "template",
+   "slots": {
+    "X": "translate"
+   },
+   "priority": 60,
+   "genre": [
+    "general"
+   ]
+  },
+  {
+   "en": "I WILL {X}",
+   "ar": "سوف {X}",
+   "type": "template",
+   "slots": {
+    "X": "translate"
+   },
+   "priority": 30,
+   "genre": [
+    "general"
+   ]
+  },
+  {
+   "en": "DON'T {X}",
+   "ar": "لا {X}",
+   "type": "template",
+   "slots": {
+    "X": "translate"
+   },
+   "priority": 30,
+   "genre": [
+    "general"
+   ]
+  },
+  {
+   "en": "WHAT DO YOU MEAN {X}",
+   "ar": "ماذا تقصد؟ {X}",
+   "type": "template",
+   "slots": {
+    "X": "translate"
+   },
+   "priority": 50,
+   "genre": [
+    "general"
+   ]
+  },
+  {
+   "en": "I'M TELLING YOU, {X}",
+   "ar": "أقول لك، {X}",
+   "type": "template",
+   "slots": {
+    "X": "translate"
+   },
+   "priority": 50,
+   "genre": [
+    "general"
+   ]
+  },
+  {
+   "en": "IS IT {X}",
+   "ar": "هل هو {X}؟",
+   "type": "template",
+   "slots": {
+    "X": "translate"
+   },
+   "priority": 20,
+   "genre": [
+    "general"
+   ]
+  },
+  {
+   "en": "YOU {X}!",
+   "ar": "أنت {X}!",
+   "type": "template",
+   "slots": {
+    "X": "translate"
+   },
+   "priority": 10,
+   "genre": [
+    "general"
+   ]
+  }
+ ]
+}

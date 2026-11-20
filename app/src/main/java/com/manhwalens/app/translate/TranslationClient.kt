@@ -30,6 +30,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 class TranslationClient(private val cache: TranslationCache = TranslationCache(512), private val post:()->Map<String,String> = {emptyMap()}, private val debug:()->Boolean={false}, private val readings: () -> Map<String,String> = { ReadingGlossary.defaults }) {
 
+    private val phraseCache=TranslationCache(512)
     private val nativePermits = kotlinx.coroutines.sync.Semaphore(2)
     private val translators = mutableMapOf<Pair<String, String>, Translator>()
     private val knownPairs = mutableSetOf<Pair<String, String>>()
@@ -53,6 +54,22 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         }
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
         val lookupStart=System.nanoTime()
+        val library=com.manhwalens.app.phrasebook.PhraseLibrary
+        val book=library.ready()
+        val ambiguous=normalized.trimEnd('.', '…').equals("no",true) && region.confidence<.60f
+        val cacheIdentity=listOf(normalized,library.version,terms,post(),glossaryNames,previous).toString()
+        if(!ambiguous && book!=null && normalized.none { it.isLetter() && Character.UnicodeScript.of(it.code)!=Character.UnicodeScript.LATIN }) {
+            phraseCache.get(cacheIdentity)?.let { Diagnostics.info("phrasebook","cache","hit");return TranslatedBlock(region,normalized,it,method="Phrasebook cache") }
+            try {
+                val match=book.render(normalized){ part,subs ->translateText(part,glossaryNames,terms+subs,retryCase) }
+                if(match!=null && ArabicOutput.hasLetters(match.text) && match.text.none { it in 'A'..'Z' || it in 'a'..'z' }){
+                    val ar=com.manhwalens.app.phrasebook.ArabicFinish.apply(match.text);phraseCache.put(cacheIdentity,ar)
+                    com.manhwalens.app.diagnostics.SessionScorecard.lookup(true,System.nanoTime()-lookupStart)
+                    Diagnostics.info("phrasebook","match","stage=${match.stage} repaired=${normalized!=region.text}")
+                    return TranslatedBlock(region,normalized,ar,method="Phrasebook ${match.stage}")
+                }
+            }catch(c:kotlinx.coroutines.CancellationException){throw c}catch(_:TranslationFailure){ /* ordinary validated fallback below */ }
+        }
         val known=com.manhwalens.app.translate.DialogueLexicon.interjection(normalized)
         val reviewed = known ?: terms[normalized.trimEnd('!','?','.','…').lowercase()]?.let { it+normalized.takeLastWhile { c->c in "!?.…" }.replace('?','؟') } ?: if (NameDetector.find(normalized,glossaryNames).none { it.source==com.manhwalens.app.names.NameHit.Source.GLOSSARY && it.name.lowercase() !in terms }) DialogueLexicon.translate(normalized, previous,terms,fuzzy=true) else null
         com.manhwalens.app.diagnostics.SessionScorecard.lookup(reviewed!=null,System.nanoTime()-lookupStart)
@@ -61,7 +78,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val properName=glossaryNames.any { normalized.trimEnd('!','?','.','…').equals(it,true) }
         val ambiguousMark=normalized.trimEnd('.','…').equals("no",true) && region.confidence<.60f
         if(ambiguousMark || scriptNoise || (reviewed==null && !properName && !com.manhwalens.app.pipeline.OcrInputQuality.isNumericContent(normalized) &&
-            (com.manhwalens.app.pipeline.ReadingEnglish.validCount(normalized)<2 || (region.surface?.reliable==false && region.confidence<.62f)))) return TranslatedBlock(region,normalized,"","OCR-UNCERTAIN",method="Script or lexical validation")
+            (com.manhwalens.app.pipeline.ReadingEnglish.validCount(normalized)<(if(region.confidence>=.5f && region.surface?.reliable!=false)1 else 2) || (region.surface?.reliable==false && region.confidence<.62f)))) return TranslatedBlock(region,normalized,"","OCR-UNCERTAIN",method="Script or lexical validation")
         if ((reviewed == null && region.confidence.isFinite() && region.confidence < .5f && !(region.confidence>=.30f && com.manhwalens.app.pipeline.ReadingEnglish.score(normalized,protectedNames)>=.8)) ||
             com.manhwalens.app.pipeline.TranslationInput.unresolved(normalized, protectedNames)) {
             return TranslatedBlock(region, normalized, "", "OCR-UNCERTAIN", method = "OCR input validation")
@@ -93,7 +110,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
         val corrections=post()
         val identity = corrections.toSortedMap().toString() + terms.toSortedMap().toString() + "\u0000" + com.manhwalens.app.pipeline.TranslationCache.normalize(trimmed) + "\u0000" + glossaryNames.filter { trimmed.contains(it,ignoreCase=true) }.sorted().joinToString("\u0000")
-        val cacheKey = "validated-v4:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
+        val cacheKey = "validated-v5:${com.manhwalens.app.phrasebook.PhraseLibrary.version}:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
         cache.get(cacheKey)?.let { return it }
 
         val maskResult = try { NameShield.mask(trimmed, glossaryNames+terms.keys) }
