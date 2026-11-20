@@ -1,25 +1,19 @@
 # ManhwaLens engineering state
 
-## Current release: v1.1.22
+## Current work: v1.1.23 direct rendering
 
-Branch: `arena/ae360a1c-manhwalens-v2`; PR9 open, not merged. Last public release at start of task: v1.1.21. Native Android / offline-first / ML Kit EN→AR unchanged. Existing durable signer reused; never regenerate it or clear user data.
+Branch `arena/ae360a1c-manhwalens-v2`; PR9 open, not merged. Previous public release v1.1.22. Native Android, offline ML Kit EN→AR retained. Reuse existing signing vault/certificate; never reset data.
 
-Implemented this task: bounded confusion dictionary and unresolved-input gate with confirmed-name shielding; two reviewed natural whole-utterance translations; display ellipsis normalization; single transient-execution retry; confidence-aware work identity; per-item preflight isolation; explicit reader failure states; capped measured translation-only reader with internal source toggle/close; 18%-area floating-icon hide/restore.
+User reversed the secondary translation reader design. Its source files, threshold controller, launcher branches, controls and dependent tests have been deleted, not hidden. The main capture button remains. Successful text now tries source geometry then expands to a measured/clamped on-page rectangle, excluding the main control and other displayed translations. No extra interaction is required to reveal it.
 
-Evidence, affected components, limitations and test details: `docs/QUALITY-READER-1.1.22.md`. Latest attachment: report 1795184359435 (185 retained samples). Prior safety design: `docs/SAFE-REPLACEMENT-1.1.21.md`.
+Report: `docs/DIRECT-RENDERING-1.1.23.md`. Earlier audit reports describe historical designs and are superseded where they concern overflow presentation.
 
-## Non-negotiable safety
+## Remaining limitations
 
-No opaque mask before complete native layout and offscreen text+background preparation. Failed/unfit/unreliable items leave source visible. Current request identity required; stale requests invalidated. No cloud translation, heavier engine, automatic OCR retry or unbounded model retry. Retry added here is one transient SDK execution retry only, per user's explicit request.
+Finite display area cannot hold arbitrary text at a readable minimum; exhaustion or rendering failure preserves source without any secondary UI. Expanded rectangles can obscure artwork. Actual Xiaomi 23106RN0DA / Android14 overlay z-order, drag timing, touch, rotation, latency and upgrade still require device checks.
 
-## Open issues / no unsupported claims
-
-- Not a full English spellchecker. Ambiguous W/ALE, AGONN, HIN and unknown names are flagged rather than guessed; dictionary coverage bounded.
-- No scene/speaker context for ML Kit, no reliable cross-bubble translation redistribution. Previous-region metadata is not model context.
-- General fluent Arabic, pronoun/terminology consistency and semantic completeness remain unverified beyond reviewed examples.
-- End-to-end latency parity on Xiaomi 23106RN0DA Android 14 is not established. Historical report baseline and emulator cleanup-only benchmark must not be conflated.
-- Physical overlay/icon lifecycle, rotation/touch, upgrade/data preservation and compositor behaviour still require device testing.
+General ML Kit semantic quality, unknown-name handling, full English spell correction and speaker-aware cross-bubble context remain limited as previously documented. No engine swap, cloud translation or extra OCR pass.
 
 ## Verification
 
-App source `642d55c`: CI 44757237108 passed unit tests/build; Android14 44757237032 passed native reader/icon tests and existing regressions. Warm cleanup microbenchmark (1,000 utterances, same run): prior 2,378,443µs total, current 1,370,046µs total. This is not end-to-end latency or Xiaomi parity. An additional severed-dialogue validator golden is covered by the release unit-test gate. Release build/unit tests 44758047001 and durable-vault signing/identity check 44758664526 passed. Published v1.1.22: https://github.com/mouadknight0-cell/ManhwaLens-v2/releases/tag/v1.1.22 . Same signer; physical update not tested.
+Current tracked-tree removed-component/label search: zero matches at implementation checkpoint. GitHub tests in progress; final execution/publication IDs will be recorded after completion.

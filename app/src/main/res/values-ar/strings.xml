@@ -69,7 +69,6 @@
     <!-- ورقة النتيجة -->
     <string name="result_title">الترجمة</string>
     <string name="result_copy_all">نسخ الكل</string>
-    <string name="result_copied">نُسخ إلى الحافظة</string>
     <string name="result_saved">حُفظ في السجل</string>
     <string name="result_empty">لم يُعثر على نص مقروء في الشاشة</string>
     <string name="result_close">إغلاق</string>
