@@ -43,7 +43,7 @@ class PhraseIndex(rows:List<Entry>,enabled:Set<String>) {
         return out}
     suspend fun render(text:String,mt:suspend(String,Map<String,String>)->String):Hit? {
         lookup(text)?.let{return it};val parts=sentence.findAll(text).map { it.value.trim() }.filter(String::isNotEmpty).toList()
-        if(parts.size in 2..8 && parts.any {lookup(it)!=null})return Hit(parts.joinToString(" "){p->lookup(p)?.text?:single(p,mt)?.text?:mt(p,emptyMap())},"sentence")
+        if(parts.size in 2..8 && parts.any {lookup(it)!=null})return Hit(parts.map {p->lookup(p)?.text?:single(p,mt)?.text?:mt(p,emptyMap())}.joinToString(" "),"sentence")
         return single(text,mt)
     }
     private suspend fun single(text:String,mt:suspend(String,Map<String,String>)->String):Hit? {

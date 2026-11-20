@@ -14,6 +14,7 @@ object CaptureManager {
     @Volatile var currentBoxes:Pair<String,List<android.graphics.Rect>>?=null
     @Volatile var debugBoxes: Pair<String,List<android.graphics.Rect>>? = null
     @Volatile var pixelHashes:Map<com.manhwalens.app.pipeline.PageState.Id,Int> = emptyMap()
+    var followFrame:((Int?,Boolean,(com.manhwalens.app.pipeline.PageState.Id,Int)->Boolean?)->Unit)?=null
     var validateOverlays:((Map<com.manhwalens.app.pipeline.PageState.Id,Int>)->Unit)?=null
     var restoreControlsAfterFrame:(()->Unit)?=null
     @Volatile var dockVisible = false

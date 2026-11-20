@@ -116,6 +116,7 @@ fun SettingsScreen(
                 scope.launch { val message=try { com.manhwalens.app.diagnostics.CompleteReport.reset(context); reportGeneration++; "تمت إعادة تعيين التقرير" } catch(e:Exception){ "تعذرت إعادة التعيين: ${e.message}" }; android.widget.Toast.makeText(context,message,android.widget.Toast.LENGTH_LONG).show() }; Unit
             }
         }) { Text("إعادة تعيين التقرير") }
+        PhraseSettings()
         key(reportGeneration) { DiagnosticTools() }
         SettingsGroup("متقدم · Advanced", "الأداء، سجل القراءة، معلومات التطبيق") {
             Text("المعالجة محلية. OCR أصلي واحد كحد أقصى، ومهمتا ترجمة أصليتان. الكاش تلقائي ولا توجد إعدادات جودة وهمية.")

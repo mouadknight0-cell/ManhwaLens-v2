@@ -121,6 +121,16 @@ class ScreenCaptureService : Service() {
     private var pipelineHeight = 0
     private var pipelineDensityDpi = 0
 
+    private var lastRows:DoubleArray?=null
+    private fun trackFrame(image:Image,changed:Boolean){
+        if(CaptureManager.pixelHashes.isEmpty())return
+        val p=image.planes[0];val buf=p.buffer;val masks=CaptureManager.overlayBounds
+        fun gray(x:Int,y:Int):Int {if(x !in 0 until image.width || y !in 0 until image.height || masks.any { it.contains(x,y) })return -1;val i=y*p.rowStride+x*p.pixelStride;return ((buf[i].toInt() and 255)*3+(buf[i+1].toInt() and 255)*6+(buf[i+2].toInt() and 255))/10}
+        val rows=DoubleArray(VerticalPhase.N){row->var sum=0;var n=0;for(j in 1..16){val g=gray(image.width*j/17,image.height*(2*row+1)/(2*VerticalPhase.N));if(g>=0){sum+=g;n++}};sum.toDouble()/maxOf(1,n)}
+        val cells=lastRows?.let {if(changed)VerticalPhase.shift(it,rows) else 0};lastRows=rows
+        val dy=cells?.takeIf { kotlin.math.abs(it)<=2 }?.let { it*image.height/VerticalPhase.N }
+        val sigs=verifiedRegions;CaptureManager.followFrame?.invoke(dy,changed){id,offset->sigs.firstOrNull {com.manhwalens.app.pipeline.PageState.id(it.region)==id}?.perimeter(offset,::gray)}
+    }
     private val frameListener = ImageReader.OnImageAvailableListener { reader ->
         val image = runCatching { reader.acquireLatestImage() }.getOrElse {
             Diagnostics.error("capture", "frame_acquire", ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED, "frame acquisition failed", throwable = it)
@@ -132,6 +142,7 @@ class ScreenCaptureService : Service() {
             val now=android.os.SystemClock.elapsedRealtime()
             val motion=liveGate.observe(sample,now,captureJob?.isActive==true)
             if ((application as ManhwaLensApp).settingsRepository.debug.value) com.manhwalens.app.diagnostics.SessionScorecard.gate(now,liveGate.fraction,motion,liveGate.ready(now))
+            trackFrame(image,motion)
             if (motion && !(captureJob?.isActive==true && unchanged(image))) {
                 sceneRevision = liveGate.revision
                 CaptureManager.activeResultId = null
@@ -193,6 +204,7 @@ class ScreenCaptureService : Service() {
                     kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
                         latestFrame.get()?.let { image ->
                             if (liveGate.observe(sampleFrame(image.image), android.os.SystemClock.elapsedRealtime(),captureJob?.isActive==true) && !(captureJob?.isActive==true && unchanged(image.image))) {
+                                trackFrame(image.image,true)
                                 sceneRevision = liveGate.revision
                                 CaptureManager.activeResultId = null
                                 captureJob?.cancel()
@@ -218,7 +230,7 @@ class ScreenCaptureService : Service() {
 
     private fun endLive(status: CaptureManager.LiveStatus = CaptureManager.LiveStatus.OFF) {
         pageState.clear()
-        verifiedRegions=emptyList();CaptureManager.pixelHashes=emptyMap()
+        lastRows=null;verifiedRegions=emptyList();CaptureManager.pixelHashes=emptyMap()
         CaptureManager.currentBoxes=null
         liveEnabled = false
         liveJob?.cancel()
@@ -483,7 +495,12 @@ class ScreenCaptureService : Service() {
             if (BenchmarkTracker.isActive()) BenchmarkTracker.finish("cancelled")
             kotlinx.coroutines.delay(delayMs)
             try {
-                com.manhwalens.app.diagnostics.CompleteReport.captureWrites.withLock { captureFrame() }
+                com.manhwalens.app.diagnostics.CompleteReport.captureWrites.withLock {
+                    if(withTimeoutOrNull(2500){captureFrame();true}!=true){
+                        CaptureManager.activeResultId=null;CaptureManager.setState(CaptureManager.CaptureState.Idle);CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION)
+                        Diagnostics.info("capture","frame_deadline","2500ms elapsed; original retained");BenchmarkTracker.finish("timeout")
+                    }
+                }
                 if (CaptureManager.state.value is CaptureManager.CaptureState.Error && liveEnabled) {
                     endLive(CaptureManager.LiveStatus.ERROR)
                 }

@@ -15,6 +15,12 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class QualityInstrumentedTest {
+    @Test fun regressionPackIsAlwaysAvailable()=runBlocking {
+        val ctx=InstrumentationRegistry.getInstrumentation().targetContext
+        val index=requireNotNull(com.manhwalens.app.phrasebook.PhraseLibrary.ready());val a=ctx.assets.open("phrasebook/phrasebook_seed.json").bufferedReader().use {org.json.JSONObject(it.readText()).getJSONArray("entries")}
+        for(i in 0 until a.length()){val e=a.getJSONObject(i);if(!e.getJSONArray("genre").toString().contains("regression-test"))continue
+            assertEquals(e.getString("en"),e.getString("ar"),index.lookup(e.getString("en"))?.text)}
+    }
     @Test fun ambiguousMarkIsNotDrawnAndInterjectionsNeverNeedMT() = runBlocking {
         val t=com.manhwalens.app.translate.TranslationClient()
         try { val r=com.manhwalens.app.pipeline.TextRegion("NO..",10,20,66,49,.45f)
@@ -26,7 +32,7 @@ class QualityInstrumentedTest {
     }
     /** Generated colour controls, not the missing phone screenshots. Force the independent-proposal path. */
     @Test fun colourRecoveryAfterEmptyFirstPass() = runBlocking {
-        for ((bg,ink,phrase) in listOf(Triple(Color.rgb(61,17,87),Color.WHITE,"THIS ISN'T ENOUGH"), Triple(Color.rgb(99,14,30),Color.WHITE,"AND THAT WASN'T ALL"),Triple(Color.WHITE,Color.rgb(172,10,35),"HOW MUCH WAS IT"))) {
+        for ((bg,ink,phrase) in listOf(Triple(Color.rgb(61,17,87),Color.WHITE,"THIS ISN'T ENOUGH"), Triple(Color.rgb(54,16,80),Color.WHITE,"SATISFY THIS HUNGER"), Triple(Color.rgb(65,4,9),Color.WHITE,"THIS SCENT"), Triple(Color.rgb(99,14,30),Color.WHITE,"AND THAT WASN'T ALL"),Triple(Color.WHITE,Color.rgb(172,10,35),"HOW MUCH WAS IT"))) {
             val image=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);val canvas=Canvas(image);canvas.drawColor(Color.rgb(25,29,27))
             val pen=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);pen.color=bg;canvas.drawOval(72f,83f,566f,230f,pen);pen.color=ink;pen.textSize=30f;pen.textAlign=android.graphics.Paint.Align.CENTER;canvas.drawText(phrase,320f,167f,pen)
             try { val recovery=com.manhwalens.app.ocr.ColorRecovery();val client=TextRecognitionClient();val log=mutableListOf<String>()

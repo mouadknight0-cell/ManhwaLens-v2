@@ -139,7 +139,7 @@ class BubbleOverlayService : Service() {
     private var displayedResultId: String? = null
     private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
-    private data class Attached(val id:com.manhwalens.app.pipeline.PageState.Id,val hash:Int?,val key:String)
+    private data class Attached(val id:com.manhwalens.app.pipeline.PageState.Id,val hash:Int?,val key:String,var dy:Int=0)
     private val attached=mutableMapOf<View,Attached>()
     private fun discard(view:View){val idx=translationViews.indexOf(view);if(idx<0)return
         runCatching { windowManager.removeView(view) };translationViews.removeAt(idx);translationRects.removeAt(idx);attached.remove(view)?.let { displayedBlocks.remove(it.key) };publishBounds() }
@@ -165,6 +165,12 @@ class BubbleOverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        CaptureManager.followFrame={ step,motion,check -> attached.toMap().forEach { (view,s)->
+            if(view.visibility==View.VISIBLE){val delta=step?:0;val same=check(s.id,s.dy+delta)
+                if(same==false || (motion && (step==null || same!=true)))discard(view)
+                else if(delta!=0 && same==true){val p=view.layoutParams as WindowManager.LayoutParams;val r=translationRects[translationViews.indexOf(view)]
+                    if(p.y+delta<0 || p.y+delta+p.height>resources.displayMetrics.heightPixels)discard(view) else {p.y+=delta;windowManager.updateViewLayout(view,p);s.dy+=delta;r.offset(0,delta);publishBounds()}}
+            } } }
         CaptureManager.validateOverlays={ hashes-> attached.toMap().forEach { (view,stamp)->if(stamp.hash==null || hashes[stamp.id]!=stamp.hash)discard(view) else if(!CaptureManager.appVisible.value)view.visibility=View.VISIBLE };publishBounds() }
         CaptureManager.hideControlsForFrame = {
             bubbleView?.visibility=View.INVISIBLE; actionDock?.visibility=View.INVISIBLE
@@ -210,7 +216,8 @@ class BubbleOverlayService : Service() {
         scope.launch {
             CaptureManager.live.collect { status ->
                 when (status) {
-                    CaptureManager.LiveStatus.SCROLLING, CaptureManager.LiveStatus.PAUSED_APP -> clearTranslations()
+                    CaptureManager.LiveStatus.SCROLLING -> Unit // frame callback already validated or discarded each view
+                    CaptureManager.LiveStatus.PAUSED_APP -> clearTranslations()
                     CaptureManager.LiveStatus.PROCESSING -> {
                         acceptResults = !CaptureManager.appVisible.value
                         requestedAt = System.currentTimeMillis()
@@ -535,6 +542,7 @@ class BubbleOverlayService : Service() {
         bubbleView = null
         CaptureManager.overlayBounds = emptyList()
         CaptureManager.hideControlsForFrame = null
+        CaptureManager.followFrame=null
         CaptureManager.validateOverlays=null
         CaptureManager.restoreControlsAfterFrame=null
         super.onDestroy()

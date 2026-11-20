@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.31
+- Local EN→AR phrase packs and Room corrections (global/per-series), import/export and correction from history. Matching precedes on-device MT; reading never triggers model installation.
+- Icon-only adjacent dock, local contrast OCR, bounded frame processing, scroll correlation and source validation. Device acceptance pending.
+
 ## 1.1.30
 - Conditional colour-crop OCR recovery, ranked candidate passes and local text repair. Murim readings, interjection handling, bounded translation timeout and Close control. Physical Redmi metrics pending.
 
