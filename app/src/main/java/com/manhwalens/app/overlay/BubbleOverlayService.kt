@@ -48,7 +48,8 @@ class BubbleOverlayService : Service() {
     private var acceptResults = false
     private var requestedAt = Long.MAX_VALUE
     private var running = false
-    private var statusLabel: TextView? = null
+    private var hidden = false
+    private var stopControl: TextView? = null
     private var startControl: TextView? = null
     private fun updateControlState() {
         val phase = CaptureManager.sessionPhase.value
@@ -59,26 +60,6 @@ class BubbleOverlayService : Service() {
             CaptureManager.SessionPhase.STOPPING -> "جارٍ الإيقاف / Stopping"
             CaptureManager.SessionPhase.FAILED -> "فشلت / Failed — أعد المحاولة"
         }
-        statusLabel?.text = when {
-            phase == CaptureManager.SessionPhase.FAILED -> "تعذّر بدء الالتقاط — أعد المحاولة"
-            phase != CaptureManager.SessionPhase.ACTIVE -> "الالتقاط: ${label.substringBefore(" /")}"
-            CaptureManager.live.value == CaptureManager.LiveStatus.NO_TRANSLATION -> {
-                val blocks=(CaptureManager.state.value as? CaptureManager.CaptureState.Done)?.result?.blocks.orEmpty()
-                when {
-                    blocks.isEmpty() -> "لم يُكتشف نص؛ اضغط ترجمة لإعادة القراءة"
-                    blocks.any { it.errorCode?.startsWith("OCR-")==true } -> "نص غير واضح أو مقطوع؛ مرّر قليلًا"
-                    blocks.any { it.errorCode!=null } -> "لم تكتمل ترجمة بعض النصوص؛ أعد المحاولة"
-                    else -> "لم يتسع موضع النص أو حجبه زر؛ حرّك الفقاعة"
-                }
-            }
-            CaptureManager.live.value == CaptureManager.LiveStatus.ERROR -> "انقطعت معالجة الالتقاط؛ اضغط ترجمة لاستئنافها"
-            else -> when (CaptureManager.live.value) {
-                CaptureManager.LiveStatus.PROCESSING -> "جارٍ قراءة الصفحة وترجمتها"
-                CaptureManager.LiveStatus.SCROLLING -> "بانتظار ثبات الصفحة"
-                CaptureManager.LiveStatus.PAUSED_APP -> "افتح القارئ لاستئناف الالتقاط"
-                else -> "جاهز للترجمة"
-            }
-        }
         bubbleView?.contentDescription = "Capture session: $label. Tap for Start and Stop controls."
         (bubbleView as? ImageView)?.setColorFilter(when (phase) {
             CaptureManager.SessionPhase.ACTIVE -> 0xFF86EFAC.toInt()
@@ -86,7 +67,9 @@ class BubbleOverlayService : Service() {
             CaptureManager.SessionPhase.FAILED -> 0xFFFCA5A5.toInt()
             else -> PANEL_TEXT
         })
-        startControl?.isEnabled = phase !in listOf(CaptureManager.SessionPhase.STARTING, CaptureManager.SessionPhase.STOPPING)
+        startControl?.isEnabled = phase in listOf(CaptureManager.SessionPhase.INACTIVE, CaptureManager.SessionPhase.FAILED)
+        stopControl?.isEnabled = phase == CaptureManager.SessionPhase.ACTIVE
+        stopControl?.alpha = if (stopControl?.isEnabled == true) 1f else 0.45f
         startControl?.alpha = if (startControl?.isEnabled == true) 1f else 0.45f
     }
     private val translationRects = mutableListOf<android.graphics.Rect>()
@@ -105,7 +88,7 @@ class BubbleOverlayService : Service() {
         actionDock?.let { it.animate().cancel(); runCatching { windowManager.removeView(it) } }
         CaptureManager.dockVisible = false
         actionDock = null
-        statusLabel = null
+        stopControl = null
         startControl = null
         dockRect = null
         publishBounds()
@@ -123,7 +106,7 @@ class BubbleOverlayService : Service() {
     private fun startTranslation() {
         event("start_click")
         if (startJob?.isActive == true) return
-        CaptureManager.refreshPage.set(true)
+        if (CaptureManager.sessionActive) return
         collapseActions()
         clearTranslations()
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.PREPARING))
@@ -135,15 +118,14 @@ class BubbleOverlayService : Service() {
             try {
                 // Keep a visible overlay and launch in the tap's main-thread turn.
                 // Hiding it before startActivity removes the visible-overlay BAL exemption.
-                if (CaptureManager.sessionActive) ScreenCaptureService.captureNow(this@BubbleOverlayService, requestedAtNs)
-                else CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true, requestedAtNs = requestedAtNs)
+                CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true, requestedAtNs = requestedAtNs)
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (failure: Exception) {
                 running = false
                 acceptResults = false
                 com.manhwalens.app.diagnostics.Diagnostics.error("overlay", "start_failed", "OVL-START", "floating start failed", throwable = failure)
                 showError("تعذر بدء الالتقاط. تحقق من إذن النوافذ المنبثقة في الخلفية ثم أعد المحاولة من الفقاعة.")
-            } finally { bubbleView?.visibility = View.VISIBLE }
+            } finally { bubbleView?.visibility = if(hidden) View.INVISIBLE else View.VISIBLE }
         }
     }
 
@@ -180,13 +162,13 @@ class BubbleOverlayService : Service() {
             translationViews.forEach { it.visibility=View.INVISIBLE }; debugView?.visibility=View.INVISIBLE
             CaptureManager.overlayBounds=emptyList(); bubbleView!=null
         }
-        CaptureManager.restoreControlsAfterFrame={ bubbleView?.visibility=View.VISIBLE; actionDock?.visibility=View.VISIBLE; publishBounds() }
+        CaptureManager.restoreControlsAfterFrame={ bubbleView?.visibility=if(hidden) View.INVISIBLE else View.VISIBLE; actionDock?.visibility=View.VISIBLE; publishBounds() }
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startBubble()
+            ACTION_START -> { hidden=false; startBubble(); bubbleView?.visibility=View.VISIBLE; publishBounds() }
             ACTION_STOP -> {
                 stopTranslation()
                 stopForeground(STOP_FOREGROUND_REMOVE)
@@ -317,52 +299,30 @@ class BubbleOverlayService : Service() {
         if (actionDock != null) { collapseActions(); return }
         val bubble = bubbleParams ?: return
         val bounds = availableBounds()
-        val buttonSize = ((bounds.width() - dp(BUBBLE_SIZE_DP)) / 4).coerceIn(dp(48), dp(60))
+        val buttonSize = (bounds.width()/3).coerceIn(dp(48),dp(110))
         val width = buttonSize * 3
-        val height = dp(130)
+        val height = dp(52)
         val dock = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            background = GradientDrawable().apply { cornerRadius = dp(24).toFloat(); setColor(PANEL_BACKGROUND); setStroke(dp(2), PANEL_ACCENT) }
-            elevation = dp(8).toFloat()
+            orientation = LinearLayout.HORIZONTAL
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+            background = GradientDrawable().apply { cornerRadius = dp(18).toFloat(); setColor(PANEL_BACKGROUND) }
         }
-        statusLabel = TextView(this).apply { textSize = 10f; setTextColor(PANEL_TEXT); gravity = Gravity.CENTER; setPadding(dp(4), dp(4), dp(4), dp(4)) }
-        dock.addView(statusLabel, LinearLayout.LayoutParams(width, dp(26)))
-        var actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        dock.addView(actions)
-        fun action(symbol: String, description: String, enabled: Boolean = true, handler: () -> Unit) {
-            actions.addView(TextView(this).apply {
-                text = symbol; textSize = 14f; gravity = Gravity.CENTER
-                if (description.startsWith("Start")) startControl = this
-                contentDescription = description
-                setTextColor(if (enabled) PANEL_TEXT else PANEL_SECONDARY_TEXT)
-                isEnabled = enabled
-                isClickable = true
+        FloatingAction.entries.forEach { action ->
+            val button=TextView(this).apply {
+                text=action.label; gravity=Gravity.CENTER; textSize=14f; maxLines=1
+                ellipsize=android.text.TextUtils.TruncateAt.END; setTextColor(PANEL_TEXT)
                 setOnClickListener {
-                    event(description)
-                    try { handler() } catch (failure: Exception) {
-                        com.manhwalens.app.diagnostics.Diagnostics.error("overlay", "action_failed", "OVL-ACTION", "floating action failed", throwable = failure)
-                        Toast.makeText(this@BubbleOverlayService, "Action failed; check permissions in the app", Toast.LENGTH_SHORT).show()
+                    collapseActions()
+                    when(action) {
+                        FloatingAction.START -> startTranslation()
+                        FloatingAction.STOP -> stopTranslation()
+                        FloatingAction.HIDE -> { hidden=true; bubbleView?.visibility=View.INVISIBLE; publishBounds() }
                     }
                 }
-                setOnLongClickListener { Toast.makeText(this@BubbleOverlayService, description, Toast.LENGTH_SHORT).show(); true }
-            }, LinearLayout.LayoutParams(buttonSize, dp(52)))
-        }
-        action("↻\nإعادة الترجمة", "Start Translation / بدء الترجمة") { startTranslation() }
-        action(if(CaptureManager.pausePages) "▶\nاستئناف" else "Ⅱ\nمؤقت", "Pause / Resume") { CaptureManager.pausePages=!CaptureManager.pausePages; collapseActions() }
-        actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }; dock.addView(actions)
-        action("■\nإيقاف", "Stop Capture Session / إيقاف جلسة الالتقاط") { stopTranslation() }
-        action("⊗\nإخفاء", "Disable Floating Icon / تعطيل الفقاعة") {
-            stopTranslation()
-            (application as ManhwaLensApp).settingsRepository.setBubbleEnabled(false)
-            stopForeground(STOP_FOREGROUND_REMOVE)
-            stopSelf()
-        }
-        action("⚙\nالإعدادات", "Open App / فتح التطبيق") {
-            collapseActions()
-            clearTranslations()
-            acceptResults = false
-            startActivity(Intent(this, com.manhwalens.app.MainActivity::class.java).putExtra("show_settings",true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+            if(action==FloatingAction.START) startControl=button
+            if(action==FloatingAction.STOP) stopControl=button
+            dock.addView(button, LinearLayout.LayoutParams(buttonSize,height))
         }
         val params = WindowManager.LayoutParams(width, height, overlayType(),
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
@@ -381,18 +341,6 @@ class BubbleOverlayService : Service() {
             (minOf(params.x+width,r.right)-maxOf(params.x,r.left)).coerceAtLeast(0).toLong()*
                 (minOf(y+offset+height,r.bottom)-maxOf(y+offset,r.top)).coerceAtLeast(0)
         } } ?: params.y
-        var dx=0f; var dy=0f
-        statusLabel?.setOnTouchListener { _,e -> when(e.actionMasked) {
-            MotionEvent.ACTION_DOWN -> { dx=params.x-e.rawX; dy=params.y-e.rawY; true }
-            MotionEvent.ACTION_MOVE -> {
-                params.x=(e.rawX+dx).toInt().coerceIn(0,(bounds.width()-width).coerceAtLeast(0))
-                params.y=(e.rawY+dy).toInt().coerceIn(0,maxY)
-                windowManager.updateViewLayout(dock,params)
-                dockRect=android.graphics.Rect(params.x,params.y+offset,params.x+width,params.y+offset+height)
-                publishBounds(); true
-            }
-            else -> true
-        } }
         dock.setOnTouchListener { _,e -> if(e.actionMasked==MotionEvent.ACTION_OUTSIDE) { collapseActions(); true } else false }
         runCatching { windowManager.addView(dock, params) }.onSuccess {
             CaptureManager.dockVisible = true
@@ -566,6 +514,8 @@ class BubbleOverlayService : Service() {
             .setContentText(getString(R.string.notif_bubble_text))
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .addAction(R.drawable.ic_stat_lens,"إظهار الأيقونة",PendingIntent.getService(this,1,Intent(this,BubbleOverlayService::class.java).setAction(ACTION_START),PendingIntent.FLAG_IMMUTABLE))
+            .addAction(R.drawable.ic_stat_lens,"الإعدادات",PendingIntent.getActivity(this,2,Intent(this,com.manhwalens.app.MainActivity::class.java).putExtra("show_settings",true),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
             .addAction(R.drawable.ic_stat_lens, getString(R.string.notif_action_stop), stopPending)
             .build()
     }
