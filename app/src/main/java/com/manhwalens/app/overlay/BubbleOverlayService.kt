@@ -103,6 +103,7 @@ class BubbleOverlayService : Service() {
     private fun event(operation: String) = com.manhwalens.app.diagnostics.Diagnostics.info("overlay", operation, "floating control event")
     private fun collapseActions() {
         actionDock?.let { it.animate().cancel(); runCatching { windowManager.removeView(it) } }
+        CaptureManager.dockVisible = false
         actionDock = null
         statusLabel = null
         startControl = null
@@ -384,6 +385,7 @@ class BubbleOverlayService : Service() {
             else -> true
         } }
         runCatching { windowManager.addView(dock, params) }.onSuccess {
+            CaptureManager.dockVisible = true
             actionDock = dock
             updateControlState()
             val topInset = if (Build.VERSION.SDK_INT >= 30) windowManager.currentWindowMetrics.windowInsets.getInsets(android.view.WindowInsets.Type.statusBars()).top else 0

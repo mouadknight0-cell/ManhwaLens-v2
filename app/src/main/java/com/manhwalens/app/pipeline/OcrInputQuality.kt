@@ -9,6 +9,7 @@ object OcrInputQuality {
         val text = region.text.trim()
         if (contentBottom > 0 && region.bottom >= contentBottom - maxOf(3, minOf(24, region.height / 2)) &&
             !text.endsWith("?") && !text.endsWith("!") && !text.endsWith(".")) return "OCR-CLIPPED"
+        if (text.uppercase() in setOf("1 CANNOT", "L CANNOT", "I CANNO")) return "OCR-CLIPPED"
         if (isNumericContent(text)) return null
         if (text.count { it.isLetter() } <= 1 || Regex("(?i)o{2,}").matches(text)) return "OCR-UNCERTAIN"
         return null

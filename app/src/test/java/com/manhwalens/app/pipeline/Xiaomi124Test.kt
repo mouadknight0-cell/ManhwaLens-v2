@@ -9,6 +9,8 @@ class Xiaomi124Test {
         val voice = TranslationInput.prepare("I AM MORE THAN CAPABLE OF HEARING YOUR NNER VOIC..", emptyList())
         assertNotNull(DialogueLexicon.translate(voice))
         assertEquals("من أنت؟", DialogueLexicon.translate(TranslationInput.prepare("WHO ARE YOZ", emptyList())))
+        for(raw in listOf("WHO A2E YOV2","WHO ARE YOVZ")) assertEquals("من أنت؟",DialogueLexicon.translate(TranslationInput.prepare(raw,emptyList())))
+        assertEquals("لا أستطيع الرؤية!",DialogueLexicon.translate(TranslationInput.prepare("L CANNOT SEE!",emptyList())))
         assertEquals("BEEN WATCHING YOUR TONGUE", TranslationInput.prepare("BEEN WATCAING YOUR TONGVE", emptyList()))
         assertEquals("YOUR Tongve", TranslationInput.prepare("YOUR TONGVE", listOf("Tongve")))
     }

@@ -39,3 +39,5 @@ Scope: real-image OCR replay is not the full reader, compositor or downloaded ML
 - `M	app/src/test/java/com/manhwalens/app/pipeline/ProgressiveTranslationTest.kt`
 - `M	app/src/test/java/com/manhwalens/app/pipeline/Xiaomi124Test.kt`
 - `A	docs/PAGE-FUNNEL-1.1.26.md`
+
+Paired evidence from the same page: `t-mwpaes7c-2` has WHO.. → Arabic and WHO A2E YOV2 → OCR-UNCERTAIN; `t-mwpaf4l4-b` has WHO ARE YOZ → Arabic and L CANNOT SEE! → OCR-UNCERTAIN. These are upstream failures, not proof of a missing window. Regression tests cover those exact damaged inputs. A truncated `1 CANNOT` with no final line is not a complete dialogue replacement. `pipeline/OcrInputQuality.kt` also changed to reject those incomplete fragments.

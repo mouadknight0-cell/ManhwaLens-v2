@@ -68,7 +68,7 @@ class ScreenCaptureService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val liveGate = LiveFrameGate()
     private var liveJob: kotlinx.coroutines.Job? = null
-    private data class CapturedFrame(val image: Image, val occlusions: List<com.manhwalens.app.pipeline.CapturedOcclusion>) {
+    private data class CapturedFrame(val image: Image, val dockVisible: Boolean, val occlusions: List<com.manhwalens.app.pipeline.CapturedOcclusion>) {
         fun close() = image.close()
     }
     private val latestFrame = AtomicReference<CapturedFrame?>(null)
@@ -132,7 +132,7 @@ class ScreenCaptureService : Service() {
         val occlusions = CaptureManager.overlayBounds.map {
             com.manhwalens.app.pipeline.CapturedOcclusion(it.left, it.top, it.right, it.bottom)
         }
-        latestFrame.getAndSet(CapturedFrame(image, occlusions))?.close()
+        latestFrame.getAndSet(CapturedFrame(image, CaptureManager.dockVisible, occlusions))?.close()
     }
 
     private fun sampleFrame(image: Image): IntArray {
@@ -789,7 +789,8 @@ class ScreenCaptureService : Service() {
 
     private suspend fun acquireFreshFrame(): CapturedFrame? = withTimeoutOrNull(FRAME_WAIT_MS) {
         var image = latestFrame.getAndSet(null)
-        while (image == null) {
+        while (image == null || image.dockVisible) {
+            image?.close()
             kotlinx.coroutines.delay(16)
             image = latestFrame.getAndSet(null)
         }
