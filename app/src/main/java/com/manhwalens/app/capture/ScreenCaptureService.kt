@@ -102,7 +102,7 @@ class ScreenCaptureService : Service() {
     }
 
     private val textRecognition by lazy { TextRecognitionClient() }
-    private val translation by lazy { TranslationClient() }
+    private val translation by lazy { TranslationClient(readings={ (application as ManhwaLensApp).settingsRepository.readings.value }) }
     private val nameGlossary by lazy { NameGlossaryStore(applicationContext) }
 
     // ── Persistent capture pipeline ────────────────────────────────

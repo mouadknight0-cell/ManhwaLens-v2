@@ -96,6 +96,13 @@ fun SettingsScreen(
         }
         Text("التشخيص والأدوات", style = MaterialTheme.typography.titleLarge)
         val repo=(context.applicationContext as com.manhwalens.app.ManhwaLensApp).settingsRepository
+        SettingsGroup("قاموس النطق والمصطلحات", "اسم أو مصطلح إنجليزي = المقابل العربي") {
+            var draft by remember { mutableStateOf(repo.readings.value.entries.joinToString("\n") { "${it.key}=${it.value}" }) }
+            var status by remember { mutableStateOf("") }
+            OutlinedTextField(value=draft,onValueChange={ draft=it },label={Text("سطر لكل مدخل")})
+            Button(onClick={ status=if(repo.saveReadings(draft)) "تم الحفظ" else "تحقق من صيغة كل سطر والمقابل العربي" }) { Text("حفظ القاموس") }
+            Text(status)
+        }
         val debug by repo.debug.collectAsState()
         Row(verticalAlignment=Alignment.CenterVertically) { Text("وضع التشخيص: حدود النص وسجل العدادات",Modifier.weight(1f)); Switch(debug,repo::setDebug) }
         DiagnosticTools()

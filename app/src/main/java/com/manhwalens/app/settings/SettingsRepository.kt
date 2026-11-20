@@ -51,6 +51,12 @@ class SettingsRepository(context: Context) {
         _bubbleEnabled.value = enabled
     }
 
+    private val defaultReadings=com.manhwalens.app.translate.ReadingGlossary.defaults
+    val readings=MutableStateFlow(prefs.getString("arabic_readings",null)?.let { com.manhwalens.app.translate.ReadingGlossary.parse(it) } ?: defaultReadings)
+    fun saveReadings(text:String):Boolean {
+        val parsed=com.manhwalens.app.translate.ReadingGlossary.parse(text) ?: return false
+        prefs.edit().putString("arabic_readings",text).apply(); readings.value=parsed; return true
+    }
     private val _debug = MutableStateFlow(prefs.getBoolean("debug_geometry", false))
     val debug = _debug.asStateFlow()
     fun setDebug(enabled:Boolean) { prefs.edit().putBoolean("debug_geometry",enabled).apply(); _debug.value=enabled }

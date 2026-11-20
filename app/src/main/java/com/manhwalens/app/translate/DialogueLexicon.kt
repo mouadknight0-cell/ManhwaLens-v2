@@ -6,6 +6,16 @@ package com.manhwalens.app.translate
  */
 object DialogueLexicon {
     private val entries = mapOf(
+        "i came to get you, sister" to "جئت لآخذكِ يا {sister}",
+        "jeong-ah! wait, your eyes" to "{jeong-ah}! انتظري، عيناكِ",
+        "it's alright now. this barrier is simply made to work that way" to "لا بأس الآن. هكذا صُمّم هذا ال{barrier} ليعمل",
+        "they say this kind of formation is called a barrier" to "يقال إن هذا النوع من ال{formation} يسمى {barrier}ًا",
+        "jeong-ah, how did you get here" to "{jeong-ah}، كيف وصلتِ إلى هنا",
+        "am i... going to die trapped in this formation" to "هل سأموت… محاصرًا في هذا ال{formation}",
+        "i didn't even get to catch up with jeong-ah after all this time" to "لم تسنح لي حتى فرصة التحدث مع {jeong-ah} بعد كل هذا الوقت",
+        "is anyone here" to "هل من أحد هنا",
+        "hey, can you hear me? answer me" to "هيه، هل تسمعني؟ أجبني",
+        "hey" to "هيه", "wait" to "انتظر", "huh" to "هاه",
         "there is no need to force yourself to make a sound" to "لا داعي لأن تُجبر نفسك على إصدار أي صوت",
         "i am more than capable of hearing your inner voice" to "أستطيع سماع صوتك الداخلي بكل وضوح",
         "i'll help you" to "سأساعدك",
@@ -41,11 +51,11 @@ object DialogueLexicon {
     )
     private fun key(text: String) = text.trim().lowercase().replace('’', '\'')
         .trimEnd('.', '!', '?', '…', ' ').replace(Regex("\\s+"), " ")
-    fun translate(text: String, previous: String? = null): String? {
+    fun translate(text: String, previous: String? = null, terms: Map<String,String> = ReadingGlossary.defaults): String? {
         val k = key(text)
         val value = if (k == "am i" && previous?.let(::key) == "where") "أنا" else entries[k] ?: return null
         val tail = text.trim().takeLastWhile { it in ".!?…" }
         if (k == "who are you" && tail.none { it == '?' }) return "$value؟"
-        return value + tail.replace(Regex("\\.{2,}"), "…").replace('?', '؟')
+        return (ReadingGlossary.expand(value,terms) ?: return null) + tail.replace(Regex("\\.{2,}"), "…").replace('?', '؟')
     }
 }
