@@ -108,14 +108,12 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
                 context = mapOf("chars" to trimmed.length.toString()), recovery = "explicit failure shown")
             throw TranslationFailure(ErrorCodes.TRANSLATE_TIMEOUT)
         }
-        if (!NameShield.preservesNames(raw, maskResult)) throw TranslationFailure("TR-NAME-LOST")
-        val restored = NameShield.restore(raw, maskResult)
-        if (restored.isBlank() || (!ArabicOutput.hasLetters(restored) && protected.none { it.equals(trimmed, true) })) {
-            Diagnostics.warn("translate", "output_validation", "model output failed Arabic validation",
-                context = mapOf("source_chars" to trimmed.length.toString(), "output_chars" to restored.length.toString(),
-                    "source_latin_letters" to trimmed.count { it in 'a'..'z' || it in 'A'..'Z' }.toString()))
-            throw TranslationFailure("TR-INVALID-OUTPUT")
+        TranslationOutput.issue(raw, maskResult)?.let { issue ->
+            Diagnostics.warn("translate", "output_validation", "model output failed structural validation",
+                code = issue, context = mapOf("source_chars" to trimmed.length.toString(), "output_chars" to raw.length.toString()))
+            throw TranslationFailure(issue)
         }
+        val restored = NameShield.restore(raw, maskResult)
         if (protected.any { !restored.contains(it, ignoreCase = true) }) throw TranslationFailure("TR-NAME-LOST")
         cache.put(cacheKey, restored)
         return restored
