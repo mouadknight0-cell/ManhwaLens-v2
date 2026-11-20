@@ -27,9 +27,11 @@ object PhraseLibrary {
     private lateinit var base:List<Entry>;private lateinit var loading:Deferred<Unit>
     @Volatile var index:PhraseIndex?=null;private set
     @Volatile var version=0L;private set
-    fun start(context:Context){ctx=context.applicationContext;loading=scope.async {val tm=System.nanoTime();base=java.io.DataInputStream(ctx.assets.open("phrase-index.bin").buffered()).use { input->
+    @Volatile var startupMs=0L;private set
+    internal fun loadAssets(ctx:Context):List<Entry> =java.io.DataInputStream(ctx.assets.open("phrase-index.bin").buffered()).use { input->
             List(input.readInt()){ Entry(input.readUTF(),input.readUTF(),input.readUTF(),input.readUTF().split(',').toSet(),input.readInt(),input.readUTF()) }
-        };rebuild();android.util.Log.i("PhraseTiming","startup_ms=${(System.nanoTime()-tm)/1_000_000} entries=${base.size}");com.manhwalens.app.diagnostics.Diagnostics.info("phrasebook","load","entries=${base.size}",durationMs=(System.nanoTime()-tm)/1000000) }}
+        }
+    fun start(context:Context){ctx=context.applicationContext;loading=scope.async {val tm=System.nanoTime();base=loadAssets(ctx);rebuild();startupMs=(System.nanoTime()-tm)/1_000_000;com.manhwalens.app.diagnostics.Diagnostics.info("phrasebook","load","entries=${base.size}",durationMs=(System.nanoTime()-tm)/1000000) }}
     suspend fun ready():PhraseIndex? {if(!::loading.isInitialized)return null;loading.await();return index}
     private suspend fun rebuild(){val user=(if(ctx.getDatabasePath("reading-phrases.db").exists())dao.all() else emptyList()).filter {it.series.isEmpty()||it.series==series}.map { Entry(it.en,it.ar,"term",setOf("user"),if(it.series.isEmpty())100 else 110) };index=PhraseIndex(base+user,enabled);version++}
     suspend fun configure(p:Set<String>,s:String)=withContext(Dispatchers.IO){ready();lock.withLock {prefs.edit().putStringSet("enabled",p.intersect(packs.toSet())).putString("series",s.trim().take(100)).apply();rebuild()}}

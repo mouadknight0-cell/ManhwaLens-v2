@@ -122,13 +122,14 @@ class ScreenCaptureService : Service() {
     private var pipelineDensityDpi = 0
 
     private var lastRows:DoubleArray?=null
-    private fun trackFrame(image:Image,changed:Boolean){
+    private fun trackFrame(image:Image,changed:Boolean,sampleMotion:Boolean=true){
         if(CaptureManager.pixelHashes.isEmpty())return
         val p=image.planes[0];val buf=p.buffer;val masks=CaptureManager.overlayBounds
         fun gray(x:Int,y:Int):Int {if(x !in 0 until image.width || y !in 0 until image.height || masks.any { it.contains(x,y) })return -1;val i=y*p.rowStride+x*p.pixelStride;return ((buf[i].toInt() and 255)*3+(buf[i+1].toInt() and 255)*6+(buf[i+2].toInt() and 255))/10}
+        val dy=if(!sampleMotion)0 else {
         val rows=DoubleArray(VerticalPhase.N){row->var sum=0;var n=0;for(j in 1..16){val g=gray(image.width*j/17,image.height*(2*row+1)/(2*VerticalPhase.N));if(g>=0){sum+=g;n++}};sum.toDouble()/maxOf(1,n)}
         val cells=lastRows?.let {if(changed)VerticalPhase.shift(it,rows) else 0};lastRows=rows
-        val dy=cells?.takeIf { kotlin.math.abs(it)<=2 }?.let { it*image.height/VerticalPhase.N }
+        cells?.takeIf { kotlin.math.abs(it)<=2 }?.let { it*image.height/VerticalPhase.N } }
         val sigs=verifiedRegions;CaptureManager.followFrame?.invoke(dy,changed){id,offset->sigs.firstOrNull {com.manhwalens.app.pipeline.PageState.id(it.region)==id}?.perimeter(offset,::gray)}
     }
     private val frameListener = ImageReader.OnImageAvailableListener { reader ->
@@ -149,7 +150,7 @@ class ScreenCaptureService : Service() {
                 captureJob?.cancel()
                 CaptureManager.setLive(CaptureManager.LiveStatus.SCROLLING)
             }
-        }
+        } else if(liveEnabled)trackFrame(image,false,false)
         // Retain exactly one newest Image, so a static display does not require another frame.
         // The consumer atomically takes ownership; only the previous unclaimed image is closed.
         val occlusions = CaptureManager.overlayBounds.map {
