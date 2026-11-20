@@ -23,7 +23,7 @@ import kotlinx.coroutines.tasks.await
 class TextRecognitionClient {
     private val nativePermit = kotlinx.coroutines.sync.Semaphore(1)
 
-    suspend fun recognize(bitmap: Bitmap, sourceLanguage: String): List<TextRegion> {
+    suspend fun recognize(bitmap: Bitmap, sourceLanguage: String, keepLine: (TextRegion) -> Boolean = { true }): List<TextRegion> {
         val scripts = LanguageMapper.scriptsFor(sourceLanguage)
 
         val detected = coroutineScope {
@@ -55,7 +55,7 @@ class TextRecognitionClient {
                                         confidence = line.confidence ?: Float.NaN,
                                         languageHint = LanguageMapper.autoLanguageFor(script),
                                     )
-                                })
+                                }.filter(keepLine))
                             }
                             val owners = linesByBlock.flatMapIndexed { index, lines -> lines.map { it to index } }.toMap()
                             com.manhwalens.app.pipeline.DialogueAssembler.assemble(linesByBlock.flatten()) { a, b ->

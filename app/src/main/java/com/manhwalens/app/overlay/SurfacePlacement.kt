@@ -1,0 +1,37 @@
+package com.manhwalens.app.overlay
+
+import com.manhwalens.app.pipeline.TextRegion
+
+/** Never relocate a mask: intersect with the visible screen, retaining sampled color.
+ * A clipped ellipse is not a new smaller ellipse; use the source rectangle instead.
+ */
+object SurfacePlacement {
+    fun source(region: TextRegion, color: Int = -1) = ReplacementSurface(
+        region.left - 2, region.top - 2, region.right + 2, region.bottom + 2, color)
+
+    fun visible(region: TextRegion, bounds: ReplacementSurface): ReplacementSurface? {
+        val evidence = region.surface
+        val candidate = if (evidence != null && evidence.left >= bounds.left && evidence.top >= bounds.top &&
+            evidence.right <= bounds.right && evidence.bottom <= bounds.bottom) evidence
+        else source(region, evidence?.color ?: -1)
+        val clipped = candidate.copy(left = maxOf(candidate.left, bounds.left), top = maxOf(candidate.top, bounds.top),
+            right = minOf(candidate.right, bounds.right), bottom = minOf(candidate.bottom, bounds.bottom))
+        return clipped.takeIf { it.width > 0 && it.height > 0 }
+    }
+
+    /** Two expanded ovals can overlap even if neither covers the other's source.
+     * Resolve against the original candidate set, not a progressively modified list.
+     */
+    fun resolveOverlaps(regions: List<TextRegion>): List<TextRegion> {
+        val candidates = regions.map { it.surface ?: source(it) }
+        return regions.mapIndexed { index, region ->
+            val surface = candidates[index]
+            if (surface.oval && candidates.indices.any { other -> other != index && intersects(surface, candidates[other]) }) {
+                region.copy(surface = source(region, surface.color))
+            } else region
+        }
+    }
+
+    private fun intersects(a: ReplacementSurface, b: ReplacementSurface) =
+        a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
+}

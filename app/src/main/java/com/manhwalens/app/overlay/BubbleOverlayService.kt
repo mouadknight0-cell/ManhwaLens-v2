@@ -405,15 +405,8 @@ class BubbleOverlayService : Service() {
             val key = "${region.left}:${region.top}:${region.right}:${region.bottom}:${block.translated}"
             if (key in displayedBlocks) return@forEach
             val failed = block.errorCode != null
-            val fallback = ReplacementSurface(
-                (region.left - 2).coerceIn(bounds.left, bounds.right - 1),
-                (region.top - 2).coerceIn(bounds.top, bounds.bottom - 1),
-                (region.right + 2).coerceIn(bounds.left + 1, bounds.right),
-                (region.bottom + 2).coerceIn(bounds.top + 1, bounds.bottom))
-            val evidence = region.surface
-            val surface = if (evidence != null && evidence.left >= bounds.left && evidence.top >= bounds.top &&
-                evidence.right <= bounds.right && evidence.bottom <= bounds.bottom) evidence else fallback
-            if (surface.width <= 0 || surface.height <= 0) return@forEach
+            val surface = SurfacePlacement.visible(region,
+                ReplacementSurface(bounds.left, bounds.top, bounds.right, bounds.bottom)) ?: return@forEach
             val width = surface.width
             val height = surface.height
             val text = ReplacementTranslationView(this, block.translated, surface, failed)

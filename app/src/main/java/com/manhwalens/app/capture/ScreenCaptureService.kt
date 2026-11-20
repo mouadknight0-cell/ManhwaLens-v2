@@ -68,7 +68,10 @@ class ScreenCaptureService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val liveGate = LiveFrameGate()
     private var liveJob: kotlinx.coroutines.Job? = null
-    private val latestFrame = AtomicReference<Image?>(null)
+    private data class CapturedFrame(val image: Image, val occlusions: List<com.manhwalens.app.pipeline.CapturedOcclusion>) {
+        fun close() = image.close()
+    }
+    private val latestFrame = AtomicReference<CapturedFrame?>(null)
     private var lastSampleNs = 0L
     @Volatile private var sceneRevision = 0L
     @Volatile private var liveEnabled = false
@@ -125,7 +128,10 @@ class ScreenCaptureService : Service() {
         }
         // Retain exactly one newest Image, so a static display does not require another frame.
         // The consumer atomically takes ownership; only the previous unclaimed image is closed.
-        latestFrame.getAndSet(image)?.close()
+        val occlusions = CaptureManager.overlayBounds.map {
+            com.manhwalens.app.pipeline.CapturedOcclusion(it.left, it.top, it.right, it.bottom)
+        }
+        latestFrame.getAndSet(CapturedFrame(image, occlusions))?.close()
     }
 
     private fun sampleFrame(image: Image): IntArray {
@@ -165,7 +171,7 @@ class ScreenCaptureService : Service() {
                     // thread, where the listener owns/replaces it, to avoid closing races.
                     kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
                         latestFrame.get()?.let { image ->
-                            if (liveGate.observe(sampleFrame(image), android.os.SystemClock.elapsedRealtime())) {
+                            if (liveGate.observe(sampleFrame(image.image), android.os.SystemClock.elapsedRealtime())) {
                                 sceneRevision = liveGate.revision
                                 captureJob?.cancel()
                                 CaptureManager.setLive(CaptureManager.LiveStatus.SCROLLING)
@@ -488,14 +494,15 @@ class ScreenCaptureService : Service() {
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.PREPARING))
 
         // ── Acquire the freshest frame ──
-        val image = acquireFreshFrame()
-        if (image == null) {
+        val captured = acquireFreshFrame()
+        if (captured == null) {
             Diagnostics.error("capture", "frame_wait", ErrorCodes.CAPTURE_NO_FRAME,
                 "no frame arrived within ${FRAME_WAIT_MS}ms", recovery = "journey aborted; user can retry")
             BenchmarkTracker.finish("error", errorCode = ErrorCodes.CAPTURE_NO_FRAME)
             CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_capture_timeout), ErrorCodes.CAPTURE_NO_FRAME))
             return
         }
+        val image = captured.image
         BenchmarkTracker.mark("T4")
         Diagnostics.info("capture", "frame_acquired", "frame acquired",
             context = mapOf("width" to image.width.toString(), "height" to image.height.toString()), traceId = traceId)
@@ -521,7 +528,10 @@ class ScreenCaptureService : Service() {
 
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.READING))
         val tOcr = System.nanoTime()
-        val regions = runCatching { textRecognition.recognize(ocrBitmap, OCR_SOURCE) }.getOrElse {
+        val regions = runCatching { textRecognition.recognize(ocrBitmap, OCR_SOURCE) { line ->
+            captured.occlusions.none { it.intersects(line,
+                frame.width.toFloat() / ocrBitmap.width, frame.height.toFloat() / ocrBitmap.height) }
+        } }.getOrElse {
             if (it is kotlinx.coroutines.CancellationException) throw it
             Diagnostics.error("ocr", "recognize", ErrorCodes.OCR_EXEC_FAILED,
                 "OCR execution failed", throwable = it, recovery = "journey aborted; user can retry")
@@ -570,9 +580,11 @@ class ScreenCaptureService : Service() {
         // Name learning: surname-pattern detections (Chinese/Korean) persist into the glossary.
         val learnedNames = learnNames(prepared.filter { it.kind != RegionKind.SOUND_EFFECT }.map { it.region }, traceId)
 
+        val plan = com.manhwalens.app.pipeline.FrameTranslationPlan.build(
+            prepared.map { com.manhwalens.app.pipeline.FrameTranslationPlan.Input(it.region, it.kind) }, readerContentBottom)
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.TRANSLATING))
         BenchmarkTracker.mark("M0")
-        val ensureOk = translation.ensureModel("en", "ar")
+        val ensureOk = !com.manhwalens.app.pipeline.FrameTranslationPlan.requiresModel(plan) || translation.ensureModel("en", "ar")
         BenchmarkTracker.mark("M1")
         if (!ensureOk) {
             Diagnostics.error("translate", "ensure_model", ErrorCodes.TRANSLATE_DOWNLOAD_FAILED,
@@ -585,8 +597,6 @@ class ScreenCaptureService : Service() {
 
         BenchmarkTracker.mark("T8")
         val id = journeyId
-        val plan = com.manhwalens.app.pipeline.FrameTranslationPlan.build(
-            prepared.map { com.manhwalens.app.pipeline.FrameTranslationPlan.Input(it.region, it.kind) }, readerContentBottom)
         val workByRegion = plan.associateBy { it.input.region }
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.map { it.region },
@@ -724,7 +734,8 @@ class ScreenCaptureService : Service() {
         Diagnostics.info("overlay", "surface_prepare", "bounded source-aligned surface detection",
             durationMs = (System.nanoTime() - began) / 1_000_000,
             context = mapOf("regions" to rendered.size.toString(), "ovals" to rendered.count { it.region.surface?.oval == true }.toString()))
-        return rendered
+        val resolved = com.manhwalens.app.overlay.SurfacePlacement.resolveOverlaps(rendered.map { it.region })
+        return rendered.mapIndexed { index, item -> item.copy(region = resolved[index]) }
     }
 
     /** Detect CN/KR names, persist new surname-pattern detections, return glossary + fresh names. */
@@ -748,7 +759,7 @@ class ScreenCaptureService : Service() {
         return merged
     }
 
-    private suspend fun acquireFreshFrame(): Image? = withTimeoutOrNull(FRAME_WAIT_MS) {
+    private suspend fun acquireFreshFrame(): CapturedFrame? = withTimeoutOrNull(FRAME_WAIT_MS) {
         var image = latestFrame.getAndSet(null)
         while (image == null) {
             kotlinx.coroutines.delay(16)

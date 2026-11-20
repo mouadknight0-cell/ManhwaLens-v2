@@ -249,4 +249,44 @@ class QualityInstrumentedTest {
         } finally { bitmap.recycle() }
     }
 
+    @Test fun occludedRealOcrLinesAreExcludedBeforeAssembly() = runBlocking {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val bitmap = instrumentation.context.assets.open("conference-text.png").use { BitmapFactory.decodeStream(it) }
+        try {
+            var lines = 0
+            val regions = TextRecognitionClient().recognize(bitmap, "en") { lines++; false }
+            assertTrue("Fixture must actually exercise detected OCR lines", lines > 0)
+            assertTrue("Excluded lines must not return through grouping", regions.isEmpty())
+        } finally { bitmap.recycle() }
+    }
+
+    @Test fun unbreakableArabicOpensDetailsAndResizeRecalculatesLayout() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val context = instrumentation.targetContext
+            val message = "الترجمة".repeat(16)
+            val view = com.manhwalens.app.overlay.ReplacementTranslationView(context, message,
+                com.manhwalens.app.overlay.ReplacementSurface(0,0,180,250))
+            view.measure(View.MeasureSpec.makeMeasureSpec(180,View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(250,View.MeasureSpec.EXACTLY))
+            view.layout(0,0,180,250)
+            assertTrue("Do not show a word broken into arbitrary Arabic fragments", view.needsDetails)
+            assertFalse(view.isScrollable)
+            assertTrue(view.fitPasses <= 6)
+            val short = com.manhwalens.app.overlay.ReplacementTranslationView(context, "مرحبًا",
+                com.manhwalens.app.overlay.ReplacementSurface(0,0,500,300))
+            fun resize(w: Int,h: Int) {
+                short.measure(View.MeasureSpec.makeMeasureSpec(w,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(h,View.MeasureSpec.EXACTLY))
+                short.layout(0,0,w,h)
+            }
+            resize(500,300)
+            assertFalse(short.needsDetails)
+            val largeSize = short.fittedSp
+            resize(5,5)
+            assertTrue(short.needsDetails)
+            resize(500,300)
+            assertFalse(short.needsDetails)
+            assertEquals(largeSize,short.fittedSp,0f)
+        }
+    }
+
 }

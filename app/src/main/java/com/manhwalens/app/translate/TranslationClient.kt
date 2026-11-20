@@ -44,8 +44,11 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
     /** Translates one region, applying the name shield. Never throws — original text on failure. */
     suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null): TranslatedBlock {
-        val normalized = com.manhwalens.app.pipeline.EnglishOcrRepair.repair(
-            com.manhwalens.app.pipeline.SentenceReconstructor.normalize(region.text))
+        val normalized = try { com.manhwalens.app.pipeline.TranslationInput.prepare(region.text, glossaryNames) }
+        catch (failure: IllegalArgumentException) {
+            Diagnostics.error("translate", "input_name_shield", "TR-NAME-SHIELD", "name protection failed before OCR repair", throwable = failure)
+            return TranslatedBlock(region, region.text, "تعذّرت حماية الأسماء — راجع القاموس", "TR-NAME-SHIELD")
+        }
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
         val began = System.nanoTime()
         if (com.manhwalens.app.pipeline.OcrInputQuality.isNumericContent(normalized)) {

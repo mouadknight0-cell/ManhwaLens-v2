@@ -73,7 +73,10 @@ class ReplacementTranslationView(context: Context, val message: String,
                 .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)
                 .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build()
         }
-        fun fits(candidate: StaticLayout): Boolean = candidate.height <= content.height() &&
+        fun wordsIntact(candidate: StaticLayout): Boolean = (1 until candidate.lineCount).none {
+            com.manhwalens.app.pipeline.WordBoundary.splitsWord(candidate.text, candidate.getLineStart(it))
+        }
+        fun fits(candidate: StaticLayout): Boolean = candidate.height <= content.height() && wordsIntact(candidate) &&
             (0 until candidate.lineCount).all { candidate.getLineWidth(it) <= width + .5f }
         var low = 12; var high = 30; var chosen = 0
         // Bound pathological text layout cost; explicit details, never silent clipping.
@@ -83,11 +86,13 @@ class ReplacementTranslationView(context: Context, val message: String,
         }
         ink.textSize = 12 * resources.displayMetrics.scaledDensity
         val minimumLine = ink.fontMetrics.bottom - ink.fontMetrics.top
-        isScrollable = chosen == 0 && message.length <= 4000 && content.height() >= minimumLine && content.width() >= ink.textSize * 2
+        val minimumLayout = if (chosen == 0 && message.length <= 4000 && content.height() >= minimumLine && content.width() >= ink.textSize * 2)
+            make(displayMessage, 12f) else null
+        isScrollable = minimumLayout != null && wordsIntact(minimumLayout)
         needsDetails = chosen == 0 && !isScrollable
         fittedSp = if (needsDetails) min(12f, content.height() / resources.displayMetrics.scaledDensity / 2f).coerceAtLeast(1f) else if (isScrollable) 12f else chosen.toFloat()
         offsetY = 0f
-        layout = make(if (needsDetails) "…" else displayMessage, fittedSp)
+        layout = if (isScrollable) minimumLayout else make(if (needsDetails) "…" else displayMessage, fittedSp)
         contentDescription = message + when {
             needsDetails -> ". المساحة لا تكفي؛ اضغط لقراءة النص كاملًا"
             isScrollable -> ". اسحب داخل النص لقراءة البقية أو اضغط للتفاصيل"

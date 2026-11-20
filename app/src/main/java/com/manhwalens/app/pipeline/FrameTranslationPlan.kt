@@ -9,6 +9,10 @@ object FrameTranslationPlan {
     data class Key(val text: String, val issue: String?, val previous: String?, val preserveSoundEffect: Boolean)
     data class Work(val input: Input, val key: Key)
 
+    fun requiresModel(work: List<Work>): Boolean = work.any {
+        it.key.issue == null && !it.key.preserveSoundEffect && !OcrInputQuality.isNumericContent(it.key.text)
+    }
+
     fun build(inputs: List<Input>, contentBottom: Int): List<Work> {
         val issues = inputs.map { OcrInputQuality.issue(it.region, contentBottom) }
         return inputs.mapIndexed { index, input ->
