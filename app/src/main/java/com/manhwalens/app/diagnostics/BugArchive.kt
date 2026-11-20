@@ -8,8 +8,10 @@ import java.util.UUID
 
 /** Bounded, synchronized error-only archive. Content-free; separate from translation samples. */
 object BugArchive {
+    @Volatile var cutoff=0L
     @Synchronized
     fun save(context: Context, event: LogEvent) {
+        if(event.timestampMs<=cutoff)return
         runCatching {
             val dir = File(context.filesDir, "diagnostics").apply { mkdirs() }
             val file = File(dir, "bug-${System.currentTimeMillis()}-${UUID.randomUUID()}.txt")

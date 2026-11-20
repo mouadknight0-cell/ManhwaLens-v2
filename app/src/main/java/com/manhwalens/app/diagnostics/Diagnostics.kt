@@ -114,6 +114,7 @@ object Diagnostics {
         // Serialize event persistence with scoped resets, but never hold this lock while
         // taking the archive/benchmark locks (avoids lock inversion during export).
         synchronized(this) {
+            if(event.timestampMs<=cutoff)return
             ring.add(event)
             while (ring.size > MAX_RING) ring.removeAt(0)
             if (initialized) appendToDisk(event)
@@ -175,7 +176,9 @@ object Diagnostics {
         ring.forEach { counters.getOrPut(it.code) { AtomicLong() }.incrementAndGet() }
     }
 
-    fun clear() {
+    private var cutoff=0L
+    @Synchronized fun resetReport(time:Long){cutoff=time;clear()}
+    @Synchronized fun clear() {
         ring.clear()
         counters.clear()
         if (initialized) {

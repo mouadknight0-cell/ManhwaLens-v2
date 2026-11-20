@@ -24,6 +24,7 @@ object SessionScorecard {
         }
     }
     fun init(context:Context){ archive=context.getSharedPreferences("session_scorecards",Context.MODE_PRIVATE) }
+    @Synchronized fun clear(){ current=null;archive?.edit()?.clear()?.commit() }
     @Synchronized fun start(){ end(); current=Counts() }
     @Synchronized fun end(){val text=current?.summary() ?:return;archive?.let { prefs->prefs.edit().putString("recent",((prefs.getString("recent","").orEmpty().lines().filter { it.isNotBlank() })+text).takeLast(32).joinToString("\n")).apply() };current=null }
     @Synchronized fun plan(page:String,regions:List<TextRegion>){current?.apply { this.page=page;ledger.clear();regions.forEach { ledger[PageState.id(it)]="pending" };eligible+=ledger.size } }

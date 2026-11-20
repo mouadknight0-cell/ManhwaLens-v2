@@ -171,6 +171,7 @@ object BenchmarkTracker {
 
     fun records(): List<BenchmarkRecord> = store?.readAll().orEmpty()
 
+    @Synchronized fun resetReport(){active=null;completedOutcome=null;store?.clear()}
     fun clearRecords() {
         store?.clear()
         Diagnostics.info("benchmarks", "clear", "benchmark records cleared")

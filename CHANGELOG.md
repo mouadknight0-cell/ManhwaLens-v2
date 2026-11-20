@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.29 — Xiaomi reader update
+- Three-action RTL dock; hiding the icon no longer ends projection. Restore via notification or app.
+- Bounded sampled bubble contours, source-centred fallback, stricter MT output checks and OCR repair.
+- Bound capture settling, add connected-clause and reviewed dialogue handling.
+- Confirmed diagnostic reset and recent-record UTF-8 report budgets. Device acceptance not yet measured.
+
+
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
