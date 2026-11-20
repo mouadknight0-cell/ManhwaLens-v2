@@ -15,7 +15,7 @@ Shared app result-sheet close/copy strings are retained because they are still u
 3. If it does not fit, measure full text in wider rectangular candidates, starting at 16sp and then 12sp. Expand height to the actual native layout height plus padding. Choose a clamped position near the original region.
 4. Exclude the main capture button (with an 8dp margin) and already placed translations from candidate rectangles. No controls are moved to make room. Candidate search is bounded to eight free rectangles.
 5. Draw complete text and background offscreen, then attach the prepared pixels directly. No tap, launch control, warning panel or scrolling text view is involved.
-6. During capture-button dragging, overlapping translations are hidden; on release, the current completed result is re-laid out around the new button position. Device compositor timing is not established by pure geometry tests.
+6. During capture-button dragging, translation windows are briefly hidden; on release, the current completed result is re-laid out around the new button position. Device compositor timing is not established by pure geometry tests.
 
 The old surface-confidence and per-block reader eligibility gates no longer divert otherwise successful output. The in-app sheet shows source text for failed items. The former OCR review-state code was replaced by the existing uncertain-input error; it cannot open a special UI.
 

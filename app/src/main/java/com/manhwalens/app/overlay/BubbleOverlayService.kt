@@ -251,14 +251,12 @@ class BubbleOverlayService : Service() {
         icon.setOnTouchListener(BubbleTouchListener(
             onDrag = { dx, dy ->
                 collapseActions()
+                // Reveal the original while moving controls; never let a stale
+                // translation window cover the dragged capture button.
+                translationViews.forEach { it.visibility = View.INVISIBLE }
                 params.x = FloatingGeometry.move(params.x, dx, availableBounds().width(), size)
                 params.y = FloatingGeometry.move(params.y, dy, availableBounds().height(), size)
                 windowManager.updateViewLayout(icon, params)
-                val xy=IntArray(2); icon.getLocationOnScreen(xy)
-                val buttonRect=android.graphics.Rect(xy[0],xy[1],xy[0]+size,xy[1]+size)
-                translationViews.forEachIndexed { i,v ->
-                    v.visibility = if (translationRects.getOrNull(i)?.let { android.graphics.Rect.intersects(it,buttonRect) } == true) View.INVISIBLE else View.VISIBLE
-                }
                 publishBounds()
             },
             onTap = ::onBubbleTapped,
