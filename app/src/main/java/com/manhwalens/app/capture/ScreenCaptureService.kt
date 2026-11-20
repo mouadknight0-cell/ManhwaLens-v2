@@ -123,7 +123,7 @@ class ScreenCaptureService : Service() {
             val sample = sampleFrame(image)
             val now=android.os.SystemClock.elapsedRealtime()
             val motion=liveGate.observe(sample,now,captureJob?.isActive==true)
-            if ((application as ManhwaLensApp).settingsRepository.debug.value) android.util.Log.d("ManhwaLensGate","changed=${liveGate.fraction} motion=$motion ready=${liveGate.ready(now)} deadline_ms=1200")
+            if ((application as ManhwaLensApp).settingsRepository.debug.value) com.manhwalens.app.diagnostics.SessionScorecard.gate(now,liveGate.fraction,motion,liveGate.ready(now))
             if (motion) {
                 sceneRevision = liveGate.revision
                 CaptureManager.activeResultId = null
@@ -626,11 +626,14 @@ class ScreenCaptureService : Service() {
         val dictionaryContext=Triple(learnedNames.toList(),prefs.readings.value,prefs.corrections.value)
         val attempted=java.util.concurrent.ConcurrentHashMap.newKeySet<TextRegion>()
         val contextParts=mutableMapOf<TextRegion,String>()
-        for ((a,b) in plan.zipWithNext()) {
-            val x=a.input.region;val y=b.input.region
-            if(x in contextParts || a.key.issue!=null || b.key.issue!=null || a.key.preserveSoundEffect || b.key.preserveSoundEffect || !com.manhwalens.app.pipeline.ConnectedDialogue.linked(x,y)) continue
-            val joined=translation.translateBlock(x.copy(text=x.text+" "+y.text),learnedNames)
-            if(joined.errorCode==null) com.manhwalens.app.pipeline.ConnectedDialogue.split(joined.translated,x.text,y.text)?.let { (first,second)->contextParts[x]=first;contextParts[y]=second }
+        var index=0
+        while(index<plan.size){val first=index++
+            if(plan[first].key.issue!=null || plan[first].key.preserveSoundEffect) continue
+            while(index<plan.size && index-first<4 && plan[index].key.issue==null && !plan[index].key.preserveSoundEffect && com.manhwalens.app.pipeline.ConnectedDialogue.linked(plan[index-1].input.region,plan[index].input.region))index++
+            if(index-first==1)continue
+            val chain=plan.subList(first,index).map { it.input.region };val sources=chain.map { it.text }
+            val joined=translation.translateBlock(chain.first().copy(text=sources.joinToString(" ")),learnedNames)
+            if(joined.errorCode==null) com.manhwalens.app.pipeline.ConnectedDialogue.split(joined.translated,sources)?.forEachIndexed { i,value -> contextParts[chain[i]]=value }
         }
         val workByRegion = plan.associateBy { it.input.region }
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
@@ -805,7 +808,7 @@ class ScreenCaptureService : Service() {
             durationMs = (System.nanoTime() - began) / 1_000_000,
             context = mapOf("regions" to rendered.size.toString(), "ovals" to rendered.count { it.region.surface?.oval == true }.toString()))
         val comic=rendered.filter { item ->
-            (item.kind==RegionKind.SOUND_EFFECT || com.manhwalens.app.pipeline.ComicSurface.enclosed(item.region,bitmap.width,bitmap.height,bitmap::getPixel)).also { keep ->
+            (item.kind==RegionKind.SOUND_EFFECT || (item.region.surface?.patch!=null && item.region.text.length>=18 && item.region.text.none(Char::isLowerCase) && item.region.text.count(Char::isWhitespace)>=2 && item.region.text.last() in "!.?…") || com.manhwalens.app.pipeline.ComicSurface.enclosed(item.region,bitmap.width,bitmap.height,bitmap::getPixel)).also { keep ->
                 if(!keep) Diagnostics.info("funnel","drop","page=${CaptureManager.activeResultId} bounds=${item.region.left},${item.region.top} reason=no_comic_surface")
             }
         }

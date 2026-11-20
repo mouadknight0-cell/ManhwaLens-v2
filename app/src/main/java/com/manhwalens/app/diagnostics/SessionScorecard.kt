@@ -10,6 +10,8 @@ import kotlin.math.ceil
 /** Aggregate only. In-flight identifiers are discarded on page turnover. No captured text on disk. */
 object SessionScorecard {
     private var archive:android.content.SharedPreferences?=null
+    private val decisions=ArrayDeque<String>()
+    @Synchronized fun gate(ms:Long,fraction:Double,motion:Boolean,ready:Boolean){if(decisions.size>=96)decisions.removeFirst();decisions.addLast("t_ms=$ms changed_pct=${(fraction*10000).toInt()/100.0} motion=$motion ready=$ready max_wait_ms=1200")}
     private var current:Counts?=null
     private class Counts {
         val since=System.currentTimeMillis(); var page="";val ledger=mutableMapOf<PageState.Id,String>()
@@ -24,12 +26,12 @@ object SessionScorecard {
         }
     }
     fun init(context:Context){ archive=context.getSharedPreferences("session_scorecards",Context.MODE_PRIVATE) }
-    @Synchronized fun clear(){ current=null;archive?.edit()?.clear()?.commit() }
+    @Synchronized fun clear(){ decisions.clear();current=null;archive?.edit()?.clear()?.commit() }
     @Synchronized fun start(){ end(); current=Counts() }
     @Synchronized fun end(){val text=current?.summary() ?:return;archive?.let { prefs->prefs.edit().putString("recent",((prefs.getString("recent","").orEmpty().lines().filter { it.isNotBlank() })+text).takeLast(32).joinToString("\n")).apply() };current=null }
     @Synchronized fun plan(page:String,regions:List<TextRegion>){current?.apply { this.page=page;ledger.clear();regions.forEach { ledger[PageState.id(it)]="pending" };eligible+=ledger.size } }
     @Synchronized fun outcome(page:String,r:TextRegion,out:String){ current?.apply { if(this.page!=page)return;val id=PageState.id(r);val old=ledger[id]?:return;if(old==out)return;totals[old]=(totals[old]?:1)-1;ledger[id]=out;totals[out]=(totals[out]?:0)+1 } }
     @Synchronized fun cycle(r:BenchmarkRecord){current?.apply { cycles++;if(r.status in setOf("cancelled","superseded")) cancels++ else if(r.status in setOf("ok","partial")) r.latencyMs("T2","T11")?.let { if(ms.size>=2048)ms.removeFirst();ms.addLast(it) } } }
     @Synchronized fun lookup(hit:Boolean,ns:Long){current?.apply { lookups++;if(hit)hits++;lookupNs+=ns } }
-    @Synchronized fun report()=listOfNotNull(archive?.getString("recent",null),current?.summary()).joinToString("\n").ifEmpty { "No sessions measured." }
+    @Synchronized fun report()=listOfNotNull(archive?.getString("recent",null),current?.summary(),decisions.takeIf { it.isNotEmpty() }?.joinToString("\n")).joinToString("\n").ifEmpty { "No sessions measured." }
 }

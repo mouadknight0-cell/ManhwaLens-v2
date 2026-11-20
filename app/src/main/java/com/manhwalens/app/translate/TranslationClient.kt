@@ -84,7 +84,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         if (trimmed.isBlank() || trimmed.none { it.isLetter() }) return trimmed
 
         val corrections=post()
-        val identity = corrections.toSortedMap().toString() + terms.toSortedMap().toString() + "\u0000" + trimmed + "\u0000" + glossaryNames.sorted().joinToString("\u0000")
+        val identity = corrections.toSortedMap().toString() + terms.toSortedMap().toString() + "\u0000" + com.manhwalens.app.pipeline.TranslationCache.normalize(trimmed) + "\u0000" + glossaryNames.filter { trimmed.contains(it,ignoreCase=true) }.sorted().joinToString("\u0000")
         val cacheKey = "validated-v4:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
         cache.get(cacheKey)?.let { return it }
 

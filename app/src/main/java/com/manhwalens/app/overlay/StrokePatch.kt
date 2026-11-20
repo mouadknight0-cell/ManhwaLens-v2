@@ -8,10 +8,12 @@ object StrokePatch {
     fun build(s: ReplacementSurface, pixel: (Int,Int)->Int): IntArray? {
         val w=s.width; val h=s.height
         if (w>400 || h>400 || w<6 || h<4 || w.toLong()*h>120000) return null
+        val deadline=System.nanoTime()+14_000_000L
         val out=IntArray(w*h); val strokes=BooleanArray(w*h)
         fun channel(c:Int,k:Int)=(c ushr k) and 255
         var count=0
         for (y in 0 until h) {
+            if(System.nanoTime()>deadline)return null
             val a=pixel(s.left,s.top+y); val b=pixel(s.right-1,s.top+y)
             for(x in 1 until w-1) {
                 fun mix(k:Int)=(channel(a,k)*(w-1-x)+channel(b,k)*x)/(w-1)
@@ -26,6 +28,7 @@ object StrokePatch {
         if (count==0 || count>w*h/2) return null
         // Feather the restored halo only, not a rectangular background over artwork.
         for(y in 0 until h) for(x in 1 until w-1) {
+            if(x==1 && System.nanoTime()>deadline)return null
             val i=y*w+x;if(strokes[i])continue
             var nearest=9
             for(dy in -2..2)for(dx in -2..2) if(x+dx in 0 until w && y+dy in 0 until h && strokes[(y+dy)*w+x+dx])nearest=minOf(nearest,dx*dx+dy*dy)
