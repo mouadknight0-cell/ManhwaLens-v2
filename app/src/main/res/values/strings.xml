@@ -143,4 +143,11 @@
     <string name="phrase_romance">Romance</string>
     <string name="phrase_school">School</string>
     <string name="phrase_business">Business</string>
+    <string name="model_unverified">Not verified</string>
+    <string name="model_verifying">Checking the installed Arabic model…</string>
+    <string name="model_absent">Arabic model unavailable. Phrasebook translation is still available.</string>
+    <string name="model_verified">Arabic model verified</string>
+    <string name="model_verify_failed">Could not verify the local model</string>
+    <string name="model_verify_action">Check installed model</string>
+    <string name="model_local_only">No files are downloaded. Model translation requires an already installed Arabic model.</string>
 </resources>

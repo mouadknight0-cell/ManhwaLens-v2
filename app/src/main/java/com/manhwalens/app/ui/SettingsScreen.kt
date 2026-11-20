@@ -58,12 +58,12 @@ fun SettingsScreen(
         Text("الإعدادات · Settings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Text("خيارات القراءة أولًا، والأدوات التقنية في أقسام منفصلة.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         SettingsGroup("الترجمة · Translation", "English → العربية · ML Kit محلي", initiallyOpen = true) {
-            Text(model.phase, style = MaterialTheme.typography.bodyMedium)
+            Text(androidx.compose.ui.res.stringResource(model.phase), style = MaterialTheme.typography.bodyMedium)
             if (model.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             Button(enabled = !model.busy, onClick = { scope.launch { LanguageModels.ensureReady(forceProbe = true) } }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(if (model.ready) "التحقق من ملف اللغة" else "تنزيل ملف اللغة / إعادة المحاولة")
+                Text(androidx.compose.ui.res.stringResource(com.manhwalens.app.R.string.model_verify_action))
             }
-            Text("نسبة التنزيل وحجم الملف غير متاحين من ML Kit. لا يُعلن الاستعداد قبل التحقق من التثبيت والترجمة.", style = MaterialTheme.typography.bodySmall)
+            Text(androidx.compose.ui.res.stringResource(com.manhwalens.app.R.string.model_local_only), style = MaterialTheme.typography.bodySmall)
         }
         XiaomiSetup()
         SettingsGroup("الفقاعة وجلسة الالتقاط", "الحالة: $phase · التحكم متاح من الفقاعة") {

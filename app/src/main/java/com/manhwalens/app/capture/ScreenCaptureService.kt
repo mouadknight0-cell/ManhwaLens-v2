@@ -677,7 +677,8 @@ class ScreenCaptureService : Service() {
                 val work = workByRegion.getValue(region)
                 contextParts[region]?.let { return@progressiveTranslation com.manhwalens.app.pipeline.TranslatedBlock(region,region.text,it,method="Connected dialogue") }
                 val contextKey=Triple(work.key,dictionaryContext,com.manhwalens.app.phrasebook.PhraseLibrary.version)
-                pageState.find(region,contextKey)?.let { return@progressiveTranslation it }
+                val blockStart=System.nanoTime()
+                pageState.find(region,contextKey)?.let { Diagnostics.info("funnel","block","page=$journeyId bounds=${region.left},${region.top} stage=${it.method} cache=page elapsed_us=${(System.nanoTime()-blockStart)/1000}",traceId=traceId);return@progressiveTranslation it }
                 val retryCase=!attempted.add(region)
                 val previousSource = work.key.previous
                 val issue = work.key.issue
@@ -716,6 +717,7 @@ class ScreenCaptureService : Service() {
                     val chosen=if(best!=null && lexical(best)>=lexical(region)) region.copy(text=best.text,confidence=best.confidence) else region
                     if((chosen.text!=region.text || translated.errorCode=="OCR-UNCERTAIN") && chosen.confidence>=.30f && lexical(chosen)>=.8) translation.translateBlock(chosen,learnedNames,previousSource,true) else translated
                 } else translated
+                Diagnostics.info("funnel","block","page=$journeyId bounds=${region.left},${region.top} stage=${recovered.method} repaired=${recovered.original!=region.text} elapsed_us=${(System.nanoTime()-blockStart)/1000}",traceId=traceId)
                 pageState.save(region,contextKey,recovered)
                 recovered.also {
                     Diagnostics.info("translate", "block_complete", "block processing complete",

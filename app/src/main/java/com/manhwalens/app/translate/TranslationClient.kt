@@ -18,8 +18,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 /**
  * On-device English → Arabic translation via ML Kit.
  *
- * ManhwaLens is locked to EN→AR for now. The model downloads once on first
- * use, then everything runs offline with zero API keys.
+ * ManhwaLens is locked to EN→AR for now. Only an already installed model is used.
  *
  * Quality levers applied here:
  *  - character names (CN/KR romanized) are masked with numeric sentinels before
@@ -40,7 +39,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     val source: String get() = SOURCE
     val target: String get() = TARGET
 
-    /** Downloads the EN→AR model if needed. Returns false on network/timeout/unavailable. */
+    /** Verifies the installed model without a download. */
     suspend fun ensureModel(source: String = SOURCE, target: String = TARGET): Boolean {
         return LanguageModels.ensureReady()
     }

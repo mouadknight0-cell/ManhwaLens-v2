@@ -143,4 +143,11 @@
     <string name="phrase_romance">رومانسية</string>
     <string name="phrase_school">مدرسي</string>
     <string name="phrase_business">تجارة</string>
+    <string name="model_unverified">لم يُفحص النموذج</string>
+    <string name="model_verifying">جارٍ فحص نموذج العربية المثبت…</string>
+    <string name="model_absent">نموذج العربية غير متاح. يمكن مواصلة الترجمة بدليل العبارات.</string>
+    <string name="model_verified">تم التحقق من نموذج العربية</string>
+    <string name="model_verify_failed">تعذر فحص النموذج المحلي</string>
+    <string name="model_verify_action">فحص النموذج المثبت</string>
+    <string name="model_local_only">لا تُنزّل ملفات. تتطلب الترجمة الآلية نموذجاً عربياً مثبتاً مسبقاً.</string>
 </resources>

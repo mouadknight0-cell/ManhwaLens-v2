@@ -1,5 +1,6 @@
 package com.manhwalens.app.translate
 
+import com.manhwalens.app.R
 import com.google.mlkit.common.model.RemoteModelManager
 import com.google.mlkit.nl.translate.*
 import kotlinx.coroutines.CancellationException
@@ -14,48 +15,32 @@ import com.manhwalens.app.diagnostics.ErrorCodes
 
 /** ML Kit owns file storage, integrity checks and download resumption. No invented byte progress. */
 object LanguageModels {
-    data class State(val phase: String = "Not verified", val busy: Boolean = false, val ready: Boolean = false)
+    data class State(val phase: Int = R.string.model_unverified, val busy: Boolean = false, val ready: Boolean = false)
     private val mutable = MutableStateFlow(State())
     val state = mutable.asStateFlow()
     private val mutex = Mutex()
-    fun invalidate() { mutable.value = State("Translation failed. Verify the language file or retry.") }
-
     suspend fun ensureReady(forceProbe: Boolean = false): Boolean = mutex.withLock {
-        val model = TranslateRemoteModel.Builder(TranslateLanguage.ARABIC).build()
-        val manager = RemoteModelManager.getInstance()
-        val translator = Translation.getClient(TranslatorOptions.Builder()
-            .setSourceLanguage(TranslateLanguage.ENGLISH).setTargetLanguage(TranslateLanguage.ARABIC).build())
-        val previouslyVerified = mutable.value.ready
+        if (!forceProbe && (mutable.value.ready || mutable.value.phase == R.string.model_absent)) return@withLock mutable.value.ready
+        mutable.value = State(R.string.model_verifying, busy = true)
         try {
-            mutable.value = State("Checking installed Arabic model…", busy = true)
-            withTimeout(120_000) {
-                val installed = manager.isModelDownloaded(model).await()
-                if (installed && previouslyVerified && !forceProbe) return@withTimeout
-                if (!installed) {
-                    mutable.value = State("Downloading EN→AR language file… ML Kit does not expose percentage or size.", busy = true)
-                }
-                // Idempotent: ML Kit skips valid installed model files.
-                if(!installed){check(forceProbe) { "Install the Arabic model explicitly in Settings before offline reading" };translator.downloadModelIfNeeded().await()}
-                mutable.value = State("Verifying installation and running a translation test…", busy = true)
-                check(manager.isModelDownloaded(model).await()) { "Arabic model installation not confirmed" }
-                val probe = withTimeout(15_000) { translator.translate("Hello.").await() }
-                check(ArabicOutput.hasLetters(probe)) { "Model usability verification failed" }
+            val installed = withTimeout(15_000) {
+                val model = TranslateRemoteModel.Builder(TranslateLanguage.ARABIC).build()
+                RemoteModelManager.getInstance().isModelDownloaded(model).await()
             }
-            mutable.value = State("Ready — installation confirmed and EN→AR test passed", ready = true)
-            Diagnostics.info("model", "verified", "EN to AR installation and inference probe passed")
+            if (!installed) { mutable.value = State(R.string.model_absent); return@withLock false }
+            val translator = Translation.getClient(TranslatorOptions.Builder().setSourceLanguage(TranslateLanguage.ENGLISH).setTargetLanguage(TranslateLanguage.ARABIC).build())
+            try {
+                check(ArabicOutput.hasLetters(withTimeout(15_000) { translator.translate("Hello.").await() }))
+            } finally { translator.close() }
+            mutable.value = State(R.string.model_verified, ready = true)
             true
         } catch (timeout: kotlinx.coroutines.TimeoutCancellationException) {
-            mutable.value = State("Download or verification timed out. Retry; completed model files are retained.")
-            Diagnostics.error("model", "timeout", ErrorCodes.TRANSLATE_DOWNLOAD_FAILED, "model verification timed out")
-            false
+            mutable.value = State(R.string.model_verify_failed); false
         } catch (cancelled: CancellationException) {
-            mutable.value = State("Verification interrupted or timed out. Retry; completed model files are retained.")
-            throw cancelled
+            mutable.value = State(); throw cancelled
         } catch (failure: Exception) {
-            mutable.value = State("Download/verification failed. Check network and free storage, then retry. ${failure.javaClass.simpleName}")
-            Diagnostics.error("model", "verify", ErrorCodes.TRANSLATE_DOWNLOAD_FAILED,
-                "model installation or inference probe failed", throwable = failure)
-            false
-        } finally { translator.close() }
+            Diagnostics.error("model", "verify", ErrorCodes.TRANSLATE_DOWNLOAD_FAILED, "local model unavailable", throwable = failure)
+            mutable.value = State(R.string.model_verify_failed); false
+        }
     }
 }

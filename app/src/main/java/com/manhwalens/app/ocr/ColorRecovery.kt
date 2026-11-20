@@ -36,7 +36,8 @@ internal class ColorRecovery {
     /** Flood-fill quantized colour components, rank contrast-bearing interiors rather than entire black pages. */
     private fun propose(b:Bitmap):List<Rect>{
         val step=max(5,max(b.width,b.height)/144);val w=b.width/step;val h=b.height/step;if(w<3||h<3)return emptyList()
-        val pix=IntArray(w*h){i->b.getPixel(i%w*step,i/w*step)};val seen=BooleanArray(pix.size);val q=IntArray(pix.size);val hits=mutableListOf<Pair<Rect,Int>>()
+        val samples=ContrastSamples(b,step);val pix=samples.corners;val tiles=samples.tiles
+        val seen=BooleanArray(pix.size);val q=IntArray(pix.size);val hits=mutableListOf<Pair<Rect,Int>>()
         for(i in pix.indices){if(seen[i])continue;val c=pix[i];if(gray(c) in 153..219 && maxOf(Color.red(c),Color.green(c),Color.blue(c))-minOf(Color.red(c),Color.green(c),Color.blue(c))<55)continue
             var n=1;var head=0;q[0]=i;seen[i]=true;var l=w;var r=0;var t=h;var bot=0;var edges=0
             fun visit(j:Int){val v=pix[j];if(maxOf(abs(Color.red(c)-Color.red(v)),abs(Color.green(c)-Color.green(v)),abs(Color.blue(c)-Color.blue(v)))>34){edges++;return};if(!seen[j]){seen[j]=true;q[n++]=j}}
@@ -45,8 +46,6 @@ internal class ColorRecovery {
          }
         // A dark full-bleed panel or coloured glyphs on a white page need not have a closed background.
         // Group neighbouring contrast tiles with both light and saturated/dark samples.
-        val tiles=BooleanArray(w*h){j->val x=(j%w)*step;val y=(j/w)*step;var low=255;var high=0;var colour=false
-            for(dy in 0..2)for(dx in 0..2){val v=b.getPixel(x+dx*(step-1)/2,y+dy*(step-1)/2);val g=gray(v);low=min(low,g);high=max(high,g);if(maxOf(Color.red(v),Color.green(v),Color.blue(v))-minOf(Color.red(v),Color.green(v),Color.blue(v))>40)colour=true};high-low>80 && (colour || low<68) }
         for(i in tiles.indices){if(!tiles[i])continue;tiles[i]=false;q[0]=i;var n=1;var head=0;var l=w;var r=0;var t=h;var bot=0
             while(head<n){val j=q[head++];val x=j%w;val y=j/w;l=min(l,x);r=max(r,x);t=min(t,y);bot=max(bot,y);for(dy in -1..1)for(dx in -2..2){val xx=x+dx;val yy=y+dy;if(xx !in 0 until w || yy !in 0 until h)continue;val k=yy*w+xx;if(tiles[k]){tiles[k]=false;q[n++]=k}}}
             if(n>=8 && r-l>=4 && r-l>bot-t && (r-l+1)*(bot-t+1)<w*h/5)hits.add(Rect(l*step,t*step,(r+1)*step,(bot+1)*step) to n)
@@ -70,6 +69,10 @@ internal class ColorRecovery {
                     val pixels=if(pass=="clahe")LocalContrast.apply(ys,r.width()) else variant(pass,colors,ys,hist);val crop=Bitmap.createBitmap(pixels,r.width(),r.height(),Bitmap.Config.ARGB_8888);val scale=when {r.height()<32->3;r.height()<=100->2;else->1};val input=if(scale==1)crop else Bitmap.createScaledBitmap(crop,r.width()*scale,r.height()*scale,true)
                     val got=try { kotlinx.coroutines.withTimeoutOrNull(remaining){client.recognize(input,lang)}.orEmpty().map { it.copy(left=r.left+it.left/scale,right=r.left+it.right/scale,top=r.top+it.top/scale,bottom=r.top+it.bottom/scale) }.filter(keep) }catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){log("pass=$pass failure=${e.javaClass.simpleName}");emptyList()}finally{if(input!==crop)input.recycle();crop.recycle()}
                     val s=got.map(::score).average().takeIf(Double::isFinite)?:0.0;log("pass=$pass score=$s regions=${got.size} box=$r");if(s>value){value=s;winner=pass;best=got}
+                    // A confident fragment is NOT a successful crop. Early-out only on a
+                    // complete reviewed utterance corroborated by the first frame reading.
+                    if(s>=.82 && got.size==1 && initial.any { overlap(box(it),box(got.single()))>.65 && it.text.equals(got.single().text,true) } &&
+                        com.manhwalens.app.phrasebook.PhraseLibrary.index?.lookup(got.single().text)?.stage=="exact")break
                 };log("winner=$winner score=$value box=$r");tr.box.set(r);tr.votes.addLast(Vote(fingerprint,visual,best,value));if(tr.votes.size>4)tr.votes.removeFirst()
                 // Only vote for aligned current blocks on perceptually similar crops. Never attach yesterday's coordinates.
                 val aligned=tr.votes.filter { v->(v.hash==fingerprint || (visual!=0L && java.lang.Long.bitCount(v.visual xor visual)<=3)) && best.isNotEmpty() && best.size==v.regions.size && best.zip(v.regions).all { (a,b)->overlap(box(a),box(b))>.5 } }

@@ -15,6 +15,33 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class QualityInstrumentedTest {
+    @Test fun installedApkCannotOpenNetworkSockets() {
+        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+        val info = ctx.packageManager.getPackageInfo(ctx.packageName, android.content.pm.PackageManager.GET_PERMISSIONS)
+        assertFalse(info.requestedPermissions.orEmpty().contains(android.Manifest.permission.INTERNET))
+    }
+
+    @Test fun contrastSamplingMatchesScalarReference() {
+        val ctx = InstrumentationRegistry.getInstrumentation().context
+        val bitmap = ctx.assets.open("xiaomi-two-dark-dialogues.png").use { BitmapFactory.decodeStream(it) }
+        try {
+            val step = maxOf(5,maxOf(bitmap.width,bitmap.height)/144)
+            val w=bitmap.width/step; val h=bitmap.height/step
+            val oldTimes=mutableListOf<Long>(); val newTimes=mutableListOf<Long>()
+            repeat(9){ trial ->
+                val start=System.nanoTime(); val corners=IntArray(w*h){bitmap.getPixel(it%w*step,it/w*step)}
+                val tiles=BooleanArray(w*h){i->var lo=255;var hi=0;var colored=false
+                    for(dy in 0..2) for(dx in 0..2){val c=bitmap.getPixel(i%w*step+dx*(step-1)/2,i/w*step+dy*(step-1)/2)
+                        val r=Color.red(c); val g=Color.green(c); val b=Color.blue(c);val gray=(r*54+g*183+b*19) shr 8
+                        lo=minOf(lo,gray);hi=maxOf(hi,gray);if(maxOf(r,g,b)-minOf(r,g,b)>40)colored=true}
+                    hi-lo>80 && (colored || lo<68)}
+                val mid=System.nanoTime();val result=com.manhwalens.app.ocr.ContrastSamples(bitmap,step);val end=System.nanoTime()
+                assertArrayEquals(corners,result.corners);assertArrayEquals(tiles,result.tiles)
+                if(trial>1){oldTimes.add(mid-start);newTimes.add(end-mid)}
+            }
+            android.util.Log.i("ManhwaLensFunnel","contrast_sampler n=7 old_us=${oldTimes.sorted()[3]/1000} new_us=${newTimes.sorted()[3]/1000} old_bitmap_reads=${10*w*h} new_bitmap_reads=${3*h}")
+        } finally {bitmap.recycle()}
+    }
     @Test fun iconDockHasTouchAndAccessibilityTargets(){val inst=InstrumentationRegistry.getInstrumentation();inst.runOnMainSync {
         val ctx=inst.targetContext;val d=ctx.resources.displayMetrics.density
         for(action in com.manhwalens.app.overlay.FloatingAction.entries){var clicked=false;val v=com.manhwalens.app.overlay.dockButton(ctx,action,Color.WHITE){clicked=true}
