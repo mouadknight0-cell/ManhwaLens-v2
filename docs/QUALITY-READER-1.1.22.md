@@ -65,3 +65,12 @@ Different milestones have different cohorts; record versions are not all establi
 Xiaomi Android 14: real floating WindowManager visibility/z-order/touch and icon restoration after rotation, long font-scale reader, projection lifecycle, actual upgrade/data preservation and controlled same-page latency A/B remain untested. Microbenchmark timings are not a battery or thermal result. Small dictionary coverage, unknown names, cross-bubble speaker context, natural Arabic beyond reviewed phrases and organic bubble reconstruction remain limited.
 
 Same durable signing vault, no data clearing. PR9 stays open. Exact execution and release links follow after checks finish.
+
+## Executed checks and measured result
+
+- CI [44757237108](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44757237108): JVM suite and debug build passed on app source `642d55c`.
+- Android14 [44757237032](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44757237032): instrumentation passed, including reader controls/actual View visibility and previous safe replacement/OCR/bidi tests.
+- Earlier unit runs failed on legacy expectations `أين...` and `أنا...؟`; updated goldens to the requested Unicode ellipsis. No validator assertion was removed to hide a translation failure.
+- First cleanup microbenchmark (44756309324) exposed overhead: 1,000 utterances, prior 4,466,222µs vs new 8,113,302µs. Added no-op repair fast path and precompiled patterns.
+- Final same-run comparison (44757237032): prior **2,378,443µs total**, current **1,370,046µs total**, ~2.378ms vs ~1.370ms per utterance on this emulator. Shared-runner timing varies; do not compare absolute numbers across different runs or infer end-to-end speedup. Microbenchmark excludes the full confidence/non-word gate, OCR, model, rendering and retries. Xiaomi parity remains unverified.
+- Final release additionally runs the explicit `THEY SEVERED THEM.. PIECE BY PIECE.` valid-Arabic validator golden. No production app changes after the tested source except release metadata.

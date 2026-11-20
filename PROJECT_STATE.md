@@ -22,4 +22,4 @@ No opaque mask before complete native layout and offscreen text+background prepa
 
 ## Verification
 
-Pending GitHub checks for current app/test source; do not equate implemented with verified. Update here with final run IDs and signed release before completion.
+App source `642d55c`: CI 44757237108 passed unit tests/build; Android14 44757237032 passed native reader/icon tests and existing regressions. Warm cleanup microbenchmark (1,000 utterances, same run): prior 2,378,443µs total, current 1,370,046µs total. This is not end-to-end latency or Xiaomi parity. An additional severed-dialogue validator golden is covered by the release unit-test gate. Signed publication pending below.

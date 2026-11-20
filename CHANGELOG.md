@@ -3,6 +3,15 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.22] - 2026-11-19
+
+- Add bounded unique digit-confusion dictionary repair and contraction cleanup behind confirmed-name shielding; flag unresolved noise/low confidence rather than transliterating corrupt input. Avoid no-op repair work and precompile patterns.
+- Add reviewed natural sound/inner-voice whole-utterance phrases, normalize display ellipses, and test short/name-only validator cases. No general semantic or speaker-context claim.
+- Retry native execution failure once after 120ms; do not retry validation, timeout or cancellation. Include confidence state in per-frame work identity.
+- Isolate per-item preflight failures and show explicit warning states rather than failure strings as dialogue. Keep successful non-overlapping replacements.
+- Replace manual circular reader with measured, capped translation-only reader and internal source/close controls. Hide floating icon at 18% screen area and restore on close; maximum reader area 30%.
+- Golden/native reader tests and cleanup microbenchmark added; full-device end-to-end latency parity remains unverified. See PROJECT_STATE.md and docs/QUALITY-READER-1.1.22.md.
+
 ## [1.1.21] - 2026-11-19
 
 - Fail closed before masking: require final/current request, structurally plausible output, acceptable OCR and reliable surface evidence, complete native layout and successful offscreen raster preparation.

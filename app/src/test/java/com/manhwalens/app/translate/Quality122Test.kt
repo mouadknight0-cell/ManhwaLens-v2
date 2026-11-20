@@ -27,6 +27,8 @@ class Quality122Test {
     }
     @Test fun validatorKeepsShortDialogueAndConfirmedNames() {
         assertNull(TranslationOutput.issue("لا!",NameShield.mask("No!",emptyList())))
+        assertNull(TranslationOutput.issue("قطعتهم… قطعة قطعة.",
+            NameShield.mask("THEY SEVERED THEM.. PIECE BY PIECE.",emptyList())))
         val mask=NameShield.mask("Jin!",listOf("Jin"))
         assertNull(TranslationOutput.issue(mask.maskedText,mask))
     }
