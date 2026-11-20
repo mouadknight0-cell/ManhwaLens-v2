@@ -47,7 +47,7 @@ Device: Xiaomi 23106RN0DA, Android 14.
 
 ## Execution and publication
 
-GitHub CI 44767603972 passed (compile, unit tests, debug APK); Android 14 regression 44767603849 passed at ffeb67d. Release build/signing pending. No physical-device or end-to-end speed parity claim.
+GitHub CI 44767603972 passed (compile, unit tests, debug APK); Android 14 regression 44767603849 passed at ffeb67d. Published v1.1.23: release build 44768373099 and existing-vault signing 44769052724 passed. Public APK: 120,189,345 bytes. Same pinned signer; no vault initialization. No physical-device or end-to-end speed parity claim.
 
 ### Regression discovered during verification
 

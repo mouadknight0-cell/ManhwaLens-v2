@@ -2,7 +2,7 @@
 
 ## Current work: v1.1.23 direct rendering
 
-Branch `arena/ae360a1c-manhwalens-v2`; PR9 open, not merged. Previous public release v1.1.22. Native Android, offline ML Kit EN→AR retained. Reuse existing signing vault/certificate; never reset data.
+Branch `arena/ae360a1c-manhwalens-v2`; PR9 open, not merged. Current public release v1.1.23. Native Android, offline ML Kit EN→AR retained. Reuse existing signing vault/certificate; never reset data.
 
 User reversed the secondary translation reader design. Its source files, threshold controller, launcher branches, controls and dependent tests have been deleted, not hidden. The main capture button remains. Successful text now tries source geometry then expands to a measured/clamped on-page rectangle, excluding the main control and other displayed translations. No extra interaction is required to reveal it.
 
@@ -16,4 +16,4 @@ General ML Kit semantic quality, unknown-name handling, full English spell corre
 
 ## Verification
 
-Current tracked-tree removed-component/label search: zero matches at implementation checkpoint. CI 44767603972 and Android 14 regression 44767603849 passed at ffeb67d. Release build/signing pending.
+Current tracked-tree removed-component/label search: zero matches at implementation checkpoint. CI 44767603972 and Android 14 regression 44767603849 passed at ffeb67d. Published v1.1.23: release build 44768373099 and existing-vault signing 44769052724 passed. Public APK: 120,189,345 bytes. Same pinned signer; no vault initialization.
