@@ -670,13 +670,13 @@ class ScreenCaptureService : Service() {
                             val paint=android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply { colorFilter=android.graphics.ColorMatrixColorFilter(row+row+row+floatArrayOf(0f,0f,0f,1f,0f)) }
                             android.graphics.Canvas(input).drawBitmap(frame,android.graphics.Rect(l,t,l+w,t+h),android.graphics.Rect(0,0,w*2,h*2),paint)
                             withTimeoutOrNull(2500){ textRecognition.recognize(input,OCR_SOURCE) }?.map { it.copy(left=l+it.left/2,top=t+it.top/2,right=l+it.right/2,bottom=t+it.bottom/2) }?.filter {
-                                it.confidence>=.35f && com.manhwalens.app.pipeline.ReadingEnglish.retryFits(region,it) && lexical(it)>=.8
+                                it.confidence>=.30f && com.manhwalens.app.pipeline.ReadingEnglish.retryFits(region,it) && lexical(it)>=.8
                             }?.maxByOrNull(::lexical)
                         } catch(cancelled:kotlinx.coroutines.CancellationException){ throw cancelled }
                         catch(e:Exception){ Diagnostics.warn("ocr","crop","retry failed",throwable=e);null } finally { input.recycle() }
                     }
                     val chosen=if(best!=null && lexical(best)>=lexical(region)) region.copy(text=best.text,confidence=best.confidence) else region
-                    if((chosen.text!=region.text || translated.errorCode=="OCR-UNCERTAIN") && chosen.confidence>=.35f && lexical(chosen)>=.8) translation.translateBlock(chosen,learnedNames,previousSource,true) else translated
+                    if((chosen.text!=region.text || translated.errorCode=="OCR-UNCERTAIN") && chosen.confidence>=.30f && lexical(chosen)>=.8) translation.translateBlock(chosen,learnedNames,previousSource,true) else translated
                 } else translated
                 pageState.save(region,contextKey,recovered)
                 recovered.also {
