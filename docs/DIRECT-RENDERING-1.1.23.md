@@ -48,3 +48,7 @@ Device: Xiaomi 23106RN0DA, Android 14.
 ## Execution and publication
 
 Pending GitHub results below. No physical-device or end-to-end speed parity claim.
+
+### Regression discovered during verification
+
+First Android runs rejected the 828-character test on a 360×640 screen. Extra native measurements showed minimum text height **337px**, well within available space: this was not a valid capacity rejection. The old fit predicate used line advance including trailing spaces; native line wrapping can place those spaces beyond the line box. Changed the fit width check to native visible line extent, excluding trailing whitespace. The 828-character acceptance case is retained unchanged; rerun required, not waived.

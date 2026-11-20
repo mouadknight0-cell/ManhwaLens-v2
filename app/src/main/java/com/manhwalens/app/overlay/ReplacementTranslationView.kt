@@ -65,8 +65,10 @@ class ReplacementTranslationView(context: Context, val message: String,
         fun wordsIntact(candidate: StaticLayout): Boolean = (1 until candidate.lineCount).none {
             com.manhwalens.app.pipeline.WordBoundary.splitsWord(candidate.text, candidate.getLineStart(it))
         }
+        // getLineWidth includes trailing spaces that native wrapping leaves past
+        // the line box. getLineMax measures visible content, not that whitespace.
         fun fits(candidate: StaticLayout): Boolean = candidate.height <= content.height() && wordsIntact(candidate) &&
-            (0 until candidate.lineCount).all { candidate.getLineWidth(it) <= width + .5f }
+            (0 until candidate.lineCount).all { candidate.getLineMax(it) <= width + .5f }
         var low = 12; var high = 30; var chosen = 0
         // Bound pathological text layout cost; bounded layout work, never silent clipping.
         if (message.length <= 20000) while (low <= high) {

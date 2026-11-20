@@ -369,7 +369,7 @@ class QualityInstrumentedTest {
                     val debugPaint=android.text.TextPaint().apply { typeface=com.manhwalens.app.overlay.ArabicTypeface.get(context);textSize=12f*metrics.scaledDensity }
                     val debugLayout=android.text.StaticLayout.Builder.obtain(message,0,message.length,debugPaint,(w-8*metrics.density).toInt().coerceAtLeast(1))
                         .setIncludePad(true).setLineSpacing(0f,1.04f).setBreakStrategy(android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY).build()
-                    assertNotNull("Full immediate text required: size=$w,$h scale=$scale chars=${message.length} density=${metrics.density} scaled=${metrics.scaledDensity} minimumHeight=${debugLayout.height} lines=${debugLayout.lineCount}",result)
+                    assertNotNull("Full immediate text required: size=$w,$h scale=$scale chars=${message.length} density=${metrics.density} scaled=${metrics.scaledDensity} minimumHeight=${debugLayout.height} lines=${debugLayout.lineCount} maxAdvance=${(0 until debugLayout.lineCount).maxOf { debugLayout.getLineWidth(it) }} maxVisible=${(0 until debugLayout.lineCount).maxOf { debugLayout.getLineMax(it) }}",result)
                     val prepared=result!!
                     assertTrue(prepared.view.replacementReady)
                     assertFalse(prepared.view.isClickable)
