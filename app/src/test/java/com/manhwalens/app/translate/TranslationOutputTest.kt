@@ -16,6 +16,7 @@ class TranslationOutputTest {
         assertEquals("TR-NAME-LOST", TranslationOutput.issue("7000",mask))
         assertEquals("TR-NAME-LOST", TranslationOutput.issue("7000 7000 7001",mask))
         assertEquals("TR-INVALID-OUTPUT", TranslationOutput.issue("7000 7001 hello",mask))
+        assertEquals("TR-INVALID-OUTPUT", TranslationOutput.issue("7000 7001 70007001",mask))
     }
     @Test fun emptyMalformedAndLatinOnlyOutputsFailButArabicIsNotProofOfSemantics() {
         val mask = NameShield.mask("Where are you?",emptyList())

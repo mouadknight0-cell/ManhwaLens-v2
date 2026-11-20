@@ -13,7 +13,9 @@ object TranslationOutput {
         // Arabic letters. Both sides must contain only protected tokens/punctuation.
         fun onlyNames(text: String): Boolean {
             var rest = NameShield.normalizeDigits(text)
-            mask.tokens.forEach { token -> rest = rest.replace(token, "") }
+            mask.tokens.forEach { token ->
+                rest = rest.replace(Regex("(?<![\\p{L}\\p{N}_])${Regex.escape(token)}(?![\\p{L}\\p{N}_])"), "")
+            }
             return mask.names.isNotEmpty() && rest.none { it.isLetterOrDigit() }
         }
         if (!ArabicOutput.hasLetters(restored) && !(onlyNames(mask.maskedText) && onlyNames(raw)))
