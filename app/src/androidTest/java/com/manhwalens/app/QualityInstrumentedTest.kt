@@ -148,4 +148,33 @@ class QualityInstrumentedTest {
         } finally { bitmap.recycle() }
     }
 
+    @Test fun originalPhoneBubbleReplacementEvidence() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val source = instrumentation.context.assets.open("conference-bubble.png").use { BitmapFactory.decodeStream(it) }
+        try {
+            val region = com.manhwalens.app.pipeline.TextRegion("I HEARD THAT THERE WAS A TERRIBLE INCIDENT AT THE POISON SECT CONFERENCE.", 47, 95, 301, 240)
+            val surface = com.manhwalens.app.overlay.SurfaceDetector.detect(region, source.width, source.height) { x, y -> source.getPixel(x, y) }
+            instrumentation.runOnMainSync {
+                val context = instrumentation.targetContext
+                // Human-authored reference to isolate renderer quality, not a model-quality claim.
+                val arabic = "سمعت أن حادثة مروعة وقعت في مؤتمر طائفة السم."
+                val view = com.manhwalens.app.overlay.ReplacementTranslationView(context, arabic, surface)
+                view.measure(View.MeasureSpec.makeMeasureSpec(surface.width, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(surface.height, View.MeasureSpec.EXACTLY))
+                view.layout(0, 0, surface.width, surface.height)
+                val mask = Bitmap.createBitmap(surface.width, surface.height, Bitmap.Config.ARGB_8888)
+                view.draw(Canvas(mask))
+                for (y in region.top until region.bottom) for (x in region.left until region.right) {
+                    assertEquals("source lettering cannot leak through alpha", 255, Color.alpha(mask.getPixel(x-surface.left, y-surface.top)))
+                }
+                val result = source.copy(Bitmap.Config.ARGB_8888, true)
+                Canvas(result).drawBitmap(mask, surface.left.toFloat(), surface.top.toFloat(), null)
+                val folder = java.io.File(context.getExternalFilesDir(null), "overlay-evidence").apply { mkdirs() }
+                java.io.File(folder, "source.png").outputStream().use { source.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                java.io.File(folder, "replacement-reference.png").outputStream().use { result.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                java.io.File(folder, "scope.txt").writeText("Real cropped historical phone screenshot; reference Arabic is human-authored, not ML Kit output. oval=${surface.oval}; details=${view.needsDetails}; fittedSp=${view.fittedSp}. Does not test physical WindowManager capture or latency.")
+                mask.recycle(); result.recycle()
+            }
+        } finally { source.recycle() }
+    }
+
 }

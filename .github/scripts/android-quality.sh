@@ -9,4 +9,6 @@ if [ "$status" -ne 0 ]; then
     echo "::error::${line//'%'/'%25'}"
   done
 fi
+mkdir -p app/build/reports/overlay-evidence
+adb pull /sdcard/Android/data/com.manhwalens.app/files/overlay-evidence/. app/build/reports/overlay-evidence/ || true
 exit "$status"
