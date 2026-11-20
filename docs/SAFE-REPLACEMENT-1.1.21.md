@@ -96,3 +96,9 @@ CI 44745299751 passed. Android runs 44745299837 and 44746056238 exposed a faulty
 - [CI 44746825723](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44746825723): compilation, unit tests and debug APK passed.
 - [Android 14 44746825783](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44746825783): native instrumented suite passed, including new pixel-preservation, injected raster failure and reference-dialogue/scale matrix, plus existing OCR/bidi/glyph/resize tests.
 - These are programmatic assertion results, not a manually inspected physical-phone screenshot. No device speed benchmark was run. Release metadata changes do not alter tested app code.
+
+### Published release
+
+- v1.1.21 release build/unit tests [44747686448](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44747686448): passed.
+- Durable-vault signing, pinned certificate and APK version identity verification [44748329383](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44748329383): passed.
+- Public APK: https://github.com/mouadknight0-cell/ManhwaLens-v2/releases/download/v1.1.21/app-release.apk . No signer change, uninstall or data reset. In-place physical upgrade was not exercised. PR9 remains open.
