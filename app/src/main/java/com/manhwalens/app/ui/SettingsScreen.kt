@@ -38,6 +38,8 @@ fun SettingsScreen(
     onBubbleEnabledChange: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
     learnedNames: List<String>,
+    confirmedNames: Set<String>,
+    onConfirmName: (String) -> Unit,
     onRemoveName: (String) -> Unit,
     onClearNames: () -> Unit,
     benchmarksRecorded: Int,
@@ -81,9 +83,11 @@ fun SettingsScreen(
         }
         SettingsGroup("الأسماء المحفوظة", "${learnedNames.size} اسم · لا تُحذف مع تشخيص الترجمة") {
             if (learnedNames.isEmpty()) Text("لا توجد أسماء محفوظة.")
+            Text("اقتراحات OCR لا تُحمى كأسماء حتى تعتمدها. المسرد مشترك بين القصص حاليًا؛ احذف الإدخالات غير المناسبة دون مسح سجل القراءة.")
             learnedNames.forEach { name ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(name, Modifier.weight(1f))
+                    Text(name + if (name in confirmedNames) " · مؤكد" else " · اقتراح", Modifier.weight(1f))
+                    if (name !in confirmedNames) TextButton(onClick = { onConfirmName(name) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("اعتماد") }
                     TextButton(onClick = { confirmation = "حذف الاسم $name؟" to { onRemoveName(name) } }, modifier = Modifier.heightIn(min = 48.dp)) { Text("حذف") }
                 }
             }

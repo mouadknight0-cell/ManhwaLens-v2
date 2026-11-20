@@ -10,9 +10,11 @@ suspend fun progressiveTranslation(
     concurrency: Int = 2,
     translate: suspend (TextRegion) -> TranslatedBlock,
     onReady: suspend (List<TranslatedBlock>) -> Unit,
+    // Callers with position-dependent validation/context must include those inputs.
+    identity: (TextRegion) -> Any = { it.text.trim() },
 ): List<TranslatedBlock> = coroutineScope {
     require(concurrency > 0)
-    val groups = regions.withIndex().groupBy { it.value.text.trim() }.values.toList()
+    val groups = regions.withIndex().groupBy { identity(it.value) }.values.toList()
     val jobs = Channel<List<IndexedValue<TextRegion>>>(Channel.UNLIMITED)
     groups.forEach { jobs.trySend(it) }
     jobs.close()
@@ -21,7 +23,7 @@ suspend fun progressiveTranslation(
         launch {
             for (group in jobs) {
                 val translated = translate(group.first().value)
-                results.send(group.map { it.index to translated.copy(region = it.value, original = it.value.text) })
+                results.send(group.map { it.index to translated.copy(region = it.value) })
             }
         }
     }

@@ -9,7 +9,7 @@ enum class RegionKind { DIALOGUE, NARRATION, SOUND_EFFECT, UNKNOWN }
 
 object RegionClassifier {
 
-    private val SFX_VERB_NOOK = Regex("^[^a-z]{0,3}(BOOM|BANG|CRASH|SMASH|GRRR|BAM|POW|WHAM|SLAM|RUMBLE|SWOOSH|HISS|ROAR|ZZZT|THUD|KAPOW|SPLAT|CRACK|KRAK|THWUMP|SHOOM|VOOM|CLANG|CRUNCH)[A-Za-z!.…-]*$", RegexOption.IGNORE_CASE)
+    private val SFX_VERB_NOOK = Regex("^[^a-z]{0,3}(BOOM|BANG|CRASH|SMASH|GRRR|BAM|POW|WHAM|SLAM|RUMBLE|SWOOSH|HISS|ROAR|ZZZT|THUD|KAPOW|SPLAT|CRACK|KRAK|THWUMP|SHOOM|VOOM|CLANG|CRUNCH)[!.…-]*$", RegexOption.IGNORE_CASE)
 
     fun classify(text: String): RegionKind {
         val t = text.trim()

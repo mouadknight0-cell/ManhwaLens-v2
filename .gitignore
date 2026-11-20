@@ -31,3 +31,10 @@ keystore.properties
 # Misc
 node_modules/
 *.log
+
+# Local image-fixture preparation environment
+.venv/
+
+# Python audit tooling bytecode
+__pycache__/
+*.pyc

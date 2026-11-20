@@ -138,8 +138,9 @@ fun ResultBottomSheet(
                                 Spacer(Modifier.height(2.dp))
                                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                                     Text(
-                                        text = block.translated,
-                                        style = MaterialTheme.typography.bodyLarge,
+                                        text = com.manhwalens.app.pipeline.ArabicDisplay.prepare(if (block.errorCode != null) block.original else block.translated),
+                                        fontFamily = com.manhwalens.app.ui.theme.ArabicFontFamily,
+                                        style = MaterialTheme.typography.bodyLarge.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Rtl),
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurface,
                                         textAlign = TextAlign.Start,
@@ -148,7 +149,7 @@ fun ResultBottomSheet(
                             }
                             IconButton(
                                 onClick = {
-                                    copyToClipboard(context, block.translated)
+                                    copyToClipboard(context, if (block.errorCode != null) block.original else block.translated)
                                 },
                             ) {
                                 Icon(
@@ -166,7 +167,7 @@ fun ResultBottomSheet(
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 Button(
-                    onClick = { copyToClipboard(context, result.translatedText) },
+                    onClick = { copyToClipboard(context, result.blocks.filter { it.errorCode == null }.joinToString("\n") { it.translated }) },
                     modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),

@@ -71,11 +71,10 @@ object NameDetector {
         for (name in glossaryNames.sortedByDescending { it.length }) {
             val parts = name.trim().split(Regex("[\\s-]+")).filter { it.isNotEmpty() }
             if (parts.isEmpty()) continue
-            var idx = 0
-            while (true) {
-                val m = matchFrom(tokens, idx, parts) ?: break
-                hits.add(NameHit(text.substring(tokens[m.first].second, tokens[m.last].third), tokens[m.first].second, tokens[m.last].third, NameHit.Source.GLOSSARY))
-                idx = m.last + 1
+            val pattern = Regex("(?<![\\p{L}\\p{N}_])" +
+                parts.joinToString("[\\s-]+") { Regex.escape(it) } + "(?![\\p{L}\\p{N}_])", RegexOption.IGNORE_CASE)
+            pattern.findAll(text).forEach { match ->
+                hits.add(NameHit(match.value, match.range.first, match.range.last + 1, NameHit.Source.GLOSSARY))
             }
         }
 

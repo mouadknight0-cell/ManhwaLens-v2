@@ -58,7 +58,6 @@ object ErrorCodes {
     // 6xxx Arabic formatting / rendering / overlay
     const val UI_UPDATE_FAILED = "UI-6001"
     const val OVERLAY_PERMISSION_MISSING = "UI-6002"
-    const val OVERLAY_PANEL_FAILED = "UI-6003"
     const val RTL_RENDER_FAILED = "UI-6004"
 
     // 7xxx Storage / export / benchmark

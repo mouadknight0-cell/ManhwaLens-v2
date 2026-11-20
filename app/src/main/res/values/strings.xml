@@ -69,7 +69,6 @@
     <!-- Result sheet -->
     <string name="result_title">Translation</string>
     <string name="result_copy_all">Copy all</string>
-    <string name="result_copied">Copied to clipboard</string>
     <string name="result_saved">Saved to history</string>
     <string name="result_empty">No readable text found on screen</string>
     <string name="result_close">Close</string>

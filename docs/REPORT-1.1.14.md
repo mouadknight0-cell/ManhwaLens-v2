@@ -1,0 +1,25 @@
+# v1.1.14 — complete TXT report and intrusive overlay correction
+
+Evidence: v1.1.13 (217282188) on Xiaomi 23106RN0DA / Android 14. Four screenshots show an oversized combined circular reader over the illustration. Pasted logs/samples are partial and duplicated, so no aggregate failure rate or before/after speed claim is justified.
+
+## Root causes and changes
+
+- **Fragmented reporting:** the automatic diagnostics export deliberately excluded translation content; section exports required separate files/copy chunks. New Settings > complete TXT controls explicitly request consent to include screen text, then save with Android CreateDocument or share one UTF-8 FileProvider attachment. Includes retained history (100-capture limit), samples (200-block limit including partial captures), readable/raw benchmarks, errors, ring/disk logs and saved bug archives. No thumbnails/configuration secrets are read. Basic labelled-secret redaction applies, but the report can still contain personal screen text. Review before sharing. Deleted/rotated records cannot be recovered. No export truncation; sections are sequential snapshots, so pausing capture is recommended. Automatic crash exports remain unchanged/content-free. Complete reports are excluded from bug enumeration to prevent recursive export growth.
+- **Giant reader:** the minimum 140dp circle plus strict coverage of rectangular OCR bounds triggered the combined reader automatically. At the phone density, a 300dp reader covered much of the drawing. Per-region circles now use 64–160dp limits; failures use a 48dp ! button. Circle coverage is no longer a reason to replace all results with a large reader. Crowding offers a 48dp explicit reader launcher; only a tap opens details. Tapping a card opens just that block. Long-press dismisses. English may remain visible around smaller circles: these are annotations, not guaranteed balloon-shaped inpainting.
+- **Misclassified browser counter:** a digit-only utterance was labelled OCR-UNCERTAIN because it had no letters. Preserve numbers, and exclude bottom browser controls only when a visible URL and a substantial dark bottom band both provide evidence. Log exclusion metadata. This is a conservative heuristic, not general browser UI recognition; light themes and hidden address bars remain limitations.
+- **Loading pages:** skip frames only with both the progressive-image-loading marker and site/update marker. Skips are reported, not counted as translations. Arbitrary ads are not universally detected.
+- **Clipped MISTER/AALSTER:** the reported box ends at 1494 while content ends near 1506. The old three-pixel test missed it. Use a capped half-glyph-height tolerance for incomplete text near the viewport bottom. Preserve a visible OCR-CLIPPED state/source rather than infer a corrupted word. Some complete unpunctuated edge text can be deferred; scrolling reveals it.
+
+## Validation plan and limits
+
+Pure regressions cover untruncated large Arabic report sections, redaction, loading-marker negative controls, browser-band evidence, preserved numeric content and the actual clipped-box coordinates. Android 14 instrumentation covers real-image OCR, circular view drawing/click/long-click forwarding and complete report generation with seeded raw/source/Arabic history and samples. GitHub run links record actual outcomes; this document alone is not a pass assertion.
+
+No physical Xiaomi/MediaProjection overlay test, document-provider interaction test or latency A/B benchmark was performed here. Cancellations are not assumed engine crashes. Known TR-INVALID-OUTPUT remains for unsupported OCR; semantic errors such as '4 days straight' and past-tense/pronoun mistakes in ML Kit are NOT solved by this release. No expanded sentence-specific patch table or new contextual model is claimed.
+
+Install over v1.1.13 using the unchanged durable v1.1.10+ signer. Do not uninstall or clear settings/history.
+
+## Executed verification
+
+- JVM tests, compile/debug assembly and signing recovery passed: https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44615901600 .
+- Android 14 instrumentation passed, including complete TXT with seeded Arabic/history/sample content and click/long-click propagation: https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44616872195 .
+- The preceding emulator run 44615901658 terminated with `Process crashed` and no useful crash stack in its test XML. Added crash-buffer collection; the next run passed without a production-code change. The earlier crash is unexplained, not claimed repaired or dismissed as harmless.

@@ -41,6 +41,13 @@ object HistoryJson {
             blocks.put(
                 JSONObject().apply {
                     put("o", block.original)
+                    put("ocr", block.region.text)
+                    put("ocr_confidence", block.region.confidence.takeIf { it.isFinite() } ?: JSONObject.NULL)
+                    block.region.surface?.let { surface ->
+                        put("surface", JSONObject().put("l", surface.left).put("t", surface.top)
+                            .put("r", surface.right).put("b", surface.bottom).put("color", surface.color).put("oval", surface.oval))
+                    }
+                    put("method", block.method)
                     put("t", block.translated)
                     put("error", block.errorCode ?: JSONObject.NULL)
                     put("duration_ms", block.durationMs ?: JSONObject.NULL)
@@ -64,13 +71,19 @@ object HistoryJson {
                 val original = b.optString("o")
                 if (original.isBlank()) continue
                 val region = TextRegion(
-                    text = original,
+                    text = b.optString("ocr", original),
                     left = b.optInt("l", 0),
                     top = b.optInt("y", 0),
                     right = b.optInt("r", 0),
                     bottom = b.optInt("b", 0),
+                    confidence = b.optDouble("ocr_confidence", Double.NaN).toFloat(),
+                    surface = b.optJSONObject("surface")?.let { surface ->
+                        com.manhwalens.app.overlay.ReplacementSurface(surface.optInt("l"), surface.optInt("t"),
+                            surface.optInt("r"), surface.optInt("b"), surface.optInt("color", -1), surface.optBoolean("oval"))
+                            .takeIf { it.width > 0 && it.height > 0 }
+                    },
                 )
-                add(TranslatedBlock(region = region, original = original, translated = b.optString("t", original), errorCode = if (b.isNull("error")) null else b.optString("error").ifBlank { null }, durationMs = if (b.isNull("duration_ms")) null else b.optLong("duration_ms")))
+                add(TranslatedBlock(region = region, original = original, translated = b.optString("t", original), errorCode = if (b.isNull("error")) null else b.optString("error").ifBlank { null }, durationMs = if (b.isNull("duration_ms")) null else b.optLong("duration_ms"), method = b.optString("method", "ML Kit on-device")))
             }
         }
         return CaptureResult(

@@ -30,6 +30,7 @@ android {
         applicationId = "com.manhwalens.app"
         minSdk = 26
         targetSdk = 35
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = appVersionCode
         versionName = appVersionName
         vectorDrawables.useSupportLibrary = true
@@ -107,6 +108,8 @@ dependencies {
     implementation(libs.mlkit.text.recognition.japanese)
     implementation(libs.mlkit.text.recognition.chinese)
 
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     testImplementation(libs.junit)
     testImplementation(libs.org.json)
     testImplementation(libs.kotlinx.coroutines.test)

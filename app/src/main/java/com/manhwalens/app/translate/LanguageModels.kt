@@ -39,7 +39,7 @@ object LanguageModels {
                 mutable.value = State("Verifying installation and running a translation test…", busy = true)
                 check(manager.isModelDownloaded(model).await()) { "Arabic model installation not confirmed" }
                 val probe = withTimeout(15_000) { translator.translate("Hello.").await() }
-                check(probe.any { it in '\u0600'..'\u06ff' }) { "Model usability verification failed" }
+                check(ArabicOutput.hasLetters(probe)) { "Model usability verification failed" }
             }
             mutable.value = State("Ready — installation confirmed and EN→AR test passed", ready = true)
             Diagnostics.info("model", "verified", "EN to AR installation and inference probe passed")

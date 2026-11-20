@@ -53,6 +53,7 @@ fun ManhwaLensTheme(
 ) {
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = ArabicTypography,
         content = content,
     )
 }
