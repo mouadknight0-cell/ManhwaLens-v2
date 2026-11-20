@@ -33,12 +33,12 @@ object SurfaceDetector {
         for (i in 0..7) {
             val x = l + (r - l - 1) * i / 7
             val y = t + (b - t - 1) * i / 7
-            read(x, t)?.let(samples::add); read(x, b - 1)?.let(samples::add)
-            read(l, y)?.let(samples::add); read(r - 1, y)?.let(samples::add)
+            read(x, (t - 3).coerceAtLeast(0))?.let(samples::add); read(x, (b + 2).coerceAtMost(imageHeight - 1))?.let(samples::add)
+            read((l - 3).coerceAtLeast(0), y)?.let(samples::add); read((r + 2).coerceAtMost(imageWidth - 1), y)?.let(samples::add)
         }
         fun median(shift: Int) = samples.map { channel(it, shift) }.sorted().let { it[it.size / 2] }
         val color = if (samples.isEmpty()) -1 else (0xff shl 24) or (median(16) shl 16) or (median(8) shl 8) or median(0)
-        val uniform = samples.count { distance(it, color) <= 18 } >= 28
+        val uniform = samples.count { distance(it, color) <= 26 } >= 24
         val fallback = ReplacementSurface(l, t, r, b, if (uniform) color else -1)
         if (!uniform || minOf(channel(color,16), channel(color,8), channel(color,0)) < 220) return fallback
         // Search from outside the text, never through its black glyphs.

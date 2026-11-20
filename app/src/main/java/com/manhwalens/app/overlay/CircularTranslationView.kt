@@ -26,8 +26,10 @@ class CircularTranslationView(context: Context, diameter: Int, message: String, 
         elevation = 2 * resources.displayMetrics.density
         val inner = CircleGeometry.innerSide(diameter)
         val label = TextView(context).apply {
-            text = message
-            gravity = Gravity.CENTER
+            text = com.manhwalens.app.pipeline.ArabicDisplay.prepare(message)
+            typeface = ArabicTypeface.get(context)
+            gravity = if (com.manhwalens.app.pipeline.ArabicDisplay.isShort(message)) Gravity.CENTER else Gravity.TOP or Gravity.START
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
             textDirection = View.TEXT_DIRECTION_FIRST_STRONG_RTL
             setTextColor(if (failed) Color.rgb(150, 30, 30) else Color.rgb(24, 24, 30))
             setLineSpacing(0f, 1.08f)

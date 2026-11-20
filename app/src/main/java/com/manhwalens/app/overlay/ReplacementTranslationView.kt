@@ -19,7 +19,20 @@ import kotlin.math.min
 class ReplacementTranslationView(context: Context, val message: String,
     private val surface: ReplacementSurface, private val failed: Boolean = false) : View(context) {
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = surface.color or (0xff shl 24) }
-    private val ink = TextPaint(Paint.ANTI_ALIAS_FLAG)
+    private val ink = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = ArabicTypeface.get(context) }
+    private val displayMessage = com.manhwalens.app.pipeline.ArabicDisplay.prepare(message)
+    private var offsetY = 0f
+    var isScrollable: Boolean = false
+        private set
+    private val gestures = android.view.GestureDetector(context, object : android.view.GestureDetector.SimpleOnGestureListener() {
+        override fun onDown(e: android.view.MotionEvent) = true
+        override fun onSingleTapUp(e: android.view.MotionEvent): Boolean { performClick(); return true }
+        override fun onLongPress(e: android.view.MotionEvent) { performLongClick() }
+        override fun onScroll(e1: android.view.MotionEvent?, e2: android.view.MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+            offsetY = (offsetY + distanceY).coerceIn(0f, ((layout?.height ?: 0) - content.height()).coerceAtLeast(0f))
+            invalidate(); return true
+        }
+    })
     private var layout: StaticLayout? = null
     private var content = RectF()
     var needsDetails: Boolean = false
@@ -52,8 +65,8 @@ class ReplacementTranslationView(context: Context, val message: String,
             fitPasses++
             ink.textSize = size * resources.displayMetrics.scaledDensity
             return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
-                .setAlignment(Layout.Alignment.ALIGN_CENTER)
-                .setTextDirection(TextDirectionHeuristics.FIRSTSTRONG_RTL)
+                .setAlignment(if (com.manhwalens.app.pipeline.ArabicDisplay.isShort(message) || text == "…") Layout.Alignment.ALIGN_CENTER else Layout.Alignment.ALIGN_NORMAL)
+                .setTextDirection(if (com.manhwalens.app.pipeline.ArabicDisplay.isArabic(message)) TextDirectionHeuristics.RTL else TextDirectionHeuristics.FIRSTSTRONG_LTR)
                 .setIncludePad(true).setLineSpacing(0f, 1.04f)
                 .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)
                 .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build()
@@ -64,13 +77,24 @@ class ReplacementTranslationView(context: Context, val message: String,
         // Bound pathological text layout cost; explicit details, never silent clipping.
         if (message.length <= 4000) while (low <= high) {
             val mid = (low + high) / 2
-            if (fits(make(message, mid.toFloat()))) { chosen = mid; low = mid + 1 } else high = mid - 1
+            if (fits(make(displayMessage, mid.toFloat()))) { chosen = mid; low = mid + 1 } else high = mid - 1
         }
-        needsDetails = chosen == 0
-        fittedSp = if (needsDetails) min(12f, content.height() / resources.displayMetrics.scaledDensity / 1.4f).coerceAtLeast(1f) else chosen.toFloat()
-        layout = make(if (needsDetails) "…" else message, fittedSp)
-        contentDescription = message + if (needsDetails) ". المساحة لا تكفي؛ اضغط لقراءة النص كاملًا" else ". اضغط لعرض النص الأصلي"
+        ink.textSize = 12 * resources.displayMetrics.scaledDensity
+        val minimumLine = ink.fontMetrics.bottom - ink.fontMetrics.top
+        isScrollable = chosen == 0 && message.length <= 4000 && content.height() >= minimumLine && content.width() >= ink.textSize * 2
+        needsDetails = chosen == 0 && !isScrollable
+        fittedSp = if (needsDetails) min(12f, content.height() / resources.displayMetrics.scaledDensity / 2f).coerceAtLeast(1f) else if (isScrollable) 12f else chosen.toFloat()
+        offsetY = 0f
+        layout = make(if (needsDetails) "…" else displayMessage, fittedSp)
+        contentDescription = message + when {
+            needsDetails -> ". المساحة لا تكفي؛ اضغط لقراءة النص كاملًا"
+            isScrollable -> ". اسحب داخل النص لقراءة البقية أو اضغط للتفاصيل"
+            else -> ". اضغط لعرض النص الأصلي"
+        }
     }
+
+    override fun onTouchEvent(event: android.view.MotionEvent): Boolean =
+        if (isScrollable) gestures.onTouchEvent(event) else super.onTouchEvent(event)
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -80,7 +104,7 @@ class ReplacementTranslationView(context: Context, val message: String,
         val text = layout ?: return
         canvas.save()
         canvas.clipRect(content)
-        canvas.translate(content.left, content.top + ((content.height() - text.height) / 2).coerceAtLeast(0f))
+        canvas.translate(content.left, content.top + ((content.height() - text.height) / 2).coerceAtLeast(0f) - offsetY)
         text.draw(canvas)
         canvas.restore()
     }

@@ -138,8 +138,9 @@ fun ResultBottomSheet(
                                 Spacer(Modifier.height(2.dp))
                                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                                     Text(
-                                        text = block.translated,
-                                        style = MaterialTheme.typography.bodyLarge,
+                                        text = com.manhwalens.app.pipeline.ArabicDisplay.prepare(block.translated),
+                                        fontFamily = com.manhwalens.app.ui.theme.ArabicFontFamily,
+                                        style = MaterialTheme.typography.bodyLarge.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Rtl),
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurface,
                                         textAlign = TextAlign.Start,

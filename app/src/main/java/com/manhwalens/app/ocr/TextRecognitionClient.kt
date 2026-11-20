@@ -59,7 +59,8 @@ class TextRecognitionClient {
                             }
                             val owners = linesByBlock.flatMapIndexed { index, lines -> lines.map { it to index } }.toMap()
                             com.manhwalens.app.pipeline.DialogueAssembler.assemble(linesByBlock.flatten()) { a, b ->
-                                owners[a] == owners[b] || lightBridge(bitmap, a, b)
+                                owners[a] == owners[b] || lightBridge(bitmap, a, b) ||
+                                    com.manhwalens.app.pipeline.TonalCorridor.isClear(a, b, bitmap.width, bitmap.height) { x, y -> bitmap.getPixel(x, y) }
                             }
                         }
                     } catch (t: Throwable) {

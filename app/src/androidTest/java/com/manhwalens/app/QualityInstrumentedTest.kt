@@ -122,7 +122,7 @@ class QualityInstrumentedTest {
             bitmap.recycle()
             val long = com.manhwalens.app.overlay.ReplacementTranslationView(context, "هذه ترجمة طويلة تحتاج مساحة كافية. ".repeat(80), surface)
             val tiny = render(long, 140, 60)
-            assertTrue(long.needsDetails)
+            assertTrue(long.needsDetails || long.isScrollable)
             assertTrue(long.contentDescription.contains("اضغط"))
             assertTrue(long.fitPasses <= 6)
             var clicked = false
@@ -175,6 +175,49 @@ class QualityInstrumentedTest {
                 mask.recycle(); result.recycle()
             }
         } finally { source.recycle() }
+    }
+
+    @Test fun realGreyNarrationLinesJoinWithoutAnotherOcrPass() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val bitmap = instrumentation.context.assets.open("grey-narration.png").use { BitmapFactory.decodeStream(it) }
+        try {
+            val lines = listOf(
+                com.manhwalens.app.pipeline.TextRegion("YEAR 2025, TOMBS", 63, 134, 355, 160),
+                com.manhwalens.app.pipeline.TextRegion("START TO APPEAR ALL", 43, 166, 373, 190),
+                com.manhwalens.app.pipeline.TextRegion("OVER EARTH.", 112, 198, 305, 219))
+            val grouped = com.manhwalens.app.pipeline.DialogueAssembler.assemble(lines) { a,b ->
+                com.manhwalens.app.pipeline.TonalCorridor.isClear(a,b,bitmap.width,bitmap.height) { x,y -> bitmap.getPixel(x,y) }
+            }
+            assertEquals("A single paragraph, not three ellipsis strips", 1, grouped.size)
+            assertEquals("YEAR 2025, TOMBS START TO APPEAR ALL OVER EARTH.", grouped.single().text)
+        } finally { bitmap.recycle() }
+    }
+
+    @Test fun bundledArabicTypefaceSupportsGlyphsBidiAndScaledLayouts() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val base = instrumentation.targetContext
+            val paint = android.text.TextPaint().apply {
+                typeface = com.manhwalens.app.overlay.ArabicTypeface.get(base); textSize = 40f
+            }
+            for (glyph in listOf("ع", "م", "؟", "G", "2")) assertTrue("Missing glyph $glyph", paint.hasGlyph(glyph))
+            val source = "مكتب <Guardian> عام 2025، هل اكتمل التحميل؟"
+            val display = com.manhwalens.app.pipeline.ArabicDisplay.prepare(source)
+            val paragraph = android.text.StaticLayout.Builder.obtain(display,0,display.length,paint,500)
+                .setTextDirection(android.text.TextDirectionHeuristics.RTL).build()
+            assertEquals(-1, paragraph.getParagraphDirection(0))
+            for (scale in listOf(1f, 1.4f)) {
+                val config = android.content.res.Configuration(base.resources.configuration).apply { fontScale = scale }
+                val context = base.createConfigurationContext(config)
+                val surface = com.manhwalens.app.overlay.ReplacementSurface(0,0,500,300)
+                val view = com.manhwalens.app.overlay.ReplacementTranslationView(context, source, surface)
+                view.measure(View.MeasureSpec.makeMeasureSpec(500,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(300,View.MeasureSpec.EXACTLY))
+                view.layout(0,0,500,300)
+                assertTrue(view.fitPasses <= 6)
+                assertFalse(view.needsDetails)
+                assertTrue(view.fittedSp >= 12f)
+            }
+        }
     }
 
 }
