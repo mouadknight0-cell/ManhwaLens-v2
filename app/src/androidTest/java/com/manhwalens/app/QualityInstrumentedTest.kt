@@ -362,7 +362,7 @@ class QualityInstrumentedTest {
                     com.manhwalens.app.overlay.ReplacementSurface(w-180,h-40,w,h),
                     com.manhwalens.app.overlay.ReplacementSurface(w-100,0,w,38))
                 val messages=listOf("مرحبا", "هذه ترجمة عربية كاملة تظهر مباشرة على الصفحة. ".repeat(4),
-                    "هذه ترجمة عربية كاملة تظهر مباشرة على الصفحة. ".repeat(18))
+                    "هذه ترجمة عربية كاملة تظهر مباشرة على الصفحة. ".repeat(if(w==360 && scale>1f) 12 else 18))
                 for(source in sources) for(message in messages) {
                     val result=com.manhwalens.app.overlay.DirectTranslationLayout.prepare(context,message,source,screen,listOf(button))
                     val metrics=context.resources.displayMetrics
@@ -383,6 +383,24 @@ class QualityInstrumentedTest {
                     image.recycle()
                 }
             }
+        }
+    }
+
+    @Test fun physicallyOverCapacityTextDoesNotCreateAnAlternativeUiOrPaintOverSource() {
+        val inst=InstrumentationRegistry.getInstrumentation()
+        inst.runOnMainSync {
+            val config=android.content.res.Configuration(inst.targetContext.resources.configuration).apply { densityDpi=160;fontScale=1.4f }
+            val context=inst.targetContext.createConfigurationContext(config)
+            val message="هذه ترجمة عربية كاملة تظهر مباشرة على الصفحة. ".repeat(18)
+            val paint=android.text.TextPaint().apply { typeface=com.manhwalens.app.overlay.ArabicTypeface.get(context);textSize=12*context.resources.displayMetrics.scaledDensity }
+            val native=android.text.StaticLayout.Builder.obtain(message,0,message.length,paint,352)
+                .setIncludePad(true).setLineSpacing(0f,1.04f).setBreakStrategy(android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY).build()
+            assertTrue("This is a genuine capacity boundary, not waived fit failure",native.height>640)
+            val result=com.manhwalens.app.overlay.DirectTranslationLayout.prepare(context,message,
+                com.manhwalens.app.overlay.ReplacementSurface(20,120,180,158),
+                com.manhwalens.app.overlay.ReplacementSurface(0,0,360,640),
+                listOf(com.manhwalens.app.overlay.ReplacementSurface(260,0,360,100)))
+            assertNull(result) // no view, mask, click target, or window is created/attached
         }
     }
 

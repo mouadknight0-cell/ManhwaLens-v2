@@ -51,4 +51,8 @@ Pending GitHub results below. No physical-device or end-to-end speed parity clai
 
 ### Regression discovered during verification
 
-First Android runs rejected the 828-character test on a 360×640 screen. Extra native measurements showed minimum text height **337px**, well within available space: this was not a valid capacity rejection. The old fit predicate used line advance including trailing spaces; native line wrapping can place those spaces beyond the line box. Changed the fit width check to native visible line extent, excluding trailing whitespace. The 828-character acceptance case is retained unchanged; rerun required, not waived.
+First Android runs rejected the 828-character test on a 360×640 screen. Extra native measurements showed minimum text height **337px**, well within available space: this was not a valid capacity rejection. The old fit predicate used line advance including trailing spaces; native line wrapping can place those spaces beyond the line box. Changed the fit width check to native visible line extent, excluding trailing whitespace. The 828-character case then passed at scale 1.0, confirming that rejection was a fit bug.
+
+### Explicit finite-capacity case
+
+The next run (44766722377) reached compact 360×640 / font scale 1.4: native minimum height for 828 characters was **647px**, exceeding the entire screen before the button reservation. This case now has its own test requiring native proof of over-capacity and no replacement view. The immediate-render acceptance matrix keeps 828 characters on larger screens and compact scale 1.0; compact scale 1.4 uses 552 characters. This is a disclosed capacity limitation, not a claim that the 828-character compact/scaled case now displays. No font below 12sp, truncation, or alternative UI was introduced to make it pass.
