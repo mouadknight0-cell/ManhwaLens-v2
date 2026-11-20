@@ -27,11 +27,11 @@ internal class ColorRecovery {
     private fun propose(b:Bitmap):List<Rect>{
         val step=max(5,max(b.width,b.height)/144);val w=b.width/step;val h=b.height/step;if(w<3||h<3)return emptyList()
         val pix=IntArray(w*h){i->b.getPixel(i%w*step,i/w*step)};val seen=BooleanArray(pix.size);val q=IntArray(pix.size);val hits=mutableListOf<Pair<Rect,Int>>()
-        for(i in pix.indices){if(seen[i])continue;val c=pix[i];if(gray(c)>152 && maxOf(Color.red(c),Color.green(c),Color.blue(c))-minOf(Color.red(c),Color.green(c),Color.blue(c))<55)continue
+        for(i in pix.indices){if(seen[i])continue;val c=pix[i];if(gray(c) in 153..219 && maxOf(Color.red(c),Color.green(c),Color.blue(c))-minOf(Color.red(c),Color.green(c),Color.blue(c))<55)continue
             var n=1;var head=0;q[0]=i;seen[i]=true;var l=w;var r=0;var t=h;var bot=0;var edges=0
             fun visit(j:Int){val v=pix[j];if(maxOf(abs(Color.red(c)-Color.red(v)),abs(Color.green(c)-Color.green(v)),abs(Color.blue(c)-Color.blue(v)))>34){edges++;return};if(!seen[j]){seen[j]=true;q[n++]=j}}
             while(head<n){val j=q[head++];val x=j%w;val y=j/w;l=min(l,x);r=max(r,x);t=min(t,y);bot=max(bot,y);if(x>0)visit(j-1);if(x<w-1)visit(j+1);if(y>0)visit(j-w);if(y<h-1)visit(j+w)}
-            val area=(r-l+1)*(bot-t+1);if(n>=18 && area<=w*h/3 && r-l>=4 && bot-t>=2 && n>=area*.28 && edges>12)hits.add(Rect(l*step,t*step,min(b.width,(r+1)*step),min(b.height,(bot+1)*step)) to edges)
+            val area=(r-l+1)*(bot-t+1);if(n>=18 && area<=w*h*.60 && r-l>=4 && bot-t>=2 && n>=area*.28 && edges>12)hits.add(Rect(l*step,t*step,min(b.width,(r+1)*step),min(b.height,(bot+1)*step)) to edges*3)
          }
         // A dark full-bleed panel or coloured glyphs on a white page need not have a closed background.
         // Group neighbouring contrast tiles with both light and saturated/dark samples.
@@ -40,23 +40,25 @@ internal class ColorRecovery {
         for(i in tiles.indices){if(!tiles[i])continue;tiles[i]=false;q[0]=i;var n=1;var head=0;var l=w;var r=0;var t=h;var bot=0
             while(head<n){val j=q[head++];val x=j%w;val y=j/w;l=min(l,x);r=max(r,x);t=min(t,y);bot=max(bot,y);for(dy in -1..1)for(dx in -2..2){val xx=x+dx;val yy=y+dy;if(xx !in 0 until w || yy !in 0 until h)continue;val k=yy*w+xx;if(tiles[k]){tiles[k]=false;q[n++]=k}}}
             if(n>=8 && r-l>=4 && r-l>bot-t && (r-l+1)*(bot-t+1)<w*h/5)hits.add(Rect(l*step,t*step,(r+1)*step,(bot+1)*step) to n)
-        };return hits.sortedByDescending { it.second }.take(3).map { it.first }
+        };return hits.sortedByDescending { it.second }.fold(mutableListOf<Rect>()){ selected,(r,_) ->
+            if(selected.size<3 && selected.none { it.contains(r) || overlap(it,r)>.45 })selected.add(r);selected }
     }
     private fun hash(b:Bitmap,r:Rect):Long {var v=17L;for(y in 0..15)for(x in 0..23){val p=b.getPixel(r.left+(r.width()-1)*x/23,r.top+(r.height()-1)*y/15);v=v*31+(p and 0xf0f0f0)};return v}
     private fun perceptual(b:Bitmap,r:Rect):Long {var sig=0L;for(y in 0..7)for(x in 0..7){val yy=r.top+(r.height()-1)*(2*y+1)/16
         if(gray(b.getPixel(r.left+(r.width()-1)*x/8,yy))>gray(b.getPixel(r.left+(r.width()-1)*(x+1)/8,yy))+4)sig=sig or (1L shl (y*8+x))};return sig}
-    suspend fun recover(client:TextRecognitionClient,b:Bitmap,lang:String,initial:List<TextRegion>,keep:(TextRegion)->Boolean,log:(String)->Unit):List<TextRegion>{
+    suspend fun recover(client:TextRecognitionClient,b:Bitmap,lang:String,initial:List<TextRegion>,budgetMs:Long=60_000,keep:(TextRegion)->Boolean,log:(String)->Unit):List<TextRegion>{
+        val deadline=android.os.SystemClock.elapsedRealtime()+budgetMs
         val weak=initial.filter { score(it)<.77 || it.confidence<.52f };if(initial.isNotEmpty() && weak.isEmpty())return initial
         val candidates=(weak.sortedBy { score(it) }.map(::box)+if(initial.size==weak.size)propose(b) else emptyList()).fold(mutableListOf<Rect>()){a,x->if(a.none { overlap(it,x)>.5 })a.add(x);a}.take(4)
         val output=initial.toMutableList()
-        for(raw in candidates){val r=Rect(max(0,raw.left-10),max(0,raw.top-10),min(b.width,raw.right+10),min(b.height,raw.bottom+10));if(r.width()<4||r.height()<4||r.width()*r.height()>350000)continue
+        for(raw in candidates){if(android.os.SystemClock.elapsedRealtime()>=deadline)break;val r=Rect(max(0,raw.left-10),max(0,raw.top-10),min(b.width,raw.right+10),min(b.height,raw.bottom+10));if(r.width()<4||r.height()<4||r.width()*r.height()>350000)continue
             val fingerprint=hash(b,r);val visual=perceptual(b,r);val tr=tracks.firstOrNull { overlap(it.box,r)>.5 }?:Track(Rect(r)).also { tracks.addLast(it);if(tracks.size>32)tracks.removeFirst() }
             val cached=tr.votes.lastOrNull()?.takeIf { it.hash==fingerprint && tr.box==r && it.score>=.77 };var best=initial.filter { overlap(raw,box(it))>.5 };var value=best.map(::score).average().takeIf(Double::isFinite)?:0.0
             if(cached!=null){best=cached.regions;value=cached.score;log("pass=cache score=$value")} else {
                 val colors=IntArray(r.width()*r.height());b.getPixels(colors,0,r.width(),r.left,r.top,r.width(),r.height());val ys=IntArray(colors.size){gray(colors[it])};val hist=IntArray(256);ys.forEach { hist[it]++ };val mean=ys.average();var winner="frame"
-                val variants=listOf("original","invert","stretch","otsu","lab");for(pass in variants){if(pass=="invert" && mean>155)continue
+                val variants=listOf("original","invert","stretch","otsu","lab");for(pass in variants){val remaining=deadline-android.os.SystemClock.elapsedRealtime();if(remaining<=0){log("recovery_budget box=$r retained_score=$value");break};if(pass=="invert" && mean>155)continue
                     val pixels=variant(pass,colors,ys,hist);val crop=Bitmap.createBitmap(pixels,r.width(),r.height(),Bitmap.Config.ARGB_8888);val scale=when {r.height()<32->3;r.height()<=100->2;else->1};val input=if(scale==1)crop else Bitmap.createScaledBitmap(crop,r.width()*scale,r.height()*scale,true)
-                    val got=try { client.recognize(input,lang).map { it.copy(left=r.left+it.left/scale,right=r.left+it.right/scale,top=r.top+it.top/scale,bottom=r.top+it.bottom/scale) }.filter(keep) }catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){log("pass=$pass failure=${e.javaClass.simpleName}");emptyList()}finally{if(input!==crop)input.recycle();crop.recycle()}
+                    val got=try { kotlinx.coroutines.withTimeoutOrNull(remaining){client.recognize(input,lang)}.orEmpty().map { it.copy(left=r.left+it.left/scale,right=r.left+it.right/scale,top=r.top+it.top/scale,bottom=r.top+it.bottom/scale) }.filter(keep) }catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){log("pass=$pass failure=${e.javaClass.simpleName}");emptyList()}finally{if(input!==crop)input.recycle();crop.recycle()}
                     val s=got.map(::score).average().takeIf(Double::isFinite)?:0.0;log("pass=$pass score=$s regions=${got.size} box=$r");if(s>value){value=s;winner=pass;best=got}
                 };log("winner=$winner score=$value box=$r");tr.box.set(r);tr.votes.addLast(Vote(fingerprint,visual,best,value));if(tr.votes.size>4)tr.votes.removeFirst()
                 // Only vote for aligned current blocks on perceptually similar crops. Never attach yesterday's coordinates.

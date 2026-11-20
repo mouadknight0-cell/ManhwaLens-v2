@@ -21,7 +21,7 @@ class QualityInstrumentedTest {
             val image=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);val canvas=Canvas(image);canvas.drawColor(Color.rgb(25,29,27))
             val pen=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);pen.color=bg;canvas.drawOval(72f,83f,566f,230f,pen);pen.color=ink;pen.textSize=30f;pen.textAlign=android.graphics.Paint.Align.CENTER;canvas.drawText(phrase,320f,167f,pen)
             try { val recovery=com.manhwalens.app.ocr.ColorRecovery();val client=TextRecognitionClient();val log=mutableListOf<String>()
-                val got=recovery.recover(client,image,"en",emptyList(),{true}){log.add(it)}
+                val got=recovery.recover(client,image,"en",emptyList(),60_000,{true}){log.add(it)}
                 assertTrue("$phrase $log ${got.map { it.text }}",got.any { it.text.contains(phrase.substringBefore(' '),true) && it.text.contains(phrase.substringAfterLast(' '),true) })
                 assertTrue(log.any { it.startsWith("winner=") });assertTrue(log.any { it.startsWith("pass=lab") })
             } finally { image.recycle() }
