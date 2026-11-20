@@ -13,7 +13,7 @@ jobs:
     name: Test & assemble debug APK
     runs-on: ubuntu-latest
     env:
-      VERSION_NAME: 1.1.20-candidate
+      VERSION_NAME: 1.1.21-candidate
     steps:
       - name: Checkout
         uses: actions/checkout@v4

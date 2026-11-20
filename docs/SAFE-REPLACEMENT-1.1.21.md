@@ -90,3 +90,9 @@ Execution results are recorded after GitHub tests finish. Same signing vault and
 ### Verification correction
 
 CI 44745299751 passed. Android runs 44745299837 and 44746056238 exposed a faulty new fixture assumption: the short full Arabic reference can fit 345×38 at the emulator density, so `assertFalse(replacementReady)` was incorrect. The guaranteed-overflow pixel-preservation test now uses a repeated long paragraph; the separate exact-reference matrix still tests the actual dialogue, allowing only complete fit or transparency. No production fit threshold was weakened. Full GitHub rerun required below.
+
+### Passed execution on app/test source `5a9bec6`
+
+- [CI 44746825723](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44746825723): compilation, unit tests and debug APK passed.
+- [Android 14 44746825783](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44746825783): native instrumented suite passed, including new pixel-preservation, injected raster failure and reference-dialogue/scale matrix, plus existing OCR/bidi/glyph/resize tests.
+- These are programmatic assertion results, not a manually inspected physical-phone screenshot. No device speed benchmark was run. Release metadata changes do not alter tested app code.

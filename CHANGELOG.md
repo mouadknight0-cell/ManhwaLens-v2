@@ -3,6 +3,14 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.21] - 2026-11-19
+
+- Fail closed before masking: require final/current request, structurally plausible output, acceptable OCR and reliable surface evidence, complete native layout and successful offscreen raster preparation.
+- Remove opaque ellipsis and scrolling-slice replacements. If anything cannot safely replace source, preserve original and offer a manually opened reader outside detected text.
+- Draw complete prepared pixels as one unit, cap bitmap staging, roll back failed window attachment and invalidate cancelled/stale request identities. Failure no longer automatically opens a large error panel.
+- Reject long-dialogue single-character/severely incomplete outputs, placeholders, malformed structures and unprotected Latin remnants; version the model cache validation namespace.
+- Add pixel-preservation/fault-injection/font-scale regressions and JVM response/state/rollback tests. General ML Kit semantics, organic reconstruction and physical-device latency remain unverified; complete-frame gating can increase first-overlay latency. See docs/SAFE-REPLACEMENT-1.1.21.md.
+
 ## [1.1.20] - 2026-11-19
 
 - Snapshot own floating-window occlusions with each captured image and reject intersecting OCR lines before grouping (scaled coordinates), instead of translating the app's own status controls.
