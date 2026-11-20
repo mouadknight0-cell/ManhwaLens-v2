@@ -20,18 +20,6 @@ class ReplacementTranslationView(context: Context, val message: String,
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = surface.color or (0xff shl 24) }
     private val ink = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = ArabicTypeface.get(context) }
     private val displayMessage = com.manhwalens.app.pipeline.ArabicDisplay.prepare(message)
-    private var offsetY = 0f
-    var isScrollable: Boolean = false
-        private set
-    private val gestures = android.view.GestureDetector(context, object : android.view.GestureDetector.SimpleOnGestureListener() {
-        override fun onDown(e: android.view.MotionEvent) = true
-        override fun onSingleTapUp(e: android.view.MotionEvent): Boolean { performClick(); return true }
-        override fun onLongPress(e: android.view.MotionEvent) { performLongClick() }
-        override fun onScroll(e1: android.view.MotionEvent?, e2: android.view.MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-            offsetY = (offsetY + distanceY).coerceIn(0f, ((layout?.height ?: 0) - content.height()).coerceAtLeast(0f))
-            awakenScrollBars(); invalidate(); return true
-        }
-    })
     private var prepared: android.graphics.Bitmap? = null
     val replacementReady: Boolean get() = prepared != null
     internal var rasterize: (Int, Int, (Canvas) -> Unit) -> android.graphics.Bitmap = { w, h, draw ->
@@ -40,20 +28,15 @@ class ReplacementTranslationView(context: Context, val message: String,
     }
     private var layout: StaticLayout? = null
     private var content = RectF()
-    var needsDetails: Boolean = false
-        private set
     var fittedSp: Float = 12f
         private set
     var fitPasses: Int = 0
         private set
 
     init {
-        isVerticalScrollBarEnabled = true
-        scrollBarStyle = SCROLLBARS_INSIDE_OVERLAY
-        isClickable = true
         isLongClickable = true
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
-        contentDescription = "$message. اضغط لعرض التفاصيل، اضغط مطولاً للإغلاق"
+        contentDescription = "$message. اضغط مطولاً للإغلاق"
         elevation = 0f
     }
 
@@ -85,20 +68,17 @@ class ReplacementTranslationView(context: Context, val message: String,
         fun fits(candidate: StaticLayout): Boolean = candidate.height <= content.height() && wordsIntact(candidate) &&
             (0 until candidate.lineCount).all { candidate.getLineWidth(it) <= width + .5f }
         var low = 12; var high = 30; var chosen = 0
-        // Bound pathological text layout cost; explicit details, never silent clipping.
-        if (message.length <= 4000) while (low <= high) {
+        // Bound pathological text layout cost; bounded layout work, never silent clipping.
+        if (message.length <= 20000) while (low <= high) {
             val mid = (low + high) / 2
             if (fits(make(displayMessage, mid.toFloat()))) { chosen = mid; low = mid + 1 } else high = mid - 1
         }
-        isScrollable = false
-        needsDetails = chosen == 0
         fittedSp = if (chosen == 0) 12f else chosen.toFloat()
-        offsetY = 0f
-        layout = if (needsDetails) null else make(displayMessage, fittedSp)
-        contentDescription = message + if (needsDetails) ". المساحة لا تكفي؛ اضغط لقراءة النص كاملًا" else ". اضغط لعرض النص الأصلي"
+        layout = if (chosen == 0) null else make(displayMessage, fittedSp)
+        contentDescription = message
         // A hard allocation budget. Unknown / oversized / failed layouts keep the source visible.
         val text = layout
-        if (!failed && text != null && message.any { it.isLetterOrDigit() } && w.toLong() * h in 1..1_000_000L) {
+        if (!failed && text != null && message.any { it.isLetterOrDigit() } && w.toLong() * h in 1..8_000_000L) {
             prepared = runCatching {
                 rasterize(w, h) { canvas ->
                     if (surface.oval) canvas.drawOval(0f, 0f, w.toFloat(), h.toFloat(), fill)
@@ -112,13 +92,6 @@ class ReplacementTranslationView(context: Context, val message: String,
             }.getOrNull()
         }
     }
-
-    override fun computeVerticalScrollRange(): Int = if (isScrollable) layout?.height ?: height else height
-    override fun computeVerticalScrollOffset(): Int = offsetY.toInt()
-    override fun computeVerticalScrollExtent(): Int = if (isScrollable) content.height().toInt() else height
-
-    override fun onTouchEvent(event: android.view.MotionEvent): Boolean =
-        if (isScrollable) gestures.onTouchEvent(event) else super.onTouchEvent(event)
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)

@@ -1,7 +1,5 @@
 package com.manhwalens.app.pipeline
 
-import com.manhwalens.app.overlay.CardPlacement
-import com.manhwalens.app.overlay.CircleGeometry
 import com.manhwalens.app.translate.DialogueLexicon
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -36,20 +34,6 @@ class QualityAndCircleTest {
         assertEquals(listOf("GOOD", "GOOD"), output.map { it.original })
         assertEquals(listOf("GO0D", "GO0D"), output.map { it.region.text })
         assertEquals(listOf("test", "test"), output.map { it.method })
-    }
-    @Test fun circleInscribedContentAlwaysFitsAcrossDensities() {
-        for (diameter in listOf(120, 280, 420, 720, 1080)) {
-            val inner = CircleGeometry.innerSide(diameter)
-            assertTrue(inner * inner * 2.0 <= diameter.toDouble() * diameter)
-            assertTrue(inner > 0)
-        }
-    }
-    @Test fun circleCoversSourceCornersNotOnlyBoundingRectangle() {
-        val source = CardPlacement.Box(100, 100, 300, 200)
-        assertFalse(CircleGeometry.covers(CardPlacement.Box(100, 50, 300, 250), source))
-        assertTrue(CircleGeometry.covers(CardPlacement.Box(80, 30, 320, 270), source))
-        assertEquals(300, CircleGeometry.diameter(900, 700, 140, 300))
-        assertEquals(80, CircleGeometry.diameter(20, 20, 140, 80))
     }
     @Test fun realPhoneCropSeparatesLightGapFromInk() {
         val rowsOfPixels = javaClass.getResourceAsStream("/phone-report/conference-light.txt")!!.bufferedReader().use { it.readLines() }

@@ -1,7 +1,6 @@
 package com.manhwalens.app.translate
 
 import com.manhwalens.app.pipeline.*
-import com.manhwalens.app.overlay.ReaderContent
 import com.manhwalens.app.names.NameShield
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.CancellationException
@@ -31,16 +30,6 @@ class Quality122Test {
             NameShield.mask("THEY SEVERED THEM.. PIECE BY PIECE.",emptyList())))
         val mask=NameShield.mask("Jin!",listOf("Jin"))
         assertNull(TranslationOutput.issue(mask.maskedText,mask))
-    }
-    @Test fun failedItemsAreStatesNotTranslationsAndDoNotPoisonOtherText() {
-        val r=TextRegion("SOURCE",0,0,100,50)
-        val blocks=listOf(TranslatedBlock(r,"one","مرحبا"),TranslatedBlock(r,"two","تعذّرت الترجمة — أعد المحاولة","TR-INVALID-OUTPUT"))
-        val shown=ReaderContent.text(blocks,false)
-        assertTrue(shown.contains("مرحبا"));assertTrue(shown.contains("⚠"))
-        assertFalse(shown.contains("تعذّرت الترجمة"));assertFalse(shown.contains("two"))
-        assertEquals("one\n\ntwo",ReaderContent.text(blocks,true))
-        assertTrue(ReaderContent.hideFloatingIcon(600,500,720,1600))
-        assertFalse(ReaderContent.hideFloatingIcon(100,100,720,1600))
     }
     @Test fun retryIsSingleBoundedAndNeverRetriesCancellationOrValidation() = runTest {
         var calls=0

@@ -138,7 +138,7 @@ fun ResultBottomSheet(
                                 Spacer(Modifier.height(2.dp))
                                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                                     Text(
-                                        text = com.manhwalens.app.pipeline.ArabicDisplay.prepare(if (block.errorCode != null) "⚠ هذا المقطع يحتاج مراجعة؛ الأصل محفوظ" else block.translated),
+                                        text = com.manhwalens.app.pipeline.ArabicDisplay.prepare(if (block.errorCode != null) block.original else block.translated),
                                         fontFamily = com.manhwalens.app.ui.theme.ArabicFontFamily,
                                         style = MaterialTheme.typography.bodyLarge.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Rtl),
                                         fontWeight = FontWeight.SemiBold,

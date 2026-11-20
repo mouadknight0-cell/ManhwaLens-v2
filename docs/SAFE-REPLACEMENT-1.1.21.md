@@ -16,7 +16,7 @@ This establishes both segmentation inconsistency and that at least one complete 
 Definite rendering defects in previous implementation:
 
 1. `ReplacementTranslationView` painted its opaque background **before** checking for a text layout. Its explicit tiny-region fallback drew `…`; its scrolling fallback hid most of a paragraph while masking the whole source.
-2. `BubbleOverlayService` attached that view without measuring/preparing it or checking `needsDetails`. Failed translation/error messages were also treated as replacements.
+2. `BubbleOverlayService` attached that view without measuring/preparing it or checking `fit status`. Failed translation/error messages were also treated as replacements.
 3. Surface uncertainty was encoded only by a white color fallback, so the renderer could not distinguish reliable white evidence from no reliable reconstruction.
 4. Script validation accepted a single Arabic character for a long English utterance. It did not flag suspiciously missing segments, Latin remnants or error/placeholder-shaped outputs consistently.
 5. Progressive block delivery was consumed directly by the replacement layer. These were whole completed blocks, NOT token streaming, but a partial frame could already be masking source. Timestamp acceptance was weaker than explicit current-request identity.

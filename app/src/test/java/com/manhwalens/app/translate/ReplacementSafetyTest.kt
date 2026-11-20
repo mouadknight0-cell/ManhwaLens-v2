@@ -54,15 +54,6 @@ class ReplacementSafetyTest {
         assertTrue(dark.reliable)
         assertFalse(dark.oval)
     }
-    @Test fun incompleteOrLowConfidenceOcrAndTranslationErrorsNeverReplaceSource() {
-        fun block(source: String, confidence: Float = .8f, error: String? = null) =
-            com.manhwalens.app.pipeline.TranslatedBlock(TextRegion(source,0,0,300,80,confidence),source,"سوف اغتنم هذه الفرصة!",error)
-        assertNotNull(ReplacementQuality.blockIssue(block("I WILL SEIZE THAT")))
-        assertNotNull(ReplacementQuality.blockIssue(block("I WILL SEIZE THAT CHANCE!", .3f)))
-        assertNotNull(ReplacementQuality.blockIssue(block("I WILL SEIZE THAT CHANCE!", error="TR-TIMEOUT")))
-        assertNull(ReplacementQuality.blockIssue(block("I WILL SEIZE THAT CHANCE!")))
-    }
-
     @Test fun outOfOrderCompletedBlocksDoNotPermitPrematureMasking() = kotlinx.coroutines.test.runTest {
         val regions = listOf(TextRegion("First!",0,0,100,40),TextRegion("Second!",0,50,100,90))
         val partialOrder = mutableListOf<String>()

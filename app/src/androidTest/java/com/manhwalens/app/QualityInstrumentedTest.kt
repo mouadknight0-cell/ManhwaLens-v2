@@ -10,7 +10,6 @@ import android.widget.TextView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.manhwalens.app.ocr.TextRecognitionClient
-import com.manhwalens.app.overlay.CircularTranslationView
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
@@ -29,37 +28,6 @@ class QualityInstrumentedTest {
         } finally { bitmap.recycle() }
     }
 
-    @Test fun circleRendersTransparentCornersAndScrollsLongArabic() {
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
-        instrumentation.runOnMainSync {
-            for (diameter in listOf(240, 420, 600)) {
-                val view = CircularTranslationView(instrumentation.targetContext, diameter,
-                    "هذه جملة عربية طويلة لاختبار وضوح النص وعدم اقتطاعه. ".repeat(200))
-                val exact = View.MeasureSpec.makeMeasureSpec(diameter, View.MeasureSpec.EXACTLY)
-                view.measure(exact, exact)
-                view.layout(0, 0, diameter, diameter)
-                val bitmap = Bitmap.createBitmap(diameter, diameter, Bitmap.Config.ARGB_8888)
-                view.draw(Canvas(bitmap))
-                assertEquals(diameter, view.measuredWidth)
-                assertEquals(diameter, view.measuredHeight)
-                assertEquals(0, Color.alpha(bitmap.getPixel(0, 0)))
-                assertEquals(255, Color.alpha(bitmap.getPixel(diameter / 2, diameter / 2)))
-                val scroll = view.getChildAt(0) as ScrollView
-                val label = scroll.getChildAt(0) as TextView
-                assertTrue("long content height=${label.height}, viewport=${scroll.height}, chars=${label.text.length}", label.height > scroll.height)
-                assertTrue(label.textSize >= 12 * view.resources.displayMetrics.scaledDensity - 0.1f)
-                var opened = false
-                view.setOnClickListener { opened = true }
-                label.performClick()
-                assertTrue(opened)
-                var dismissed = false
-                view.setOnLongClickListener { dismissed = true; true }
-                label.performLongClick()
-                assertTrue(dismissed)
-                bitmap.recycle()
-            }
-        }
-    }
     @Test fun unifiedReportIsUtf8AndIncludesAllRetainedSections() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val history = (context.applicationContext as ManhwaLensApp).historyStore
@@ -101,7 +69,7 @@ class QualityInstrumentedTest {
         } finally { store.remove(name) }
     }
 
-    @Test fun replacementMasksEveryPixelAndFitsOrExplicitlyOffersDetails() {
+    @Test fun fixedSurfaceFailureIsTransparentBeforeDirectExpansion() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.runOnMainSync {
             val context = instrumentation.targetContext
@@ -113,7 +81,7 @@ class QualityInstrumentedTest {
                 return Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { view.draw(Canvas(it)) }
             }
             val bitmap = render(short, 500, 300)
-            assertFalse(short.needsDetails)
+            assertTrue(short.replacementReady)
             assertTrue(short.fittedSp > 18f)
             assertTrue(short.fitPasses <= 6)
             for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) {
@@ -122,20 +90,11 @@ class QualityInstrumentedTest {
             bitmap.recycle()
             val long = com.manhwalens.app.overlay.ReplacementTranslationView(context, "هذه ترجمة طويلة تحتاج مساحة كافية. ".repeat(80), surface)
             val tiny = render(long, 140, 60)
-            assertTrue(long.needsDetails)
             assertFalse(long.replacementReady)
             for (y in 0 until tiny.height) for (x in 0 until tiny.width)
                 assertEquals("Unfit text must NOT mask the original", 0, Color.alpha(tiny.getPixel(x,y)))
-            assertTrue(long.contentDescription.contains("اضغط"))
             assertTrue(long.fitPasses <= 6)
-            var clicked = false
-            long.setOnClickListener { clicked = true }
-            long.performClick(); assertTrue(clicked)
             tiny.recycle()
-            val old = CircularTranslationView(context, 200, "مرحبا")
-            val oldBitmap = render(old, 200, 200)
-            assertEquals(0, Color.alpha(oldBitmap.getPixel(0, 0)))
-            oldBitmap.recycle()
         }
     }
 
@@ -174,7 +133,7 @@ class QualityInstrumentedTest {
                 val folder = java.io.File(context.getExternalFilesDir(null), "overlay-evidence").apply { mkdirs() }
                 java.io.File(folder, "source.png").outputStream().use { source.compress(Bitmap.CompressFormat.PNG, 100, it) }
                 java.io.File(folder, "replacement-reference.png").outputStream().use { result.compress(Bitmap.CompressFormat.PNG, 100, it) }
-                java.io.File(folder, "scope.txt").writeText("Real cropped historical phone screenshot; reference Arabic is human-authored, not ML Kit output. oval=${surface.oval}; details=${view.needsDetails}; fittedSp=${view.fittedSp}. Does not test physical WindowManager capture or latency.")
+                java.io.File(folder, "scope.txt").writeText("Real cropped historical phone screenshot; reference Arabic is human-authored, not ML Kit output. oval=${surface.oval}; ready=${view.replacementReady}; fittedSp=${view.fittedSp}. Does not test physical WindowManager capture or latency.")
                 mask.recycle(); result.recycle()
             }
         } finally { source.recycle() }
@@ -219,7 +178,7 @@ class QualityInstrumentedTest {
                 view.measure(View.MeasureSpec.makeMeasureSpec(500,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(300,View.MeasureSpec.EXACTLY))
                 view.layout(0,0,500,300)
                 assertTrue(view.fitPasses <= 6)
-                assertFalse(view.needsDetails)
+                assertTrue(view.replacementReady)
                 assertTrue(view.fittedSp >= 12f)
             }
         }
@@ -240,13 +199,12 @@ class QualityInstrumentedTest {
                 val view = com.manhwalens.app.overlay.ReplacementTranslationView(context, "في عام 2025، بدأت المقابر تظهر في أنحاء الأرض.", surface)
                 view.measure(View.MeasureSpec.makeMeasureSpec(surface.width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(surface.height,View.MeasureSpec.EXACTLY))
                 view.layout(0,0,surface.width,surface.height)
-                assertEquals("Only full-fit layouts can replace the source", !view.needsDetails, view.replacementReady)
                 val output = bitmap.copy(Bitmap.Config.ARGB_8888, true)
                 val canvas = Canvas(output)
                 canvas.save(); canvas.translate(surface.left.toFloat(),surface.top.toFloat()); view.draw(canvas); canvas.restore()
                 val folder = java.io.File(context.getExternalFilesDir(null),"overlay-evidence").apply { mkdirs() }
                 java.io.File(folder,"grey-arabic-reference.png").outputStream().use { output.compress(Bitmap.CompressFormat.PNG,100,it) }
-                java.io.File(folder,"grey-scope.txt").writeText("Real supplied grey-panel crop, actual bundled OCR/grouping, human-authored Arabic reference (NOT model output). Font=Noto Sans Arabic; scrolling=${view.isScrollable}; sp=${view.fittedSp}.")
+                java.io.File(folder,"grey-scope.txt").writeText("Real supplied grey-panel crop, actual bundled OCR/grouping, human-authored Arabic reference (NOT model output). Font=Noto Sans Arabic; sp=${view.fittedSp}.")
                 output.recycle()
             }
         } finally { bitmap.recycle() }
@@ -272,8 +230,8 @@ class QualityInstrumentedTest {
                 com.manhwalens.app.overlay.ReplacementSurface(0,0,180,250))
             view.measure(View.MeasureSpec.makeMeasureSpec(180,View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(250,View.MeasureSpec.EXACTLY))
             view.layout(0,0,180,250)
-            assertTrue("Do not show a word broken into arbitrary Arabic fragments", view.needsDetails)
-            assertFalse(view.isScrollable)
+            assertFalse("Do not show a word broken into arbitrary Arabic fragments", view.replacementReady)
+
             assertTrue(view.fitPasses <= 6)
             val short = com.manhwalens.app.overlay.ReplacementTranslationView(context, "مرحبًا",
                 com.manhwalens.app.overlay.ReplacementSurface(0,0,500,300))
@@ -282,12 +240,12 @@ class QualityInstrumentedTest {
                 short.layout(0,0,w,h)
             }
             resize(500,300)
-            assertFalse(short.needsDetails)
+            assertTrue(short.replacementReady)
             val largeSize = short.fittedSp
             resize(5,5)
-            assertTrue(short.needsDetails)
+            assertFalse(short.replacementReady)
             resize(500,300)
-            assertFalse(short.needsDetails)
+            assertTrue(short.replacementReady)
             assertEquals(largeSize,short.fittedSp,0f)
         }
     }
@@ -355,8 +313,7 @@ class QualityInstrumentedTest {
                     com.manhwalens.app.overlay.ReplacementSurface(0,0,345,height,Color.BLACK))
                 view.measure(View.MeasureSpec.makeMeasureSpec(345,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(height,View.MeasureSpec.EXACTLY))
                 view.layout(0,0,345,height)
-                assertFalse(view.isScrollable)
-                assertEquals(!view.needsDetails,view.replacementReady)
+
                 val pixels = Bitmap.createBitmap(345,height,Bitmap.Config.ARGB_8888)
                 view.draw(Canvas(pixels))
                 if (!view.replacementReady) {
@@ -368,35 +325,6 @@ class QualityInstrumentedTest {
                 }
                 pixels.recycle()
             }
-        }
-    }
-
-    @Test fun cappedReaderHasInternalControlsAndRestoresHiddenIcon() {
-        val inst=InstrumentationRegistry.getInstrumentation()
-        inst.runOnMainSync {
-            val context=inst.targetContext
-            val r=com.manhwalens.app.pipeline.TextRegion("SOURCE",0,0,200,100)
-            var closed=false
-            val panel=com.manhwalens.app.overlay.ReadingPanelView(context,listOf(
-                com.manhwalens.app.pipeline.TranslatedBlock(r,"ORIGINAL ENGLISH","مرحبا ".repeat(100)),
-                com.manhwalens.app.pipeline.TranslatedBlock(r,"FAILED SOURCE","تعذّرت الترجمة — أعد المحاولة","TR-INVALID-OUTPUT"))) { closed=true }
-            val h=panel.desiredHeight(600,400)
-            assertTrue(h<=400)
-            panel.measure(View.MeasureSpec.makeMeasureSpec(600,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(h,View.MeasureSpec.EXACTLY))
-            panel.layout(0,0,600,h)
-            val label=(panel.getChildAt(1) as ScrollView).getChildAt(0) as TextView
-            assertFalse(label.text.contains("ORIGINAL ENGLISH"))
-            assertFalse(label.text.contains("تعذّرت الترجمة"))
-            assertTrue(label.text.contains("مرحبا"))
-            val controls=panel.getChildAt(0) as android.widget.LinearLayout
-            controls.getChildAt(0).performClick()
-            assertTrue(label.text.contains("ORIGINAL ENGLISH"))
-            controls.getChildAt(1).performClick();assertTrue(closed)
-            val icon=View(context)
-            com.manhwalens.app.overlay.ReaderIconVisibility.opened(icon,600,500,720,1600)
-            assertEquals(View.INVISIBLE,icon.visibility)
-            com.manhwalens.app.overlay.ReaderIconVisibility.closed(icon)
-            assertEquals(View.VISIBLE,icon.visibility)
         }
     }
 
@@ -418,6 +346,42 @@ class QualityInstrumentedTest {
         val measurement = "1000 utterances; emulator warm cleanup only, microseconds total: prior=$prior current=$current. NOT end-to-end OCR/model/render latency or Xiaomi parity."
         java.io.File(folder,"cleanup-benchmark.txt").writeText(measurement)
         android.util.Log.i("ManhwaLensBenchmark", measurement)
+    }
+
+    @Test fun shortLongVeryLongAndEdgeDialogueRenderImmediatelyAwayFromCaptureButton() {
+        val inst=InstrumentationRegistry.getInstrumentation()
+        inst.runOnMainSync {
+            for ((w,h) in listOf(720 to 1600,1600 to 720,360 to 640)) for(scale in listOf(1f,1.4f)) {
+                val config=android.content.res.Configuration(inst.targetContext.resources.configuration).apply {
+                    densityDpi=if(w>=720) 320 else 160
+                    fontScale=scale
+                }
+                val context=inst.targetContext.createConfigurationContext(config)
+                val screen=com.manhwalens.app.overlay.ReplacementSurface(0,0,w,h)
+                val button=com.manhwalens.app.overlay.ReplacementSurface(w-100,0,w,100)
+                val sources=listOf(
+                    com.manhwalens.app.overlay.ReplacementSurface(20,120,180,158),
+                    com.manhwalens.app.overlay.ReplacementSurface(w-180,h-40,w,h),
+                    com.manhwalens.app.overlay.ReplacementSurface(w-100,0,w,38))
+                val messages=listOf("مرحبا", "هذه ترجمة عربية كاملة تظهر مباشرة على الصفحة. ".repeat(4),
+                    "هذه ترجمة عربية كاملة تظهر مباشرة على الصفحة. ".repeat(18))
+                for(source in sources) for(message in messages) {
+                    val result=com.manhwalens.app.overlay.DirectTranslationLayout.prepare(context,message,source,screen,listOf(button))
+                    assertNotNull("Full immediate text required: size=$w,$h scale=$scale chars=${message.length}",result)
+                    val prepared=result!!
+                    assertTrue(prepared.view.replacementReady)
+                    assertFalse(prepared.view.isClickable)
+                    assertFalse(prepared.view.isVerticalScrollBarEnabled)
+                    assertTrue(prepared.view.fittedSp>=12f)
+                    assertFalse(com.manhwalens.app.overlay.DirectPlacement.intersects(prepared.surface,button))
+                    assertTrue(prepared.surface.left>=0 && prepared.surface.top>=0 && prepared.surface.right<=w && prepared.surface.bottom<=h)
+                    val image=Bitmap.createBitmap(prepared.surface.width,prepared.surface.height,Bitmap.Config.ARGB_8888)
+                    prepared.view.draw(Canvas(image)) // no performClick, no second render phase
+                    assertTrue((0 until image.height).any { y -> (0 until image.width).any { x -> Color.alpha(image.getPixel(x,y))>0 && Color.red(image.getPixel(x,y))<100 } })
+                    image.recycle()
+                }
+            }
+        }
     }
 
 }

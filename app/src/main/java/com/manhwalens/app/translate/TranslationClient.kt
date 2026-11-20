@@ -52,7 +52,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
         if ((region.confidence.isFinite() && region.confidence < .5f) ||
             com.manhwalens.app.pipeline.TranslationInput.unresolved(normalized, glossaryNames)) {
-            return TranslatedBlock(region, normalized, "", "OCR-NEEDS-REVIEW", method = "OCR input validation")
+            return TranslatedBlock(region, normalized, "", "OCR-UNCERTAIN", method = "OCR input validation")
         }
         val began = System.nanoTime()
         if (com.manhwalens.app.pipeline.OcrInputQuality.isNumericContent(normalized)) {
