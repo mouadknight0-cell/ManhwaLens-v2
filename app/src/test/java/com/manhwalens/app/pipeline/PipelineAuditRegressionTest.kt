@@ -56,6 +56,12 @@ class PipelineAuditRegressionTest {
         assertTrue(ArabicOutput.hasLetters("سأساعدك؟"))
         assertTrue(ArabicOutput.hasLetters("ﻻ"))
     }
+    @Test fun soundEffectPrefixesMustNotSwallowOrdinaryWords() {
+        assertEquals(RegionKind.SOUND_EFFECT, RegionClassifier.classify("BOOM!"))
+        assertEquals(RegionKind.DIALOGUE, RegionClassifier.classify("BANGKOK"))
+        assertEquals(RegionKind.DIALOGUE, RegionClassifier.classify("CRASHED"))
+        assertEquals(RegionKind.DIALOGUE, RegionClassifier.classify("ROARING"))
+    }
     @Test fun unknownConfidenceIsNotFabricatedAndSurvivesHistory() {
         val r = TextRegion("Hello", 0, 0, 100, 30)
         assertTrue(r.confidence.isNaN())

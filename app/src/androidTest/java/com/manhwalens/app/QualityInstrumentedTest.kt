@@ -93,8 +93,11 @@ class QualityInstrumentedTest {
             assertFalse(store.translationNames().contains(name))
             store.add(name, "confirmed")
             assertTrue(store.translationNames().contains(name))
-            store.add(name, "auto")
+            store.add(name.lowercase(), "auto")
             assertTrue(store.translationNames().contains(name))
+            val second = com.manhwalens.app.names.NameGlossaryStore(context)
+            assertTrue(second.translationNames().contains(name))
+            assertEquals(1, second.all().count { it.equals(name, ignoreCase = true) })
         } finally { store.remove(name) }
     }
 
