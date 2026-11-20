@@ -123,8 +123,7 @@ class BubbleOverlayService : Service() {
     private fun startTranslation() {
         event("start_click")
         if (startJob?.isActive == true) return
-        if (CaptureManager.live.value == CaptureManager.LiveStatus.PROCESSING) { collapseActions(); return }
-        CaptureManager.manualPage.set(true)
+        CaptureManager.refreshPage.set(true)
         collapseActions()
         clearTranslations()
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.PREPARING))
@@ -349,9 +348,8 @@ class BubbleOverlayService : Service() {
                 setOnLongClickListener { Toast.makeText(this@BubbleOverlayService, description, Toast.LENGTH_SHORT).show(); true }
             }, LinearLayout.LayoutParams(buttonSize, dp(52)))
         }
-        action("▶\nترجمة", "Start Translation / بدء الترجمة") { startTranslation() }
+        action("↻\nإعادة الترجمة", "Start Translation / بدء الترجمة") { startTranslation() }
         action(if(CaptureManager.pausePages) "▶\nاستئناف" else "Ⅱ\nمؤقت", "Pause / Resume") { CaptureManager.pausePages=!CaptureManager.pausePages; collapseActions() }
-        action(if(CaptureManager.autoPages) "↻\nتلقائي" else "☞\nيدوي", "Automatic / Manual") { CaptureManager.autoPages=!CaptureManager.autoPages; collapseActions() }
         actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }; dock.addView(actions)
         action("■\nإيقاف", "Stop Capture Session / إيقاف جلسة الالتقاط") { stopTranslation() }
         action("⊗\nإخفاء", "Disable Floating Icon / تعطيل الفقاعة") {

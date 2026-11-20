@@ -184,8 +184,11 @@ class ScreenCaptureService : Service() {
                             }
                         }
                     }
-                    if (!CaptureManager.dockVisible && (!CaptureManager.pausePages && CaptureManager.autoPages || CaptureManager.manualPage.get()) && captureJob?.isActive != true && liveGate.claim(android.os.SystemClock.elapsedRealtime()) != null) {
-                        CaptureManager.manualPage.set(false)
+                    if (CaptureManager.refreshPage.get() && captureJob?.isActive != true && !CaptureManager.dockVisible) {
+                        translation.clearCache(); liveGate.retry(android.os.SystemClock.elapsedRealtime()-250)
+                    }
+                    if (!CaptureManager.dockVisible && (!CaptureManager.pausePages || CaptureManager.refreshPage.get()) && captureJob?.isActive != true && liveGate.claim(android.os.SystemClock.elapsedRealtime()) != null) {
+                        CaptureManager.refreshPage.set(false)
                         requestNs = System.nanoTime()
                         CaptureManager.setLive(CaptureManager.LiveStatus.PROCESSING)
                         launchCapture()

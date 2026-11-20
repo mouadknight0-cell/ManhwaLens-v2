@@ -145,6 +145,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
     private fun normalize(code: String?): String = code?.trim()?.lowercase().orEmpty()
 
+    fun clearCache() = cache.clear()
     fun close() {
         synchronized(translators) {
             translators.values.forEach { runCatching { it.close() } }

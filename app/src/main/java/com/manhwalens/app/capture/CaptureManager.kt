@@ -12,9 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
 object CaptureManager {
     /** Called on main before acquiring a reader frame. */
     @Volatile var debugBoxes: Pair<String,List<android.graphics.Rect>>? = null
-    @Volatile var autoPages=true
     @Volatile var pausePages=false
-    val manualPage=java.util.concurrent.atomic.AtomicBoolean(false)
+    val refreshPage=java.util.concurrent.atomic.AtomicBoolean(false)
     var restoreControlsAfterFrame:(()->Unit)?=null
     @Volatile var dockVisible = false
     var hideControlsForFrame: (() -> Boolean)? = null
