@@ -769,7 +769,9 @@ class ScreenCaptureService : Service() {
                     (item.region.left - 2).coerceAtLeast(0), (item.region.top - 2).coerceAtLeast(0),
                     (item.region.right + 2).coerceAtMost(bitmap.width), (item.region.bottom + 2).coerceAtMost(bitmap.height), detected.color, reliable = detected.reliable)
                 else detected
-                val local = if (surface.reliable) surface else surface.copy(patch = com.manhwalens.app.overlay.StrokePatch.build(surface, bitmap::getPixel))
+                val local = if (surface.reliable) com.manhwalens.app.overlay.FlatInterior.expand(surface,bitmap.width,bitmap.height,{ s ->
+                    classified.any { other -> other!==item && other.region.left-2<s.right && other.region.right+2>s.left && other.region.top-2<s.bottom && other.region.bottom+2>s.top }
+                },bitmap::getPixel) else surface.copy(patch = com.manhwalens.app.overlay.StrokePatch.build(surface, bitmap::getPixel))
                 item.copy(region = item.region.copy(surface = local))
             }
         }

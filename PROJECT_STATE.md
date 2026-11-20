@@ -1,6 +1,10 @@
 # ManhwaLens engineering state
 
-## Current implementation — 1.1.26
+## Current implementation — 1.1.27
+
+The supplied Redmi 1.1.26 report contains sub-32px retry boxes (HERE 18×13, JEONG-4H. 45×11), per-block exceptions, occlusions and independent fit failures. Not every failure has a retained stack trace. See `docs/REDMI-1.1.27.md`. Test-input translations and JVM/Android checks are not a physical reader-session test.
+
+## Prior implementation — 1.1.26
 
 Both 1.1.24 and 1.1.25 were published with the stable signer; older unreleased notes below describe historical checkpoints.
 

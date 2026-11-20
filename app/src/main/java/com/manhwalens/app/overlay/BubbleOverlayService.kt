@@ -454,8 +454,14 @@ class BubbleOverlayService : Service() {
             if(reason!=null) { outcome(i,reason); return@forEachIndexed }
             val source=SurfacePlacement.visible(block.region,screen)
             val others=result.blocks.filterIndexed { n,_ -> n!=i }.map { SurfacePlacement.source(it.region) }
-            val prepared=source?.takeIf { it.reliable || it.patch?.size?.toLong()==it.width.toLong()*it.height }?.let {
+            val expanded=source?.takeIf { it.reliable || it.patch?.size?.toLong()==it.width.toLong()*it.height }?.let {
                 runCatching { DirectTranslationLayout.prepare(this,block.translated,it,screen,occupied+others) }.getOrNull()
+            }
+            // A safe expansion may hit the main control or another window. Try
+            // the original glyph rectangle before declaring the block obstructed.
+            val prepared=expanded ?: source?.takeIf { it.reliable }?.let { s ->
+                val tight=SurfacePlacement.source(block.region,s.color,true)
+                if(tight==s) null else runCatching { DirectTranslationLayout.prepare(this,block.translated,tight,screen,occupied+others) }.getOrNull()
             }
             if(prepared==null) { outcome(i,"source_fit_or_obstruction"); renderFailure=true; return@forEachIndexed }
             val surface=prepared.surface; val text=prepared.view

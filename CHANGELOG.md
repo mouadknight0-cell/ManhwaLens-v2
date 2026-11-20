@@ -3,6 +3,13 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.27] - 2026-11-20
+
+- Resize undersized OCR retry crops for ML Kit, retain per-block failures, process surface evidence beyond region 24, and add opt-in geometry/logcat diagnostics.
+- Keep the capture menu open through page completion. Add pause/resume, automatic/manual capture, translate-now, settings and outside dismissal. Hide capture windows while acquiring a fresh frame.
+- Editable Arabic readings for character names/terms, punctuation-preserving reviewed whole utterances and short dialogue. Preserve GYU as SFX.
+- Bounded flat-ring growth with original-box fallback and larger native auto-fit range. No new translator or on-page reader.
+
 ## [1.1.23] - 2026-11-19
 
 - Delete secondary translation launcher, manual reader, controls, thresholds and overflow branches; keep main capture control.

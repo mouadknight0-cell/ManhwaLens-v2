@@ -69,7 +69,7 @@ class ReplacementTranslationView(context: Context, val message: String,
         // the line box. getLineMax measures visible content, not that whitespace.
         fun fits(candidate: StaticLayout): Boolean = candidate.height <= content.height() && wordsIntact(candidate) &&
             (0 until candidate.lineCount).all { candidate.getLineMax(it) <= width + .5f }
-        var low = 12; var high = 30; var chosen = 0
+        var low = 12; var high = 42; var chosen = 0
         // Bound pathological text layout cost; bounded layout work, never silent clipping.
         if (message.length <= 20000) while (low <= high) {
             val mid = (low + high) / 2
