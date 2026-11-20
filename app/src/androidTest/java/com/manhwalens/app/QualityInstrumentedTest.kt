@@ -15,6 +15,15 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class QualityInstrumentedTest {
+    @Test fun ambiguousMarkIsNotDrawnAndInterjectionsNeverNeedMT() = runBlocking {
+        val t=com.manhwalens.app.translate.TranslationClient()
+        try { val r=com.manhwalens.app.pipeline.TextRegion("NO..",10,20,66,49,.45f)
+            val no=t.translateBlock(r);assertEquals("OCR-UNCERTAIN",no.errorCode);assertEquals("",no.translated)
+            assertEquals("هم؟",t.translateBlock(r.copy(text="HM..?" )).translated)
+            assertEquals("سيدي",t.translateBlock(r.copy(text="MY LORD")).translated)
+            assertTrue(t.translateBlock(r.copy(text="A HUNG AY GHOST PROM HELL!!!!!!",confidence=.7f)).translated.contains("شبح جائع من الجحيم"))
+        } finally { t.close() }
+    }
     /** Generated colour controls, not the missing phone screenshots. Force the independent-proposal path. */
     @Test fun colourRecoveryAfterEmptyFirstPass() = runBlocking {
         for ((bg,ink,phrase) in listOf(Triple(Color.rgb(61,17,87),Color.WHITE,"THIS ISN'T ENOUGH"), Triple(Color.rgb(99,14,30),Color.WHITE,"AND THAT WASN'T ALL"),Triple(Color.WHITE,Color.rgb(172,10,35),"HOW MUCH WAS IT"))) {

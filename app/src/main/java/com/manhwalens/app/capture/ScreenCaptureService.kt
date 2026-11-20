@@ -567,8 +567,7 @@ class ScreenCaptureService : Service() {
         val keepLine:(TextRegion)->Boolean={ line -> captured.occlusions.none { it.intersects(line,frame.width.toFloat()/ocrBitmap.width,frame.height.toFloat()/ocrBitmap.height) } }
         val audit:(String)->Unit={ Diagnostics.info("ocr","passes",it,traceId=traceId) }
         val regions = runCatching {
-            val first=withTimeoutOrNull(12000L){textRecognition.recognize(ocrBitmap,OCR_SOURCE,audit,keepLine)} ?: error("OCR timed out")
-            recovery.recover(textRecognition,ocrBitmap,OCR_SOURCE,first,6500,keepLine,audit) }.getOrElse {
+            recovery.recognize(textRecognition,ocrBitmap,OCR_SOURCE,keepLine,audit) }.getOrElse {
             if (it is kotlinx.coroutines.CancellationException) throw it
             Diagnostics.error("ocr", "recognize", ErrorCodes.OCR_EXEC_FAILED,
                 "OCR execution failed", throwable = it, recovery = "journey aborted; user can retry")

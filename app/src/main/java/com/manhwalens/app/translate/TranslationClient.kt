@@ -59,7 +59,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val letters=normalized.filter(Char::isLetter)
         val scriptNoise=letters.any { Character.UnicodeScript.of(it.code)!=Character.UnicodeScript.LATIN }
         val properName=glossaryNames.any { normalized.trimEnd('!','?','.','…').equals(it,true) }
-        if(scriptNoise || (reviewed==null && !properName && !com.manhwalens.app.pipeline.OcrInputQuality.isNumericContent(normalized) &&
+        val ambiguousMark=normalized.trimEnd('.','…').equals("no",true) && region.confidence<.60f
+        if(ambiguousMark || scriptNoise || (reviewed==null && !properName && !com.manhwalens.app.pipeline.OcrInputQuality.isNumericContent(normalized) &&
             (com.manhwalens.app.pipeline.ReadingEnglish.validCount(normalized)<2 || (region.surface?.reliable==false && region.confidence<.62f)))) return TranslatedBlock(region,normalized,"","OCR-UNCERTAIN",method="Script or lexical validation")
         if ((reviewed == null && region.confidence.isFinite() && region.confidence < .5f && !(region.confidence>=.30f && com.manhwalens.app.pipeline.ReadingEnglish.score(normalized,protectedNames)>=.8)) ||
             com.manhwalens.app.pipeline.TranslationInput.unresolved(normalized, protectedNames)) {

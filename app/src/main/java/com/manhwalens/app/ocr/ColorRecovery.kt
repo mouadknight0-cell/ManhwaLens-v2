@@ -12,7 +12,17 @@ internal class ColorRecovery {
     private data class Vote(val hash:Long,val visual:Long,val regions:List<TextRegion>,val score:Double)
     private class Track(val box:Rect,val votes:ArrayDeque<Vote> = ArrayDeque())
     private val tracks=ArrayDeque<Track>()
-    fun clear(){tracks.clear()}
+    private data class Page(val w:Int,val h:Int,val scene:Long,val boxes:List<TextRegion>,val signatures:List<Long>)
+    private var lastPage:Page?=null
+    /** Check scene context as well as every crop. A new caption elsewhere must trigger discovery. */
+    suspend fun recognize(client:TextRecognitionClient,b:Bitmap,lang:String,keep:(TextRegion)->Boolean,log:(String)->Unit):List<TextRegion> {
+        var scene=17L;for(y in 0..63)for(x in 0..47)scene=31*scene+(b.getPixel((b.width-1)*x/47,(b.height-1)*y/63) and 0xf0f0f0)
+        lastPage?.takeIf { it.w==b.width && it.h==b.height && it.scene==scene && it.boxes.all(keep) && it.boxes.indices.all { i->hash(b,box(it.boxes[i]))==it.signatures[i] } }?.let {log("pass=unchanged_page regions=${it.boxes.size}");return it.boxes}
+        val first=kotlinx.coroutines.withTimeoutOrNull(12000){client.recognize(b,lang,log,keep)}?:error("OCR timed out")
+        val got=recover(client,b,lang,first,6500,keep,log)
+        lastPage=if(got.isNotEmpty() && got.size<=32 && got.all { it.left>=0 && it.top>=0 && it.right<=b.width && it.bottom<=b.height && it.width>0 && it.height>0 && score(it)>=.77 }) Page(b.width,b.height,scene,got,got.map { hash(b,box(it)) }) else null
+        return got
+    }
     private fun overlap(a:Rect,b:Rect):Double {val i=max(0,min(a.right,b.right)-max(a.left,b.left))*max(0,min(a.bottom,b.bottom)-max(a.top,b.top));return i.toDouble()/max(1,a.width()*a.height()+b.width()*b.height()-i)}
     private fun box(r:TextRegion)=Rect(r.left,r.top,r.right,r.bottom)
     private fun gray(c:Int)=(Color.red(c)*54+Color.green(c)*183+Color.blue(c)*19) shr 8
