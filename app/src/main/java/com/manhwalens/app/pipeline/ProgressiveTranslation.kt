@@ -11,6 +11,7 @@ suspend fun progressiveTranslation(
     translate: suspend (TextRegion) -> TranslatedBlock,
     onReady: suspend (List<TranslatedBlock>) -> Unit,
     // Callers with position-dependent validation/context must include those inputs.
+    onException: (Exception) -> Unit = {},
     identity: (TextRegion) -> Any = { it.text.trim() },
 ): List<TranslatedBlock> = coroutineScope {
     require(concurrency > 0)
@@ -25,7 +26,7 @@ suspend fun progressiveTranslation(
                 val region = group.first().value
                 suspend fun attempt(): TranslatedBlock = try { translate(region) }
                 catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                catch (failure: Exception) { TranslatedBlock(region, region.text, "", "TR-BLOCK-EXCEPTION") }
+                catch (failure: Exception) { onException(failure); TranslatedBlock(region, region.text, "", "TR-BLOCK-EXCEPTION") }
                 var translated = attempt()
                 if (translated.errorCode != null && translated.errorCode !in setOf("OCR-CLIPPED", "OCR-UNCERTAIN")) {
                     kotlinx.coroutines.delay(120)

@@ -147,6 +147,7 @@ class BubbleOverlayService : Service() {
         }
     }
 
+    private var debugView: View? = null
     private val translationViews = mutableListOf<View>()
     private var renderRetriedId: String? = null
     private var displayedResultId: String? = null
@@ -154,6 +155,7 @@ class BubbleOverlayService : Service() {
     private var startJob: kotlinx.coroutines.Job? = null
     private fun clearTranslations() {
         translationViews.forEach { it.visibility = View.INVISIBLE; runCatching { windowManager.removeView(it) } }
+        debugView?.let { runCatching { windowManager.removeViewImmediate(it) } }; debugView=null
         translationViews.clear()
         displayedBlocks.clear()
         displayedResultId = null
@@ -467,6 +469,17 @@ class BubbleOverlayService : Service() {
                 bubbleView?.postDelayed({ if(displayedResultId==result.id) showPanel(result,final) },120)
             }
         } else if(result.id==renderRetriedId && result.blocks.all { it.errorCode==null }) CaptureManager.setLive(CaptureManager.LiveStatus.READY)
+        CaptureManager.debugBoxes?.takeIf { it.first==result.id }?.let { (_,boxes) ->
+            android.util.Log.i("ManhwaLensFunnel","page=${result.id} translated=${result.blocks.count { it.errorCode==null && it.original!=it.translated }} rendered=${displayedBlocks.size}")
+            if(debugView==null) {
+                val outline=object:View(this){
+                    val pen=android.graphics.Paint().apply { style=android.graphics.Paint.Style.STROKE; strokeWidth=2f; color=android.graphics.Color.CYAN }
+                    override fun onDraw(canvas:android.graphics.Canvas){ val xy=IntArray(2);getLocationOnScreen(xy);canvas.translate(-xy[0].toFloat(),-xy[1].toFloat());boxes.forEach { canvas.drawRect(it,pen) } }
+                }
+                val lp=WindowManager.LayoutParams(-1,-1,overlayType(),WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply { alpha=.35f }
+                runCatching { windowManager.addView(outline,lp) }.onSuccess { debugView=outline }
+            }
+        }
         if(displayedBlocks.isNotEmpty()) markRendered(result,!renderFailure && result.blocks.none { it.errorCode!=null })
     }
 

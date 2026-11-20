@@ -578,9 +578,13 @@ class ScreenCaptureService : Service() {
             BenchmarkTracker.finish("skipped", frameWidth = frame.width, frameHeight = frame.height, regionCount = regions.size)
             return
         }
-        val prepared = prepareRegions(regions.map { it.copy(
+        val scaledRegions = regions.map { it.copy(
             left = (it.left * scaleX).toInt(), top = (it.top * scaleY).toInt(),
-            right = (it.right * scaleX).toInt(), bottom = (it.bottom * scaleY).toInt()) }, frame)
+            right = (it.right * scaleX).toInt(), bottom = (it.bottom * scaleY).toInt()) }
+        val debug=(application as ManhwaLensApp).settingsRepository.debug.value
+        CaptureManager.debugBoxes=if(debug) journeyId to scaledRegions.map { android.graphics.Rect(it.left,it.top,it.right,it.bottom) } else null
+        val prepared=prepareRegions(scaledRegions,frame)
+        if(debug) android.util.Log.i("ManhwaLensFunnel","page=$journeyId detected=${scaledRegions.size} filtered=${prepared.size}")
         BenchmarkTracker.mark("T7")
         if (prepared.isEmpty()) {
             Diagnostics.warn("text", "reconstruct", "OCR produced no translatable text",
@@ -615,6 +619,7 @@ class ScreenCaptureService : Service() {
         val workByRegion = plan.associateBy { it.input.region }
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.map { it.region },
+            onException = { Diagnostics.warn("translate","worker_exception","block attempt failed",throwable=it,traceId=traceId) },
             identity = { workByRegion.getValue(it).key },
             translate = { region ->
                 val started = System.nanoTime()
@@ -637,9 +642,14 @@ class ScreenCaptureService : Service() {
                     kotlinx.coroutines.delay(100)
                     val crop = Bitmap.createBitmap(frame,region.left,region.top,region.width,region.height)
                     try {
-                        val candidate = withTimeoutOrNull(2500) { textRecognition.recognize(crop,OCR_SOURCE).singleOrNull() }
+                        val scale=maxOf(1,(32+crop.width-1)/crop.width,(32+crop.height-1)/crop.height)
+                        val input=if(scale==1) crop else Bitmap.createScaledBitmap(crop,crop.width*scale,crop.height*scale,true)
+                        val candidate=try { withTimeoutOrNull(2500) { textRecognition.recognize(input,OCR_SOURCE).singleOrNull() } }
+                        catch(cancelled:kotlinx.coroutines.CancellationException){ throw cancelled }
+                        catch(failure:Exception){ Diagnostics.warn("ocr","retry_failed","crop retry failed; original retained",throwable=failure,traceId=traceId); null }
+                        finally { if(input!==crop) input.recycle() }
                         if(candidate!=null && candidate.confidence >= .50f && candidate.confidence > region.confidence &&
-                            candidate.height >= .7f*crop.height && candidate.width >= .7f*crop.width) {
+                            candidate.height >= .7f*crop.height*scale && candidate.width >= .7f*crop.width*scale) {
                             Diagnostics.info("funnel","ocr_retry","page=$journeyId bounds=${region.left},${region.top} improved",traceId=traceId)
                             translation.translateBlock(region.copy(text=candidate.text,confidence=candidate.confidence),learnedNames,previousSource)
                         } else translated
@@ -744,8 +754,8 @@ class ScreenCaptureService : Service() {
         val began = System.nanoTime()
         // Hard frame budget: no bitmap copies and no additional OCR. Detection is
         // on Dispatchers.Default, never in the WindowManager/UI callback.
-        val rendered = classified.mapIndexed { index, item ->
-            if (index >= 24 || item.kind == RegionKind.SOUND_EFFECT) item else {
+        val rendered = classified.map { item ->
+            if (item.kind == RegionKind.SOUND_EFFECT) item else {
                 val detected = com.manhwalens.app.overlay.SurfaceDetector.detect(item.region, bitmap.width, bitmap.height) { x, y -> bitmap.getPixel(x, y) }
                 val overlapsAnother = detected.oval && classified.any { other ->
                     other !== item && other.region.left < detected.right && other.region.right > detected.left &&

@@ -6,7 +6,7 @@ package com.manhwalens.app.pipeline
  */
 object RegionFilter {
 
-    const val DEFAULT_MIN_HEIGHT_PX = 10
+    const val DEFAULT_MIN_HEIGHT_PX = 8
     const val DEFAULT_MIN_LETTER_RATIO = 0.5f
 
     fun filter(

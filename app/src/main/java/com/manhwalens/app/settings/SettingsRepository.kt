@@ -51,6 +51,10 @@ class SettingsRepository(context: Context) {
         _bubbleEnabled.value = enabled
     }
 
+    private val _debug = MutableStateFlow(prefs.getBoolean("debug_geometry", false))
+    val debug = _debug.asStateFlow()
+    fun setDebug(enabled:Boolean) { prefs.edit().putBoolean("debug_geometry",enabled).apply(); _debug.value=enabled }
+
     fun markOnboardingSeen() {
         prefs.edit().putBoolean(KEY_ONBOARDING, true).apply()
         _onboardingSeen.value = true
