@@ -3,6 +3,15 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.18] - 2026-11-19
+
+- Replace default displaced circles with opaque source-aligned text masks; no fading, decorative shadow or collision-driven relocation.
+- Use an oval only when bounded pixel probes support a closed light elliptical interior and complete source coverage; otherwise use an exact padded rectangle with uniform perimeter color or neutral white.
+- Fit Arabic using native bidi/shaping and bounded 12–30sp search; if minimum readable text cannot fit, show an explicit details marker rather than truncated dialogue. Preserve font padding and dark-background contrast.
+- Preserve numeric/currency/time expressions without misclassifying them as uncertain alphabetic OCR.
+- Export rendering geometry hints and surface-preparation duration. Add real historical bubble-crop/opaque-mask tests and CI rendering evidence; reference Arabic is human-authored, not model output.
+- Same offline ML Kit and concurrency. Performance parity and general semantic quality are not established; see docs/OVERLAY-QUALITY-1.1.18.md.
+
 ## [1.1.17] - 2026-11-19
 
 - Keep the local ML Kit fast path, native concurrency and cache. No remote text upload, heavy model or automatic extra OCR/model pass.
