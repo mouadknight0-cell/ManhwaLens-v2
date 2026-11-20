@@ -14,7 +14,11 @@ if [ "$status" -ne 0 ]; then
 fi
 mkdir -p app/build/reports/overlay-evidence
 adb pull /sdcard/Android/data/com.manhwalens.app/files/overlay-evidence/. app/build/reports/overlay-evidence/ || true
-if [ -f app/build/reports/overlay-evidence/cleanup-benchmark.txt ]; then
-  echo "::notice::$(cat app/build/reports/overlay-evidence/cleanup-benchmark.txt)"
+# Gradle may uninstall the target and remove external files after tests; logcat
+# captures the benchmark before teardown as well.
+measurement=$(adb logcat -d -s ManhwaLensBenchmark:I '*:S' | grep '1000 utterances' | tail -1)
+if [ -n "$measurement" ]; then
+  printf '%s\n' "$measurement" > app/build/reports/overlay-evidence/cleanup-benchmark.txt
+  echo "::notice::$measurement"
 fi
 exit "$status"

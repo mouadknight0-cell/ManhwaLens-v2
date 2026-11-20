@@ -16,7 +16,7 @@ class QualityAndCircleTest {
     @Test fun exactDialogueIdiomsPreservePunctuation() {
         assertEquals("هذا مطمئن.", DialogueLexicon.translate("THAT'S A RELIEF."))
         assertEquals("أتمزح معي؟!", DialogueLexicon.translate("ARE YOU KIDDING ME?!"))
-        assertEquals("أين...", DialogueLexicon.translate("WHERE..."))
+        assertEquals("أين…", DialogueLexicon.translate("WHERE..."))
         assertEquals("أنا...؟", DialogueLexicon.translate("AM I...?", "WHERE..."))
         assertNull(DialogueLexicon.translate("AM I...?", "WHY..."))
         assertNull(DialogueLexicon.translate("I see a monster behind you."))

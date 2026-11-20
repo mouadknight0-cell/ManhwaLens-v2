@@ -415,7 +415,9 @@ class QualityInstrumentedTest {
         val current=time { com.manhwalens.app.pipeline.TranslationInput.prepare(it,names) }
         val context=InstrumentationRegistry.getInstrumentation().targetContext
         val folder=java.io.File(context.getExternalFilesDir(null),"overlay-evidence").apply { mkdirs() }
-        java.io.File(folder,"cleanup-benchmark.txt").writeText("1000 utterances; emulator warm cleanup only, microseconds total: prior=$prior current=$current. NOT end-to-end OCR/model/render latency or Xiaomi parity.")
+        val measurement = "1000 utterances; emulator warm cleanup only, microseconds total: prior=$prior current=$current. NOT end-to-end OCR/model/render latency or Xiaomi parity."
+        java.io.File(folder,"cleanup-benchmark.txt").writeText(measurement)
+        android.util.Log.i("ManhwaLensBenchmark", measurement)
     }
 
 }
