@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 object CaptureManager {
     /** Called on main before acquiring a reader frame. */
+    @Volatile var currentBoxes:Pair<String,List<android.graphics.Rect>>?=null
     @Volatile var debugBoxes: Pair<String,List<android.graphics.Rect>>? = null
     @Volatile var pausePages=false
     val refreshPage=java.util.concurrent.atomic.AtomicBoolean(false)

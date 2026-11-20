@@ -463,8 +463,8 @@ class ScreenCaptureService : Service() {
     private fun launchCapture(delayMs: Long = 0) {
         // One owner for frame acquisition and benchmarks; newer requests supersede old ones.
         val previous = captureJob
-        CaptureManager.activeResultId = null
         if(previous?.isActive==true) return
+        CaptureManager.activeResultId = null
         captureJob = scope.launch {
             previous?.join()
             if (BenchmarkTracker.isActive()) BenchmarkTracker.finish("cancelled")
@@ -592,7 +592,8 @@ class ScreenCaptureService : Service() {
             left = (it.left * scaleX).toInt(), top = (it.top * scaleY).toInt(),
             right = (it.right * scaleX).toInt(), bottom = (it.bottom * scaleY).toInt()) }
         val debug=(application as ManhwaLensApp).settingsRepository.debug.value
-        CaptureManager.debugBoxes=if(debug) journeyId to scaledRegions.map { android.graphics.Rect(it.left,it.top,it.right,it.bottom) } else null
+        CaptureManager.currentBoxes=journeyId to scaledRegions.map { android.graphics.Rect(it.left,it.top,it.right,it.bottom) }
+        CaptureManager.debugBoxes=if(debug) CaptureManager.currentBoxes else null
         val prepared=prepareRegions(scaledRegions,frame)
         if(debug) android.util.Log.i("ManhwaLensFunnel","page=$journeyId detected=${scaledRegions.size} filtered=${prepared.size}")
         BenchmarkTracker.mark("T7")

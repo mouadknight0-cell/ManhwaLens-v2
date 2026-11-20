@@ -397,6 +397,9 @@ class QualityInstrumentedTest {
             val screen=s.copy(left=0,top=0,right=720,bottom=1600)
             val ok=com.manhwalens.app.overlay.DirectTranslationLayout.prepare(inst.targetContext,"من أنت؟",s,screen,emptyList())
             assertEquals(s,ok?.surface)
+            val tiny=s.copy(right=40,bottom=126)
+            val near=com.manhwalens.app.overlay.DirectTranslationLayout.nearby(inst.targetContext,"من أنت؟",tiny,screen,emptyList())
+            assertNotNull(near); assertTrue(near!!.view.replacementReady)
             assertNull(com.manhwalens.app.overlay.DirectTranslationLayout.prepare(inst.targetContext,"من أنت؟",s,screen,listOf(s)))
         }
     }

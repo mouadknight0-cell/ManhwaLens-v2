@@ -435,8 +435,15 @@ class BubbleOverlayService : Service() {
         fun outcome(i: Int, reason: String) = com.manhwalens.app.diagnostics.Diagnostics.info("funnel", "render", "page=${result.id} block=$i outcome=$reason")
         val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,bounds.bottom)
         val occupied = translationRects.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }.toMutableList()
+        val boxes=CaptureManager.currentBoxes?.takeIf { it.first==result.id }?.second.orEmpty()
+        dockRect?.let { occupied.add(ReplacementSurface(it.left,it.top,it.right,it.bottom)) }
         bubbleView?.let { button ->
             val xy=IntArray(2); button.getLocationOnScreen(xy)
+            val old=android.graphics.Rect(xy[0],xy[1],xy[0]+button.width,xy[1]+button.height)
+            if(actionDock==null && boxes.any { android.graphics.Rect.intersects(it,old) }) {
+                val free=listOf(bounds.left,bounds.right-button.width).flatMap { x -> listOf(bounds.top,bounds.bottom-button.height).map { y -> android.graphics.Rect(x,y,x+button.width,y+button.height) } }.firstOrNull { r -> (boxes+translationRects).none { android.graphics.Rect.intersects(it,r) } }
+                if(free!=null) bubbleParams?.let { p -> p.x+=free.left-old.left;p.y+=free.top-old.top;windowManager.updateViewLayout(button,p);xy[0]=free.left;xy[1]=free.top }
+            }
             occupied.add(ReplacementSurface(xy[0],xy[1],xy[0]+button.width,xy[1]+button.height))
         }
         var renderFailure = false
@@ -451,16 +458,19 @@ class BubbleOverlayService : Service() {
             }
             if(reason!=null) { outcome(i,reason); return@forEachIndexed }
             val source=SurfacePlacement.visible(block.region,screen)
-            val others=result.blocks.filterIndexed { n,_ -> n!=i }.map { SurfacePlacement.source(it.region) }
+            val r=block.region
+            val others=boxes.filterNot { it.left==r.left && it.top==r.top && it.right==r.right && it.bottom==r.bottom }.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }
             val expanded=source?.takeIf { it.reliable || it.patch?.size?.toLong()==it.width.toLong()*it.height }?.let {
                 runCatching { DirectTranslationLayout.prepare(this,block.translated,it,screen,occupied+others) }.getOrNull()
             }
             // A safe expansion may hit the main control or another window. Try
             // the original glyph rectangle before declaring the block obstructed.
-            val prepared=expanded ?: source?.takeIf { it.reliable }?.let { s ->
+            val tightFit=expanded ?: source?.takeIf { it.reliable }?.let { s ->
                 val tight=SurfacePlacement.source(block.region,s.color,true)
                 if(tight==s) null else runCatching { DirectTranslationLayout.prepare(this,block.translated,tight,screen,occupied+others) }.getOrNull()
             }
+            val prepared=tightFit ?: source?.let { DirectTranslationLayout.nearby(this,block.translated,it,screen,occupied+others) }
+            if(tightFit==null) outcome(i,"fit_fallback source=${source?.width}x${source?.height} chars=${block.translated.length} minSp=12 occupied=${occupied.size} nearby=${prepared!=null}")
             if(prepared==null) { outcome(i,"source_fit_or_obstruction"); renderFailure=true; return@forEachIndexed }
             val surface=prepared.surface; val text=prepared.view
             val params=WindowManager.LayoutParams(surface.width,surface.height,overlayType(),
