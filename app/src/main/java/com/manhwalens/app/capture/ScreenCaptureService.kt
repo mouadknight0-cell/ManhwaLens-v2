@@ -154,7 +154,7 @@ class ScreenCaptureService : Service() {
 
     private fun startLive() {
         if (liveEnabled && liveJob?.isActive == true) {
-            if (CaptureManager.live.value == CaptureManager.LiveStatus.NO_TRANSLATION) liveGate.retry(android.os.SystemClock.elapsedRealtime())
+            if (captureJob?.isActive != true) liveGate.retry(android.os.SystemClock.elapsedRealtime())
             return
         }
         liveEnabled = true
@@ -503,6 +503,9 @@ class ScreenCaptureService : Service() {
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.PREPARING))
 
         // ── Acquire the freshest frame ──
+        kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
+            if (CaptureManager.hideControlsForFrame?.invoke() == true) latestFrame.getAndSet(null)?.close()
+        }
         val captured = acquireFreshFrame()
         if (captured == null) {
             Diagnostics.error("capture", "frame_wait", ErrorCodes.CAPTURE_NO_FRAME,
@@ -537,10 +540,10 @@ class ScreenCaptureService : Service() {
 
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.READING))
         val tOcr = System.nanoTime()
-        val regions = runCatching { textRecognition.recognize(ocrBitmap, OCR_SOURCE) { line ->
+        val regions = runCatching { withTimeoutOrNull(12000L) { textRecognition.recognize(ocrBitmap, OCR_SOURCE, audit = { Diagnostics.info("funnel", "ocr", it, traceId = traceId) }) { line ->
             captured.occlusions.none { it.intersects(line,
                 frame.width.toFloat() / ocrBitmap.width, frame.height.toFloat() / ocrBitmap.height) }
-        } }.getOrElse {
+        } } ?: error("OCR timed out") }.getOrElse {
             if (it is kotlinx.coroutines.CancellationException) throw it
             Diagnostics.error("ocr", "recognize", ErrorCodes.OCR_EXEC_FAILED,
                 "OCR execution failed", throwable = it, recovery = "journey aborted; user can retry")
@@ -594,6 +597,7 @@ class ScreenCaptureService : Service() {
             prepared.map { com.manhwalens.app.pipeline.FrameTranslationPlan.Input(it.region, it.kind) }, readerContentBottom)
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.TRANSLATING))
         BenchmarkTracker.mark("M0")
+        Diagnostics.info("funnel", "planned", "page=$journeyId prepared=${prepared.size} grouped=${regions.size}", traceId = traceId)
         val ensureOk = !com.manhwalens.app.pipeline.FrameTranslationPlan.requiresModel(plan) || translation.ensureModel("en", "ar")
         BenchmarkTracker.mark("M1")
         if (!ensureOk) {
@@ -616,6 +620,7 @@ class ScreenCaptureService : Service() {
                 val work = workByRegion.getValue(region)
                 val previousSource = work.key.previous
                 val issue = work.key.issue
+                Diagnostics.info("funnel", "dispatch", "page=$journeyId bounds=${region.left},${region.top} action=${issue ?: if(work.key.preserveSoundEffect) "preserve_sfx" else "translate"}", traceId = traceId)
                 val translated = if (work.key.preserveSoundEffect && issue == null) {
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text, region.text,
                         method = "Sound effect preserved (not translated)")
@@ -625,7 +630,20 @@ class ScreenCaptureService : Service() {
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text,
                         com.manhwalens.app.pipeline.OcrInputQuality.message(issue, region.text), issue, method = "OCR input validation")
                 }
-                translated.also {
+                val recovered = if (translated.errorCode == "OCR-UNCERTAIN" && region.width > 0 && region.height > 0 &&
+                    region.area in 1..150000 && region.left >= 0 && region.top >= 0 && region.right <= frame.width && region.bottom <= frame.height) {
+                    kotlinx.coroutines.delay(100)
+                    val crop = Bitmap.createBitmap(frame,region.left,region.top,region.width,region.height)
+                    try {
+                        val candidate = withTimeoutOrNull(2500) { textRecognition.recognize(crop,OCR_SOURCE).singleOrNull() }
+                        if(candidate!=null && candidate.confidence >= .50f && candidate.confidence > region.confidence &&
+                            candidate.height >= .7f*crop.height && candidate.width >= .7f*crop.width) {
+                            Diagnostics.info("funnel","ocr_retry","page=$journeyId bounds=${region.left},${region.top} improved",traceId=traceId)
+                            translation.translateBlock(region.copy(text=candidate.text,confidence=candidate.confidence),learnedNames,previousSource)
+                        } else translated
+                    } finally { if (crop !== frame) crop.recycle() }
+                } else translated
+                recovered.also {
                     Diagnostics.info("translate", "block_complete", "block processing complete",
                         durationMs = (System.nanoTime() - started) / 1_000_000,
                         context = mapOf("chars" to region.text.length.toString(), "method" to it.method,
@@ -671,11 +689,11 @@ class ScreenCaptureService : Service() {
             traceId = traceId, context = mapOf("blocks" to blocks.size.toString()))
         currentCoroutineContext().ensureActive()
         if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
-        CaptureManager.setState(CaptureManager.CaptureState.Done(result))
         if (liveEnabled) {
-            val translated = blocks.any { it.errorCode == null && it.translated.isNotBlank() && it.original != it.translated }
+            val translated = blocks.filterNot { it.method.startsWith("Sound effect") || it.method.startsWith("Numeric") }.let { dialogue -> dialogue.isNotEmpty() && dialogue.all { it.errorCode == null && it.translated.isNotBlank() && it.original != it.translated } }
             CaptureManager.setLive(if (translated) CaptureManager.LiveStatus.READY else CaptureManager.LiveStatus.NO_TRANSLATION)
         }
+        CaptureManager.setState(CaptureManager.CaptureState.Done(result))
         scope.launch {
             kotlinx.coroutines.delay(1500)
             BenchmarkTracker.finishIfActive(journeyId, if (blocks.any { it.errorCode != null }) "partial" else "ok", blocks.firstNotNullOfOrNull { it.errorCode })
@@ -712,7 +730,7 @@ class ScreenCaptureService : Service() {
             context = mapOf("top" to bottom.toString(), "bottom" to systemBottom.toString(),
                 "excluded_regions" to regions.count { it.top >= bottom }.toString()))
         val classified = regions.asSequence()
-            .filter { com.manhwalens.app.pipeline.ReaderContentFilter.keep(it, top, systemBottom) && it.top < bottom }
+            .filter { region -> (com.manhwalens.app.pipeline.ReaderContentFilter.keep(region, top, systemBottom) && region.top < bottom).also { if (!it) Diagnostics.info("funnel","drop","page=${CaptureManager.activeResultId} bounds=${region.left},${region.top} reason=reader_chrome_or_insets") } }
             .map { region ->
                 val cleaned = SentenceReconstructor.normalize(region.text)
                 if (cleaned == region.text) region else region.copy(text = cleaned)
@@ -735,7 +753,8 @@ class ScreenCaptureService : Service() {
                     (item.region.left - 2).coerceAtLeast(0), (item.region.top - 2).coerceAtLeast(0),
                     (item.region.right + 2).coerceAtMost(bitmap.width), (item.region.bottom + 2).coerceAtMost(bitmap.height), detected.color, reliable = detected.reliable)
                 else detected
-                item.copy(region = item.region.copy(surface = surface))
+                val local = if (surface.reliable) surface else surface.copy(patch = com.manhwalens.app.overlay.StrokePatch.build(surface, bitmap::getPixel))
+                item.copy(region = item.region.copy(surface = local))
             }
         }
         Diagnostics.info("overlay", "surface_prepare", "bounded source-aligned surface detection",

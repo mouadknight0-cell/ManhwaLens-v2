@@ -59,13 +59,17 @@ class BubbleOverlayService : Service() {
             CaptureManager.SessionPhase.STOPPING -> "جارٍ الإيقاف / Stopping"
             CaptureManager.SessionPhase.FAILED -> "فشلت / Failed — أعد المحاولة"
         }
-        val work = (CaptureManager.state.value as? CaptureManager.CaptureState.Working)?.status
         statusLabel?.text = when {
             phase == CaptureManager.SessionPhase.FAILED -> "تعذّر بدء الالتقاط — أعد المحاولة"
             phase != CaptureManager.SessionPhase.ACTIVE -> "الالتقاط: ${label.substringBefore(" /")}"
             CaptureManager.live.value == CaptureManager.LiveStatus.NO_TRANSLATION -> "لم تُترجم الصفحة؛ اضغط ترجمة أو مرّر"
-            CaptureManager.live.value == CaptureManager.LiveStatus.ERROR -> "الالتقاط متصل؛ تعذّرت معالجة الصفحة — أعد المحاولة"
-            else -> "الالتقاط متصل • ${work ?: CaptureManager.live.value}"
+            CaptureManager.live.value == CaptureManager.LiveStatus.ERROR -> "انقطعت معالجة الالتقاط؛ اضغط ترجمة لاستئنافها"
+            else -> when (CaptureManager.live.value) {
+                CaptureManager.LiveStatus.PROCESSING -> "جارٍ قراءة الصفحة وترجمتها"
+                CaptureManager.LiveStatus.SCROLLING -> "بانتظار ثبات الصفحة"
+                CaptureManager.LiveStatus.PAUSED_APP -> "افتح القارئ لاستئناف الالتقاط"
+                else -> "جاهز للترجمة"
+            }
         }
         bubbleView?.contentDescription = "Capture session: $label. Tap for Start and Stop controls."
         (bubbleView as? ImageView)?.setColorFilter(when (phase) {
@@ -74,8 +78,7 @@ class BubbleOverlayService : Service() {
             CaptureManager.SessionPhase.FAILED -> 0xFFFCA5A5.toInt()
             else -> PANEL_TEXT
         })
-        startControl?.isEnabled = phase !in listOf(CaptureManager.SessionPhase.STARTING, CaptureManager.SessionPhase.STOPPING) &&
-            (phase != CaptureManager.SessionPhase.ACTIVE || CaptureManager.live.value in listOf(CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR, CaptureManager.LiveStatus.NO_TRANSLATION))
+        startControl?.isEnabled = phase !in listOf(CaptureManager.SessionPhase.STARTING, CaptureManager.SessionPhase.STOPPING)
         startControl?.alpha = if (startControl?.isEnabled == true) 1f else 0.45f
     }
     private val translationRects = mutableListOf<android.graphics.Rect>()
@@ -110,7 +113,8 @@ class BubbleOverlayService : Service() {
     }
     private fun startTranslation() {
         event("start_click")
-        if (CaptureManager.live.value !in listOf(CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR, CaptureManager.LiveStatus.NO_TRANSLATION) || startJob?.isActive == true) return
+        if (startJob?.isActive == true) return
+        if (CaptureManager.live.value == CaptureManager.LiveStatus.PROCESSING) { collapseActions(); return }
         collapseActions()
         clearTranslations()
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.PREPARING))
@@ -159,6 +163,7 @@ class BubbleOverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        CaptureManager.hideControlsForFrame = { (actionDock != null).also { if (it) collapseActions() } }
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
     }
 
@@ -221,7 +226,7 @@ class BubbleOverlayService : Service() {
             CaptureManager.state.collect { state ->
                 updateControlState()
                 when (state) {
-                    is CaptureManager.CaptureState.Done -> { running = false; bubbleView?.alpha = 1f; showPanel(state.result, final = true) }
+                    is CaptureManager.CaptureState.Done -> { running = false; collapseActions(); bubbleView?.alpha = 1f; showPanel(state.result, final = true) }
                     is CaptureManager.CaptureState.Partial -> showPanel(state.result, final = false)
                     is CaptureManager.CaptureState.Error -> { running = false; bubbleView?.alpha = 1f; if (acceptResults) showError(state.message) }
                     is CaptureManager.CaptureState.Working -> { running = true; showWorking(state.status) }
@@ -385,69 +390,46 @@ class BubbleOverlayService : Service() {
             val inset = metrics.windowInsets.getInsetsIgnoringVisibility(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
             android.graphics.Rect(inset.left, inset.top, metrics.bounds.width() - inset.right, metrics.bounds.height() - inset.bottom)
         } else availableBounds()
-        if (displayedBlocks.isNotEmpty()) return
-        val replacing = result.blocks.filter { it.translated != it.original }
-        if (replacing.isEmpty()) return
-        data class Ready(val view: View, val params: WindowManager.LayoutParams, val rect: android.graphics.Rect)
-        val ready = mutableListOf<Ready>()
+        fun outcome(i: Int, reason: String) = com.manhwalens.app.diagnostics.Diagnostics.info("funnel", "render", "page=${result.id} block=$i outcome=$reason")
         val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,bounds.bottom)
         val occupied = mutableListOf<ReplacementSurface>()
         bubbleView?.let { button ->
             val xy=IntArray(2); button.getLocationOnScreen(xy)
-            occupied.add(ReplacementSurface(xy[0]-dp(8),xy[1]-dp(8),xy[0]+dp(BUBBLE_SIZE_DP)+dp(8),xy[1]+dp(BUBBLE_SIZE_DP)+dp(8)))
+            occupied.add(ReplacementSurface(xy[0],xy[1],xy[0]+button.width,xy[1]+button.height))
         }
-        // An expanded successful translation must not cover failed source dialogue.
-        result.blocks.filter { it.errorCode != null || it.translated.isBlank() }.forEach {
-            occupied.add(SurfacePlacement.source(it.region))
-        }
-        for (block in replacing) {
-            if (block.errorCode != null || block.translated.isBlank()) continue
-            val source = SurfacePlacement.visible(block.region,screen)?.copy(oval = false) ?: continue
-            val others = result.blocks.filter { it !== block }.map { SurfacePlacement.source(it.region) }
-            val barriers = occupied + others
-            val prepared = runCatching { DirectTranslationLayout.prepare(this,block.translated,source,screen,barriers) }.getOrNull()
-            if (prepared == null) {
-                com.manhwalens.app.diagnostics.Diagnostics.warn("overlay","screen_capacity","Original retained: complete text exceeds available display or rendering failed")
-                continue
+        var renderFailure = false
+        result.blocks.forEachIndexed { i,block ->
+            val key="${result.id}:$i"
+            if (key in displayedBlocks) return@forEachIndexed
+            val reason=when {
+                block.errorCode!=null -> block.errorCode
+                block.translated==block.original -> "source_preserved"
+                block.translated.isBlank() -> "empty_output"
+                else -> null
             }
-            val surface=prepared.surface
-            val text=prepared.view
-            val rect=android.graphics.Rect(surface.left,surface.top,surface.right,surface.bottom)
-            val params = WindowManager.LayoutParams(surface.width, surface.height, overlayType(),
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                PixelFormat.TRANSLUCENT).apply {
-                gravity = Gravity.TOP or Gravity.LEFT; x = surface.left; y = surface.top; alpha = 1f
+            if(reason!=null) { outcome(i,reason); return@forEachIndexed }
+            val source=SurfacePlacement.visible(block.region,screen)
+            val others=result.blocks.filterIndexed { n,_ -> n!=i }.map { SurfacePlacement.source(it.region) }
+            val prepared=source?.takeIf { it.reliable || it.patch?.size?.toLong()==it.width.toLong()*it.height }?.let {
+                runCatching { DirectTranslationLayout.prepare(this,block.translated,it,screen,occupied+others) }.getOrNull()
+            }
+            if(prepared==null) { outcome(i,"source_fit_or_obstruction"); renderFailure=true; return@forEachIndexed }
+            val surface=prepared.surface; val text=prepared.view
+            val params=WindowManager.LayoutParams(surface.width,surface.height,overlayType(),
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply {
+                gravity=Gravity.TOP or Gravity.LEFT; x=surface.left; y=surface.top
             }
             text.setOnLongClickListener { clearTranslations(); true }
-            // Cover only source ink left outside the text window. Keep masks in the
-            // same rollback/lifecycle transaction and never draw over the control.
-            val ink = SurfacePlacement.source(block.region, source.color)
-            val uncovered = android.graphics.Region(ink.left, ink.top, ink.right, ink.bottom)
-            uncovered.op(screen.left, screen.top, screen.right, screen.bottom, android.graphics.Region.Op.INTERSECT)
-            for (reserved in barriers + surface) uncovered.op(reserved.left, reserved.top, reserved.right, reserved.bottom, android.graphics.Region.Op.DIFFERENCE)
-            val pieces = android.graphics.RegionIterator(uncovered)
-            val piece = android.graphics.Rect()
-            while (pieces.next(piece)) {
-                val mask = View(this).apply { setBackgroundColor(source.color or (0xff shl 24)) }
-                val mp = WindowManager.LayoutParams().apply {
-                    copyFrom(params); x = piece.left; y = piece.top; width = piece.width(); height = piece.height()
-                    flags = flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                }
-                ready.add(Ready(mask, mp, android.graphics.Rect(piece)))
-            }
-            ready.add(Ready(text, params, rect))
-            occupied.add(surface)
+            val committed=ReplacementCommit.commit(listOf(text),current={ acceptResults && !CaptureManager.appVisible.value && ReplacementCommit.eligible(result.id,CaptureManager.activeResultId,final) },
+                attach={windowManager.addView(it,params)}, remove={windowManager.removeViewImmediate(it)})
+            if(committed) {
+                translationViews.add(text); translationRects.add(android.graphics.Rect(surface.left,surface.top,surface.right,surface.bottom))
+                occupied.add(surface); displayedBlocks.add(key); outcome(i,"attached")
+            } else { outcome(i,"attach_failed_or_stale"); renderFailure=true }
         }
-        val committed = ReplacementCommit.commit(ready,
-            current = { acceptResults && !CaptureManager.appVisible.value &&
-                ReplacementCommit.eligible(result.id, CaptureManager.activeResultId, final) },
-            attach = { windowManager.addView(it.view, it.params) },
-            remove = { it.view.visibility = View.INVISIBLE; windowManager.removeViewImmediate(it.view) })
-        if (!committed) return
-        ready.forEach { translationViews.add(it.view); translationRects.add(it.rect) }
-        displayedBlocks.add(result.id)
         publishBounds()
-        if (ready.isNotEmpty()) markRendered(result, final && ready.size == replacing.size)
+        if(renderFailure && result.id==CaptureManager.activeResultId) CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION)
+        if(displayedBlocks.isNotEmpty()) markRendered(result,!renderFailure && result.blocks.none { it.errorCode!=null })
     }
 
     private fun markRendered(result: CaptureResult, final: Boolean) {
@@ -511,6 +493,7 @@ class BubbleOverlayService : Service() {
         bubbleView?.let { view -> runCatching { windowManager.removeView(view) } }
         bubbleView = null
         CaptureManager.overlayBounds = emptyList()
+        CaptureManager.hideControlsForFrame = null
         super.onDestroy()
     }
 
@@ -523,7 +506,7 @@ class BubbleOverlayService : Service() {
         private const val BUBBLE_SIZE_DP = 56
         private const val TAG_WORKING_TEXT = "working_text"
 
-        private val PANEL_BACKGROUND = 0xF21A1430.toInt()
+        private val PANEL_BACKGROUND = 0xFF1A1430.toInt()
         private val PANEL_TEXT = 0xFFF3EFFA.toInt()
         private val PANEL_SECONDARY_TEXT = 0xFFB9B3D6.toInt()
         private val PANEL_ACCENT = 0xFFC4B5FD.toInt()

@@ -64,6 +64,7 @@ fun SettingsScreen(
             }
             Text("نسبة التنزيل وحجم الملف غير متاحين من ML Kit. لا يُعلن الاستعداد قبل التحقق من التثبيت والترجمة.", style = MaterialTheme.typography.bodySmall)
         }
+        XiaomiSetup()
         SettingsGroup("الفقاعة وجلسة الالتقاط", "الحالة: $phase · التحكم متاح من الفقاعة") {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("إظهار الفقاعة العائمة", Modifier.weight(1f))

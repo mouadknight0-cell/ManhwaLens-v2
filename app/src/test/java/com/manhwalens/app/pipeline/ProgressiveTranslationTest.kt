@@ -29,6 +29,15 @@ class ProgressiveTranslationTest {
         assertEquals(6, result.size)
         assertEquals((1..6).toList(), sizes)
     }
+    @Test fun oneExceptionCannotCancelFiveSiblingsAndOnlyFailureRetries() = runTest {
+        val inputs=(0..5).map { region("bubble $it",it*40) }; val calls=IntArray(6)
+        val result=progressiveTranslation(inputs,translate={ r ->
+            val i=r.top/40; calls[i]++; if(i==2) error("forced")
+            TranslatedBlock(r,r.text,"مرحبا")
+        },onReady={})
+        assertEquals(6,result.size); assertEquals(5,result.count { it.errorCode==null })
+        assertEquals("TR-BLOCK-EXCEPTION",result[2].errorCode); assertArrayEquals(intArrayOf(1,1,2,1,1,1),calls)
+    }
     @Test fun cancellationStopsQueuedWork() = runTest {
         var calls = 0
         val job = launch {

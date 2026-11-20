@@ -83,7 +83,10 @@ class ReplacementTranslationView(context: Context, val message: String,
         if (!failed && text != null && message.any { it.isLetterOrDigit() } && w.toLong() * h in 1..8_000_000L) {
             prepared = runCatching {
                 rasterize(w, h) { canvas ->
-                    if (surface.oval) canvas.drawOval(0f, 0f, w.toFloat(), h.toFloat(), fill)
+                    if (surface.patch != null) {
+                        canvas.drawBitmap(surface.patch,0,w,0f,0f,w,h,true,null)
+                        ink.setShadowLayer(1f,0f,0f,if (ink.color == Color.WHITE) Color.BLACK else Color.WHITE)
+                    } else if (surface.oval) canvas.drawOval(0f, 0f, w.toFloat(), h.toFloat(), fill)
                     else canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), fill)
                     canvas.save()
                     canvas.clipRect(content)

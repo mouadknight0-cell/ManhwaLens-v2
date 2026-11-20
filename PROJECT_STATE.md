@@ -1,5 +1,9 @@
 # ManhwaLens engineering state
 
+## Current implementation — 1.1.26
+
+See `docs/PAGE-FUNNEL-1.1.26.md` for report evidence, page-local retries and source-aligned rendering. This supersedes the older displaced-rectangle rendering design. No new physical-device or end-to-end latency verification.
+
 ## Current branch: bubble unit implementation (unreleased)
 
 Added bounded dark-tone bridge checks including both text-box interiors, glossary-first model casing, native RTL punctuation regression and source coverage for displaced translations. Neighboring dialogue is reserved during placement. Physical Xiaomi coverage, semantic output and end-to-end latency remain unverified. Separate balloons are not co-translated based on proximity. The investigation below records the prior checkpoint.

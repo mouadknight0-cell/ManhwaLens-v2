@@ -61,9 +61,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
                 method = "Numeric content preserved (not translated)")
         }
         val block = try {
-            val translated = reviewed ?: TranslationRetry.run(
-                retryable = { it is TranslationFailure && it.code == ErrorCodes.TRANSLATE_FAILED }
-            ) { translateText(normalized, glossaryNames) }
+            val translated = reviewed ?: translateText(normalized, glossaryNames)
             TranslatedBlock(region, normalized, translated, method = if (reviewed == null) "ML Kit on-device" else "Reviewed dialogue lexicon v1")
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {

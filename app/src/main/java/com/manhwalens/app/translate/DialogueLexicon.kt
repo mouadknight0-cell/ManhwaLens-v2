@@ -33,8 +33,10 @@ object DialogueLexicon {
         "we'd better end this sooner rather than later" to "من الأفضل أن ننهي هذا في أقرب وقت",
         "where" to "أين",
         "why" to "لماذا",
+        "i cannot see" to "لا أستطيع الرؤية",
+        "i'm starting to remember" to "بدأت أتذكر",
         "who are you" to "من أنت",
-        "who" to "مَن",
+        "who" to "من",
         "what" to "ماذا"
     )
     private fun key(text: String) = text.trim().lowercase().replace('’', '\'')
@@ -43,6 +45,7 @@ object DialogueLexicon {
         val k = key(text)
         val value = if (k == "am i" && previous?.let(::key) == "where") "أنا" else entries[k] ?: return null
         val tail = text.trim().takeLastWhile { it in ".!?…" }
+        if (k == "who are you" && tail.none { it == '?' }) return "$value؟"
         return value + tail.replace(Regex("\\.{2,}"), "…").replace('?', '؟')
     }
 }

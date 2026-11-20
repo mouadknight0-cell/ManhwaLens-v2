@@ -13,6 +13,7 @@ object OcrLexicon {
     private val noise = setOf("HIN", "AGONN", "WLE", "MEARING", "AEARNG")
     // Require a corroborating adjacent word; never fuzzy-correct an isolated name.
     private val contextual = mapOf(
+        "1 CANNOT" to "I CANNOT", "W/ALE YOU" to "WHILE YOU", "THE AGONN" to "THE AGONY",
         "BEEN WATCAING" to "BEEN WATCHING", "YOUR TONGVE" to "YOUR TONGUE",
         "YOUR NNER" to "YOUR INNER", "INNER VOCE" to "INNER VOICE", "INNER VOIC" to "INNER VOICE",
         "WHO AREYOV" to "WHO ARE YOU", "WHO ARE YOZ" to "WHO ARE YOU", "WHO ARE YOUZ" to "WHO ARE YOU"

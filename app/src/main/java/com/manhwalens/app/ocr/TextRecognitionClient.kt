@@ -23,7 +23,7 @@ import kotlinx.coroutines.tasks.await
 class TextRecognitionClient {
     private val nativePermit = kotlinx.coroutines.sync.Semaphore(1)
 
-    suspend fun recognize(bitmap: Bitmap, sourceLanguage: String, keepLine: (TextRegion) -> Boolean = { true }): List<TextRegion> {
+    suspend fun recognize(bitmap: Bitmap, sourceLanguage: String, audit: (String) -> Unit = {}, keepLine: (TextRegion) -> Boolean = { true }): List<TextRegion> {
         val scripts = LanguageMapper.scriptsFor(sourceLanguage)
 
         val detected = coroutineScope {
@@ -43,9 +43,10 @@ class TextRecognitionClient {
                     }
                     try {
                         task.await().let { result ->
+                            audit("detected blocks=${result.textBlocks.size} lines=${result.textBlocks.sumOf { it.lines.size }}")
                             val linesByBlock = result.textBlocks.map { block ->
-                                RegionFilter.filter(block.lines.mapNotNull { line ->
-                                    val box = line.boundingBox ?: return@mapNotNull null
+                                val raw = block.lines.mapNotNull { line ->
+                                    val box = line.boundingBox ?: run { audit("drop missing_box"); return@mapNotNull null }
                                     TextRegion(
                                         text = line.text,
                                         left = box.left,
@@ -55,13 +56,17 @@ class TextRecognitionClient {
                                         confidence = line.confidence ?: Float.NaN,
                                         languageHint = LanguageMapper.autoLanguageFor(script),
                                     )
-                                }.filter(keepLine))
+                                }.filter { line -> keepLine(line).also { if (!it) audit("drop occlusion ${line.left},${line.top}") } }
+                                RegionFilter.filter(raw).also { kept ->
+                                    (raw - kept.toSet()).filter { it.text == it.text.trim() }.forEach { audit("drop line_filter ${it.left},${it.top}") }
+                                }
                             }
+                            audit("filtered lines=${linesByBlock.sumOf { it.size }}")
                             val owners = linesByBlock.flatMapIndexed { index, lines -> lines.map { it to index } }.toMap()
                             com.manhwalens.app.pipeline.DialogueAssembler.assemble(linesByBlock.flatten()) { a, b ->
                                 owners[a] == owners[b] || lightBridge(bitmap, a, b) ||
                                     com.manhwalens.app.pipeline.TonalCorridor.isClear(a, b, bitmap.width, bitmap.height) { x, y -> bitmap.getPixel(x, y) }
-                            }
+                            }.also { audit("grouped blocks=${it.size}") }
                         }
                     } catch (t: Throwable) {
                         throw t

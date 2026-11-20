@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.asStateFlow
  * Both the in-app UI and the floating bubble panel observe this flow.
  */
 object CaptureManager {
+    /** Called on main before acquiring a reader frame. */
+    var hideControlsForFrame: (() -> Boolean)? = null
     @Volatile var activeResultId: String? = null
 
     sealed interface CaptureState {

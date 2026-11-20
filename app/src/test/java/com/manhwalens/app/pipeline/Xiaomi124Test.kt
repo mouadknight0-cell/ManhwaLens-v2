@@ -8,7 +8,7 @@ class Xiaomi124Test {
     @Test fun reportInputsCanReachReviewedTranslationWithoutGuessingNames() {
         val voice = TranslationInput.prepare("I AM MORE THAN CAPABLE OF HEARING YOUR NNER VOIC..", emptyList())
         assertNotNull(DialogueLexicon.translate(voice))
-        assertEquals("من أنت", DialogueLexicon.translate(TranslationInput.prepare("WHO ARE YOZ", emptyList())))
+        assertEquals("من أنت؟", DialogueLexicon.translate(TranslationInput.prepare("WHO ARE YOZ", emptyList())))
         assertEquals("BEEN WATCHING YOUR TONGUE", TranslationInput.prepare("BEEN WATCAING YOUR TONGVE", emptyList()))
         assertEquals("YOUR Tongve", TranslationInput.prepare("YOUR TONGVE", listOf("Tongve")))
     }

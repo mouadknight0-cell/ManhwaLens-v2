@@ -22,7 +22,15 @@ suspend fun progressiveTranslation(
     val workers = List(minOf(concurrency, groups.size)) {
         launch {
             for (group in jobs) {
-                val translated = translate(group.first().value)
+                val region = group.first().value
+                suspend fun attempt(): TranslatedBlock = try { translate(region) }
+                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (failure: Exception) { TranslatedBlock(region, region.text, "", "TR-BLOCK-EXCEPTION") }
+                var translated = attempt()
+                if (translated.errorCode != null && translated.errorCode !in setOf("OCR-CLIPPED", "OCR-UNCERTAIN")) {
+                    kotlinx.coroutines.delay(120)
+                    translated = attempt()
+                }
                 results.send(group.map { it.index to translated.copy(region = it.value) })
             }
         }

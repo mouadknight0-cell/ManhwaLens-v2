@@ -21,4 +21,5 @@ if [ -n "$measurement" ]; then
   printf '%s\n' "$measurement" > app/build/reports/overlay-evidence/cleanup-benchmark.txt
   echo "::notice::$measurement"
 fi
+adb logcat -d -s ManhwaLensFunnel:I '*:S' | tee app/build/reports/overlay-evidence/report25-funnel.txt
 exit "$status"
