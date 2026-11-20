@@ -388,7 +388,7 @@ class BubbleOverlayService : Service() {
         val occupied = translationRects.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }.toMutableList()
         val boxes=CaptureManager.currentBoxes?.takeIf { it.first==result.id }?.second.orEmpty()
         dockRect?.let { occupied.add(ReplacementSurface(it.left,it.top,it.right,it.bottom)) }
-        bubbleView?.let { button ->
+        bubbleView?.takeIf { it.visibility==View.VISIBLE }?.let { button ->
             val xy=IntArray(2); button.getLocationOnScreen(xy)
             val old=android.graphics.Rect(xy[0],xy[1],xy[0]+button.width,xy[1]+button.height)
             if(actionDock==null && boxes.any { android.graphics.Rect.intersects(it,old) }) {
@@ -416,11 +416,11 @@ class BubbleOverlayService : Service() {
             }
             // A safe expansion may hit the main control or another window. Try
             // the original glyph rectangle before declaring the block obstructed.
-            val tightFit=expanded ?: source?.takeIf { it.reliable }?.let { s ->
+            val tightFit=expanded ?: source?.takeIf { it.mask==null && it.reliable }?.let { s ->
                 val tight=SurfacePlacement.source(block.region,s.color,true)
                 if(tight==s) null else runCatching { DirectTranslationLayout.prepare(this,block.translated,tight,screen,occupied+others) }.getOrNull()
             }
-            val prepared=tightFit ?: source?.let { DirectTranslationLayout.nearby(this,block.translated,it,screen,occupied+others) }
+            val prepared=tightFit ?: source?.takeIf { it.mask==null }?.let { DirectTranslationLayout.nearby(this,block.translated,it,screen,occupied+others) }
             if(tightFit==null && (application as ManhwaLensApp).settingsRepository.debug.value && source!=null){
                 val paint=android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { typeface=ArabicTypeface.get(this@BubbleOverlayService); textSize=12f*resources.displayMetrics.scaledDensity }
                 val width=(source.width-dp(8)).coerceAtLeast(1);val msg=block.translated

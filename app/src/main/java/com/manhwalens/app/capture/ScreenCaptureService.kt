@@ -143,11 +143,11 @@ class ScreenCaptureService : Service() {
         val plane = image.planes[0]
         val buffer = plane.buffer
         val masks = CaptureManager.overlayBounds
-        val roi=CaptureManager.currentBoxes?.second.orEmpty()
-        return IntArray(32 * 48) { index ->
+        val roi=CaptureManager.currentBoxes?.second.orEmpty().take(32)
+        fun grid(textOnly:Boolean)=IntArray(32 * 48) { index ->
             val x = ((index % 32 + 0.5) * image.width / 32).toInt()
             val y = ((index / 32 + 0.5) * image.height / 48).toInt()
-            if ((roi.isNotEmpty() && roi.none { x in it.left-24..it.right+24 && y in it.top-24..it.bottom+24 }) || y < image.height * 0.08 || y > image.height * 0.94 || masks.any { it.contains(x, y) }) -1
+            if ((textOnly && roi.none { x in it.left-24..it.right+24 && y in it.top-24..it.bottom+24 }) || y < image.height * 0.08 || y > image.height * 0.94 || masks.any { it.contains(x, y) }) -1
             else {
                 val offset = y * plane.rowStride + x * plane.pixelStride
                 ((buffer.get(offset).toInt() and 255) * 3 +
@@ -155,6 +155,7 @@ class ScreenCaptureService : Service() {
                     (buffer.get(offset + 2).toInt() and 255)) / 10
             }
         }
+        val focused=grid(roi.isNotEmpty());return if(roi.isNotEmpty() && focused.count { it>=0 }<12)grid(false) else focused
     }
 
     private val pageState=com.manhwalens.app.pipeline.PageState()
@@ -209,6 +210,7 @@ class ScreenCaptureService : Service() {
 
     private fun endLive(status: CaptureManager.LiveStatus = CaptureManager.LiveStatus.OFF) {
         pageState.clear()
+        CaptureManager.currentBoxes=null
         liveEnabled = false
         liveJob?.cancel()
         liveJob = null
@@ -791,11 +793,12 @@ class ScreenCaptureService : Service() {
                     (item.region.left - 2).coerceAtLeast(0), (item.region.top - 2).coerceAtLeast(0),
                     (item.region.right + 2).coerceAtMost(bitmap.width), (item.region.bottom + 2).coerceAtMost(bitmap.height), detected.color, reliable = detected.reliable)
                 else detected
-                val contour = if ((application as ManhwaLensApp).settingsRepository.matchStyle.value) com.manhwalens.app.overlay.BubbleContours.detect(item.region,detected.color,bitmap.width,bitmap.height,bitmap::getPixel)?.takeUnless { s -> classified.any { other -> other!==item && other.region.left<s.right && other.region.right>s.left && other.region.top<s.bottom && other.region.bottom>s.top } } else null
+                val matched=(application as ManhwaLensApp).settingsRepository.matchStyle.value
+                val contour = if (matched) com.manhwalens.app.overlay.BubbleContours.detect(item.region,detected.color,bitmap.width,bitmap.height,bitmap::getPixel)?.takeUnless { s -> classified.any { other -> other!==item && other.region.left<s.right && other.region.right>s.left && other.region.top<s.bottom && other.region.bottom>s.top } } else null
                 val local = contour ?: if (surface.reliable) com.manhwalens.app.overlay.FlatInterior.expand(surface,bitmap.width,bitmap.height,{ s ->
                     classified.any { other -> other!==item && other.region.left-2<s.right && other.region.right+2>s.left && other.region.top-2<s.bottom && other.region.bottom+2>s.top }
                 },bitmap::getPixel) else surface.copy(patch = com.manhwalens.app.overlay.StrokePatch.build(surface, bitmap::getPixel))
-                item.copy(region = item.region.copy(surface = local))
+                item.copy(region = item.region.copy(surface = if(matched && local.mask==null && !local.oval && local.patch==null) local.copy(capsule=true) else local))
             }
         }
         Diagnostics.info("overlay", "surface_prepare", "bounded source-aligned surface detection",
@@ -806,7 +809,9 @@ class ScreenCaptureService : Service() {
                 if(!keep) Diagnostics.info("funnel","drop","page=${CaptureManager.activeResultId} bounds=${item.region.left},${item.region.top} reason=no_comic_surface")
             }
         }
-        val resolved = com.manhwalens.app.overlay.SurfacePlacement.resolveOverlaps(comic.map { it.region })
+        val matched=(application as ManhwaLensApp).settingsRepository.matchStyle.value
+        val resolved = com.manhwalens.app.overlay.SurfacePlacement.resolveOverlaps(comic.map { item -> val r=item.region
+            if(matched) r else r.copy(surface=r.surface?.copy(color=0xff272431.toInt(),mask=null,patch=null,reliable=true,capsule=true,oval=false)) })
         return comic.mapIndexed { index, item -> item.copy(region = resolved[index]) }
     }
 

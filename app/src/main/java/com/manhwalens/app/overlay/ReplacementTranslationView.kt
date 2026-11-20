@@ -52,7 +52,10 @@ class ReplacementTranslationView(context: Context, val message: String,
         val c = surface.color
         val luminance = Color.red(c) * .2126 + Color.green(c) * .7152 + Color.blue(c) * .0722
         ink.color = if (luminance < 120) Color.WHITE else if (failed) Color.rgb(125, 20, 20) else Color.rgb(20, 20, 20)
-        surface.mask?.let { ink.color=it.ink }
+        surface.mask?.let { m -> ink.color=m.ink
+            ink.setFontVariationSettings("'wght' ${m.weight}")
+            if(m.glow!=0)ink.setShadowLayer(m.step.coerceIn(2,5).toFloat(),0f,0f,m.glow)
+        }
         fitPasses = 0
         fun make(text: String, size: Float): StaticLayout {
             fitPasses++
@@ -87,7 +90,11 @@ class ReplacementTranslationView(context: Context, val message: String,
                 rasterize(w, h) { canvas ->
                     if (surface.mask != null) {
                         val m=surface.mask; val path=android.graphics.Path(); val d=m.step.toFloat()
-                        for(i in m.spans.indices step 3){ val y=m.spans[i]*d;path.addRect(m.spans[i+1]*d,y,m.spans[i+2]*d,y+d,android.graphics.Path.Direction.CW) }; canvas.drawPath(path,fill)
+                        for(i in m.spans.indices step 3){ val y=m.spans[i]*d;path.addRect(m.spans[i+1]*d,y,m.spans[i+2]*d,y+d,android.graphics.Path.Direction.CW) }
+                        canvas.save(); canvas.clipPath(path)
+                        if(m.texture!=null){val tw=w/m.step;val th=h/m.step;canvas.save();canvas.scale(d,d);canvas.drawBitmap(m.texture,0,tw,0f,0f,tw,th,true,Paint(Paint.FILTER_BITMAP_FLAG));canvas.restore()}
+                        else canvas.drawPath(path,fill)
+                        canvas.restore()
                     } else if (surface.patch != null) {
                         canvas.drawBitmap(surface.patch,0,w,0f,0f,w,h,true,null)
                         ink.setShadowLayer(1f,0f,0f,if (ink.color == Color.WHITE) Color.BLACK else Color.WHITE)

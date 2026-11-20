@@ -7,7 +7,7 @@ import kotlin.math.abs
 object ComicSurface {
     fun enclosed(r:TextRegion,w:Int,h:Int,pixel:(Int,Int)->Int):Boolean {
         val s=r.surface ?: return false
-        if(s.oval) return true
+        if(s.oval || s.mask!=null) return true
         fun contrast(c:Int)=maxOf(abs((c and 255)-(s.color and 255)),abs(((c ushr 8) and 255)-((s.color ushr 8) and 255)),abs(((c ushr 16) and 255)-((s.color ushr 16) and 255)))
         fun border(x:Int,y:Int,dx:Int,dy:Int):Boolean {
             var interior=0
