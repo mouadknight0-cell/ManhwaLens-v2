@@ -87,6 +87,7 @@ class ReplacementTranslationView(context: Context, val message: String,
                         canvas.drawBitmap(surface.patch,0,w,0f,0f,w,h,true,null)
                         ink.setShadowLayer(1f,0f,0f,if (ink.color == Color.WHITE) Color.BLACK else Color.WHITE)
                     } else if (surface.oval) canvas.drawOval(0f, 0f, w.toFloat(), h.toFloat(), fill)
+                    else if(surface.capsule) canvas.drawRoundRect(0f,0f,w.toFloat(),h.toFloat(),padding*2,padding*2,fill)
                     else canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), fill)
                     canvas.save()
                     canvas.clipRect(content)

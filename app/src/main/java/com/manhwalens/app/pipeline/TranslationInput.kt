@@ -21,7 +21,18 @@ object TranslationInput {
         }
     }
 
-    fun prepare(text: String, glossaryNames: List<String>): String {
+    // Repeated pages, retries and lexical scoring often normalize the exact same source.
+    // RAM-only, bounded; names are part of identity, so edits invalidate old matches.
+    private data class Input(val raw:String,val names:List<String>)
+    private val memo=object:LinkedHashMap<Input,String>(128,.75f,true){
+        override fun removeEldestEntry(eldest:MutableMap.MutableEntry<Input,String>?)=size>128
+    }
+    fun prepare(text:String,glossaryNames:List<String>):String {
+        if(text.length>2048 || glossaryNames.size>128) return clean(text,glossaryNames)
+        val key=Input(text,glossaryNames.toList());synchronized(memo){memo[key]?.let { return it }}
+        val value=clean(text,key.names);synchronized(memo){memo[key]=value};return value
+    }
+    private fun clean(text: String, glossaryNames: List<String>): String {
         val normalized = SentenceReconstructor.normalize(text)
         val alias=if(glossaryNames.any { it.equals("Jeong-ah",true) }) normalized.replace(Regex("\\bjeong-4h\\b",RegexOption.IGNORE_CASE),"Jeong-ah") else normalized
         if (!OcrLexicon.needsCleanup(alias) && alias.none(Char::isUpperCase)) return alias

@@ -473,6 +473,13 @@ class BubbleOverlayService : Service() {
                 if(tight==s) null else runCatching { DirectTranslationLayout.prepare(this,block.translated,tight,screen,occupied+others) }.getOrNull()
             }
             val prepared=tightFit ?: source?.let { DirectTranslationLayout.nearby(this,block.translated,it,screen,occupied+others) }
+            if(tightFit==null && (application as ManhwaLensApp).settingsRepository.debug.value && source!=null){
+                val paint=android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { typeface=ArabicTypeface.get(this@BubbleOverlayService); textSize=12f*resources.displayMetrics.scaledDensity }
+                val width=(source.width-dp(8)).coerceAtLeast(1);val msg=block.translated
+                val layout=android.text.StaticLayout.Builder.obtain(msg,0,msg.length,paint,width).setTextDirection(android.text.TextDirectionHeuristics.RTL).build()
+                val intersects=(occupied+others).any { it.left<source.right && it.right>source.left && it.top<source.bottom && it.bottom>source.top }
+                outcome(i,"min_fit measured_width=${paint.measureText(msg)} wrap_width=$width lines=${layout.lineCount} required_height=${layout.height+dp(8)} available_height=${source.height} intersects=$intersects")
+            }
             if(tightFit==null) outcome(i,"fit_fallback source=${source?.width}x${source?.height} chars=${block.translated.length} minSp=12 occupied=${occupied.size} nearby=${prepared!=null}")
             if(prepared==null) { outcome(i,"source_fit_or_obstruction"); renderFailure=true; return@forEachIndexed }
             val surface=prepared.surface; val text=prepared.view

@@ -645,7 +645,7 @@ class ScreenCaptureService : Service() {
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text,
                         com.manhwalens.app.pipeline.OcrInputQuality.message(issue, region.text), issue, method = "OCR input validation")
                 }
-                val recovered = if (translated.errorCode == "OCR-UNCERTAIN" && region.width > 0 && region.height > 0 &&
+                val recovered = if ((translated.errorCode == "OCR-UNCERTAIN" || (!retryCase && region.confidence < .55f && translated.errorCode in setOf("TR-INVALID-OUTPUT","TR-UNTRANSLATED"))) && region.width > 0 && region.height > 0 &&
                     region.area in 1..150000 && region.left >= 0 && region.top >= 0 && region.right <= frame.width && region.bottom <= frame.height) {
                     Diagnostics.info("funnel","ocr_retry","page=$journeyId bounds=${region.left},${region.top} attempt=crop",traceId=traceId)
                     val box=region.surface
@@ -668,7 +668,7 @@ class ScreenCaptureService : Service() {
                         catch(e:Exception){ Diagnostics.warn("ocr","crop","retry failed",throwable=e);null } finally { input.recycle() }
                     }
                     val chosen=if(best!=null && lexical(best)>=lexical(region)) region.copy(text=best.text,confidence=best.confidence) else region
-                    if(chosen.confidence>=.35f && lexical(chosen)>=.8) translation.translateBlock(chosen,learnedNames,previousSource,true) else translated
+                    if((chosen.text!=region.text || translated.errorCode=="OCR-UNCERTAIN") && chosen.confidence>=.35f && lexical(chosen)>=.8) translation.translateBlock(chosen,learnedNames,previousSource,true) else translated
                 } else translated
                 pageState.save(region,contextKey,recovered)
                 recovered.also {

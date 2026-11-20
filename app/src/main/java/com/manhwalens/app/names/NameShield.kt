@@ -22,12 +22,14 @@ object NameShield {
         // longest first, unique
         val unique = names.map { it.trim() }.filter { it.isNotBlank() }.distinctBy { it.lowercase() }
             .sortedByDescending { it.length }
+        if(unique.none { text.contains(it,ignoreCase=true) }) return MaskResult(text,emptyList())
         var result = text
         val used = mutableListOf<String>()
         val tokens = mutableListOf<String>()
         val originalDigits = normalizeDigits(text)
         var next = BASE
         for (name in unique) {
+            if(!result.contains(name,ignoreCase=true)) continue
             val regex = Regex("(?<![\\p{L}\\p{N}_])" + Regex.escape(name) + "(?![\\p{L}\\p{N}_])", RegexOption.IGNORE_CASE)
             if (regex.containsMatchIn(result)) {
                 while (next <= MAX && originalDigits.contains(next.toString())) next++

@@ -19,7 +19,8 @@ object SessionScorecard {
             fun rate(n:Int,d:Int)=if(d==0) "n/a" else String.format(Locale.ROOT,"%.1f%%",100.0*n/d)
             fun metric(k:String)="${totals[k]?:0} (${rate(totals[k]?:0,eligible)})"
             val ordered=ms.sorted();fun q(p:Double)=ordered.getOrNull((ceil(ordered.size*p).toInt()-1).coerceAtLeast(0))?.let { String.format(Locale.ROOT,"%.1f",it) } ?: "n/a"
-            return "session=$since cycles=$cycles cancelled=$cancels (${rate(cancels,cycles)}) eligible=$eligible rendered=${metric("attached")} source_fit_or_obstruction=${metric("source_fit_or_obstruction")} TR-UNTRANSLATED=${metric("TR-UNTRANSLATED")} OCR-UNCERTAIN=${metric("OCR-UNCERTAIN")} lexicon_hits=$hits/$lookups (${rate(hits,lookups)}) lookup_us_total=${lookupNs/1000} completed_processing_samples=${ms.size} median_ms=${q(.5)} p90_ms=${q(.9)}"
+            val median=if(ordered.isEmpty()) "n/a" else String.format(Locale.ROOT,"%.1f",(ordered[(ordered.size-1)/2]+ordered[ordered.size/2])/2)
+            return "session=$since cycles=$cycles cancelled=$cancels (${rate(cancels,cycles)}) eligible=$eligible rendered=${metric("attached")} source_fit_or_obstruction=${metric("source_fit_or_obstruction")} TR-UNTRANSLATED=${metric("TR-UNTRANSLATED")} OCR-UNCERTAIN=${metric("OCR-UNCERTAIN")} lexicon_hits=$hits/$lookups (${rate(hits,lookups)}) lookup_us_total=${lookupNs/1000} completed_processing_samples=${ms.size} median_ms=$median p90_ms=${q(.9)}"
         }
     }
     fun init(context:Context){ archive=context.getSharedPreferences("session_scorecards",Context.MODE_PRIVATE) }
