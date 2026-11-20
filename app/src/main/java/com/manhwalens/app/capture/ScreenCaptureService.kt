@@ -35,6 +35,7 @@ import com.manhwalens.app.pipeline.TranslatedBlock
 import com.manhwalens.app.translate.TranslationClient
 import com.manhwalens.app.util.downscaleTo
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -471,7 +472,7 @@ class ScreenCaptureService : Service() {
             if (BenchmarkTracker.isActive()) BenchmarkTracker.finish("cancelled")
             kotlinx.coroutines.delay(delayMs)
             try {
-                captureFrame()
+                com.manhwalens.app.diagnostics.CompleteReport.captureWrites.withLock { captureFrame() }
                 if (CaptureManager.state.value is CaptureManager.CaptureState.Error && liveEnabled) {
                     endLive(CaptureManager.LiveStatus.ERROR)
                 }

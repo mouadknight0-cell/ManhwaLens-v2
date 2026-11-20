@@ -52,6 +52,7 @@ fun SettingsScreen(
     val phase by CaptureManager.sessionPhase.collectAsState()
     val live by CaptureManager.live.collectAsState()
     val model by LanguageModels.state.collectAsState()
+    var reportGeneration by remember { mutableIntStateOf(0) }
     var confirmation by remember { mutableStateOf<Pair<String, () -> Unit>?>(null) }
     Column(modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("الإعدادات · Settings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
@@ -113,10 +114,10 @@ fun SettingsScreen(
         Row(verticalAlignment=Alignment.CenterVertically) { Text("وضع التشخيص: حدود النص وسجل العدادات",Modifier.weight(1f)); Switch(debug,repo::setDebug) }
         OutlinedButton(enabled=phase in setOf(CaptureManager.SessionPhase.INACTIVE,CaptureManager.SessionPhase.FAILED), onClick={
             confirmation="مسح بيانات التقرير والصور والقياسات؟ ستبقى الإعدادات والقواميس." to {
-                scope.launch { val message=try { com.manhwalens.app.diagnostics.CompleteReport.reset(context); "تمت إعادة تعيين التقرير" } catch(e:Exception){ "تعذرت إعادة التعيين: ${e.message}" }; android.widget.Toast.makeText(context,message,android.widget.Toast.LENGTH_LONG).show() }; Unit
+                scope.launch { val message=try { com.manhwalens.app.diagnostics.CompleteReport.reset(context); reportGeneration++; "تمت إعادة تعيين التقرير" } catch(e:Exception){ "تعذرت إعادة التعيين: ${e.message}" }; android.widget.Toast.makeText(context,message,android.widget.Toast.LENGTH_LONG).show() }; Unit
             }
         }) { Text("إعادة تعيين التقرير") }
-        DiagnosticTools()
+        key(reportGeneration) { DiagnosticTools() }
         SettingsGroup("متقدم · Advanced", "الأداء، سجل القراءة، معلومات التطبيق") {
             Text("المعالجة محلية. OCR أصلي واحد كحد أقصى، ومهمتا ترجمة أصليتان. الكاش تلقائي ولا توجد إعدادات جودة وهمية.")
             OutlinedButton(onClick = onExportDiagnostics, modifier = Modifier.fillMaxWidth()) { Text("مشاركة حزمة التشخيص الكاملة") }

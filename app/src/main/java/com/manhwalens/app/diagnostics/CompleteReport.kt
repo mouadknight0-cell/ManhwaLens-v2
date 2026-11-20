@@ -18,9 +18,10 @@ import kotlinx.coroutines.sync.withLock
  * Includes ALL currently retained records, not only the last rendered capture.
  */
 object CompleteReport {
+    internal val captureWrites=kotlinx.coroutines.sync.Mutex()
     private val lock=kotlinx.coroutines.sync.Mutex()
     private fun meta(context:Context)=context.getSharedPreferences("report_epoch",Context.MODE_PRIVATE)
-    suspend fun reset(context:Context)=withContext(Dispatchers.IO){ lock.withLock {
+    suspend fun reset(context:Context)=withContext(Dispatchers.IO){ lock.withLock { captureWrites.withLock {
         check(CaptureManager.sessionPhase.value in setOf(CaptureManager.SessionPhase.INACTIVE,CaptureManager.SessionPhase.FAILED)) { "أوقف جلسة الالتقاط أولاً" }
         (context.applicationContext as com.manhwalens.app.ManhwaLensApp).historyStore.clear()
         TranslationSamples.clear(); BenchmarkTracker.resetReport(); SessionScorecard.clear()
@@ -29,7 +30,7 @@ object CompleteReport {
         synchronized(BugArchive){ BugArchive.cutoff=time; DiagnosticFilePolicy.clearBugs(File(context.filesDir,"diagnostics")) }
         File(context.filesDir,"diagnostics").listFiles()?.filter { it.isFile && it.extension=="txt" && (it.name.startsWith("report-") || it.name.startsWith("manhwalens-diagnostics") || it.name=="translation-samples.txt") }?.forEach { check(it.delete()) }
         check(meta(context).edit().putLong("since",time).commit()); CaptureManager.reset()
-    } }
+    } } }
     // Keep complete recent records rather than splitting JSON or UTF-8 characters.
     private fun limited(raw:String,newestFirst:Boolean,limit:Int):String {
         val arr=org.json.JSONArray(raw);val selected=ArrayDeque<String>();var used=2
@@ -60,9 +61,9 @@ object CompleteReport {
                     "Contains captured text. Share only with people you trust.\nNewest records within section budgets; deleted/rotated data cannot be recovered. History limit=100; sample limit=200.\n" +
                     "Sections are collected sequentially; pause capture for a stable snapshot. Repeated traces across sections are not separate runs.")
                 ReportText.section(out, "Projection sessions (T2 to T11 for completed processing, not physical presentation)",SessionScorecard.report())
-                ReportText.section(out, "Translation history JSON (${history.size}  retained)", limited(HistoryJson.encode(history),true,175000))
-                ReportText.section(out, "Translation samples JSON (includes partial  retained)", samples)
-                ReportText.section(out, "Benchmarks readable (${benchmarks.size} records)", BenchmarkReport.format(benchmarks.take(40)))
+                ReportText.section(out, "Translation history JSON (${history.size} retained)", limited(HistoryJson.encode(history),true,175000))
+                ReportText.section(out, "Translation samples JSON (includes partial captures)", limited(samples,false,150000))
+                ReportText.section(out, "Benchmarks readable (${benchmarks.size} records)", recentLines(BenchmarkReport.format(benchmarks.take(40)),70000))
                 ReportText.section(out, "Benchmarks JSON", limited(BenchmarkTracker.exportJson(),true,95000))
                 ReportText.section(out, "Errors JSON", limited(Diagnostics.errorsJson(),false,85000))
                 ReportText.section(out, "Diagnostic ring JSON", org.json.JSONObject(Diagnostics.snapshotJson()).also { obj->obj.put("events",org.json.JSONArray(limited(obj.getJSONArray("events").toString(),false,90000))) }.toString())

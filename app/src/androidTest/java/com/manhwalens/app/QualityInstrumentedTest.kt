@@ -72,6 +72,19 @@ class QualityInstrumentedTest {
         } finally { bitmap.recycle() }
     }
 
+    @Test fun resetReportDropsHistoryButNotReadings() = runBlocking {
+        val context=InstrumentationRegistry.getInstrumentation().targetContext
+        val app=context.applicationContext as ManhwaLensApp
+        val before=app.settingsRepository.readings.value.toMap()
+        val r=com.manhwalens.app.pipeline.TextRegion("OldReportFixture",1,1,50,50)
+        val b=com.manhwalens.app.pipeline.TranslatedBlock(r,r.text,"نص قديم")
+        app.historyStore.add(com.manhwalens.app.pipeline.CaptureResult("old-report",1,"en","ar",listOf(b)))
+        com.manhwalens.app.history.TranslationSamples.collect("old-report","old-trace",listOf(b))
+        com.manhwalens.app.diagnostics.CompleteReport.reset(context)
+        val file=com.manhwalens.app.diagnostics.CompleteReport.create(context)
+        try {val text=file.readText(); assertTrue(text.startsWith("reset at "));assertFalse(text.contains("OldReportFixture"));assertEquals(before,app.settingsRepository.readings.value);assertTrue(file.length()<=1048576) } finally {file.delete()}
+    }
+
     @Test fun unifiedReportIsUtf8AndIncludesAllRetainedSections() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val history = (context.applicationContext as ManhwaLensApp).historyStore
