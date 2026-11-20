@@ -83,4 +83,19 @@ class QualityInstrumentedTest {
         } finally { file.delete(); history.delete(capture.id) }
     }
 
+    @Test fun learnedNamesRequireConfirmationWithoutLosingSuggestions() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val store = com.manhwalens.app.names.NameGlossaryStore(context)
+        val name = "Audit " + java.util.UUID.randomUUID().toString()
+        try {
+            store.add(name, "auto")
+            assertTrue(store.all().contains(name))
+            assertFalse(store.translationNames().contains(name))
+            store.add(name, "confirmed")
+            assertTrue(store.translationNames().contains(name))
+            store.add(name, "auto")
+            assertTrue(store.translationNames().contains(name))
+        } finally { store.remove(name) }
+    }
+
 }

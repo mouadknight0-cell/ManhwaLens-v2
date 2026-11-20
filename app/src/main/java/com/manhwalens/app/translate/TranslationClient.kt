@@ -71,7 +71,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val cacheKey = "en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
         cache.get(cacheKey)?.let { return it }
 
-        val namesInText = NameDetector.find(trimmed, glossaryNames).map { it.name }
+        val namesInText = NameDetector.find(trimmed, glossaryNames)
+            .filter { it.source == com.manhwalens.app.names.NameHit.Source.GLOSSARY }.map { it.name }
             .distinctBy { it.lowercase() }
         val maskResult = try { NameShield.mask(trimmed, namesInText) }
             catch (failure: IllegalArgumentException) { throw TranslationFailure("TR-NAME-SHIELD") }

@@ -3,6 +3,16 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.16] - 2026-11-19
+
+- Audit capture/OCR/reconstruction/context/translation/names/cache/display/reporting; document unresolved model-level and device-validation gates in docs/TRANSLATION-QUALITY-AUDIT.md.
+- Stop sharing position-dependent clipping/context results across equal text at different locations; preserve exact model-cache reuse.
+- Allocate collision-free name sentinels and validate occurrence counts; prevent glossary matching across punctuation and support hyphen variants.
+- Retain auto-learned names as suggestions, requiring explicit Settings confirmation before shielding. No glossary deletion or data migration.
+- Preserve decimal/time/thousands punctuation and emphatic runs; distinguish real Arabic letters from digits/punctuation in output validation.
+- Capture actual OCR confidence (unknown stays unknown), use per-axis coordinate scaling, retain SFX as explicitly untranslated records, and refresh open readers on progressive results.
+- Add regression tests and a private local version-isolated report review tool. General scene understanding, idioms and native-level Arabic remain unresolved; no semantic accuracy claim.
+
 ## [1.1.15] - 2026-11-19
 
 - Prepare complete TXT before opening the document picker; preserve its path across recreation and verify saved byte count/hash before success. Physical provider behavior remains unverified.

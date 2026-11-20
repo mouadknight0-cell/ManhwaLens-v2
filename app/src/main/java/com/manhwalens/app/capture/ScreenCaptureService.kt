@@ -720,9 +720,9 @@ class ScreenCaptureService : Service() {
                 .onFailure { Diagnostics.warn("names", "glossary_add", "failed to persist learned name",
                     code = ErrorCodes.GLOSSARY_WRITE_FAILED, throwable = it, traceId = traceId) }
         }
-        val merged = (glossary + fresh).distinctBy { it.lowercase() }
+        val merged = glossary.distinctBy { it.lowercase() }
         if (fresh.isNotEmpty()) {
-            Diagnostics.info("names", "learned", "new character names persisted",
+            Diagnostics.info("names", "learned", "name suggestions retained; user confirmation required before shielding",
                 traceId = traceId, context = mapOf("fresh" to fresh.size.toString(), "glossary" to merged.size.toString()))
         }
         return merged

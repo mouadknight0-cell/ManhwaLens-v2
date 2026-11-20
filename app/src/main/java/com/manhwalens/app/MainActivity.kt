@@ -234,6 +234,7 @@ private fun ManhwaLensRoot(
     val sessionPhase by CaptureManager.sessionPhase.collectAsState()
     val sessionActive = sessionPhase == CaptureManager.SessionPhase.ACTIVE
     var learnedNames by remember { mutableStateOf(nameGlossary.all()) }
+    var confirmedNames by remember { mutableStateOf(nameGlossary.translationNames().toSet()) }
     var benchmarksRecorded by remember { mutableStateOf(BenchmarkTracker.records().size) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -364,16 +365,23 @@ private fun ManhwaLensRoot(
                             }
                         },
                         learnedNames = learnedNames,
+                        confirmedNames = confirmedNames,
+                        onConfirmName = { name ->
+                            nameGlossary.add(name, "confirmed")
+                            confirmedNames = nameGlossary.translationNames().toSet()
+                        },
                         onRemoveName = { name ->
                             scope.launch {
                                 nameGlossary.remove(name)
                                 learnedNames = nameGlossary.all()
+                                confirmedNames = nameGlossary.translationNames().toSet()
                             }
                         },
                         onClearNames = {
                             scope.launch {
                                 nameGlossary.clear()
                                 learnedNames = emptyList()
+                                confirmedNames = emptySet()
                             }
                         },
                         benchmarksRecorded = benchmarksRecorded,

@@ -17,10 +17,10 @@ class NameGlossaryStore(context: Context) {
     @Synchronized
     fun all(): List<String> = load().keys.filter { it.isNotBlank() }.sortedBy { it.lowercase() }
 
-    /** Keep questionable legacy entries on disk/UI, but do not shield them automatically. */
+    /** Heuristic suggestions remain on disk/UI but require explicit user confirmation. */
     @Synchronized
     fun translationNames(): List<String> = load().filter { (name, note) ->
-        note != "auto" || NameDetector.safeAutomaticName(name)
+        note != "auto"
     }.keys.toList()
 
     @Synchronized
@@ -31,6 +31,8 @@ class NameGlossaryStore(context: Context) {
         val normalized = name.trim()
         if (normalized.isBlank()) return
         val current = load()
+        // Learning must never demote a name explicitly confirmed by the reader.
+        if (note == "auto" && current[normalized]?.let { it != "auto" } == true) return
         current[normalized] = note?.take(120) ?: current[normalized] ?: ""
         save(current)
     }
