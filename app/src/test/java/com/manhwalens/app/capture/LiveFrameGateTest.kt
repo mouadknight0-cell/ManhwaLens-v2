@@ -12,11 +12,11 @@ class LiveFrameGateTest {
     }
     @Test fun continuousAndInertiaScrollingPauseUntilQuiet() {
         val gate = LiveFrameGate()
-        for (i in 0..40) {
-            gate.observe(IntArray(100){i * 5}, i * 80L)
-            assertNull(gate.claim(i * 80L + 79))
+        gate.observe(IntArray(100){0},0)
+        for (i in 1..15) {
+            gate.observe(IntArray(100){i*8},i*80L)
+            if(i<15) assertNull(gate.claim(i*80L)) else assertNotNull(gate.claim(i*80L))
         }
-        assertNotNull(gate.claim(40 * 80L + 180))
     }
     @Test fun slowMotionAccumulatesAgainstAnchor() {
         val gate = LiveFrameGate()

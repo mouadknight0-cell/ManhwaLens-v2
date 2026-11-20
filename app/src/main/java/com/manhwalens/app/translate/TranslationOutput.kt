@@ -21,6 +21,7 @@ object TranslationOutput {
         if (!ArabicOutput.hasLetters(restored) && !(onlyNames(mask.maskedText) && onlyNames(raw)))
             return "TR-INVALID-OUTPUT"
         if (ArabicOutput.hasLetters(restored)) {
+            if (raw.any { Character.UnicodeScript.of(it.code)==Character.UnicodeScript.LATIN }) return "TR-UNTRANSLATED"
             ReplacementQuality.issue(mask.maskedText, raw)?.let { return it }
 
         }

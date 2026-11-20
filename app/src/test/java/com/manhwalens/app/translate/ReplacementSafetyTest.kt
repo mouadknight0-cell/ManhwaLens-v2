@@ -19,7 +19,7 @@ class ReplacementSafetyTest {
     @Test fun realModelBoundaryRejectsShortAndUntranslatedMixedOutput() {
         val mask = NameShield.mask(source,emptyList())
         assertNull(TranslationOutput.issue("أ",mask))
-        assertNull(TranslationOutput.issue("iwill اغتنم هذه الفرصة! سوف آخذ هذه القوة!",mask))
+        assertEquals("TR-UNTRANSLATED",TranslationOutput.issue("iwill اغتنم هذه الفرصة! سوف آخذ هذه القوة!",mask))
         assertEquals("TR-UNTRANSLATED",TranslationOutput.issue("untranslated words نعم",mask))
         assertNotNull(TranslationOutput.issue("تعذّرت الترجمة — أعد المحاولة",mask))
     }

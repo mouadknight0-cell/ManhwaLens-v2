@@ -120,7 +120,10 @@ class ScreenCaptureService : Service() {
         if (liveEnabled && System.nanoTime() - lastSampleNs >= 70_000_000L) {
             lastSampleNs = System.nanoTime()
             val sample = sampleFrame(image)
-            if (liveGate.observe(sample, android.os.SystemClock.elapsedRealtime(),captureJob?.isActive==true)) {
+            val now=android.os.SystemClock.elapsedRealtime()
+            val motion=liveGate.observe(sample,now,captureJob?.isActive==true)
+            if ((application as ManhwaLensApp).settingsRepository.debug.value) android.util.Log.d("ManhwaLensGate","changed=${liveGate.fraction} motion=$motion ready=${liveGate.ready(now)} deadline_ms=1200")
+            if (motion) {
                 sceneRevision = liveGate.revision
                 CaptureManager.activeResultId = null
                 captureJob?.cancel()
@@ -139,10 +142,11 @@ class ScreenCaptureService : Service() {
         val plane = image.planes[0]
         val buffer = plane.buffer
         val masks = CaptureManager.overlayBounds
+        val roi=CaptureManager.currentBoxes?.second.orEmpty()
         return IntArray(32 * 48) { index ->
             val x = ((index % 32 + 0.5) * image.width / 32).toInt()
             val y = ((index / 32 + 0.5) * image.height / 48).toInt()
-            if (y < image.height * 0.08 || y > image.height * 0.94 || masks.any { it.contains(x, y) }) -1
+            if ((roi.isNotEmpty() && roi.none { x in it.left-24..it.right+24 && y in it.top-24..it.bottom+24 }) || y < image.height * 0.08 || y > image.height * 0.94 || masks.any { it.contains(x, y) }) -1
             else {
                 val offset = y * plane.rowStride + x * plane.pixelStride
                 ((buffer.get(offset).toInt() and 255) * 3 +
@@ -618,14 +622,22 @@ class ScreenCaptureService : Service() {
         val prefs=(application as ManhwaLensApp).settingsRepository
         val dictionaryContext=Triple(learnedNames.toList(),prefs.readings.value,prefs.corrections.value)
         val attempted=java.util.concurrent.ConcurrentHashMap.newKeySet<TextRegion>()
+        val contextParts=mutableMapOf<TextRegion,String>()
+        for ((a,b) in plan.zipWithNext()) {
+            val x=a.input.region;val y=b.input.region
+            if(x in contextParts || a.key.issue!=null || b.key.issue!=null || a.key.preserveSoundEffect || b.key.preserveSoundEffect || !com.manhwalens.app.pipeline.ConnectedDialogue.linked(x,y)) continue
+            val joined=translation.translateBlock(x.copy(text=x.text+" "+y.text),learnedNames)
+            if(joined.errorCode==null) com.manhwalens.app.pipeline.ConnectedDialogue.split(joined.translated,x.text,y.text)?.let { (first,second)->contextParts[x]=first;contextParts[y]=second }
+        }
         val workByRegion = plan.associateBy { it.input.region }
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.map { it.region },
             onException = { Diagnostics.warn("translate","worker_exception","block attempt failed",throwable=it,traceId=traceId) },
-            identity = { workByRegion.getValue(it).key },
+            identity = { workByRegion.getValue(it).key to contextParts[it] },
             translate = { region ->
                 val started = System.nanoTime()
                 val work = workByRegion.getValue(region)
+                contextParts[region]?.let { return@progressiveTranslation com.manhwalens.app.pipeline.TranslatedBlock(region,region.text,it,method="Connected dialogue") }
                 val contextKey=work.key to dictionaryContext
                 pageState.find(region,contextKey)?.let { return@progressiveTranslation it }
                 val retryCase=!attempted.add(region)
