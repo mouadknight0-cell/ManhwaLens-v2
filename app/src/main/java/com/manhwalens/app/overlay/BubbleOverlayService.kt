@@ -136,7 +136,7 @@ class BubbleOverlayService : Service() {
                 acceptResults = false
                 com.manhwalens.app.diagnostics.Diagnostics.error("overlay", "start_failed", "OVL-START", "floating start failed", throwable = failure)
                 showError("تعذر بدء الالتقاط. تحقق من إذن النوافذ المنبثقة في الخلفية ثم أعد المحاولة من الفقاعة.")
-            } finally { bubbleView?.visibility = View.VISIBLE }
+            } finally { ReaderIconVisibility.closed(bubbleView) }
         }
     }
 
@@ -425,7 +425,9 @@ class BubbleOverlayService : Service() {
             }
             pixels += surface.width.toLong() * surface.height
             val rect = android.graphics.Rect(surface.left, surface.top, surface.right, surface.bottom)
-            if (pixels > 4_000_000L || ready.any { android.graphics.Rect.intersects(it.rect, rect) }) {
+            if (pixels > 4_000_000L || ready.any { android.graphics.Rect.intersects(it.rect, rect) } ||
+                result.blocks.any { other -> other !== block && android.graphics.Rect.intersects(rect,
+                    android.graphics.Rect(other.region.left,other.region.top,other.region.right,other.region.bottom)) }) {
                 fallback("RENDER-OVERLAP-OR-BUDGET"); continue
             }
             val text = runCatching {
@@ -516,7 +518,7 @@ class BubbleOverlayService : Service() {
         if (runCatching { windowManager.addView(reader, params) }.isSuccess) {
             panelView = reader
             collapseActions()
-            bubbleView?.visibility = if (ReaderContent.hideFloatingIcon(width,height,bounds.width(),bounds.height())) View.INVISIBLE else View.VISIBLE
+            ReaderIconVisibility.opened(bubbleView,width,height,bounds.width(),bounds.height())
             reader.restoreScroll(oldScroll)
             reader.post { publishBounds() }
         }
@@ -699,7 +701,7 @@ class BubbleOverlayService : Service() {
     private fun hidePanel() {
         panelView?.let { view -> runCatching { windowManager.removeView(view) } }
         panelView = null
-        bubbleView?.visibility = View.VISIBLE
+        ReaderIconVisibility.closed(bubbleView)
         publishBounds()
     }
 

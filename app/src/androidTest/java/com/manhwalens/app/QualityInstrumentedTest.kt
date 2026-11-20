@@ -371,4 +371,51 @@ class QualityInstrumentedTest {
         }
     }
 
+    @Test fun cappedReaderHasInternalControlsAndRestoresHiddenIcon() {
+        val inst=InstrumentationRegistry.getInstrumentation()
+        inst.runOnMainSync {
+            val context=inst.targetContext
+            val r=com.manhwalens.app.pipeline.TextRegion("SOURCE",0,0,200,100)
+            var closed=false
+            val panel=com.manhwalens.app.overlay.ReadingPanelView(context,listOf(
+                com.manhwalens.app.pipeline.TranslatedBlock(r,"ORIGINAL ENGLISH","مرحبا ".repeat(100)),
+                com.manhwalens.app.pipeline.TranslatedBlock(r,"FAILED SOURCE","تعذّرت الترجمة — أعد المحاولة","TR-INVALID-OUTPUT"))) { closed=true }
+            val h=panel.desiredHeight(600,400)
+            assertTrue(h<=400)
+            panel.measure(View.MeasureSpec.makeMeasureSpec(600,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(h,View.MeasureSpec.EXACTLY))
+            panel.layout(0,0,600,h)
+            val label=(panel.getChildAt(1) as ScrollView).getChildAt(0) as TextView
+            assertFalse(label.text.contains("ORIGINAL ENGLISH"))
+            assertFalse(label.text.contains("تعذّرت الترجمة"))
+            assertTrue(label.text.contains("مرحبا"))
+            val controls=panel.getChildAt(0) as android.widget.LinearLayout
+            controls.getChildAt(0).performClick()
+            assertTrue(label.text.contains("ORIGINAL ENGLISH"))
+            controls.getChildAt(1).performClick();assertTrue(closed)
+            val icon=View(context)
+            com.manhwalens.app.overlay.ReaderIconVisibility.opened(icon,600,500,720,1600)
+            assertEquals(View.INVISIBLE,icon.visibility)
+            com.manhwalens.app.overlay.ReaderIconVisibility.closed(icon)
+            assertEquals(View.VISIBLE,icon.visibility)
+        }
+    }
+
+    @Test fun benchmarkBoundedCleanupWithoutModelOrNetwork() {
+        val corpus=listOf("IM STARTING TO 2EMEMBER", "W/ALE YOU DRIFTED IN AND OUT OF CONSCIOUSNESS FROM THE AGONN,",
+            "There is no need to force yourself to make a sound.", "Jin, I DONT remember!")
+        val names=listOf("Jin")
+        repeat(100) { corpus.forEach { com.manhwalens.app.pipeline.TranslationInput.prepare(it,names) } }
+        fun time(operation: (String)->Unit): Long {
+            val start=System.nanoTime()
+            repeat(250) { corpus.forEach(operation) }
+            return (System.nanoTime()-start)/1000
+        }
+        val prior=time { com.manhwalens.app.names.NameShield.mask(com.manhwalens.app.pipeline.SentenceReconstructor.normalize(it),names).let { m ->
+            com.manhwalens.app.names.NameShield.restore(com.manhwalens.app.pipeline.EnglishOcrRepair.repair(m.maskedText),m) } }
+        val current=time { com.manhwalens.app.pipeline.TranslationInput.prepare(it,names) }
+        val context=InstrumentationRegistry.getInstrumentation().targetContext
+        val folder=java.io.File(context.getExternalFilesDir(null),"overlay-evidence").apply { mkdirs() }
+        java.io.File(folder,"cleanup-benchmark.txt").writeText("1000 utterances; emulator warm cleanup only, microseconds total: prior=$prior current=$current. NOT end-to-end OCR/model/render latency or Xiaomi parity.")
+    }
+
 }

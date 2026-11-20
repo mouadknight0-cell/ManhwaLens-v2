@@ -14,4 +14,7 @@ if [ "$status" -ne 0 ]; then
 fi
 mkdir -p app/build/reports/overlay-evidence
 adb pull /sdcard/Android/data/com.manhwalens.app/files/overlay-evidence/. app/build/reports/overlay-evidence/ || true
+if [ -f app/build/reports/overlay-evidence/cleanup-benchmark.txt ]; then
+  echo "::notice::$(cat app/build/reports/overlay-evidence/cleanup-benchmark.txt)"
+fi
 exit "$status"
