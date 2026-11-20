@@ -8,9 +8,11 @@ import com.manhwalens.app.names.NameShield
  */
 object TranslationInput {
     fun prepare(text: String, glossaryNames: List<String>): String {
-        val masked = NameShield.mask(SentenceReconstructor.normalize(text), glossaryNames)
+        val normalized = SentenceReconstructor.normalize(text)
+        if (!OcrLexicon.needsCleanup(normalized)) return normalized
+        val masked = NameShield.mask(normalized, glossaryNames)
         return NameShield.restore(OcrLexicon.repair(EnglishOcrRepair.repair(masked.maskedText)), masked)
     }
     fun unresolved(text: String, glossaryNames: List<String>): Boolean =
-        OcrLexicon.unresolved(NameShield.mask(text, glossaryNames).maskedText)
+        OcrLexicon.unresolved(text) && OcrLexicon.unresolved(NameShield.mask(text, glossaryNames).maskedText)
 }
