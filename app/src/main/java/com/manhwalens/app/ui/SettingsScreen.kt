@@ -101,6 +101,9 @@ fun SettingsScreen(
             var status by remember { mutableStateOf("") }
             OutlinedTextField(value=draft,onValueChange={ draft=it },label={Text("سطر لكل مدخل")})
             Button(onClick={ status=if(repo.saveReadings(draft)) "تم الحفظ" else "تحقق من صيغة كل سطر والمقابل العربي" }) { Text("حفظ القاموس") }
+            var post by remember { mutableStateOf(repo.corrections.value.entries.joinToString("\n"){ "${it.key}=${it.value}" }) }
+            OutlinedTextField(value=post,onValueChange={post=it},label={Text("تصحيحات عربية بعد الترجمة")})
+            Button(onClick={status=if(repo.saveCorrections(post)) "تم الحفظ" else "تحقق من التصحيحات"}) { Text("حفظ التصحيحات") }
             Text(status)
         }
         val debug by repo.debug.collectAsState()

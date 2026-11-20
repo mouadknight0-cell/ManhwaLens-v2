@@ -102,7 +102,7 @@ class ScreenCaptureService : Service() {
     }
 
     private val textRecognition by lazy { TextRecognitionClient() }
-    private val translation by lazy { TranslationClient(debug={ (application as ManhwaLensApp).settingsRepository.debug.value },readings={ (application as ManhwaLensApp).settingsRepository.readings.value }) }
+    private val translation by lazy { TranslationClient(post={ (application as ManhwaLensApp).settingsRepository.corrections.value },debug={ (application as ManhwaLensApp).settingsRepository.debug.value },readings={ (application as ManhwaLensApp).settingsRepository.readings.value }) }
     private val nameGlossary by lazy { NameGlossaryStore(applicationContext) }
 
     // ── Persistent capture pipeline ────────────────────────────────
@@ -614,20 +614,11 @@ class ScreenCaptureService : Service() {
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.TRANSLATING))
         BenchmarkTracker.mark("M0")
         Diagnostics.info("funnel", "planned", "page=$journeyId prepared=${prepared.size} grouped=${regions.size}", traceId = traceId)
-        val ensureOk = !com.manhwalens.app.pipeline.FrameTranslationPlan.requiresModel(plan) || translation.ensureModel("en", "ar")
-        BenchmarkTracker.mark("M1")
-        if (!ensureOk) {
-            Diagnostics.error("translate", "ensure_model", ErrorCodes.TRANSLATE_DOWNLOAD_FAILED,
-                "EN→AR model unavailable (download failed or network offline)",
-                recovery = "journey aborted; retry with network access")
-            BenchmarkTracker.finish("error", errorCode = ErrorCodes.TRANSLATE_DOWNLOAD_FAILED)
-            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_translation_model), ErrorCodes.TRANSLATE_DOWNLOAD_FAILED))
-            return
-        }
-
+        BenchmarkTracker.mark("M1") // Model availability checked lazily on actual MT misses.
         BenchmarkTracker.mark("T8")
         val id = journeyId
-        val dictionaryContext=learnedNames.toList() to (application as ManhwaLensApp).settingsRepository.readings.value
+        val prefs=(application as ManhwaLensApp).settingsRepository
+        val dictionaryContext=Triple(learnedNames.toList(),prefs.readings.value,prefs.corrections.value)
         val attempted=java.util.concurrent.ConcurrentHashMap.newKeySet<TextRegion>()
         val workByRegion = plan.associateBy { it.input.region }
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(

@@ -2,7 +2,7 @@ package com.manhwalens.app.translate
 
 /** Explicit local readings, separate from unconfirmed OCR name suggestions. */
 object ReadingGlossary {
-    val defaults=mapOf("jeong-ah" to "جونغ آه", "formation" to "تشكيل", "barrier" to "حاجز", "sister" to "أختي", "qi" to "تشي", "sect" to "طائفة", "disciple" to "تلميذ")
+    val defaults=mapOf("wall" to "جدار","headquarters" to "المقر","geumju" to "غومجو","jeong-ah" to "جونغ آه", "formation" to "تشكيل", "barrier" to "حاجز", "sister" to "أختي", "qi" to "تشي", "sect" to "طائفة", "disciple" to "تلميذ")
     fun parse(lines:String): Map<String,String>? {
         val entries=mutableMapOf<String,String>()
         for(line in lines.lineSequence().filter { it.isNotBlank() }) {
