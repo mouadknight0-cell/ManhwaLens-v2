@@ -390,6 +390,10 @@ class BubbleOverlayService : Service() {
             val xy=IntArray(2); button.getLocationOnScreen(xy)
             occupied.add(ReplacementSurface(xy[0]-dp(8),xy[1]-dp(8),xy[0]+dp(BUBBLE_SIZE_DP)+dp(8),xy[1]+dp(BUBBLE_SIZE_DP)+dp(8)))
         }
+        // An expanded successful translation must not cover failed source dialogue.
+        result.blocks.filter { it.errorCode != null || it.translated.isBlank() }.forEach {
+            occupied.add(SurfacePlacement.source(it.region))
+        }
         for (block in replacing) {
             if (block.errorCode != null || block.translated.isBlank()) continue
             val source = SurfacePlacement.visible(block.region,screen) ?: continue

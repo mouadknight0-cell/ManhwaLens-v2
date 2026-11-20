@@ -13,7 +13,7 @@ Shared app result-sheet close/copy strings are retained because they are still u
 1. Wait for the completed current request; genuine model/validation failures retain original dialogue. Existing one-retry execution policy, short-dialogue validation and glossary-name exception remain.
 2. For each successful translation, try the original region using native Arabic layout and 12–30sp fitting.
 3. If it does not fit, measure full text in wider rectangular candidates, starting at 16sp and then 12sp. Expand height to the actual native layout height plus padding. Choose a clamped position near the original region.
-4. Exclude the main capture button (with an 8dp margin) and already placed translations from candidate rectangles. No controls are moved to make room. Candidate search is bounded to eight free rectangles.
+4. Exclude the main capture button (with an 8dp margin) already placed translations and failed-source regions from candidate rectangles. No controls are moved to make room. Candidate search is bounded to eight free rectangles.
 5. Draw complete text and background offscreen, then attach the prepared pixels directly. No tap, launch control, warning panel or scrolling text view is involved.
 6. During capture-button dragging, translation windows are briefly hidden; on release, the current completed result is re-laid out around the new button position. Device compositor timing is not established by pure geometry tests.
 
