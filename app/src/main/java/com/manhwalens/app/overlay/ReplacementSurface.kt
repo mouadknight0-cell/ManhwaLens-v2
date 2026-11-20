@@ -8,7 +8,7 @@ import kotlin.math.*
  * No bitmap allocation, OCR pass, learning or invented contour.
  */
 data class ReplacementSurface(val left: Int, val top: Int, val right: Int, val bottom: Int,
-    val color: Int = -1, val oval: Boolean = false, val reliable: Boolean = false, val patch: IntArray? = null,val capsule:Boolean=false) {
+    val color: Int = -1, val oval: Boolean = false, val reliable: Boolean = false, val patch: IntArray? = null,val capsule:Boolean=false,val mask:BubbleMask?=null) {
     val width get() = right - left
     val height get() = bottom - top
 }

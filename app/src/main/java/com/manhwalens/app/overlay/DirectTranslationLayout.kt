@@ -13,8 +13,9 @@ object DirectTranslationLayout {
         if(w<=0) return null
         val x=((source.left+source.right-w)/2).coerceIn(screen.left,screen.right-w)
         for(dp in listOf(40,72,110)) {
-            val h=(dp*d).toInt(); for(y in listOf(source.bottom+3,source.top-h-3)) {
-                val s=ReplacementSurface(x,y,x+w,y+h,0xff211d2a.toInt(),reliable=true,capsule=true)
+            val h=(dp*d).toInt(); for(y in listOf(((source.top+source.bottom-h)/2).coerceIn(screen.top,maxOf(screen.top,screen.bottom-h)))) {
+                val s=ReplacementSurface(x,y,x+w,y+h,source.color,reliable=true,capsule=true)
+                if(s.left>source.left || s.right<source.right || s.top>source.top || s.bottom<source.bottom) continue
                 prepare(context,message,s,screen,occupied)?.let { return it }
             }
         }; return null

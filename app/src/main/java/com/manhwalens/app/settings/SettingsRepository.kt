@@ -63,6 +63,8 @@ class SettingsRepository(context: Context) {
         val map=parseCorrections(s); if(map.size>100 || map.any { (k,v)->k.length !in 1..64 || v.length !in 1..64 || !com.manhwalens.app.translate.ArabicOutput.hasLetters(k) || !com.manhwalens.app.translate.ArabicOutput.hasLetters(v) }) return false
         prefs.edit().putString("post_ar",s).apply(); corrections.value=map;return true
     }
+    val matchStyle=MutableStateFlow(prefs.getBoolean("match_style",true))
+    fun setMatchStyle(v:Boolean){ prefs.edit().putBoolean("match_style",v).apply(); matchStyle.value=v }
     private val _debug = MutableStateFlow(prefs.getBoolean("debug_geometry", false))
     val debug = _debug.asStateFlow()
     fun setDebug(enabled:Boolean) { prefs.edit().putBoolean("debug_geometry",enabled).apply(); _debug.value=enabled }

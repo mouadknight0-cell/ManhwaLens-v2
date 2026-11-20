@@ -97,6 +97,8 @@ fun SettingsScreen(
         }
         Text("التشخيص والأدوات", style = MaterialTheme.typography.titleLarge)
         val repo=(context.applicationContext as com.manhwalens.app.ManhwaLensApp).settingsRepository
+        val matched by repo.matchStyle.collectAsState()
+        OutlinedButton(onClick={ repo.setMatchStyle(!matched) }) { Text("نمط الرسم: " + if(matched) "مطابق للأصل" else "موحّد") }
         SettingsGroup("قاموس النطق والمصطلحات", "اسم أو مصطلح إنجليزي = المقابل العربي") {
             var draft by remember { mutableStateOf(repo.readings.value.entries.joinToString("\n") { "${it.key}=${it.value}" }) }
             var status by remember { mutableStateOf("") }

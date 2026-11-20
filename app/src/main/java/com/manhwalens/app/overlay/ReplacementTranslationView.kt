@@ -47,10 +47,12 @@ class ReplacementTranslationView(context: Context, val message: String,
         val insetX = if (surface.oval) w * .15f else 0f
         val insetY = if (surface.oval) h * .15f else 0f
         content.set(insetX + padding, insetY + padding, w - insetX - padding, h - insetY - padding)
+        surface.mask?.inset?.let { content.set(it[0]+padding,it[1]+padding,it[2]-padding,it[3]-padding) }
         val width = content.width().toInt().coerceAtLeast(1)
         val c = surface.color
         val luminance = Color.red(c) * .2126 + Color.green(c) * .7152 + Color.blue(c) * .0722
         ink.color = if (luminance < 120) Color.WHITE else if (failed) Color.rgb(125, 20, 20) else Color.rgb(20, 20, 20)
+        surface.mask?.let { ink.color=it.ink }
         fitPasses = 0
         fun make(text: String, size: Float): StaticLayout {
             fitPasses++
@@ -83,7 +85,10 @@ class ReplacementTranslationView(context: Context, val message: String,
         if (!failed && text != null && message.any { it.isLetterOrDigit() } && w.toLong() * h in 1..8_000_000L) {
             prepared = runCatching {
                 rasterize(w, h) { canvas ->
-                    if (surface.patch != null) {
+                    if (surface.mask != null) {
+                        val m=surface.mask; val path=android.graphics.Path(); val d=m.step.toFloat()
+                        for(i in m.spans.indices step 3){ val y=m.spans[i]*d;path.addRect(m.spans[i+1]*d,y,m.spans[i+2]*d,y+d,android.graphics.Path.Direction.CW) }; canvas.drawPath(path,fill)
+                    } else if (surface.patch != null) {
                         canvas.drawBitmap(surface.patch,0,w,0f,0f,w,h,true,null)
                         ink.setShadowLayer(1f,0f,0f,if (ink.color == Color.WHITE) Color.BLACK else Color.WHITE)
                     } else if (surface.oval) canvas.drawOval(0f, 0f, w.toFloat(), h.toFloat(), fill)
