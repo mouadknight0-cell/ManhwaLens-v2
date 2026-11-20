@@ -70,3 +70,11 @@ Required contract for either alternative:
 - Cache keys include all semantically relevant context and revisions. Requests from superseded scenes cannot update history/display. No text in ordinary error logs; opt-in samples only.
 
 **Completion gates not met:** held-out bilingual semantic review, calibrated image recovery/vertical ordering, general scene-aware engine selection, per-series confirmed terminology, and physical-device regression. This audit must remain open rather than claiming all major translation quality issues resolved.
+
+## Executed verification for this patch
+
+- Commit `42a58d4`: GitHub CI compile, JVM regressions, audit-tool/recovery tests and debug assembly passed: https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44645768069 .
+- Same app code: Android 14 instrumentation passed (real-image OCR, circular view, UTF-8 report, glossary suggestion/confirmation/persistence): https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44645768101 .
+- Earlier pipeline-only checkpoint `67aad88` also passed CI 44644961782 and emulator 44644961751.
+- Local report analyzer executed on the supplied v1.1.14 TXT; generated review queue stayed outside Git. Three analyzer negative/control tests passed locally and are included in GitHub CI.
+- These passes do not establish semantic fluency, contextual reasoning, all-device overlays, actual WindowManager progressive-reader behavior, performance improvements or safe in-place upgrades. The new glossary file format remains the same JSON array and no existing entries are removed automatically.
