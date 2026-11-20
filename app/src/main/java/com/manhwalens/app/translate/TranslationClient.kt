@@ -76,6 +76,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             TranslatedBlock(region, normalized, translated, method = if (reviewed == null) "ML Kit on-device" else "Reviewed dialogue lexicon v1")
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {
+            Diagnostics.info("translate","rejected","reason=${failure.code} retry_case=$retryCase source_retained=true")
             if(debug()) Diagnostics.error("translate", "block_failed", failure.code, "translation block failed; source retained, failure shown", throwable = failure,
                 context = mapOf("source_chars" to normalized.length.toString(), "word_count" to normalized.split(Regex("\\s+")).size.toString(),
                     "bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
@@ -127,6 +128,11 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         TranslationOutput.issue(raw, maskResult)?.let { issue ->
             if(debug()) Diagnostics.warn("translate", "output_validation", "model output failed structural validation",
                 code = issue, context = mapOf("source_chars" to trimmed.length.toString(), "output_chars" to raw.length.toString()))
+            // ProgressiveTranslation owns the single retry. On that attempt validate the term-only
+            // protected fallback separately if uncertain learned names changed the model input.
+            if(retryCase && issue in setOf("TR-UNTRANSLATED","TR-INVALID-OUTPUT","TR-NAME-LOST") && glossaryNames.isNotEmpty() && protected.all { it in terms.values }) {
+                return translateText(trimmed,emptyList(),terms,false)
+            }
             throw TranslationFailure(issue)
         }
         val restored = NameShield.restore(raw, arabicMask)

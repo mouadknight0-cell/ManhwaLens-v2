@@ -65,6 +65,7 @@ object DialogueLexicon {
     private val ahead=Regex("^there's a ([a-z-]+) ahead$")
     private val justNow=Regex("^what was that ([a-z-]+) just now$")
     private val kin=Regex("^i came to get you, ([a-z-]+)$")
+    private val title=Regex("^(eldest young master|young master) of the ([a-z-]+) (sword house)$")
     private val alive=Regex("^([a-z-]+)'s still alive$")
     private val yes=Regex("(?i)^yes,? +(.{1,300})$")
     private val died=Regex("(?i)^as soon as ([a-z-]+) died,? (.{1,300})$")
@@ -75,6 +76,7 @@ object DialogueLexicon {
         return "فور موت $reading، " to m.groupValues[2]
     }
     private fun pattern(k:String,terms:Map<String,String>):String? {
+        title.matchEntire(k)?.let { m -> val rank=terms[m.groupValues[1]] ?:return null;val house=terms[m.groupValues[3]]?:return null;val name=terms[m.groupValues[2]]?:return null;return "$rank في $house في $name" }
         alive.matchEntire(k)?.let { m -> terms[m.groupValues[1]]?.let { return "$it ما زال على قيد الحياة" } }
         ahead.matchEntire(k)?.let { return terms[it.groupValues[1]]?.let { term->"هناك $term أمامنا" } }
         justNow.matchEntire(k)?.let { return terms[it.groupValues[1]]?.let { term->"ما كان ذلك ${if(term.startsWith("ال")) term else "ال$term"} قبل قليل" } }

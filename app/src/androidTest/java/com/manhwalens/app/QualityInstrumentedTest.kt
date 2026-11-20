@@ -15,6 +15,18 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class QualityInstrumentedTest {
+    /** Generated colour controls, not the missing phone screenshots. Force the independent-proposal path. */
+    @Test fun colourRecoveryAfterEmptyFirstPass() = runBlocking {
+        for ((bg,ink,phrase) in listOf(Triple(Color.rgb(61,17,87),Color.WHITE,"THIS ISN'T ENOUGH"), Triple(Color.rgb(99,14,30),Color.WHITE,"AND THAT WASN'T ALL"),Triple(Color.WHITE,Color.rgb(172,10,35),"HOW MUCH WAS IT"))) {
+            val image=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);val canvas=Canvas(image);canvas.drawColor(Color.rgb(25,29,27))
+            val pen=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);pen.color=bg;canvas.drawOval(72f,83f,566f,230f,pen);pen.color=ink;pen.textSize=30f;pen.textAlign=android.graphics.Paint.Align.CENTER;canvas.drawText(phrase,320f,167f,pen)
+            try { val recovery=com.manhwalens.app.ocr.ColorRecovery();val client=TextRecognitionClient();val log=mutableListOf<String>()
+                val got=recovery.recover(client,image,"en",emptyList(),{true}){log.add(it)}
+                assertTrue("$phrase $log ${got.map { it.text }}",got.any { it.text.contains(phrase.substringBefore(' '),true) && it.text.contains(phrase.substringAfterLast(' '),true) })
+                assertTrue(log.any { it.startsWith("winner=") });assertTrue(log.any { it.startsWith("pass=lab") })
+            } finally { image.recycle() }
+        }
+    }
     @Test fun scorecardDoesNotCountDuplicateAttachmentsOrFailedRetriesTwice(){
         val score=com.manhwalens.app.diagnostics.SessionScorecard
         val r=com.manhwalens.app.pipeline.TextRegion("Hello",20,20,120,80)

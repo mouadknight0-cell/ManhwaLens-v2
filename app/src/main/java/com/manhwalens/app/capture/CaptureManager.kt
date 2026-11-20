@@ -13,6 +13,8 @@ object CaptureManager {
     /** Called on main before acquiring a reader frame. */
     @Volatile var currentBoxes:Pair<String,List<android.graphics.Rect>>?=null
     @Volatile var debugBoxes: Pair<String,List<android.graphics.Rect>>? = null
+    @Volatile var pixelHashes:Map<com.manhwalens.app.pipeline.PageState.Id,Int> = emptyMap()
+    var validateOverlays:((Map<com.manhwalens.app.pipeline.PageState.Id,Int>)->Unit)?=null
     var restoreControlsAfterFrame:(()->Unit)?=null
     @Volatile var dockVisible = false
     var hideControlsForFrame: (() -> Boolean)? = null

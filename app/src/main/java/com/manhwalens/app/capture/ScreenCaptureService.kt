@@ -102,6 +102,13 @@ class ScreenCaptureService : Service() {
         }
     }
 
+    @Volatile private var verifiedRegions=emptyList<RegionPixels>()
+    private fun unchanged(image:Image):Boolean {
+        val regions=verifiedRegions;if(regions.isEmpty())return false
+        val p=image.planes[0];val buf=p.buffer;val masks=CaptureManager.overlayBounds
+        return regions.all { sig-> sig.matches { x,y -> if(x !in 0 until image.width || y !in 0 until image.height || masks.any { it.contains(x,y) }) -1 else {
+            val i=y*p.rowStride+x*p.pixelStride;((buf.get(i).toInt() and 255)*3+(buf.get(i+1).toInt() and 255)*6+(buf.get(i+2).toInt() and 255))/10 } } }
+    }
     private val recovery=com.manhwalens.app.ocr.ColorRecovery()
     private val textRecognition by lazy { TextRecognitionClient() }
     private val translation by lazy { TranslationClient(post={ (application as ManhwaLensApp).settingsRepository.corrections.value },debug={ (application as ManhwaLensApp).settingsRepository.debug.value },readings={ (application as ManhwaLensApp).settingsRepository.readings.value }) }
@@ -125,7 +132,7 @@ class ScreenCaptureService : Service() {
             val now=android.os.SystemClock.elapsedRealtime()
             val motion=liveGate.observe(sample,now,captureJob?.isActive==true)
             if ((application as ManhwaLensApp).settingsRepository.debug.value) com.manhwalens.app.diagnostics.SessionScorecard.gate(now,liveGate.fraction,motion,liveGate.ready(now))
-            if (motion) {
+            if (motion && !(captureJob?.isActive==true && unchanged(image))) {
                 sceneRevision = liveGate.revision
                 CaptureManager.activeResultId = null
                 captureJob?.cancel()
@@ -185,7 +192,7 @@ class ScreenCaptureService : Service() {
                     // thread, where the listener owns/replaces it, to avoid closing races.
                     kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
                         latestFrame.get()?.let { image ->
-                            if (liveGate.observe(sampleFrame(image.image), android.os.SystemClock.elapsedRealtime(),captureJob?.isActive==true)) {
+                            if (liveGate.observe(sampleFrame(image.image), android.os.SystemClock.elapsedRealtime(),captureJob?.isActive==true) && !(captureJob?.isActive==true && unchanged(image.image))) {
                                 sceneRevision = liveGate.revision
                                 CaptureManager.activeResultId = null
                                 captureJob?.cancel()
@@ -211,6 +218,7 @@ class ScreenCaptureService : Service() {
 
     private fun endLive(status: CaptureManager.LiveStatus = CaptureManager.LiveStatus.OFF) {
         pageState.clear()
+        verifiedRegions=emptyList();CaptureManager.pixelHashes=emptyMap()
         CaptureManager.currentBoxes=null
         liveEnabled = false
         liveJob?.cancel()
@@ -558,10 +566,9 @@ class ScreenCaptureService : Service() {
         val tOcr = System.nanoTime()
         val keepLine:(TextRegion)->Boolean={ line -> captured.occlusions.none { it.intersects(line,frame.width.toFloat()/ocrBitmap.width,frame.height.toFloat()/ocrBitmap.height) } }
         val audit:(String)->Unit={ Diagnostics.info("ocr","passes",it,traceId=traceId) }
-        val regions = runCatching { withTimeoutOrNull(12000L) {
-            val first=textRecognition.recognize(ocrBitmap,OCR_SOURCE,audit,keepLine)
-            recovery.recover(textRecognition,ocrBitmap,OCR_SOURCE,first,keepLine,audit)
-        } ?: error("OCR timed out") }.getOrElse {
+        val regions = runCatching {
+            val first=withTimeoutOrNull(12000L){textRecognition.recognize(ocrBitmap,OCR_SOURCE,audit,keepLine)} ?: error("OCR timed out")
+            withTimeoutOrNull(6500L){recovery.recover(textRecognition,ocrBitmap,OCR_SOURCE,first,keepLine,audit)} ?: first.also { audit("recovery_timeout original_retained=${first.size}") } }.getOrElse {
             if (it is kotlinx.coroutines.CancellationException) throw it
             Diagnostics.error("ocr", "recognize", ErrorCodes.OCR_EXEC_FAILED,
                 "OCR execution failed", throwable = it, recovery = "journey aborted; user can retry")
@@ -602,6 +609,10 @@ class ScreenCaptureService : Service() {
         CaptureManager.currentBoxes=journeyId to scaledRegions.map { android.graphics.Rect(it.left,it.top,it.right,it.bottom) }
         CaptureManager.debugBoxes=if(debug) CaptureManager.currentBoxes else null
         val prepared=prepareRegions(scaledRegions,frame)
+        val signatures=prepared.take(32).map { item->RegionPixels.capture(item.region){x,y->val c=frame.getPixel(x.coerceIn(0,frame.width-1),y.coerceIn(0,frame.height-1));(android.graphics.Color.red(c)*3+android.graphics.Color.green(c)*6+android.graphics.Color.blue(c))/10} }
+        verifiedRegions=signatures
+        CaptureManager.pixelHashes=signatures.associate { com.manhwalens.app.pipeline.PageState.id(it.region) to it.hash }
+        kotlinx.coroutines.withContext(Dispatchers.Main.immediate){if(frameRevision==sceneRevision)CaptureManager.validateOverlays?.invoke(CaptureManager.pixelHashes)}
         if(debug) android.util.Log.i("ManhwaLensFunnel","page=$journeyId detected=${scaledRegions.size} filtered=${prepared.size}")
         BenchmarkTracker.mark("T7")
         if (prepared.isEmpty()) {
@@ -635,6 +646,7 @@ class ScreenCaptureService : Service() {
             while(index<plan.size && index-first<4 && plan[index].key.issue==null && !plan[index].key.preserveSoundEffect && com.manhwalens.app.pipeline.ConnectedDialogue.linked(plan[index-1].input.region,plan[index].input.region))index++
             if(index-first==1)continue
             val chain=plan.subList(first,index).map { it.input.region };val sources=chain.map { it.text }
+            if(chain.any { it.text.any { ch->ch.isLetter() && Character.UnicodeScript.of(ch.code)!=Character.UnicodeScript.LATIN } })continue
             val joined=translation.translateBlock(chain.first().copy(text=sources.joinToString(" ")),learnedNames)
             if(joined.errorCode==null) com.manhwalens.app.pipeline.ConnectedDialogue.split(joined.translated,sources)?.forEachIndexed { i,value -> contextParts[chain[i]]=value }
         }
@@ -777,10 +789,6 @@ class ScreenCaptureService : Service() {
                 "excluded_regions" to regions.count { it.top >= bottom }.toString()))
         val classified = regions.asSequence()
             .filter { region -> (com.manhwalens.app.pipeline.ReaderContentFilter.keep(region, top, systemBottom) && region.top < bottom).also { if (!it) Diagnostics.info("funnel","drop","page=${CaptureManager.activeResultId} bounds=${region.left},${region.top} reason=reader_chrome_or_insets") } }
-            .map { region ->
-                val cleaned = SentenceReconstructor.normalize(region.text)
-                if (cleaned == region.text) region else region.copy(text = cleaned)
-            }
             .filter { it.text.isNotBlank() && it.text.any { c -> c.isLetterOrDigit() } }
             .map { region -> ClassifiedRegion(region, RegionClassifier.classify(region.text)) }
             .sortedWith(compareBy({ it.region.top }, { it.region.left }))

@@ -138,10 +138,14 @@ class BubbleOverlayService : Service() {
     private var displayedResultId: String? = null
     private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
+    private data class Attached(val id:com.manhwalens.app.pipeline.PageState.Id,val hash:Int?,val key:String)
+    private val attached=mutableMapOf<View,Attached>()
+    private fun discard(view:View){val idx=translationViews.indexOf(view);if(idx<0)return
+        runCatching { windowManager.removeView(view) };translationViews.removeAt(idx);translationRects.removeAt(idx);attached.remove(view)?.let { displayedBlocks.remove(it.key) };publishBounds() }
     private fun clearTranslations() {
         translationViews.forEach { it.visibility = View.INVISIBLE; runCatching { windowManager.removeView(it) } }
         debugView?.let { runCatching { windowManager.removeViewImmediate(it) } }; debugView=null
-        translationViews.clear()
+        attached.clear();translationViews.clear()
         displayedBlocks.clear()
         displayedResultId = null
         translationRects.clear()
@@ -160,6 +164,7 @@ class BubbleOverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        CaptureManager.validateOverlays={ hashes-> attached.toMap().forEach { (view,stamp)->if(stamp.hash==null || hashes[stamp.id]!=stamp.hash)discard(view) else if(!CaptureManager.appVisible.value)view.visibility=View.VISIBLE };publishBounds() }
         CaptureManager.hideControlsForFrame = {
             bubbleView?.visibility=View.INVISIBLE; actionDock?.visibility=View.INVISIBLE
             translationViews.forEach { it.visibility=View.INVISIBLE }; debugView?.visibility=View.INVISIBLE
@@ -375,7 +380,7 @@ class BubbleOverlayService : Service() {
         // StateFlow replays its last result to new subscribers: never render history over a different app.
         if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt) return
         if (!ReplacementCommit.eligible(result.id, CaptureManager.activeResultId, final)) return
-        if (displayedResultId != result.id) { clearTranslations(); displayedResultId = result.id }
+        if (displayedResultId != result.id) displayedResultId = result.id
         val bounds = if (Build.VERSION.SDK_INT >= 30) {
             val metrics = windowManager.maximumWindowMetrics
             val inset = metrics.windowInsets.getInsetsIgnoringVisibility(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
@@ -400,8 +405,10 @@ class BubbleOverlayService : Service() {
         }
         var renderFailure = false
         result.blocks.forEachIndexed { i,block ->
-            val key="${result.id}:${com.manhwalens.app.pipeline.PageState.id(block.region)}"
-            if (key in displayedBlocks) return@forEachIndexed
+            val id=com.manhwalens.app.pipeline.PageState.id(block.region);val hash=CaptureManager.pixelHashes[id]
+            val key="$id:$hash:${block.translated}"
+            attached.filterValues { it.id==id && it.key!=key }.keys.toList().forEach(::discard)
+            if (key in displayedBlocks) { outcome(i,"attached");return@forEachIndexed }
             val reason=when {
                 block.errorCode!=null -> block.errorCode
                 block.translated==block.original -> "source_preserved"
@@ -441,7 +448,8 @@ class BubbleOverlayService : Service() {
                 attach={windowManager.addView(it,params)}, remove={windowManager.removeViewImmediate(it)})
             if(committed) {
                 translationViews.add(text); translationRects.add(android.graphics.Rect(surface.left,surface.top,surface.right,surface.bottom))
-                text.postDelayed({val idx=translationViews.indexOf(text);if(idx>=0){runCatching { windowManager.removeView(text) };translationViews.removeAt(idx);translationRects.removeAt(idx);displayedBlocks.remove(key);publishBounds();if(CaptureManager.sessionActive)ScreenCaptureService.captureNow(this)}},120_000L)
+                attached[text]=Attached(id,hash,key)
+                text.postDelayed({if(text in attached){discard(text);if(CaptureManager.sessionActive)ScreenCaptureService.captureNow(this)}},120_000L)
                 occupied.add(surface); displayedBlocks.add(key); outcome(i,"attached")
             } else { outcome(i,"attach_failed_or_stale"); renderFailure=true }
         }
@@ -483,7 +491,7 @@ class BubbleOverlayService : Service() {
     }
 
     private fun showWorking(status: CaptureManager.Status) {
-        if (status == CaptureManager.Status.PREPARING) { clearTranslations() }
+        // Retain verified source-aligned views until the clean frame validates their signatures.
         // Do not put our own status text into the screen being OCR'd.
         bubbleView?.alpha = 0.65f
     }
@@ -517,7 +525,7 @@ class BubbleOverlayService : Service() {
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .addAction(R.drawable.ic_stat_lens,"الإعدادات",PendingIntent.getActivity(this,2,Intent(this,com.manhwalens.app.MainActivity::class.java).putExtra("show_settings",true),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
-            .addAction(R.drawable.ic_stat_lens, getString(R.string.notif_action_stop), stopPending)
+            .addAction(R.drawable.ic_stat_lens, getString(R.string.action_close), stopPending)
             .build()
     }
 
@@ -530,6 +538,7 @@ class BubbleOverlayService : Service() {
         bubbleView = null
         CaptureManager.overlayBounds = emptyList()
         CaptureManager.hideControlsForFrame = null
+        CaptureManager.validateOverlays=null
         CaptureManager.restoreControlsAfterFrame=null
         super.onDestroy()
     }
