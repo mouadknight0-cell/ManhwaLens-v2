@@ -4,7 +4,7 @@ import java.util.Locale
 import kotlin.math.abs
 
 /** Immutable per settings/dictionary generation. No model or Android dependency. */
-data class Entry(val en:String,val ar:String,val type:String,val genres:Set<String>,val priority:Int)
+data class Entry(val en:String,val ar:String,val type:String,val genres:Set<String>,val priority:Int,val normalized:String?=null)
 data class Hit(val text:String,val stage:String)
 class PhraseIndex(rows:List<Entry>,enabled:Set<String>) {
     companion object {
@@ -21,7 +21,7 @@ class PhraseIndex(rows:List<Entry>,enabled:Set<String>) {
         fun rank(e:Entry)=when {"user" in e.genres->4;"regression-test" in e.genres->3;e.genres.any { it!="general" }->2;else->1}
         val active=rows.filter { it.genres.any { g->g in enabled || g=="user" || g=="regression-test" } }.sortedWith(compareByDescending<Entry>{rank(it)}.thenByDescending { it.priority })
         for(e in active){if(e.type=="template"){val parts=e.en.split("{X}");if(parts.size==2)templates.add(Regex("^"+Regex.escape(key(parts[0]))+" +(.{1,180})"+(key(parts[1]).takeIf(String::isNotEmpty)?.let { " +"+Regex.escape(it) }?:"")+"$") to e);continue}
-            val k=key(e.en);if(k.isEmpty() || exact.putIfAbsent(k,e)!=null)continue
+            val k=e.normalized?:key(e.en);if(k.isEmpty() || exact.putIfAbsent(k,e)!=null)continue
             val words=k.split(' ');val set=words.toSet();tokenSets[k]=set;set.forEach { inverted.getOrPut(it){mutableListOf()}.add(k) };lengths.getOrPut(k.length){mutableListOf()}.add(k)
             if(e.type in setOf("term","phrase")){var n=trie;for(w in words)n=n.next.getOrPut(w){Node()};n.end=e}
         }

@@ -1,3 +1,6 @@
+import java.io.DataOutputStream
+import java.util.Locale
+import groovy.json.JsonSlurper
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // Release builds can inject version info (CI sets VERSION_NAME / VERSION_CODE from the git tag).
@@ -125,3 +128,29 @@ tasks.configureEach {
         check(hasReleaseKeystore || System.getenv("ALLOW_UNSIGNED_RELEASE") == "true") { "Stable signing key missing. Refusing an incompatible release; restore the original signing key in GitHub secrets." }
     }
 }
+
+// JSON remains the editable interchange format. Compile it on the build machine so a
+// cold reader session doesn't allocate an entire JSONObject tree (or run key regexes).
+val phraseAssets = layout.buildDirectory.dir("generated/reader-pack")
+val packPhrases by tasks.registering {
+    val files = fileTree("src/main/assets/phrasebook") { include("*.json") }
+    inputs.files(files)
+    val packed = phraseAssets.map { it.file("phrase-index.bin") }
+    outputs.file(packed)
+    doLast {
+        val rows = files.sortedBy { it.name }.flatMap { file ->
+            val root = JsonSlurper().parse(file) as Map<*, *>
+            (root["entries"] as List<*>).map { it as Map<*, *> }
+        }
+        val output = packed.get().asFile
+        output.parentFile.mkdirs()
+        DataOutputStream(output.outputStream().buffered()).use { stream ->
+            stream.writeInt(rows.size)
+            for(row in rows){val en=row["en"] as String;val key=en.uppercase(Locale.ROOT).replace('’','\'').replace(Regex("\\b([A-Z]{1,3})-(?=\\1[A-Z'])"), "").replace(Regex("[^A-Z0-9']+")," ").trim()
+                stream.writeUTF(en);stream.writeUTF(row["ar"] as String);stream.writeUTF(row["type"] as String);stream.writeUTF((row["genre"] as List<*>).joinToString(","));stream.writeInt((row["priority"] as Number).toInt());stream.writeUTF(key)
+            }
+        }
+    }
+}
+android.sourceSets["main"].assets.srcDir(phraseAssets)
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") || it.name=="preBuild" }.configureEach { dependsOn(packPhrases) }

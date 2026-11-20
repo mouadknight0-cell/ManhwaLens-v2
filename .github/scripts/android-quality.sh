@@ -2,6 +2,9 @@
 set -uo pipefail
 chmod +x gradlew
 status=0
+adb logcat -v brief -s PhraseTiming:I '*:S' >/tmp/phrase-timing.log &
+timing_pid=$!
+trap 'kill "$timing_pid" 2>/dev/null || true' EXIT
 ./gradlew connectedDebugAndroidTest --stacktrace 2>&1 | tee /tmp/quality-gradle.log || status=$?
 adb logcat -d -b crash > /tmp/quality-crash.log || true
 if [ "$status" -ne 0 ]; then
@@ -23,5 +26,5 @@ if [ -n "$measurement" ]; then
 fi
 adb logcat -d -s ManhwaLensFunnel:I '*:S' | tee app/build/reports/overlay-evidence/report25-funnel.txt
 grep "ManhwaLensFunnel:" app/build/reports/overlay-evidence/report25-funnel.txt | while read -r line; do echo "::notice::$line"; done
-adb logcat -d -s PhraseTiming:I '*:S' | grep "startup_ms=" | tail -2 | while IFS= read -r line; do echo "::notice::$line"; done
+grep "startup_ms=" /tmp/phrase-timing.log | tail -2 | while IFS= read -r line; do echo "::notice::$line"; done
 exit "$status"
