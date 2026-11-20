@@ -48,6 +48,10 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             com.manhwalens.app.pipeline.SentenceReconstructor.normalize(region.text))
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
         val began = System.nanoTime()
+        if (com.manhwalens.app.pipeline.OcrInputQuality.isNumericContent(normalized)) {
+            return TranslatedBlock(region, normalized, normalized, durationMs = (System.nanoTime() - began) / 1_000_000,
+                method = "Numeric content preserved (not translated)")
+        }
         val block = try {
             val reviewed = if (NameDetector.find(normalized, glossaryNames).isEmpty()) DialogueLexicon.translate(normalized, previous) else null
             val translated = reviewed ?: translateText(normalized, glossaryNames)

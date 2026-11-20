@@ -404,38 +404,29 @@ class BubbleOverlayService : Service() {
             val region = block.region
             val key = "${region.left}:${region.top}:${region.right}:${region.bottom}:${block.translated}"
             if (key in displayedBlocks) return@forEach
-            // Failure messages are indicators, not replacements for the OCR rectangle.
-            // A spurious giant OCR box must never become a giant opaque error card.
             val failed = block.errorCode != null
-            val width = if (failed) minOf(dp(48), bounds.width(), bounds.height()) else
-                CircleGeometry.diameter(region.width + dp(8), region.height + dp(8),
-                    dp(64), minOf(dp(160), bounds.width(), bounds.height()))
-            val height = width
-            val text = CircularTranslationView(this, width, if (failed) "!" else block.translated, failed)
-            text.contentDescription = "${block.translated}. اضغط لعرض النص الأصلي والتفاصيل"
+            val fallback = ReplacementSurface(
+                (region.left - 2).coerceIn(bounds.left, bounds.right - 1),
+                (region.top - 2).coerceIn(bounds.top, bounds.bottom - 1),
+                (region.right + 2).coerceIn(bounds.left + 1, bounds.right),
+                (region.bottom + 2).coerceIn(bounds.top + 1, bounds.bottom))
+            val evidence = region.surface
+            val surface = if (evidence != null && evidence.left >= bounds.left && evidence.top >= bounds.top &&
+                evidence.right <= bounds.right && evidence.bottom <= bounds.bottom) evidence else fallback
+            if (surface.width <= 0 || surface.height <= 0) return@forEach
+            val width = surface.width
+            val height = surface.height
+            val text = ReplacementTranslationView(this, block.translated, surface, failed)
             text.setOnClickListener { showReadingPanel(result.copy(blocks = listOf(block)), final, block.region) }
             val params = WindowManager.LayoutParams(width, height, overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT).apply {
                 gravity = Gravity.TOP or Gravity.LEFT
-                x = (region.centerX - width / 2).coerceIn(bounds.left, bounds.right - width)
-                y = (region.top - (height - region.height) / 2).coerceIn(bounds.top, bounds.bottom - height)
+                x = surface.left; y = surface.top
                 alpha = 1f
             }
-            val occupied = translationRects.map { CardPlacement.Box(it.left, it.top, it.right, it.bottom) } +
-                listOfNotNull(bubbleView?.let { view ->
-                    val xy = IntArray(2); view.getLocationOnScreen(xy)
-                    CardPlacement.Box(xy[0], xy[1], xy[0] + view.width, xy[1] + view.height)
-                }, dockRect?.let { CardPlacement.Box(it.left, it.top, it.right, it.bottom) })
-            val placement = CardPlacement.place(CardPlacement.Box(params.x, params.y, params.x + width, params.y + height),
-                CardPlacement.Box(bounds.left, bounds.top, bounds.right, bounds.bottom), occupied, dp(6))
-            if (placement == null || kotlin.math.abs(placement.top - params.y) > dp(100) || kotlin.math.abs(placement.left - params.x) > dp(100)) {
-                showReadingLauncher(result, final)
-                return
-            }
-            // A circle cannot mask every elongated source rectangle without
-            // excessive growth. Never open a giant reader merely for coverage.
-            params.x = placement.left; params.y = placement.top
+            // Source replacement must not be moved by collision avoidance: doing
+            // so exposes the original lettering. Difficult text opens details on tap.
             val card: View = text
             val rect = android.graphics.Rect(params.x, params.y, params.x + width, params.y + height)
             text.setOnLongClickListener {
@@ -444,8 +435,6 @@ class BubbleOverlayService : Service() {
                 true
             }
             if (runCatching { windowManager.addView(card, params) }.isSuccess) {
-                card.alpha = 0f
-                card.animate().alpha(1f).setDuration(120L).start()
                 translationViews.add(card); translationRects.add(rect); displayedBlocks.add(key)
                 publishBounds()
             }

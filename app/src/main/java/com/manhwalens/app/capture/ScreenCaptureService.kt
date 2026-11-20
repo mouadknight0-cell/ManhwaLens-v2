@@ -694,7 +694,7 @@ class ScreenCaptureService : Service() {
         if (bottom < systemBottom) Diagnostics.info("ocr", "browser_controls", "excluded evidenced browser bottom controls",
             context = mapOf("top" to bottom.toString(), "bottom" to systemBottom.toString(),
                 "excluded_regions" to regions.count { it.top >= bottom }.toString()))
-        return regions.asSequence()
+        val classified = regions.asSequence()
             .filter { com.manhwalens.app.pipeline.ReaderContentFilter.keep(it, top, systemBottom) && it.top < bottom }
             .map { region ->
                 val cleaned = SentenceReconstructor.normalize(region.text)
@@ -704,6 +704,27 @@ class ScreenCaptureService : Service() {
             .map { region -> ClassifiedRegion(region, RegionClassifier.classify(region.text)) }
             .sortedWith(compareBy({ it.region.top }, { it.region.left }))
             .toList()
+        val began = System.nanoTime()
+        // Hard frame budget: no bitmap copies and no additional OCR. Detection is
+        // on Dispatchers.Default, never in the WindowManager/UI callback.
+        val rendered = classified.mapIndexed { index, item ->
+            if (index >= 24 || item.kind == RegionKind.SOUND_EFFECT) item else {
+                val detected = com.manhwalens.app.overlay.SurfaceDetector.detect(item.region, bitmap.width, bitmap.height) { x, y -> bitmap.getPixel(x, y) }
+                val overlapsAnother = detected.oval && classified.any { other ->
+                    other !== item && other.region.left < detected.right && other.region.right > detected.left &&
+                        other.region.top < detected.bottom && other.region.bottom > detected.top
+                }
+                val surface = if (overlapsAnother) com.manhwalens.app.overlay.ReplacementSurface(
+                    (item.region.left - 2).coerceAtLeast(0), (item.region.top - 2).coerceAtLeast(0),
+                    (item.region.right + 2).coerceAtMost(bitmap.width), (item.region.bottom + 2).coerceAtMost(bitmap.height), detected.color)
+                else detected
+                item.copy(region = item.region.copy(surface = surface))
+            }
+        }
+        Diagnostics.info("overlay", "surface_prepare", "bounded source-aligned surface detection",
+            durationMs = (System.nanoTime() - began) / 1_000_000,
+            context = mapOf("regions" to rendered.size.toString(), "ovals" to rendered.count { it.region.surface?.oval == true }.toString()))
+        return rendered
     }
 
     /** Detect CN/KR names, persist new surname-pattern detections, return glossary + fresh names. */

@@ -32,8 +32,12 @@ object TranslationSamples {
                     put("id", key); put("trace", trace); put("timestamp", System.currentTimeMillis())
                     put("source", safe(block.original)); put("ocr_source", safe(block.region.text))
                     put("semantic_quality", "unverified")
+                    block.region.surface?.let { surface ->
+                        put("surface_hint", JSONObject().put("oval", surface.oval).put("color", surface.color)
+                            .put("left", surface.left).put("top", surface.top).put("right", surface.right).put("bottom", surface.bottom))
+                    }
                     put("ocr_confidence", block.region.confidence.takeIf { it.isFinite() } ?: JSONObject.NULL)
-                    put("processing_status", if (block.method == "Sound effect preserved (not translated)") "preserved_not_translated" else if (block.errorCode != null) "error" else "translated_unverified")
+                    put("processing_status", if (block.method.endsWith("preserved (not translated)")) "preserved_not_translated" else if (block.errorCode != null) "error" else "translated_unverified")
                     put("translation", if (block.errorCode == null) safe(block.translated) else JSONObject.NULL)
                     put("error_code", block.errorCode ?: JSONObject.NULL)
                     put("duration_ms", block.durationMs ?: JSONObject.NULL)

@@ -14,6 +14,8 @@ data class TextRegion(
     val confidence: Float = Float.NaN,
     /** BCP-47 hint derived from the recognizer that produced this region ("ko", "ja", "zh", "en"), or null if unknown. */
     val languageHint: String? = null,
+    /** Ephemeral screen-space rendering evidence, never a translation-model input. */
+    val surface: com.manhwalens.app.overlay.ReplacementSurface? = null,
 ) {
     val width: Int get() = (right - left).coerceAtLeast(0)
     val height: Int get() = (bottom - top).coerceAtLeast(0)

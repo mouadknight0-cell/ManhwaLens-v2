@@ -101,4 +101,51 @@ class QualityInstrumentedTest {
         } finally { store.remove(name) }
     }
 
+    @Test fun replacementMasksEveryPixelAndFitsOrExplicitlyOffersDetails() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val context = instrumentation.targetContext
+            val surface = com.manhwalens.app.overlay.ReplacementSurface(0, 0, 500, 300)
+            val short = com.manhwalens.app.overlay.ReplacementTranslationView(context, "مرحبا", surface)
+            fun render(view: View, w: Int, h: Int): Bitmap {
+                view.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY))
+                view.layout(0, 0, w, h)
+                return Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { view.draw(Canvas(it)) }
+            }
+            val bitmap = render(short, 500, 300)
+            assertFalse(short.needsDetails)
+            assertTrue(short.fittedSp > 18f)
+            assertTrue(short.fitPasses <= 6)
+            for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) {
+                assertEquals("opaque mask at $x,$y", 255, Color.alpha(bitmap.getPixel(x, y)))
+            }
+            bitmap.recycle()
+            val long = com.manhwalens.app.overlay.ReplacementTranslationView(context, "هذه ترجمة طويلة تحتاج مساحة كافية. ".repeat(80), surface)
+            val tiny = render(long, 140, 60)
+            assertTrue(long.needsDetails)
+            assertTrue(long.contentDescription.contains("اضغط"))
+            assertTrue(long.fitPasses <= 6)
+            var clicked = false
+            long.setOnClickListener { clicked = true }
+            long.performClick(); assertTrue(clicked)
+            tiny.recycle()
+            val old = CircularTranslationView(context, 200, "مرحبا")
+            val oldBitmap = render(old, 200, 200)
+            assertEquals(0, Color.alpha(oldBitmap.getPixel(0, 0)))
+            oldBitmap.recycle()
+        }
+    }
+
+    @Test fun realOcrCropHasSourceAlignedFallbackWithoutInventedOval() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val bitmap = instrumentation.context.assets.open("conference-text.png").use { BitmapFactory.decodeStream(it) }
+        try {
+            val region = com.manhwalens.app.pipeline.TextRegion("conference", 0, 0, bitmap.width, bitmap.height)
+            val surface = com.manhwalens.app.overlay.SurfaceDetector.detect(region, bitmap.width, bitmap.height) { x, y -> bitmap.getPixel(x, y) }
+            assertFalse(surface.oval)
+            assertEquals(0, surface.left); assertEquals(0, surface.top)
+            assertEquals(bitmap.width, surface.right); assertEquals(bitmap.height, surface.bottom)
+        } finally { bitmap.recycle() }
+    }
+
 }
