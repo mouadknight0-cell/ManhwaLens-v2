@@ -407,19 +407,25 @@ class BubbleOverlayService : Service() {
         data class Ready(val view: ReplacementTranslationView, val params: WindowManager.LayoutParams, val rect: android.graphics.Rect)
         val ready = mutableListOf<Ready>()
         var pixels = 0L
+        fun fallback(reason: String) {
+            com.manhwalens.app.diagnostics.Diagnostics.warn("overlay", "replacement_rejected",
+                "Original preserved; full reader available", code = reason,
+                context = mapOf("result_id" to result.id, "blocks" to replacing.size.toString()))
+            showReadingLauncher(result, final)
+        }
         for (block in replacing) {
             val region = block.region
             val surface = SurfacePlacement.visible(region,
                 ReplacementSurface(bounds.left, bounds.top, bounds.right, bounds.bottom))
-            val issue = com.manhwalens.app.translate.ReplacementQuality.issue(block.original, block.translated)
+            val issue = com.manhwalens.app.translate.ReplacementQuality.blockIssue(block)
             if (block.errorCode != null || issue != null || surface == null || !surface.reliable ||
                 (region.confidence.isFinite() && region.confidence < .5f)) {
-                showReadingLauncher(result, final); return
+                fallback(block.errorCode ?: issue ?: "RENDER-UNSAFE-SURFACE-OR-OCR"); return
             }
             pixels += surface.width.toLong() * surface.height
             val rect = android.graphics.Rect(surface.left, surface.top, surface.right, surface.bottom)
             if (pixels > 4_000_000L || ready.any { android.graphics.Rect.intersects(it.rect, rect) }) {
-                showReadingLauncher(result, final); return
+                fallback("RENDER-OVERLAP-OR-BUDGET"); return
             }
             val text = runCatching {
                 ReplacementTranslationView(this, block.translated, surface).also {
@@ -428,7 +434,7 @@ class BubbleOverlayService : Service() {
                     it.layout(0, 0, surface.width, surface.height)
                 }
             }.getOrNull()
-            if (text == null || !text.replacementReady) { showReadingLauncher(result, final); return }
+            if (text == null || !text.replacementReady) { fallback("RENDER-NOT-FULLY-PREPARED"); return }
             text.setOnClickListener { showReadingPanel(result.copy(blocks = listOf(block)), final, block.region) }
             val params = WindowManager.LayoutParams(surface.width, surface.height, overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
@@ -443,7 +449,7 @@ class BubbleOverlayService : Service() {
                 ReplacementCommit.eligible(result.id, CaptureManager.activeResultId, final) },
             attach = { windowManager.addView(it.view, it.params) },
             remove = { windowManager.removeViewImmediate(it.view) })
-        if (!committed) { showReadingLauncher(result, final); return }
+        if (!committed) { fallback("RENDER-COMMIT-ROLLED-BACK"); return }
         ready.forEach { translationViews.add(it.view); translationRects.add(it.rect) }
         displayedBlocks.add(result.id)
         publishBounds()

@@ -122,6 +122,7 @@ class ScreenCaptureService : Service() {
             val sample = sampleFrame(image)
             if (liveGate.observe(sample, android.os.SystemClock.elapsedRealtime())) {
                 sceneRevision = liveGate.revision
+                CaptureManager.activeResultId = null
                 captureJob?.cancel()
                 CaptureManager.setLive(CaptureManager.LiveStatus.SCROLLING)
             }
@@ -162,6 +163,7 @@ class ScreenCaptureService : Service() {
             var pausedForApp = false
             while (liveEnabled && mediaProjection != null) {
                 if (CaptureManager.appVisible.value) {
+                    CaptureManager.activeResultId = null
                     captureJob?.cancel()
                     pausedForApp = true
                     CaptureManager.setLive(CaptureManager.LiveStatus.PAUSED_APP)
@@ -173,6 +175,7 @@ class ScreenCaptureService : Service() {
                         latestFrame.get()?.let { image ->
                             if (liveGate.observe(sampleFrame(image.image), android.os.SystemClock.elapsedRealtime())) {
                                 sceneRevision = liveGate.revision
+                                CaptureManager.activeResultId = null
                                 captureJob?.cancel()
                                 CaptureManager.setLive(CaptureManager.LiveStatus.SCROLLING)
                             }
@@ -198,6 +201,7 @@ class ScreenCaptureService : Service() {
         liveEnabled = false
         liveJob?.cancel()
         liveJob = null
+        CaptureManager.activeResultId = null
         captureJob?.cancel()
         CaptureManager.setLive(status)
     }
@@ -449,6 +453,7 @@ class ScreenCaptureService : Service() {
     private fun launchCapture(delayMs: Long = 0) {
         // One owner for frame acquisition and benchmarks; newer requests supersede old ones.
         val previous = captureJob
+        CaptureManager.activeResultId = null
         previous?.cancel()
         captureJob = scope.launch {
             previous?.join()

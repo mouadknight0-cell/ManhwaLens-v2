@@ -54,4 +54,28 @@ class ReplacementSafetyTest {
         assertTrue(dark.reliable)
         assertFalse(dark.oval)
     }
+    @Test fun incompleteOrLowConfidenceOcrAndTranslationErrorsNeverReplaceSource() {
+        fun block(source: String, confidence: Float = .8f, error: String? = null) =
+            com.manhwalens.app.pipeline.TranslatedBlock(TextRegion(source,0,0,300,80,confidence),source,"سوف اغتنم هذه الفرصة!",error)
+        assertNotNull(ReplacementQuality.blockIssue(block("I WILL SEIZE THAT")))
+        assertNotNull(ReplacementQuality.blockIssue(block("I WILL SEIZE THAT CHANCE!", .3f)))
+        assertNotNull(ReplacementQuality.blockIssue(block("I WILL SEIZE THAT CHANCE!", error="TR-TIMEOUT")))
+        assertNull(ReplacementQuality.blockIssue(block("I WILL SEIZE THAT CHANCE!")))
+    }
+
+    @Test fun outOfOrderCompletedBlocksDoNotPermitPrematureMasking() = kotlinx.coroutines.test.runTest {
+        val regions = listOf(TextRegion("First!",0,0,100,40),TextRegion("Second!",0,50,100,90))
+        val partialOrder = mutableListOf<String>()
+        val result = com.manhwalens.app.pipeline.progressiveTranslation(regions, translate = {
+            kotlinx.coroutines.delay(if(it.text == "First!") 100 else 10)
+            com.manhwalens.app.pipeline.TranslatedBlock(it,it.text,"مرحبا!")
+        }, onReady = {
+            partialOrder.add(it.first().original)
+            assertFalse(ReplacementCommit.eligible("active","active",false))
+        })
+        assertEquals("Second!",partialOrder.first())
+        assertEquals(listOf("First!","Second!"),result.map { it.original })
+        assertTrue(ReplacementCommit.eligible("active","active",true))
+    }
+
 }
