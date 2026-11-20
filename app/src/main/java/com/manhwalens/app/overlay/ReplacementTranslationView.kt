@@ -44,11 +44,9 @@ class ReplacementTranslationView(context: Context, val message: String,
         val insetY = if (surface.oval) h * .15f else 0f
         content.set(insetX + padding, insetY + padding, w - insetX - padding, h - insetY - padding)
         val width = content.width().toInt().coerceAtLeast(1)
-        ink.color = if (failed) Color.rgb(125, 20, 20) else {
-            val c = surface.color
-            val luminance = Color.red(c) * .2126 + Color.green(c) * .7152 + Color.blue(c) * .0722
-            if (luminance < 120) Color.WHITE else Color.rgb(20, 20, 20)
-        }
+        val c = surface.color
+        val luminance = Color.red(c) * .2126 + Color.green(c) * .7152 + Color.blue(c) * .0722
+        ink.color = if (luminance < 120) Color.WHITE else if (failed) Color.rgb(125, 20, 20) else Color.rgb(20, 20, 20)
         fitPasses = 0
         fun make(text: String, size: Float): StaticLayout {
             fitPasses++
@@ -56,7 +54,7 @@ class ReplacementTranslationView(context: Context, val message: String,
             return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
                 .setAlignment(Layout.Alignment.ALIGN_CENTER)
                 .setTextDirection(TextDirectionHeuristics.FIRSTSTRONG_RTL)
-                .setIncludePad(false).setLineSpacing(0f, 1.04f)
+                .setIncludePad(true).setLineSpacing(0f, 1.04f)
                 .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)
                 .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build()
         }
