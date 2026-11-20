@@ -25,7 +25,9 @@ class QualityInstrumentedTest {
     }
     @Test fun regressionPackIsAlwaysAvailable()=runBlocking {
         val ctx=InstrumentationRegistry.getInstrumentation().targetContext
-        val index=requireNotNull(com.manhwalens.app.phrasebook.PhraseLibrary.ready());val a=ctx.assets.open("phrasebook/phrasebook_seed.json").bufferedReader().use {org.json.JSONObject(it.readText()).getJSONArray("entries")}
+        val index=requireNotNull(com.manhwalens.app.phrasebook.PhraseLibrary.ready())
+        val narration=index.render("HAVE YOU FORGOTTEN? THOSE EYES OF YOURS, ONCE FULL OF PROFOUND WISDOM, WERE GOUGED OUT WITH RED-HOT IRON SKEWERS."){_,_->error("reviewed narration must not invoke MT")}
+        assertTrue(narration!!.text.contains("بأسياخ"));val a=ctx.assets.open("phrasebook/phrasebook_seed.json").bufferedReader().use {org.json.JSONObject(it.readText()).getJSONArray("entries")}
         for(i in 0 until a.length()){val e=a.getJSONObject(i);if(!e.getJSONArray("genre").toString().contains("regression-test"))continue
             assertEquals(e.getString("en"),e.getString("ar"),index.lookup(e.getString("en"))?.text)}
     }

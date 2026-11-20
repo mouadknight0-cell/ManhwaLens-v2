@@ -41,8 +41,23 @@ class PhraseIndex(rows:List<Entry>,enabled:Set<String>) {
         while(i<ts.size){var n=trie;var last=-1;var ar="";var j=i
             while(j<ts.size){if(j>i && text.substring(ts[j-1].range.last+1,ts[j].range.first).any { !it.isWhitespace() })break;n=n.next[key(ts[j].value)]?:break;n.end?.let {last=j;ar=it.ar};j++};if(last<0)i++ else {out.add(Span(ts[i].range.first..ts[last].range.last,ar));i=last+1}}
         return out}
+    // A comma may join narration boxes but also belong INSIDE a reviewed phrase.
+    // Cover the whole utterance with longest matching clauses; never translate dangling slivers.
+    private val clauseBreak=Regex("[,;:.!?…]+")
+    private fun reviewedClauses(source:String):String? {
+        val ends=(clauseBreak.findAll(source).map {it.range.last+1}.toList()+source.length).distinct()
+        if(ends.size !in 2..12)return null
+        val memo=mutableMapOf<Int,String?>()
+        fun cover(start:Int):String? {
+            if(start>=source.length || source.substring(start).isBlank())return ""
+            if(memo.containsKey(start))return memo[start]
+            for(end in ends.asReversed()){if(end<=start)break;val part=exact[key(source.substring(start,end))]?:continue
+                val tail=cover(end)?:continue;return (part.ar+" "+tail).trim().also {memo[start]=it}}
+            memo[start]=null;return null
+        };return cover(0)
+    }
     suspend fun render(text:String,mt:suspend(String,Map<String,String>)->String):Hit? {
-        lookup(text)?.let{return it};val parts=sentence.findAll(text).map { it.value.trim() }.filter(String::isNotEmpty).toList()
+        lookup(text)?.let{return it};reviewedClauses(text)?.let{return Hit(it,"sentence")};val parts=sentence.findAll(text).map { it.value.trim() }.filter(String::isNotEmpty).toList()
         if(parts.size in 2..8 && parts.any {lookup(it)!=null})return Hit(parts.map {p->lookup(p)?.text?:single(p,mt)?.text?:mt(p,emptyMap())}.joinToString(" "),"sentence")
         return single(text,mt)
     }
