@@ -3,6 +3,14 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.17] - 2026-11-19
+
+- Keep the local ML Kit fast path, native concurrency and cache. No remote text upload, heavy model or automatic extra OCR/model pass.
+- Precompute frame work and safely deduplicate only equal text/validation/context/SFX-mode inputs; preserve individual coordinates and order. Replace repeated region scans.
+- Preserve single-letter hesitations, standalone interruption dashes and numeric dashes during line reconstruction.
+- Log processing method/status rather than claiming every preserved/error block is an ML translation.
+- Add equivalence/negative regressions; mock work-count reductions are not physical latency results. See docs/FAST-PATH-1.1.17.md.
+
 ## [1.1.16] - 2026-11-19
 
 - Audit capture/OCR/reconstruction/context/translation/names/cache/display/reporting; document unresolved model-level and device-validation gates in docs/TRANSLATION-QUALITY-AUDIT.md.
