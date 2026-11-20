@@ -184,7 +184,8 @@ class ScreenCaptureService : Service() {
                             }
                         }
                     }
-                    if (captureJob?.isActive != true && liveGate.claim(android.os.SystemClock.elapsedRealtime()) != null) {
+                    if (!CaptureManager.dockVisible && (!CaptureManager.pausePages && CaptureManager.autoPages || CaptureManager.manualPage.get()) && captureJob?.isActive != true && liveGate.claim(android.os.SystemClock.elapsedRealtime()) != null) {
+                        CaptureManager.manualPage.set(false)
                         requestNs = System.nanoTime()
                         CaptureManager.setLive(CaptureManager.LiveStatus.PROCESSING)
                         launchCapture()
@@ -504,10 +505,13 @@ class ScreenCaptureService : Service() {
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.PREPARING))
 
         // ── Acquire the freshest frame ──
-        kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
-            if (CaptureManager.hideControlsForFrame?.invoke() == true) latestFrame.getAndSet(null)?.close()
-        }
-        val captured = acquireFreshFrame() ?: acquireFreshFrame()
+        val captured = try {
+            val hidden=kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
+                (CaptureManager.hideControlsForFrame?.invoke()==true).also { if(it) latestFrame.getAndSet(null)?.close() }
+            }
+            if(hidden) kotlinx.coroutines.delay(48) // let the compositor submit a clean frame
+            acquireFreshFrame() ?: acquireFreshFrame()
+        } finally { kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.Main.immediate) { CaptureManager.restoreControlsAfterFrame?.invoke() } }
         if (captured == null) {
             Diagnostics.error("capture", "frame_wait", ErrorCodes.CAPTURE_NO_FRAME,
                 "no frame arrived within ${FRAME_WAIT_MS}ms", recovery = "journey aborted; user can retry")

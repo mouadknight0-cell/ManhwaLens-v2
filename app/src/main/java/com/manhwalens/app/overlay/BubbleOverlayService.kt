@@ -124,6 +124,7 @@ class BubbleOverlayService : Service() {
         event("start_click")
         if (startJob?.isActive == true) return
         if (CaptureManager.live.value == CaptureManager.LiveStatus.PROCESSING) { collapseActions(); return }
+        CaptureManager.manualPage.set(true)
         collapseActions()
         clearTranslations()
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.PREPARING))
@@ -175,7 +176,12 @@ class BubbleOverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        CaptureManager.hideControlsForFrame = { (actionDock != null).also { if (it) collapseActions() } }
+        CaptureManager.hideControlsForFrame = {
+            bubbleView?.visibility=View.INVISIBLE; actionDock?.visibility=View.INVISIBLE
+            translationViews.forEach { it.visibility=View.INVISIBLE }; debugView?.visibility=View.INVISIBLE
+            CaptureManager.overlayBounds=emptyList(); bubbleView!=null
+        }
+        CaptureManager.restoreControlsAfterFrame={ bubbleView?.visibility=View.VISIBLE; actionDock?.visibility=View.VISIBLE; publishBounds() }
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
     }
 
@@ -238,7 +244,7 @@ class BubbleOverlayService : Service() {
             CaptureManager.state.collect { state ->
                 updateControlState()
                 when (state) {
-                    is CaptureManager.CaptureState.Done -> { running = false; collapseActions(); bubbleView?.alpha = 1f; showPanel(state.result, final = true) }
+                    is CaptureManager.CaptureState.Done -> { running = false; bubbleView?.alpha = 1f; showPanel(state.result, final = true) }
                     is CaptureManager.CaptureState.Partial -> showPanel(state.result, final = false)
                     is CaptureManager.CaptureState.Error -> { running = false; bubbleView?.alpha = 1f; if (acceptResults) showError(state.message) }
                     is CaptureManager.CaptureState.Working -> { running = true; showWorking(state.status) }
@@ -313,8 +319,8 @@ class BubbleOverlayService : Service() {
         val bubble = bubbleParams ?: return
         val bounds = availableBounds()
         val buttonSize = ((bounds.width() - dp(BUBBLE_SIZE_DP)) / 4).coerceIn(dp(48), dp(60))
-        val width = buttonSize * 4
-        val height = dp(78)
+        val width = buttonSize * 3
+        val height = dp(130)
         val dock = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -323,7 +329,7 @@ class BubbleOverlayService : Service() {
         }
         statusLabel = TextView(this).apply { textSize = 10f; setTextColor(PANEL_TEXT); gravity = Gravity.CENTER; setPadding(dp(4), dp(4), dp(4), dp(4)) }
         dock.addView(statusLabel, LinearLayout.LayoutParams(width, dp(26)))
-        val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        var actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         dock.addView(actions)
         fun action(symbol: String, description: String, enabled: Boolean = true, handler: () -> Unit) {
             actions.addView(TextView(this).apply {
@@ -344,6 +350,9 @@ class BubbleOverlayService : Service() {
             }, LinearLayout.LayoutParams(buttonSize, dp(52)))
         }
         action("▶\nترجمة", "Start Translation / بدء الترجمة") { startTranslation() }
+        action(if(CaptureManager.pausePages) "▶\nاستئناف" else "Ⅱ\nمؤقت", "Pause / Resume") { CaptureManager.pausePages=!CaptureManager.pausePages; collapseActions() }
+        action(if(CaptureManager.autoPages) "↻\nتلقائي" else "☞\nيدوي", "Automatic / Manual") { CaptureManager.autoPages=!CaptureManager.autoPages; collapseActions() }
+        actions=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }; dock.addView(actions)
         action("■\nإيقاف", "Stop Capture Session / إيقاف جلسة الالتقاط") { stopTranslation() }
         action("⊗\nإخفاء", "Disable Floating Icon / تعطيل الفقاعة") {
             stopTranslation()
@@ -351,14 +360,14 @@ class BubbleOverlayService : Service() {
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         }
-        action("↗\nالتطبيق", "Open App / فتح التطبيق") {
+        action("⚙\nالإعدادات", "Open App / فتح التطبيق") {
             collapseActions()
             clearTranslations()
             acceptResults = false
-            startActivity(Intent(this, com.manhwalens.app.MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            startActivity(Intent(this, com.manhwalens.app.MainActivity::class.java).putExtra("show_settings",true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
         val params = WindowManager.LayoutParams(width, height, overlayType(),
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT).apply {
             gravity = Gravity.TOP or Gravity.LEFT
             x = (if (bubble.x > bounds.width() / 2) bubble.x - width else bubble.x + dp(BUBBLE_SIZE_DP))
@@ -386,6 +395,7 @@ class BubbleOverlayService : Service() {
             }
             else -> true
         } }
+        dock.setOnTouchListener { _,e -> if(e.actionMasked==MotionEvent.ACTION_OUTSIDE) { collapseActions(); true } else false }
         runCatching { windowManager.addView(dock, params) }.onSuccess {
             CaptureManager.dockVisible = true
             actionDock = dock
@@ -545,6 +555,7 @@ class BubbleOverlayService : Service() {
         bubbleView = null
         CaptureManager.overlayBounds = emptyList()
         CaptureManager.hideControlsForFrame = null
+        CaptureManager.restoreControlsAfterFrame=null
         super.onDestroy()
     }
 
@@ -619,7 +630,7 @@ private class BubbleTouchListener(
                 true
             }
             MotionEvent.ACTION_UP -> {
-                if (!dragging) onTap() else onRelease()
+                if (!dragging && event.eventTime-event.downTime <= android.view.ViewConfiguration.getLongPressTimeout()) onTap() else if(dragging) onRelease()
                 dragging = false
                 true
             }

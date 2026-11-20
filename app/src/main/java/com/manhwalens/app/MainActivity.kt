@@ -226,7 +226,7 @@ private fun ManhwaLensRoot(
     val onboardingSeen by activity.settingsRepository.onboardingSeen.collectAsState()
     val bubbleEnabled by activity.settingsRepository.bubbleEnabled.collectAsState()
 
-    var tab by remember { mutableStateOf(Tab.HOME) }
+    var tab by remember { mutableStateOf(if(activity.intent.getBooleanExtra("show_settings",false)) Tab.SETTINGS else Tab.HOME) }
     var entries by remember { mutableStateOf(emptyList<CaptureResult>()) }
     var selectedResult by remember { mutableStateOf<CaptureResult?>(null) }
     var resultIsFinal by remember { mutableStateOf(true) }
