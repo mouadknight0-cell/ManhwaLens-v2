@@ -44,7 +44,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
     /** Translates one region, applying the name shield. Never throws — original text on failure. */
     suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null, lexicalRetry:Boolean=false, retryCase:Boolean=false): TranslatedBlock {
-        val terms=readings()
+        val terms=ReadingGlossary.murim+readings()
         val protectedNames=(glossaryNames+terms.keys).distinct()
         val normalized = try { com.manhwalens.app.pipeline.TranslationInput.prepare(region.text, protectedNames) }
         catch (failure: IllegalArgumentException) {
@@ -53,8 +53,14 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         }
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
         val lookupStart=System.nanoTime()
-        val reviewed = terms[normalized.trimEnd('!','?','.','…').lowercase()]?.let { it+normalized.takeLastWhile { c->c in "!?.…" }.replace('?','؟') } ?: if (NameDetector.find(normalized,glossaryNames).none { it.source==com.manhwalens.app.names.NameHit.Source.GLOSSARY && it.name.lowercase() !in terms }) DialogueLexicon.translate(normalized, previous,terms,fuzzy=true) else null
+        val known=com.manhwalens.app.translate.DialogueLexicon.interjection(normalized)
+        val reviewed = known ?: terms[normalized.trimEnd('!','?','.','…').lowercase()]?.let { it+normalized.takeLastWhile { c->c in "!?.…" }.replace('?','؟') } ?: if (NameDetector.find(normalized,glossaryNames).none { it.source==com.manhwalens.app.names.NameHit.Source.GLOSSARY && it.name.lowercase() !in terms }) DialogueLexicon.translate(normalized, previous,terms,fuzzy=true) else null
         com.manhwalens.app.diagnostics.SessionScorecard.lookup(reviewed!=null,System.nanoTime()-lookupStart)
+        val letters=normalized.filter(Char::isLetter)
+        val scriptNoise=letters.any { Character.UnicodeScript.of(it.code)!=Character.UnicodeScript.LATIN }
+        val properName=glossaryNames.any { normalized.trimEnd('!','?','.','…').equals(it,true) }
+        if(scriptNoise || (reviewed==null && !properName && !com.manhwalens.app.pipeline.OcrInputQuality.isNumericContent(normalized) &&
+            (com.manhwalens.app.pipeline.ReadingEnglish.validCount(normalized)<2 || (region.surface?.reliable==false && region.confidence<.62f)))) return TranslatedBlock(region,normalized,"","OCR-UNCERTAIN",method="Script or lexical validation")
         if ((reviewed == null && region.confidence.isFinite() && region.confidence < .5f && !(region.confidence>=.30f && com.manhwalens.app.pipeline.ReadingEnglish.score(normalized,protectedNames)>=.8)) ||
             com.manhwalens.app.pipeline.TranslationInput.unresolved(normalized, protectedNames)) {
             return TranslatedBlock(region, normalized, "", "OCR-UNCERTAIN", method = "OCR input validation")
@@ -112,7 +118,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             throw TranslationFailure(ErrorCodes.TRANSLATE_FAILED)
         }
         if (raw == null) {
-            LanguageModels.invalidate()
+            // An invocation timeout does not invalidate the installed language pair.
             Diagnostics.warn("translate", "translate_timeout", "translation timed out; block marked failed",
                 code = ErrorCodes.TRANSLATE_TIMEOUT,
                 context = mapOf("chars" to trimmed.length.toString()), recovery = "explicit failure shown")
@@ -126,8 +132,9 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val restored = NameShield.restore(raw, arabicMask)
         if (protected.any { !restored.contains(it, ignoreCase = true) }) throw TranslationFailure("TR-NAME-LOST")
         val clean=corrections.entries.fold(restored){ v,e -> v.replace(Regex("(?<![\\p{L}])"+Regex.escape(e.key)+"(?![\\p{L}])")){ e.value } }
-        cache.put(cacheKey, clean)
-        return clean
+        val final=clean.replace(Regex("(?<![\\p{L}])([\\p{IsArabic}]{2,})(?:\\s+\\1)+(?![\\p{L}])"),"$1").replace(Regex("\\.{2,}"),"…")
+        cache.put(cacheKey,final)
+        return final
     }
 
     /** Back-compat helper: translate a list sequentially. Used by tests and simple flows. */
@@ -166,6 +173,6 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         const val SOURCE = "en"
         const val TARGET = "ar"
         private const val MODEL_DOWNLOAD_TIMEOUT_MS = 45_000L
-        private const val TRANSLATE_TIMEOUT_MS = 15_000L
+        private const val TRANSLATE_TIMEOUT_MS = 2_500L
     }
 }

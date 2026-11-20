@@ -2,7 +2,8 @@ package com.manhwalens.app.translate
 
 /** Explicit local readings, separate from unconfirmed OCR name suggestions. */
 object ReadingGlossary {
-    val defaults=mapOf("wall" to "جدار","headquarters" to "المقر","geumju" to "غومجو","jeong-ah" to "جونغ آه", "formation" to "تشكيل", "barrier" to "حاجز", "sister" to "أختي", "qi" to "تشي", "sect" to "طائفة", "disciple" to "تلميذ")
+    val murim=mapOf("my lord" to "سيدي", "young master" to "السيد الشاب", "eldest young master" to "السيد الشاب الأكبر", "sword house" to "بيت السيف", "hungry ghost" to "شبح جائع", "from hell" to "من الجحيم", "luoyang" to "لوه يانغ")
+    val defaults=murim+mapOf("wall" to "جدار","headquarters" to "المقر","geumju" to "غومجو","jeong-ah" to "جونغ آه", "formation" to "تشكيل", "barrier" to "حاجز", "sister" to "أختي", "qi" to "تشي", "sect" to "طائفة", "disciple" to "تلميذ")
     fun parse(lines:String): Map<String,String>? {
         val entries=mutableMapOf<String,String>()
         for(line in lines.lineSequence().filter { it.isNotBlank() }) {
@@ -12,7 +13,7 @@ object ReadingGlossary {
         }
         return entries
     }
-    private val placeholder=Regex("\\{([a-z-]+)\\}")
+    private val placeholder=Regex("\\{([a-z -]+)\\}")
     fun expand(template:String,terms:Map<String,String>):String? {
         if(placeholder.findAll(template).any { it.groupValues[1] !in terms }) return null
         return placeholder.replace(template){ terms.getValue(it.groupValues[1]) }

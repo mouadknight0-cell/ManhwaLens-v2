@@ -48,7 +48,6 @@ class BubbleOverlayService : Service() {
     private var acceptResults = false
     private var requestedAt = Long.MAX_VALUE
     private var running = false
-    private var hidden = false
     private var stopControl: TextView? = null
     private var startControl: TextView? = null
     private fun updateControlState() {
@@ -93,6 +92,10 @@ class BubbleOverlayService : Service() {
         dockRect = null
         publishBounds()
     }
+    private fun closeService(){
+        (application as ManhwaLensApp).settingsRepository.setBubbleEnabled(false)
+        stopTranslation();stopForeground(STOP_FOREGROUND_REMOVE);stopSelf()
+    }
     private fun stopTranslation() {
         event("stop_click")
         acceptResults = false
@@ -125,7 +128,7 @@ class BubbleOverlayService : Service() {
                 acceptResults = false
                 com.manhwalens.app.diagnostics.Diagnostics.error("overlay", "start_failed", "OVL-START", "floating start failed", throwable = failure)
                 showError("تعذر بدء الالتقاط. تحقق من إذن النوافذ المنبثقة في الخلفية ثم أعد المحاولة من الفقاعة.")
-            } finally { bubbleView?.visibility = if(hidden) View.INVISIBLE else View.VISIBLE }
+            } finally { bubbleView?.visibility = View.VISIBLE }
         }
     }
 
@@ -162,18 +165,14 @@ class BubbleOverlayService : Service() {
             translationViews.forEach { it.visibility=View.INVISIBLE }; debugView?.visibility=View.INVISIBLE
             CaptureManager.overlayBounds=emptyList(); bubbleView!=null
         }
-        CaptureManager.restoreControlsAfterFrame={ bubbleView?.visibility=if(hidden) View.INVISIBLE else View.VISIBLE; actionDock?.visibility=View.VISIBLE; publishBounds() }
+        CaptureManager.restoreControlsAfterFrame={ bubbleView?.visibility=View.VISIBLE; actionDock?.visibility=View.VISIBLE; publishBounds() }
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> { hidden=false; startBubble(); bubbleView?.visibility=View.VISIBLE; publishBounds() }
-            ACTION_STOP -> {
-                stopTranslation()
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                stopSelf()
-            }
+            ACTION_START -> { startBubble(); bubbleView?.visibility=View.VISIBLE; publishBounds() }
+            ACTION_STOP -> closeService()
             else -> startBubble()
         }
         return START_STICKY
@@ -309,14 +308,16 @@ class BubbleOverlayService : Service() {
         }
         FloatingAction.entries.forEach { action ->
             val button=TextView(this).apply {
-                text=action.label; gravity=Gravity.CENTER; textSize=14f; maxLines=1
+                text=if(action==FloatingAction.CLOSE)getString(R.string.action_close) else action.label
+                if(action==FloatingAction.CLOSE){contentDescription=text;setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_close,0,0,0)}
+                 gravity=Gravity.CENTER; textSize=14f; maxLines=1
                 ellipsize=android.text.TextUtils.TruncateAt.END; setTextColor(PANEL_TEXT)
                 setOnClickListener {
                     collapseActions()
                     when(action) {
                         FloatingAction.START -> startTranslation()
                         FloatingAction.STOP -> stopTranslation()
-                        FloatingAction.HIDE -> { hidden=true; bubbleView?.visibility=View.INVISIBLE; publishBounds() }
+                        FloatingAction.CLOSE -> closeService()
                     }
                 }
             }
@@ -440,6 +441,7 @@ class BubbleOverlayService : Service() {
                 attach={windowManager.addView(it,params)}, remove={windowManager.removeViewImmediate(it)})
             if(committed) {
                 translationViews.add(text); translationRects.add(android.graphics.Rect(surface.left,surface.top,surface.right,surface.bottom))
+                text.postDelayed({val idx=translationViews.indexOf(text);if(idx>=0){runCatching { windowManager.removeView(text) };translationViews.removeAt(idx);translationRects.removeAt(idx);displayedBlocks.remove(key);publishBounds();if(CaptureManager.sessionActive)ScreenCaptureService.captureNow(this)}},120_000L)
                 occupied.add(surface); displayedBlocks.add(key); outcome(i,"attached")
             } else { outcome(i,"attach_failed_or_stale"); renderFailure=true }
         }
@@ -514,7 +516,6 @@ class BubbleOverlayService : Service() {
             .setContentText(getString(R.string.notif_bubble_text))
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .addAction(R.drawable.ic_stat_lens,"إظهار الأيقونة",PendingIntent.getService(this,1,Intent(this,BubbleOverlayService::class.java).setAction(ACTION_START),PendingIntent.FLAG_IMMUTABLE))
             .addAction(R.drawable.ic_stat_lens,"الإعدادات",PendingIntent.getActivity(this,2,Intent(this,com.manhwalens.app.MainActivity::class.java).putExtra("show_settings",true),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
             .addAction(R.drawable.ic_stat_lens, getString(R.string.notif_action_stop), stopPending)
             .build()

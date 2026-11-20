@@ -5,7 +5,11 @@ package com.manhwalens.app.translate
  * Model output is not labelled semantically verified merely because Arabic exists.
  */
 object DialogueLexicon {
+    fun interjection(text:String):String? = when(text.trim().lowercase().trimEnd('.','!','?','…').replace(Regex("(.)\\1{2,}"),"$1")) {
+        "hm","hmm"->"هم؟";"ugh","urgh"->"آخ";"huh"->"هاه؟";"tch"->"تسك";else->null
+    }
     private val entries = mapOf(
+        "a hungry ghost from hell" to "{hungry ghost} {from hell}", "a hungry ghost from hell has appeared" to "ظهر {hungry ghost} {from hell}",
         "it is useless" to "إنه بلا فائدة", "is that so" to "هل هذا صحيح", "that's impossible" to "هذا مستحيل",
         "she's still alive" to "إنها ما زالت حيّة", "he's still alive" to "إنه ما زال حياً",
         "is everyone safe" to "هل الجميع بأمان", "i lost my way" to "ضللتُ طريقي",

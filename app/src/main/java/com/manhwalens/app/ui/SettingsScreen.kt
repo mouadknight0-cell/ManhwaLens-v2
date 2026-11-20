@@ -71,7 +71,6 @@ fun SettingsScreen(
                 Text("إظهار الفقاعة العائمة", Modifier.weight(1f))
                 Switch(checked = bubbleEnabled, onCheckedChange = onBubbleEnabledChange)
             }
-            OutlinedButton(onClick = { onBubbleEnabledChange(true) }) { Text("إظهار الأيقونة") }
             Text("من الفقاعة: بدء ← إذن Android ← نشطة. إيقاف يحرر الجلسة. لا يلزم فتح الصفحة الرئيسية.")
             Button(enabled = phase in listOf(CaptureManager.SessionPhase.INACTIVE, CaptureManager.SessionPhase.FAILED), onClick = { CaptureConsentActivity.launch(context, autoCapture = true) }, modifier = Modifier.fillMaxWidth()) { Text("بدء جلسة الالتقاط") }
             OutlinedButton(enabled = phase !in listOf(CaptureManager.SessionPhase.INACTIVE, CaptureManager.SessionPhase.STOPPING), onClick = { ScreenCaptureService.stop(context) }, modifier = Modifier.fillMaxWidth()) { Text("إيقاف جلسة الالتقاط") }

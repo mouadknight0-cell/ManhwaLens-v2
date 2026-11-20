@@ -8,7 +8,8 @@ object ReadingEnglish {
     private val stutter=Regex("\\b([a-z])-((?:\\1)[a-z']+)",RegexOption.IGNORE_CASE)
     private val observed=mapOf("aheao" to "ahead","dio" to "did","angwer" to "answer","commano" to "command","headouarters" to "headquarters","1s" to "is")
     private val context=mapOf("1 SEE" to "I SEE", "THE GARTH" to "THE EARTH", "STILL ALVE" to "STILL ALIVE", "GET YO," to "GET YOU,","A NALL" to "A WALL","THIG IG" to "THIS IS","THEY SAV" to "THEY SAY")
-    private val swap=mapOf('o' to "dq",'d' to "o",'g' to "es",'e' to "g",'v' to "y",'y' to "v",'3' to "e",'5' to "s",'s' to "g",'4' to "a",'1' to "il",'0' to "o",'q' to "o")
+    private val swap=mapOf('8' to "b",'p' to "f",'f' to "p",'o' to "dq",'d' to "o",'g' to "es",'e' to "g",'v' to "y",'y' to "v",'3' to "e",'5' to "s",'s' to "g",'4' to "a",'1' to "il",'0' to "o",'q' to "o")
+    fun validCount(text:String)=tokens.findAll(text.lowercase()).count { it.value in words || it.value.replace("'","") in words }
     fun score(s:String,names:List<String>):Double {
         val ts=tokens.findAll(s.lowercase()).map { it.value }.toList(); if(ts.isEmpty()) return 0.0
         return ts.count { it in words || it.replace("'","") in words || names.any { n->n.equals(it,true) } }.toDouble()/ts.size
@@ -27,7 +28,7 @@ object ReadingEnglish {
         return best
     }
     fun repair(masked:String):String {
-        val contextual=context.entries.fold(stutter.replace(masked,"$2")){s,e->s.replace(e.key,e.value,ignoreCase=true)}
+        val contextual=context.entries.fold(stutter.replace(ComicSpelling.context(masked),"$2")){s,e->s.replace(e.key,e.value,ignoreCase=true)}
         return tokens.replace(contextual){ m -> val raw=m.value;val w=raw.lowercase()
             if((raw.any(Char::isLowerCase) && raw.count(Char::isUpperCase)<raw.length/2 && !raw.any(Char::isDigit)) || raw.all(Char::isDigit)) return@replace raw
             val corrected=observed[w] ?: if(w.length in 4..18 && w !in words) {
@@ -36,7 +37,7 @@ object ReadingEnglish {
                     String(chars).takeIf(words::contains)?.let(hits::add)
                     for(j in i+1 until chars.size) for(b in swap[w[j]].orEmpty()) { chars[j]=b; String(chars).takeIf(words::contains)?.let(hits::add);chars[j]=w[j] }
                     chars[i]=w[i]
-                };hits.singleOrNull() ?: segment(w) ?: insertion(w)
+                };hits.singleOrNull() ?: ComicSpelling.suggest(w) ?: segment(w) ?: insertion(w)
             } else null
             corrected?.uppercase() ?: raw
         }

@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.30
+- Conditional colour-crop OCR recovery, ranked candidate passes and local text repair. Murim readings, interjection handling, bounded translation timeout and Close control. Physical Redmi metrics pending.
+
 ## 1.1.29 — Xiaomi reader update
 - Three-action RTL dock; hiding the icon no longer ends projection. Restore via notification or app.
 - Bounded sampled bubble contours, source-centred fallback, stricter MT output checks and OCR repair.

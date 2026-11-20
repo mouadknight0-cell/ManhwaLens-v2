@@ -102,6 +102,7 @@ class ScreenCaptureService : Service() {
         }
     }
 
+    private val recovery=com.manhwalens.app.ocr.ColorRecovery()
     private val textRecognition by lazy { TextRecognitionClient() }
     private val translation by lazy { TranslationClient(post={ (application as ManhwaLensApp).settingsRepository.corrections.value },debug={ (application as ManhwaLensApp).settingsRepository.debug.value },readings={ (application as ManhwaLensApp).settingsRepository.readings.value }) }
     private val nameGlossary by lazy { NameGlossaryStore(applicationContext) }
@@ -555,10 +556,12 @@ class ScreenCaptureService : Service() {
 
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.READING))
         val tOcr = System.nanoTime()
-        val regions = runCatching { withTimeoutOrNull(12000L) { textRecognition.recognize(ocrBitmap, OCR_SOURCE, audit = { Diagnostics.info("funnel", "ocr", it, traceId = traceId) }) { line ->
-            captured.occlusions.none { it.intersects(line,
-                frame.width.toFloat() / ocrBitmap.width, frame.height.toFloat() / ocrBitmap.height) }
-        } } ?: error("OCR timed out") }.getOrElse {
+        val keepLine:(TextRegion)->Boolean={ line -> captured.occlusions.none { it.intersects(line,frame.width.toFloat()/ocrBitmap.width,frame.height.toFloat()/ocrBitmap.height) } }
+        val audit:(String)->Unit={ Diagnostics.info("ocr","passes",it,traceId=traceId) }
+        val regions = runCatching { withTimeoutOrNull(12000L) {
+            val first=textRecognition.recognize(ocrBitmap,OCR_SOURCE,audit,keepLine)
+            recovery.recover(textRecognition,ocrBitmap,OCR_SOURCE,first,keepLine,audit)
+        } ?: error("OCR timed out") }.getOrElse {
             if (it is kotlinx.coroutines.CancellationException) throw it
             Diagnostics.error("ocr", "recognize", ErrorCodes.OCR_EXEC_FAILED,
                 "OCR execution failed", throwable = it, recovery = "journey aborted; user can retry")
