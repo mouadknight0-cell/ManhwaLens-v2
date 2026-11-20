@@ -653,21 +653,27 @@ class ScreenCaptureService : Service() {
                 val recovered = if (translated.errorCode == "OCR-UNCERTAIN" && region.width > 0 && region.height > 0 &&
                     region.area in 1..150000 && region.left >= 0 && region.top >= 0 && region.right <= frame.width && region.bottom <= frame.height) {
                     Diagnostics.info("funnel","ocr_retry","page=$journeyId bounds=${region.left},${region.top} attempt=crop",traceId=traceId)
-                    kotlinx.coroutines.delay(100)
-                    val crop = Bitmap.createBitmap(frame,region.left,region.top,region.width,region.height)
-                    try {
-                        val scale=maxOf(1,(32+crop.width-1)/crop.width,(32+crop.height-1)/crop.height)
-                        val input=if(scale==1) crop else Bitmap.createScaledBitmap(crop,crop.width*scale,crop.height*scale,true)
-                        val candidate=try { withTimeoutOrNull(2500) { textRecognition.recognize(input,OCR_SOURCE).singleOrNull() } }
-                        catch(cancelled:kotlinx.coroutines.CancellationException){ throw cancelled }
-                        catch(failure:Exception){ Diagnostics.warn("ocr","retry_failed","crop retry failed; original retained",throwable=failure,traceId=traceId); null }
-                        finally { if(input!==crop) input.recycle() }
-                        if(candidate!=null && candidate.confidence >= .50f && candidate.confidence > region.confidence &&
-                            candidate.height >= .7f*crop.height*scale && candidate.width >= .7f*crop.width*scale) {
-                            Diagnostics.info("funnel","ocr_retry","page=$journeyId bounds=${region.left},${region.top} improved",traceId=traceId)
-                            translation.translateBlock(region.copy(text=candidate.text,confidence=candidate.confidence),learnedNames,previousSource)
-                        } else translated
-                    } finally { if (crop !== frame) crop.recycle() }
+                    val box=region.surface
+                    val l=((box?.left ?: region.left)-8).coerceAtLeast(0); val t=((box?.top ?: region.top)-8).coerceAtLeast(0)
+                    val w=((box?.right ?: region.right)+8).coerceAtMost(frame.width)-l; val h=((box?.bottom ?: region.bottom)+8).coerceAtMost(frame.height)-t
+                    val names=learnedNames+(application as ManhwaLensApp).settingsRepository.readings.value.keys
+                    fun lexical(r:TextRegion)=com.manhwalens.app.pipeline.ReadingEnglish.score(com.manhwalens.app.pipeline.TranslationInput.prepare(r.text,names),names)
+                    val best=if(w*h !in 1..200000) null else {
+                        val input=Bitmap.createBitmap(w*2,h*2,Bitmap.Config.ARGB_8888)
+                        try {
+                            val dark=android.graphics.Color.red(box?.color ?: -1)<100
+                            val f=if(dark) -1.5f else 1.5f;val shift=if(dark) 320f else -64f
+                            val row=floatArrayOf(.299f*f,.587f*f,.114f*f,0f,shift)
+                            val paint=android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply { colorFilter=android.graphics.ColorMatrixColorFilter(row+row+row+floatArrayOf(0f,0f,0f,1f,0f)) }
+                            android.graphics.Canvas(input).drawBitmap(frame,android.graphics.Rect(l,t,l+w,t+h),android.graphics.Rect(0,0,w*2,h*2),paint)
+                            withTimeoutOrNull(2500){ textRecognition.recognize(input,OCR_SOURCE) }?.map { it.copy(left=l+it.left/2,top=t+it.top/2,right=l+it.right/2,bottom=t+it.bottom/2) }?.filter {
+                                it.confidence>=.35f && com.manhwalens.app.pipeline.ReadingEnglish.retryFits(region,it) && lexical(it)>=.8
+                            }?.maxByOrNull(::lexical)
+                        } catch(cancelled:kotlinx.coroutines.CancellationException){ throw cancelled }
+                        catch(e:Exception){ Diagnostics.warn("ocr","crop","retry failed",throwable=e);null } finally { input.recycle() }
+                    }
+                    val chosen=if(best!=null && lexical(best)>=lexical(region)) region.copy(text=best.text,confidence=best.confidence) else region
+                    if(chosen.confidence>=.35f && lexical(chosen)>=.8) translation.translateBlock(chosen,learnedNames,previousSource,true) else translated
                 } else translated
                 pageState.save(region,contextKey,recovered)
                 recovered.also {

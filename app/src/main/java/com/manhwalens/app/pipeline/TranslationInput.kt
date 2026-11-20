@@ -23,9 +23,10 @@ object TranslationInput {
 
     fun prepare(text: String, glossaryNames: List<String>): String {
         val normalized = SentenceReconstructor.normalize(text)
-        if (!OcrLexicon.needsCleanup(normalized)) return normalized
-        val masked = NameShield.mask(normalized, glossaryNames)
-        return NameShield.restore(OcrLexicon.repair(EnglishOcrRepair.repair(masked.maskedText)), masked)
+        val alias=if(glossaryNames.any { it.equals("Jeong-ah",true) }) normalized.replace(Regex("\\bjeong-4h\\b",RegexOption.IGNORE_CASE),"Jeong-ah") else normalized
+        if (!OcrLexicon.needsCleanup(alias) && alias.none(Char::isUpperCase)) return alias
+        val masked = NameShield.mask(alias, glossaryNames)
+        return NameShield.restore(ReadingEnglish.repair(OcrLexicon.repair(EnglishOcrRepair.repair(masked.maskedText))), masked)
     }
     fun unresolved(text: String, glossaryNames: List<String>): Boolean =
         OcrLexicon.unresolved(text) && OcrLexicon.unresolved(NameShield.mask(text, glossaryNames).maskedText)

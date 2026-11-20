@@ -43,7 +43,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     }
 
     /** Translates one region, applying the name shield. Never throws — original text on failure. */
-    suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null): TranslatedBlock {
+    suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null, lexicalRetry:Boolean=false): TranslatedBlock {
         val terms=readings()
         val protectedNames=(glossaryNames+terms.keys).distinct()
         val normalized = try { com.manhwalens.app.pipeline.TranslationInput.prepare(region.text, protectedNames) }
@@ -52,8 +52,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             return TranslatedBlock(region, region.text, "تعذّرت حماية الأسماء — راجع القاموس", "TR-NAME-SHIELD")
         }
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
-        val reviewed = if (NameDetector.find(normalized,glossaryNames).none { it.source==com.manhwalens.app.names.NameHit.Source.GLOSSARY && it.name.lowercase() !in terms }) DialogueLexicon.translate(normalized, previous,terms) else null
-        if ((reviewed == null && region.confidence.isFinite() && region.confidence < .5f) ||
+        val reviewed = terms[normalized.trimEnd('!','?','.','…').lowercase()]?.let { it+normalized.takeLastWhile { c->c in "!?.…" }.replace('?','؟') } ?: if (NameDetector.find(normalized,glossaryNames).none { it.source==com.manhwalens.app.names.NameHit.Source.GLOSSARY && it.name.lowercase() !in terms }) DialogueLexicon.translate(normalized, previous,terms) else null
+        if ((reviewed == null && region.confidence.isFinite() && region.confidence < .5f && !(lexicalRetry && region.confidence>=.35f && com.manhwalens.app.pipeline.ReadingEnglish.score(normalized,protectedNames)>=.8)) ||
             com.manhwalens.app.pipeline.TranslationInput.unresolved(normalized, protectedNames)) {
             return TranslatedBlock(region, normalized, "", "OCR-UNCERTAIN", method = "OCR input validation")
         }
