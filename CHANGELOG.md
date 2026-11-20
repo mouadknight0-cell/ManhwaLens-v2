@@ -3,6 +3,14 @@
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.19] - 2026-11-19
+
+- Bundle licensed Noto Sans Arabic across native overlays/readers and Compose typography, with cached native loading and safe font fallback.
+- Use explicit Arabic RTL base and display-only Latin/name/number isolation; no string reversal or changes to stored/copied translations. Long dialogue uses natural alignment, short text stays centered.
+- Recognize consistent light-grey inter-line corridors after white-only evidence fails, retaining geometry/separator/probe-budget guards. Exercise the supplied Nekoyomi crop through actual OCR and grouping.
+- Keep readable overflowing paragraphs visible with inline scrolling/tap details rather than replacing all content with an ellipsis; tiny regions still need details. Improve sampling outside outlined glyphs for grey backgrounds.
+- Include Arabic/Latin glyph, bidi order, font-scale, source preservation and grey-panel regressions. Semantic mistranslations in the screenshots are not claimed repaired by typography; see docs/ARABIC-RTL-1.1.19.md.
+
 ## [1.1.18] - 2026-11-19
 
 - Replace default displaced circles with opaque source-aligned text masks; no fading, decorative shadow or collision-driven relocation.

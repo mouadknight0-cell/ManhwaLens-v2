@@ -37,3 +37,9 @@ Background sampling moves a few pixels outside the raw glyph perimeter (without 
 - No physical Xiaomi gesture/font-size/layout A/B or latency/battery measurement here. Font adds APK size, and tonal evidence adds bounded work; unchanged speed is not yet measured. No cloud, larger translation model, extra inference pass, invented pronunciation or screenshot-specific phrase repair.
 
 OPEN: semantic errors in the supplied examples; stylized character recognition; exact textured/polygon bubble reconstruction; all overlapping layouts; device-level touch/scroll regression and performance parity. This release is not a declaration that all requested display/translation defects are solved. Upcoming screenshots can expose additional cases.
+
+## Executed checks
+
+JVM/compile/debug CI at `4d6e876` passed https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44714368514 . Android 14 instrumentation, including the supplied grey crop's actual OCR/grouping, native bidi ordering and font scales, passed at the same app source (CI diagnostics-only change `af2d13a`): https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44715009089 . Generated reference-render PNG is in the android-quality-results artifact, not a physical phone screenshot or actual translated-model result.
+
+Preceding emulator run 44714368508 failed without test artifacts or a useful surfaced error; remote log retrieval was blocked. Added compiler-failure annotations, then the next run passed with no app/test-source change. That earlier failure's cause is unknown, not claimed repaired. No test expectations were weakened to obtain this pass.
