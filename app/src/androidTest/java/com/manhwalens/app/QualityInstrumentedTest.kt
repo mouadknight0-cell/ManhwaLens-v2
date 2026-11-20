@@ -206,6 +206,8 @@ class QualityInstrumentedTest {
             val paragraph = android.text.StaticLayout.Builder.obtain(display,0,display.length,paint,500)
                 .setTextDirection(android.text.TextDirectionHeuristics.RTL).build()
             assertEquals(-1, paragraph.getParagraphDirection(0))
+            val latinStart = display.indexOf("Guardian")
+            assertTrue("Latin name remains LTR inside RTL paragraph", paragraph.getPrimaryHorizontal(latinStart) < paragraph.getPrimaryHorizontal(latinStart + 7))
             for (scale in listOf(1f, 1.4f)) {
                 val config = android.content.res.Configuration(base.resources.configuration).apply { fontScale = scale }
                 val context = base.createConfigurationContext(config)
@@ -218,6 +220,33 @@ class QualityInstrumentedTest {
                 assertTrue(view.fittedSp >= 12f)
             }
         }
+    }
+
+    @Test fun realGreyScreenshotOcrProducesWholeNarration() = runBlocking {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val bitmap = instrumentation.context.assets.open("grey-narration.png").use { BitmapFactory.decodeStream(it) }
+        try {
+            val regions = TextRecognitionClient().recognize(bitmap, "en")
+            assertTrue("Narration should not remain three thin lines: ${regions.map { it.text }}", regions.any {
+                it.text.contains("TOMBS", ignoreCase = true) && it.text.contains("EARTH", ignoreCase = true)
+            })
+            instrumentation.runOnMainSync {
+                val context = instrumentation.targetContext
+                val region = regions.first { it.text.contains("TOMBS", ignoreCase = true) && it.text.contains("EARTH", ignoreCase = true) }
+                val surface = com.manhwalens.app.overlay.SurfaceDetector.detect(region,bitmap.width,bitmap.height) { x,y -> bitmap.getPixel(x,y) }
+                val view = com.manhwalens.app.overlay.ReplacementTranslationView(context, "في عام 2025، بدأت المقابر تظهر في أنحاء الأرض.", surface)
+                view.measure(View.MeasureSpec.makeMeasureSpec(surface.width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(surface.height,View.MeasureSpec.EXACTLY))
+                view.layout(0,0,surface.width,surface.height)
+                assertFalse("Grouped narration must show Arabic, not only an ellipsis", view.needsDetails)
+                val output = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+                val canvas = Canvas(output)
+                canvas.save(); canvas.translate(surface.left.toFloat(),surface.top.toFloat()); view.draw(canvas); canvas.restore()
+                val folder = java.io.File(context.getExternalFilesDir(null),"overlay-evidence").apply { mkdirs() }
+                java.io.File(folder,"grey-arabic-reference.png").outputStream().use { output.compress(Bitmap.CompressFormat.PNG,100,it) }
+                java.io.File(folder,"grey-scope.txt").writeText("Real supplied grey-panel crop, actual bundled OCR/grouping, human-authored Arabic reference (NOT model output). Font=Noto Sans Arabic; scrolling=${view.isScrollable}; sp=${view.fittedSp}.")
+                output.recycle()
+            }
+        } finally { bitmap.recycle() }
     }
 
 }
