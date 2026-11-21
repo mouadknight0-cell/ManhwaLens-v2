@@ -27,6 +27,23 @@ object TranslationOutput {
         }
         return null
     }
+    // Recovery only for a *single copied identifier* with organization syntax on BOTH
+    // sides. Do not whitelist arbitrary Latin, learn a name or change the model input.
+    private val organization = Regex("(?i)\\bthe ([a-z]{4,32}) (?:society|sect)\\b")
+    private val latin = Regex("[A-Za-z]+")
+    internal fun recoverOrganization(source:String, raw:String, mask:NameShield.MaskResult, edits:Map<String,String>):Finished? {
+        val copied=latin.findAll(raw).singleOrNull()?.value ?: return null
+        if(com.manhwalens.app.pipeline.ReadingEnglish.validCount(copied)!=0) return null
+        val name=organization.findAll(mask.maskedText).map { it.groupValues[1] }.singleOrNull { it.equals(copied,true) } ?: return null
+        if (!Regex("(?:طائفة|جمعية|جماعة|رابطة|مجتمع|منظمة)\\s+${Regex.escape(copied)}(?![\\p{L}\\p{N}_])").containsMatchIn(raw)) return null
+        if(Regex("[\\p{IsArabic}]{2,}").findAll(raw).count()<3)return null
+        val extra=NameShield.mask(mask.maskedText,listOf(name))
+        val token=extra.tokens.singleOrNull() ?: return null
+        if(token in NameShield.normalizeDigits(raw))return null
+        val combined=NameShield.MaskResult(extra.maskedText,mask.names+name,mask.tokens+token)
+        val shielded=raw.replace(copied,token)
+        return finish(source,shielded,combined,edits)
+    }
     internal data class Finished(val text:String,val correctionRejected:Boolean=false)
 
     /** Corrections are literal, non-cascading edits. Apply while identities are still

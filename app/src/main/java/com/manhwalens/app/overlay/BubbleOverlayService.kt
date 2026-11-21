@@ -388,7 +388,7 @@ class BubbleOverlayService : Service() {
         } else availableBounds()
         fun outcome(i:Int,reason:String){
             if(reason=="attached" || reason=="source_fit_or_obstruction" || reason=="attach_failed_or_stale") com.manhwalens.app.diagnostics.SessionScorecard.outcome(result.id,result.blocks[i].region,reason)
-            com.manhwalens.app.diagnostics.Diagnostics.info("funnel","render","page=${result.id} block=$i outcome=$reason")
+            com.manhwalens.app.diagnostics.Diagnostics.info("funnel","render","page=${result.id} bounds=${result.blocks[i].region.let { "${it.left},${it.top},${it.right},${it.bottom}" }} outcome=$reason")
         }
         val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,bounds.bottom)
         val occupied = translationRects.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }.toMutableList()

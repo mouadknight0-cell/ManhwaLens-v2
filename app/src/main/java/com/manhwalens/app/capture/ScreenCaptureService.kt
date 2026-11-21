@@ -39,6 +39,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.currentCoroutineContext
@@ -639,6 +640,10 @@ class ScreenCaptureService : Service() {
         val dictionaryContext=Triple(learnedNames.toList(),prefs.readings.value,prefs.corrections.value)
         val attempted=java.util.concurrent.ConcurrentHashMap.newKeySet<TextRegion>()
         val contextParts=mutableMapOf<TextRegion,com.manhwalens.app.pipeline.TranslatedBlock>()
+        val pending=plan.map { it.input.region }.toMutableSet()
+        fun stage(r:TextRegion,event:String, why:String="") = Diagnostics.info("funnel",event,"page=$id bounds=${r.left},${r.top},${r.right},${r.bottom} $why",traceId=traceId)
+        pending.forEach { stage(it,"queued") }
+        val blocks=try {
         var index=0
         while(index<plan.size){val first=index++
             if(plan[first].key.issue!=null || plan[first].key.preserveSoundEffect) continue
@@ -646,21 +651,23 @@ class ScreenCaptureService : Service() {
             if(index-first==1)continue
             val chain=plan.subList(first,index).map { it.input.region };val sources=chain.map { it.text }
             if(chain.any { it.text.any { ch->ch.isLetter() && Character.UnicodeScript.of(ch.code)!=Character.UnicodeScript.LATIN } })continue
-            val joined=translation.translateBlock(chain.first().copy(text=sources.joinToString(" ")),learnedNames)
+            val joined=try { translation.translateBlock(chain.first().copy(text=sources.joinToString(" ")),learnedNames) }
+            catch(e:kotlinx.coroutines.CancellationException){currentCoroutineContext().ensureActive();stage(chain.first(),"joined_fallback","request_cancelled");continue}
             if(joined.errorCode==null) com.manhwalens.app.pipeline.ConnectedDialogue.split(joined.translated,sources)?.forEachIndexed { i,value -> contextParts[chain[i]]=joined.copy(region=chain[i],original=chain[i].text,translated=value,method="Connected dialogue: ${joined.method}") }
         }
         val workByRegion = plan.associateBy { it.input.region }
-        val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
+        com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.map { it.region },
             onException = { Diagnostics.warn("translate","worker_exception","block attempt failed",throwable=it,traceId=traceId) },
             identity = { workByRegion.getValue(it).key to contextParts[it]?.translated },
             translate = { region ->
                 val started = System.nanoTime()
                 val work = workByRegion.getValue(region)
-                contextParts[region]?.let { return@progressiveTranslation it }
+                contextParts[region]?.let { stage(region,"started","joined_result");return@progressiveTranslation it }
                 val contextKey=work.key to dictionaryContext
-                pageState.find(region,contextKey)?.let { return@progressiveTranslation it }
+                pageState.find(region,contextKey)?.let { stage(region,"started","page_cache");return@progressiveTranslation it }
                 val retryCase=!attempted.add(region)
+                stage(region,if(retryCase) "retried" else "started")
                 val previousSource = work.key.previous
                 val issue = work.key.issue
                 Diagnostics.info("funnel", "dispatch", "page=$journeyId bounds=${region.left},${region.top} action=${issue ?: if(work.key.preserveSoundEffect) "preserve_sfx" else "translate"}", traceId = traceId)
@@ -709,6 +716,7 @@ class ScreenCaptureService : Service() {
             onReady = { completed ->
                 currentCoroutineContext().ensureActive()
                 if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
+                completed.filter { pending.remove(it.region) }.forEach { b->stage(b.region,"translation_outcome",b.errorCode ?: b.method) }
                 completed.forEach { b->b.errorCode?.let { com.manhwalens.app.diagnostics.SessionScorecard.outcome(id,b.region,it) } }
                 if (completed.any { it.errorCode == null && it.translated != it.original }) BenchmarkTracker.mark("T9")
                 BenchmarkTracker.setJourneyCounts(frame.width, frame.height, prepared.size, completed.size)
@@ -719,6 +727,7 @@ class ScreenCaptureService : Service() {
                 catch (failure: Exception) { Diagnostics.warn("samples", "save", "could not save translation sample", throwable = failure) }
             },
         )
+        } finally { pending.forEach { stage(it,"not_delivered",if(currentCoroutineContext().isActive) "journey_aborted" else "page_cancelled") } }
         BenchmarkTracker.mark("T11")
         BenchmarkTracker.setOutcome(if (blocks.any { it.errorCode != null }) "partial" else "ok", blocks.firstNotNullOfOrNull { it.errorCode })
         BenchmarkTracker.setJourneyCounts(frame.width, frame.height, prepared.size, blocks.size)
@@ -788,7 +797,7 @@ class ScreenCaptureService : Service() {
                 "excluded_regions" to regions.count { it.top >= bottom }.toString()))
         val classified = regions.asSequence()
             .filter { region -> (com.manhwalens.app.pipeline.ReaderContentFilter.keep(region, top, systemBottom) && region.top < bottom).also { if (!it) Diagnostics.info("funnel","drop","page=${CaptureManager.activeResultId} bounds=${region.left},${region.top} reason=reader_chrome_or_insets") } }
-            .filter { it.text.isNotBlank() && it.text.any { c -> c.isLetterOrDigit() } }
+            .filter { r -> r.text.any(Char::isLetterOrDigit).also { if(!it) Diagnostics.info("funnel","drop","page=${CaptureManager.activeResultId} bounds=${r.left},${r.top} reason=no_letters_or_digits") } }
             .map { region -> ClassifiedRegion(region, RegionClassifier.classify(region.text)) }
             .sortedWith(compareBy({ it.region.top }, { it.region.left }))
             .toList()

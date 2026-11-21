@@ -8,18 +8,26 @@ object DirectTranslationLayout {
     data class Prepared(val view: ReplacementTranslationView, val surface: ReplacementSurface)
     /** Last resort for successful Arabic only. Reserve every other OCR region and control. */
     fun nearby(context:Context,message:String,source:ReplacementSurface,screen:ReplacementSurface,occupied:List<ReplacementSurface>):Prepared? {
-        val d=context.resources.displayMetrics.density
-        val w=maxOf(source.width,(132*d).toInt()).coerceAtMost(minOf(screen.width,(220*d).toInt()))
-        if(w<=0) return null
-        val x=((source.left+source.right-w)/2).coerceIn(screen.left,screen.right-w)
-        for(dp in listOf(40,72,110)) {
-            val h=(dp*d).toInt(); if(h>screen.height)continue
-            val y=((source.top+source.bottom-h)/2).coerceIn(screen.top,screen.bottom-h)
-            val s=ReplacementSurface(x,y,x+w,y+h,source.color,reliable=true,capsule=true)
-            if(s.left>source.left || s.right<source.right || s.top>source.top || s.bottom<source.bottom) continue
-            prepare(context,message,s,screen,occupied)?.let { return it }
-        }; return null
+        return candidates(source,screen,context.resources.displayMetrics.density).firstNotNullOfOrNull {
+            prepare(context,message,it,screen,occupied)
+        }
     }
+    // A centred capsule can hit a neighbouring bubble while a flush edge on the
+    // same source is clear. Every candidate still contains the entire source.
+    internal fun candidates(source:ReplacementSurface,screen:ReplacementSurface,d:Float):Sequence<ReplacementSurface> = sequence {
+        val w=maxOf(source.width,(132*d).toInt()).coerceAtMost(minOf(screen.width,(220*d).toInt()))
+        if(w<=0 || w<source.width)return@sequence
+        for(dp in listOf(40,72,110)) {
+            val h=(dp*d).toInt();if(h<source.height || h>screen.height)continue
+            val xs=listOf((source.left+source.right-w)/2,source.left,source.right-w)
+            val ys=listOf((source.top+source.bottom-h)/2,source.top,source.bottom-h)
+            for(y0 in ys)for(x0 in xs){
+                val x=x0.coerceIn(screen.left,screen.right-w);val y=y0.coerceIn(screen.top,screen.bottom-h)
+                if(x<=source.left && x+w>=source.right && y<=source.top && y+h>=source.bottom)
+                    yield(ReplacementSurface(x,y,x+w,y+h,source.color,reliable=true,capsule=true))
+            }
+        }
+    }.distinct()
     fun prepare(context: Context, message: String, source: ReplacementSurface,
         screen: ReplacementSurface, occupied: List<ReplacementSurface>): Prepared? {
         fun build(s: ReplacementSurface): Prepared? {

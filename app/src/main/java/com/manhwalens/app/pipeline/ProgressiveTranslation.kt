@@ -2,6 +2,8 @@ package com.manhwalens.app.pipeline
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 
 /** Bounded workers, one request per exact utterance, serialized progressive delivery. */
@@ -25,10 +27,15 @@ suspend fun progressiveTranslation(
             for (group in jobs) {
                 val region = group.first().value
                 suspend fun attempt(): TranslatedBlock = try { translate(region) }
-                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    // A cancelled SDK task is not necessarily a cancelled page. If this
+                    // worker still has a live owner, finish its group and drain the queue.
+                    currentCoroutineContext().ensureActive()
+                    TranslatedBlock(region,region.text,"","TR-REQUEST-CANCELLED")
+                }
                 catch (failure: Exception) { onException(failure); TranslatedBlock(region, region.text, "", "TR-BLOCK-EXCEPTION") }
                 var translated = attempt()
-                if (translated.errorCode != null && translated.errorCode !in setOf("OCR-CLIPPED", "OCR-UNCERTAIN")) {
+                if (translated.errorCode in setOf(com.manhwalens.app.diagnostics.ErrorCodes.TRANSLATE_FAILED,"TR-BLOCK-EXCEPTION")) {
                     kotlinx.coroutines.delay(120)
                     translated = attempt()
                 }

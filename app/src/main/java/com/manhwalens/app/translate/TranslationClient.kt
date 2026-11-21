@@ -101,7 +101,6 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             catch (failure: IllegalArgumentException) { throw TranslationFailure("TR-NAME-SHIELD") }
         val modelInput = com.manhwalens.app.pipeline.TranslationInput.nativeInput(if(retryCase) maskResult.maskedText.uppercase() else maskResult.maskedText)
         val arabicMask=maskResult.copy(names=maskResult.names.map { terms[it.lowercase()] ?: it })
-        val protected = arabicMask.names
 
         if(!LanguageModels.state.value.ready && !ensureModel()) throw TranslationFailure(ErrorCodes.TRANSLATE_DOWNLOAD_FAILED)
         val raw = try {
@@ -127,17 +126,12 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
                 context = mapOf("chars" to trimmed.length.toString()), recovery = "explicit failure shown")
             throw TranslationFailure(ErrorCodes.TRANSLATE_TIMEOUT)
         }
-        TranslationOutput.issue(raw, maskResult)?.let { issue ->
-            if(debug()) Diagnostics.warn("translate", "output_validation", "model output failed structural validation",
-                code = issue, context = mapOf("source_chars" to trimmed.length.toString(), "output_chars" to raw.length.toString()))
-            // ProgressiveTranslation owns the single retry. On that attempt validate the term-only
-            // protected fallback separately if uncertain learned names changed the model input.
-            if(retryCase && issue in setOf("TR-UNTRANSLATED","TR-INVALID-OUTPUT","TR-NAME-LOST") && glossaryNames.isNotEmpty() && protected.all { it in terms.values }) {
-                return translateText(trimmed,emptyList(),terms,false)
-            }
-            throw TranslationFailure(issue)
-        }
-        val finished=TranslationOutput.finish(trimmed,raw,arabicMask,corrections) ?: throw TranslationFailure("TR-INVALID-OUTPUT")
+        val issue=TranslationOutput.issue(raw,maskResult)
+        val finished=if(issue==null) TranslationOutput.finish(trimmed,raw,arabicMask,corrections) else {
+            val recovered=if(issue=="TR-UNTRANSLATED") TranslationOutput.recoverOrganization(trimmed,raw,arabicMask,corrections) else null
+            Diagnostics.info("translate","native_validation","ready=${LanguageModels.state.value.ready} issue=$issue raw_chars=${raw.length} arabic_letters=${raw.count(ArabicOutput::isLetter)} latin_letters=${raw.count { it in 'A'..'Z' || it in 'a'..'z' }} tokens=${maskResult.tokens.size} recovered=${recovered!=null}")
+            recovered ?: throw TranslationFailure(issue)
+        } ?: throw TranslationFailure("TR-INVALID-OUTPUT")
         if(finished.correctionRejected) Diagnostics.warn("translate","post_validation","Invalid correction ignored; kept validated translation")
         val final=finished.text
         cache.put(cacheKey,final)
