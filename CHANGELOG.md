@@ -258,3 +258,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Enforce offline-only model checks, including dependencies in the merged manifest. Missing models no longer trigger downloads.
 - Batch dark-proposer pixel sampling, reuse immutable frame samples and skip sampling when the screen is off. Add per-block dispatch diagnostics and hardware profiling tools.
 - See `docs/offline-reader-audit.md` for the measured A/B and unverified device targets.
+
+### 1.1.32 candidate — release blocked
+- Updated reviewed EN→AR seed, restricted template/term substitution, added name retries and revised translation cache identity.
+- Improved consent and overlay checks. Added opt-in bounded crop OCR and an output-sensitive Android performance gate. It currently fails on crop-only discovery; see `docs/reader-1.1.32-candidate.md` before enabling.

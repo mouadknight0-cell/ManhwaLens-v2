@@ -30,7 +30,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        buildConfigField("boolean", "CROP_FIRST", providers.gradleProperty("cropFirst").orElse("true").get())
+        buildConfigField("boolean", "CROP_FIRST", providers.gradleProperty("cropFirst").orElse("false").get())
         buildConfigField("boolean", "STRICT_PLACEMENT", providers.gradleProperty("strictPlacement").orElse("true").get())
         // Permanent application id — must never change between releases.
         applicationId = "com.manhwalens.app"
