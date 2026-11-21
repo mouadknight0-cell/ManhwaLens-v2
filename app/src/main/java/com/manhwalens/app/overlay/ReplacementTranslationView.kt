@@ -16,10 +16,21 @@ import kotlin.math.min
  * Unfit/error layouts are transparent, never an opaque ellipsis or scrolling slice.
  */
 class ReplacementTranslationView(context: Context, val message: String,
-    private val surface: ReplacementSurface, private val failed: Boolean = false) : View(context) {
+    private val surface: ReplacementSurface, private val failed: Boolean = false,
+    private val anchor:ReplacementSurface?=null, private val minSp:Int=12) : View(context) {
+    companion object {
+        internal fun lines(text:String,ink:TextPaint,width:Int):StaticLayout {
+            return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
+                .setAlignment(Layout.Alignment.ALIGN_CENTER)
+                .setTextDirection(if (com.manhwalens.app.pipeline.ArabicDisplay.isArabic(text)) TextDirectionHeuristics.RTL else TextDirectionHeuristics.FIRSTSTRONG_LTR)
+                .setIncludePad(true).setLineSpacing(0f, 1.04f)
+                .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)
+                .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build()
+        }
+    }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = surface.color or (0xff shl 24) }
     private val ink = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = ArabicTypeface.get(context) }
-    private val displayMessage = com.manhwalens.app.pipeline.ArabicDisplay.prepare(message)
+    private val displayMessage = com.manhwalens.app.pipeline.ArabicDisplay.isolate(message)
     private var prepared: android.graphics.Bitmap? = null
     val replacementReady: Boolean get() = prepared != null
     internal var rasterize: (Int, Int, (Canvas) -> Unit) -> android.graphics.Bitmap = { w, h, draw ->
@@ -45,6 +56,7 @@ class ReplacementTranslationView(context: Context, val message: String,
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         prepared = null
+        presented=false
         val padding = min(4 * resources.displayMetrics.density, min(w, h) * .08f)
         // Largest centered inscribed rectangle with the ellipse’s aspect ratio.
         val ovalMargin = ((1.0 - kotlin.math.sqrt(0.5)) / 2).toFloat()
@@ -65,12 +77,7 @@ class ReplacementTranslationView(context: Context, val message: String,
         fun make(text: String, size: Float): StaticLayout {
             fitPasses++
             ink.textSize = size * resources.displayMetrics.scaledDensity
-            return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
-                .setAlignment(Layout.Alignment.ALIGN_CENTER)
-                .setTextDirection(if (com.manhwalens.app.pipeline.ArabicDisplay.isArabic(message)) TextDirectionHeuristics.RTL else TextDirectionHeuristics.FIRSTSTRONG_LTR)
-                .setIncludePad(true).setLineSpacing(0f, 1.04f)
-                .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)
-                .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build()
+            return lines(text,ink,width)
         }
         fun wordsIntact(candidate: StaticLayout): Boolean = (1 until candidate.lineCount).none {
             com.manhwalens.app.pipeline.WordBoundary.splitsWord(candidate.text, candidate.getLineStart(it))
@@ -80,7 +87,7 @@ class ReplacementTranslationView(context: Context, val message: String,
         fun fits(candidate: StaticLayout): Boolean = candidate.height <= content.height() && wordsIntact(candidate) &&
             (0 until candidate.lineCount).all { candidate.getLineMax(it) <= width + .5f }
         var last:StaticLayout?=null
-        var low = 12; var high = 42; var chosen = 0
+        var low = minSp; var high = 42; var chosen = 0
         // Bound pathological text layout cost; bounded layout work, never silent clipping.
         if (content.width()>=1 && content.height()>=1 && message.length <= 20000) while (low <= high) {
             val mid = (low + high) / 2
@@ -97,6 +104,9 @@ class ReplacementTranslationView(context: Context, val message: String,
         if (!failed && text != null && message.any { it.isLetterOrDigit() } && w.toLong() * h in 1..8_000_000L) {
             prepared = runCatching {
                 rasterize(w, h) { canvas ->
+                    // Rounded corners/irregular contours must never expose the source glyphs.
+                    anchor?.let { a -> canvas.drawRect((a.left-surface.left).toFloat(),(a.top-surface.top).toFloat(),
+                        (a.right-surface.left).toFloat(),(a.bottom-surface.top).toFloat(),fill) }
                     if (surface.mask != null) {
                         val m=surface.mask; val path=android.graphics.Path(); val d=m.step.toFloat()
                         for(i in m.spans.indices step 3){ val y=m.spans[i]*d;path.addRect(m.spans[i+1]*d,y,m.spans[i+2]*d,y+d,android.graphics.Path.Direction.CW) }
@@ -120,6 +130,12 @@ class ReplacementTranslationView(context: Context, val message: String,
         }
     }
 
+    internal fun fullyOnScreen():Boolean {
+        if(!isShown || !isAttachedToWindow || !presented || !replacementReady || width!=surface.width || height!=surface.height) return false
+        val xy=IntArray(2);getLocationOnScreen(xy)
+        val clip=android.graphics.Rect()
+        return xy[0]==surface.left && xy[1]==surface.top && getLocalVisibleRect(clip) && clip==android.graphics.Rect(0,0,width,height)
+    }
     var presented=false
         private set
     var onPresented:(()->Unit)?=null

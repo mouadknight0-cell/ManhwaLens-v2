@@ -31,7 +31,7 @@ class ReliabilityTest {
     }
     @Test fun offsetCandidateKeepsGlyphsOnSourceAndAvoidsAdjacentDialogue() {
         val src=ReplacementSurface(100,120,150,145);val screen=ReplacementSurface(0,0,400,500)
-        val boxes=DirectTranslationLayout.candidates(src,screen,1f).toList()
+        val boxes=DirectTranslationLayout.positions(src,screen,132,45,emptyList()).toList()
         assertTrue(boxes.first().left<95);assertTrue(boxes.any { it.left>=95 });assertTrue(boxes.all { it.left<=100 && it.right>=150 && it.top<=120 && it.bottom>=145 })
     }
 }

@@ -19,17 +19,17 @@ object SessionScorecard {
         val totals=mutableMapOf<String,Int>();var eligible=0;var cycles=0;var cancels=0
         var lookups=0;var hits=0;var lookupNs=0L;val ms=ArrayDeque<Double>()
         fun closePending(reason:String) {
-            ledger.entries.filter { it.value in setOf("pending","fallback_attached","balloon_attached") }.forEach {
+            ledger.entries.filter { it.value in setOf("pending","balloon_attached") }.forEach {
                 if(it.value!="pending") totals[it.value]=(totals[it.value]?:1)-1
                 totals[reason]=(totals[reason]?:0)+1; it.setValue(reason)
             }
         }
         fun summary():String {
             fun rate(n:Int,d:Int)=if(d==0) "n/a" else String.format(Locale.ROOT,"%.1f%%",100.0*n/d)
-            fun metric(k:String):String { val n=if(k=="attached") listOf("attached","VISIBLE_IN_BALLOON","VISIBLE_IN_FALLBACK").sumOf { totals[it]?:0 } else stages[k]?:totals[k]?:0;return "$n (${rate(n,eligible)})" }
+            fun metric(k:String):String { val n=if(k=="attached") listOf("attached","VISIBLE_IN_IMAGE").sumOf { totals[it]?:0 } else stages[k]?:totals[k]?:0;return "$n (${rate(n,eligible)})" }
             val ordered=ms.sorted();fun q(p:Double)=ordered.getOrNull((ceil(ordered.size*p).toInt()-1).coerceAtLeast(0))?.let { String.format(Locale.ROOT,"%.1f",it) } ?: "n/a"
             val median=if(ordered.isEmpty()) "n/a" else String.format(Locale.ROOT,"%.1f",(ordered[(ordered.size-1)/2]+ordered[ordered.size/2])/2)
-            return "session=$since cycles=$cycles cancelled=$cancels (${rate(cancels,cycles)}) eligible=$eligible rendered=${metric("attached")} source_fit_or_obstruction=${metric("source_fit_or_obstruction")} TR-UNTRANSLATED=${metric("TR-UNTRANSLATED")} OCR-UNCERTAIN=${metric("OCR-UNCERTAIN")} stages=$stages visibility=${totals.filterKeys { it in setOf("VISIBLE_IN_BALLOON","VISIBLE_IN_FALLBACK","TRANSLATION_FAILED","RENDER_FAILED","STALE_RESULT","CANCELLED") }} lexicon_hits=$hits/$lookups (${rate(hits,lookups)}) lookup_us_total=${lookupNs/1000} completed_processing_samples=${ms.size} median_ms=$median p90_ms=${q(.9)}"
+            return "session=$since cycles=$cycles cancelled=$cancels (${rate(cancels,cycles)}) eligible=$eligible rendered=${metric("attached")} source_fit_or_obstruction=${metric("source_fit_or_obstruction")} TR-UNTRANSLATED=${metric("TR-UNTRANSLATED")} OCR-UNCERTAIN=${metric("OCR-UNCERTAIN")} stages=$stages visibility=${totals.filterKeys { it in setOf("VISIBLE_IN_IMAGE","TRANSLATION_FAILED","RENDER_FAILED","STALE_RESULT","CANCELLED") }} lexicon_hits=$hits/$lookups (${rate(hits,lookups)}) lookup_us_total=${lookupNs/1000} completed_processing_samples=${ms.size} median_ms=$median p90_ms=${q(.9)}"
         }
     }
     fun init(context:Context){ archive=context.getSharedPreferences("session_scorecards",Context.MODE_PRIVATE) }
