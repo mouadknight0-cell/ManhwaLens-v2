@@ -609,7 +609,7 @@ class ScreenCaptureService : Service() {
         if (com.manhwalens.app.pipeline.ReaderContentFilter.isTabOverview(regions) ||
             com.manhwalens.app.pipeline.ReaderContentFilter.isLoadingPage(regions)) {
             Diagnostics.info("capture", "reader_skip", "browser overview or loading page skipped; waiting for reader content", traceId = traceId)
-            commit("empty"){CaptureManager.setState(CaptureManager.CaptureState.Done(CaptureResult(journeyId, System.currentTimeMillis(), OCR_SOURCE, TARGET, emptyList(),sceneRevision=frameRevision)))}
+            commit("empty"){CaptureManager.setState(CaptureManager.CaptureState.Done(CaptureResult(journeyId, System.currentTimeMillis(), OCR_SOURCE, TARGET, emptyList(),traceId=traceId,sceneRevision=frameRevision)))}
             if (liveEnabled) CaptureManager.setLive(CaptureManager.LiveStatus.WAITING)
             BenchmarkTracker.finish("skipped", frameWidth = frame.width, frameHeight = frame.height, regionCount = regions.size)
             return
@@ -631,7 +631,7 @@ class ScreenCaptureService : Service() {
         if (prepared.isEmpty()) {
             Diagnostics.warn("text", "reconstruct", "OCR produced no translatable text",
                 code = ErrorCodes.OCR_EMPTY, recovery = "empty result shown to user")
-            commit("empty"){CaptureManager.setState(CaptureManager.CaptureState.Done(CaptureResult(journeyId, System.currentTimeMillis(), OCR_SOURCE, TARGET, emptyList(),sceneRevision=frameRevision)))}
+            commit("empty"){CaptureManager.setState(CaptureManager.CaptureState.Done(CaptureResult(journeyId, System.currentTimeMillis(), OCR_SOURCE, TARGET, emptyList(),traceId=traceId,sceneRevision=frameRevision)))}
             if (liveEnabled) CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION)
             BenchmarkTracker.finish("empty", frameWidth = frame.width, frameHeight = frame.height, regionCount = 0)
             return
@@ -750,7 +750,7 @@ class ScreenCaptureService : Service() {
                 if (completed.any { it.errorCode == null && it.translated != it.original }) BenchmarkTracker.mark("T9")
                 BenchmarkTracker.setJourneyCounts(frame.width, frame.height, prepared.size, completed.size)
                 commit("partial"){CaptureManager.setState(CaptureManager.CaptureState.Partial(CaptureResult(
-                    id, System.currentTimeMillis(), OCR_SOURCE, TARGET, completed,sceneRevision=frameRevision)))}
+                    id, System.currentTimeMillis(), OCR_SOURCE, TARGET, completed,traceId=traceId,sceneRevision=frameRevision)))}
                 try { com.manhwalens.app.history.TranslationSamples.collect(id, traceId, completed) }
                 catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (failure: Exception) { Diagnostics.warn("samples", "save", "could not save translation sample", throwable = failure) }
@@ -772,7 +772,7 @@ class ScreenCaptureService : Service() {
             sourceLanguage = OCR_SOURCE,
             targetLanguage = TARGET,
             blocks = blocks.toList(),
-            thumbnailPath = thumbnailPath,sceneRevision=frameRevision,
+            thumbnailPath = thumbnailPath,traceId=traceId,sceneRevision=frameRevision,
         )
         runCatching { history.add(result) }
             .onFailure {

@@ -29,12 +29,13 @@ object DirectTranslationLayout {
         }
     }.distinct()
     fun prepare(context: Context, message: String, source: ReplacementSurface,
-        screen: ReplacementSurface, occupied: List<ReplacementSurface>): Prepared? {
+        screen: ReplacementSurface, occupied: List<ReplacementSurface>, measured:(String)->Unit = {}): Prepared? {
         fun build(s: ReplacementSurface): Prepared? {
             if (s.width <= 0 || s.height <= 0 || occupied.any { s.left < it.right && s.right > it.left && s.top < it.bottom && s.bottom > it.top }) return null
             val view=ReplacementTranslationView(context,message,s)
             view.measure(View.MeasureSpec.makeMeasureSpec(s.width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(s.height,View.MeasureSpec.EXACTLY))
             view.layout(0,0,s.width,s.height)
+            measured(view.measurement)
             return if(view.replacementReady) Prepared(view,s) else null
         }
         if (source.left>=screen.left && source.top>=screen.top && source.right<=screen.right && source.bottom<=screen.bottom)

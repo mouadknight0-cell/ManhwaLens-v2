@@ -112,7 +112,7 @@ object BenchmarkTracker {
             traceId = s.traceId,
             startedAtMs = s.startedAtMs,
             coldStart = cold,
-            status = if (status in listOf("cancelled", "superseded")) completedOutcome?.first ?: status else status,
+            status = if (status=="ok" && t12Inferred) "partial" else status,
             errorCode = errorCode ?: completedOutcome?.second ?: if (status == "partial") ErrorCodes.TRANSLATE_FAILED else null,
             t12Inferred = t12Inferred,
             frameWidth = frameWidth.takeIf { it != 0 } ?: s.frameWidth,

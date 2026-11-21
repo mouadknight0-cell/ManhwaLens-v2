@@ -28,6 +28,8 @@ class ReplacementTranslationView(context: Context, val message: String,
     }
     private var layout: StaticLayout? = null
     private var content = RectF()
+    var measurement: String = "not_measured"
+        private set
     var fittedSp: Float = 12f
         private set
     var fitPasses: Int = 0
@@ -44,10 +46,13 @@ class ReplacementTranslationView(context: Context, val message: String,
         super.onSizeChanged(w, h, oldw, oldh)
         prepared = null
         val padding = min(4 * resources.displayMetrics.density, min(w, h) * .08f)
-        val insetX = if (surface.oval) w * .15f else 0f
-        val insetY = if (surface.oval) h * .15f else 0f
+        // Largest centered inscribed rectangle with the ellipse’s aspect ratio.
+        val ovalMargin = ((1.0 - kotlin.math.sqrt(0.5)) / 2).toFloat()
+        val insetX = if (surface.oval) w * ovalMargin else 0f
+        val insetY = if (surface.oval) h * ovalMargin else 0f
         content.set(insetX + padding, insetY + padding, w - insetX - padding, h - insetY - padding)
         surface.mask?.inset?.let { content.set(it[0]+padding,it[1]+padding,it[2]-padding,it[3]-padding) }
+        content.intersect(0f,0f,w.toFloat(),h.toFloat())
         val width = content.width().toInt().coerceAtLeast(1)
         val c = surface.color
         val luminance = Color.red(c) * .2126 + Color.green(c) * .7152 + Color.blue(c) * .0722
@@ -82,6 +87,8 @@ class ReplacementTranslationView(context: Context, val message: String,
         }
         fittedSp = if (chosen == 0) 12f else chosen.toFloat()
         layout = if (chosen == 0) null else make(displayMessage, fittedSp)
+        val measured = layout ?: make(displayMessage.take(20000), 12f)
+        measurement = "interior=${width}x${content.height().toInt()} sp=$fittedSp lines=${measured.lineCount} required_height=${measured.height} fits=${layout!=null}"
         contentDescription = message
         // A hard allocation budget. Unknown / oversized / failed layouts keep the source visible.
         val text = layout
@@ -111,10 +118,13 @@ class ReplacementTranslationView(context: Context, val message: String,
         }
     }
 
+    var presented=false
+        private set
+    var onPresented:(()->Unit)?=null
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val image = prepared ?: return // no independent background paint exists
-        try { canvas.drawBitmap(image, 0f, 0f, null) }
+        try { canvas.drawBitmap(image, 0f, 0f, null); if(!presented){presented=true; post { onPresented?.invoke() }} }
         catch (failure: Exception) { prepared = null; postInvalidate() }
     }
 
