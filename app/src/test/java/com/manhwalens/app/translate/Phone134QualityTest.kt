@@ -37,7 +37,7 @@ class Phone134QualityTest {
     @Test fun scopedPhrasingKeepsNegationAndDegree(){
         assertEquals("وهذا أيضًا ليس ببعيد عن المعقول.",DialogueLexicon.translate("IT'S NOT UNREASONABLE, EITHER."))
         assertNull(DialogueLexicon.translate("It is not unreasonable to wait."));assertEquals("Isn't this a little too harsh?",TranslationInput.nativeInput("ISN'T THIS A LITTLE TOO HEAVY-HANDED?"))
-        assertEquals("We would have had to handle it sooner or later.",TranslationInput.nativeInput("WE WOULD HAVE HAD TO DEAL WITH IT SOONER OR LATER."))
+        assertEquals("We would eventually have had to handle it.",TranslationInput.nativeInput("WE WOULD HAVE HAD TO DEAL WITH IT SOONER OR LATER."))
         assertEquals("Head to 7000.",TranslationInput.nativeInput("HEAD TO 7000."))
     }
     @Test fun rhetoricalSuffixIsNotAnInventedObject()=runTest {

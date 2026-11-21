@@ -121,4 +121,5 @@
     <string name="ok">حسناً</string>
     <string name="delete">حذف</string>
     <string name="action_close">إغلاق</string>
+    <string name="capture_launch_blocked">لم تظهر نافذة الإذن. ابدأ الالتقاط من التطبيق. على شاومي تحقق من إذن النوافذ المنبثقة في الخلفية.</string>
 </resources>

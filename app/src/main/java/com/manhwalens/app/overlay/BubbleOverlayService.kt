@@ -121,7 +121,7 @@ class BubbleOverlayService : Service() {
             try {
                 // Keep a visible overlay and launch in the tap's main-thread turn.
                 // Hiding it before startActivity removes the visible-overlay BAL exemption.
-                CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true, requestedAtNs = requestedAtNs)
+                CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true, requestedAtNs = requestedAtNs, source="bubble")
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (failure: Exception) {
                 running = false
@@ -190,7 +190,7 @@ class BubbleOverlayService : Service() {
 
     private fun startBubble() {
         if (!Settings.canDrawOverlays(this)) {
-            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_overlay_denied)))
+            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_overlay_denied),"PERM-OVERLAY"))
             stopSelf()
             return
         }

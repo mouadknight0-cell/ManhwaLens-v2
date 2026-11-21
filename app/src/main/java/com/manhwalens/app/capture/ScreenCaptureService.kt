@@ -274,6 +274,12 @@ class ScreenCaptureService : Service() {
     // ── Session lifecycle ──────────────────────────────────────────
 
     private fun handleStartSession(intent: Intent) {
+        val generation=intent.getLongExtra("consent_generation",-1)
+        if(!CaptureManager.advance(generation,CaptureManager.ConsentStep.DISPATCH,CaptureManager.ConsentStep.SERVICE)){
+            Diagnostics.warn("capture","stale_service","id=$generation ignored",code="CAP-STALE")
+            if(mediaProjection==null)stopSelf()
+            return
+        }
         val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, -1)
         val resultData: Intent? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(EXTRA_RESULT_DATA, Intent::class.java)
@@ -327,7 +333,11 @@ class ScreenCaptureService : Service() {
         }
 
         // API 34+ requires a registered callback BEFORE any VirtualDisplay is created.
-        projection.registerCallback(projectionCallback, mainHandler)
+        Diagnostics.info("capture","projection_obtained","id=$generation")
+        try { projection.registerCallback(projectionCallback, mainHandler) } catch(e:RuntimeException){
+            Diagnostics.error("capture","projection_callback",ErrorCodes.CAPTURE_MEDIA_PROJECTION_EXCEPTION,"id=$generation",throwable=e)
+            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_capture_generic),ErrorCodes.CAPTURE_MEDIA_PROJECTION_EXCEPTION));runCatching {projection.stop()};stopSelf();return
+        }
         mediaProjection = projection
 
         if (!createCapturePipeline(projection)) {
@@ -340,8 +350,9 @@ class ScreenCaptureService : Service() {
         }
 
         com.manhwalens.app.diagnostics.SessionScorecard.start()
+        Diagnostics.info("capture","pipeline_initialized","id=$generation virtual display and image reader ready")
         CaptureManager.setSessionActive(true)
-        Diagnostics.info("capture", "session_active", "media projection held; pipeline ready",
+        Diagnostics.info("capture", "session_active", "id=$generation media projection held; reader and virtual display ready",
             context = mapOf("width" to pipelineWidth.toString(), "height" to pipelineHeight.toString()))
 
         if (autoCapture) {
@@ -652,6 +663,7 @@ class ScreenCaptureService : Service() {
             while(index<plan.size && index-first<4 && plan[index].key.issue==null && !plan[index].key.preserveSoundEffect && com.manhwalens.app.pipeline.ConnectedDialogue.linked(plan[index-1].input.region,plan[index].input.region))index++
             if(index-first==1)continue
             val chain=plan.subList(first,index).map { it.input.region };val sources=chain.map { it.text }
+            if(chain.any { com.manhwalens.app.pipeline.ReadingEnglish.fragmented(it.text,learnedNames+prefs.readings.value.keys) })continue
             if(chain.any { it.text.any { ch->ch.isLetter() && Character.UnicodeScript.of(ch.code)!=Character.UnicodeScript.LATIN } })continue
             val joined=try { translation.translateBlock(chain.first().copy(text=sources.joinToString(" ")),learnedNames) }
             catch(e:kotlinx.coroutines.CancellationException){currentCoroutineContext().ensureActive();stage(chain.first(),"joined_fallback","request_cancelled");continue}
@@ -705,7 +717,9 @@ class ScreenCaptureService : Service() {
                         catch(e:Exception){ Diagnostics.warn("ocr","crop","retry failed",throwable=e);null } finally { input.recycle() }
                     }
                     val chosen=if(best!=null && lexical(best)>=lexical(region)) region.copy(text=best.text,confidence=best.confidence) else region
-                    if((chosen.text!=region.text || translated.errorCode=="OCR-UNCERTAIN") && chosen.confidence>=.30f && lexical(chosen)>=.8) translation.translateBlock(chosen,learnedNames,previousSource,true) else translated
+                    val improved=chosen.text!=region.text && chosen.confidence>=.30f && lexical(chosen)>=.8
+                    val result=if(improved)translation.translateBlock(chosen,learnedNames,previousSource,true) else translated
+                    if(debug) result.copy(evidence=result.evidence+mapOf("initial_status" to (translated.errorCode?:"ok"),"crop_candidate" to best?.text.orEmpty().take(512),"crop_decision" to if(improved)"accepted" else "no_improvement")) else result
                 } else translated
                 commit("page_cache"){pageState.save(region,contextKey,recovered)}
                 recovered.also {
@@ -954,7 +968,7 @@ class ScreenCaptureService : Service() {
         endLive(if (CaptureManager.live.value == CaptureManager.LiveStatus.ERROR) CaptureManager.LiveStatus.ERROR else CaptureManager.LiveStatus.OFF)
         expectedProjectionStop = true
         teardownCapturePipeline()
-        CaptureManager.setSessionActive(false)
+        if(CaptureManager.sessionPhase.value!=CaptureManager.SessionPhase.STARTING)CaptureManager.setSessionActive(false)
         mediaProjection?.let { projection ->
             runCatching { projection.unregisterCallback(projectionCallback) }
             runCatching { projection.stop() }
@@ -984,9 +998,10 @@ class ScreenCaptureService : Service() {
         private const val MAX_BUFFERED_FRAMES = 3
         private const val VIRTUAL_DISPLAY_NAME = "ManhwaLensCapture"
 
-        fun startSession(context: Context, resultCode: Int, resultData: Intent, autoCapture: Boolean, requestedAtNs: Long = System.nanoTime()) {
+        fun startSession(context: Context, generation:Long, resultCode: Int, resultData: Intent, autoCapture: Boolean, requestedAtNs: Long = System.nanoTime()) {
             val intent = Intent(context, ScreenCaptureService::class.java).apply {
                 action = ACTION_START_SESSION
+                putExtra("consent_generation",generation)
                 putExtra("request_ns", requestedAtNs)
                 putExtra(EXTRA_RESULT_CODE, resultCode)
                 putExtra(EXTRA_RESULT_DATA, resultData)
@@ -994,6 +1009,12 @@ class ScreenCaptureService : Service() {
             }
             try {
                 androidx.core.content.ContextCompat.startForegroundService(context, intent)
+                Handler(Looper.getMainLooper()).postDelayed({
+                    if(CaptureManager.pending(generation,CaptureManager.ConsentStep.DISPATCH)){
+                        Diagnostics.warn("capture","service_not_entered","id=$generation retry from foreground",code=ErrorCodes.CAPTURE_SERVICE_START_FAILED)
+                        CaptureManager.setState(CaptureManager.CaptureState.Error(context.getString(R.string.error_capture_generic),ErrorCodes.CAPTURE_SERVICE_START_FAILED))
+                    }
+                },5000)
             } catch (t: Throwable) {
                 Diagnostics.error("capture", "start_service", ErrorCodes.CAPTURE_SERVICE_START_FAILED,
                     "failed to start foreground capture service", throwable = t,
@@ -1010,7 +1031,7 @@ class ScreenCaptureService : Service() {
         }
 
         fun stop(context: Context) {
-            CaptureManager.consentGeneration.incrementAndGet()
+            Diagnostics.info("capture","stop_cancel","invalidated id=${CaptureManager.consentGeneration.getAndIncrement()}")
             if (!CaptureManager.sessionActive && CaptureManager.sessionPhase.value != CaptureManager.SessionPhase.STOPPING) {
                 context.stopService(Intent(context, ScreenCaptureService::class.java))
                 CaptureManager.setSessionPhase(CaptureManager.SessionPhase.INACTIVE)

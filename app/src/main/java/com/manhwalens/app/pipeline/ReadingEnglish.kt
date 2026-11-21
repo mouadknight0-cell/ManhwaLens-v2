@@ -10,6 +10,15 @@ object ReadingEnglish {
     private val context=mapOf("1 SEE" to "I SEE", "THE GARTH" to "THE EARTH", "STILL ALVE" to "STILL ALIVE", "GET YO," to "GET YOU,","A NALL" to "A WALL","THIG IG" to "THIS IS","THEY SAV" to "THEY SAY")
     private val swap=mapOf('8' to "b",'p' to "f",'f' to "p",'o' to "dq",'d' to "o",'g' to "es",'e' to "g",'v' to "y",'y' to "v",'3' to "e",'5' to "s",'s' to "g",'4' to "a",'1' to "il",'0' to "o",'q' to "o")
     fun validCount(text:String)=tokens.findAll(text.lowercase()).count { it.value in words || it.value.replace("'","") in words }
+    // Mean OCR confidence hides truncated words. Require several independent
+    // clues before spending a crop retry; don't identify names from uppercase.
+    fun fragmented(text:String,names:List<String>):Boolean {
+        if(text.length<60 || text.last() !in 'A'..'Z' || text.any {it in ".!?:;"})return false
+        val source=com.manhwalens.app.names.NameShield.mask(text,names).maskedText
+        val ts=tokens.findAll(source.lowercase()).map {it.value}.toList()
+        fun suspect(t:String)=t.length in 2..3 && t.all { it in 'a'..'z' } && t !in words
+        return ts.size>=12 && suspect(ts.last()) && ts.filter(::suspect).distinct().size>=3
+    }
     fun score(s:String,names:List<String>):Double {
         val ts=tokens.findAll(s.lowercase()).map { it.value }.toList(); if(ts.isEmpty()) return 0.0
         return ts.count { it in words || it.replace("'","") in words || names.any { n->n.equals(it,true) } }.toDouble()/ts.size

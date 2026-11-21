@@ -32,6 +32,8 @@ data class TranslatedBlock(
     val errorCode: String? = null,
     val durationMs: Long? = null,
     val method: String = "ML Kit on-device",
+    val evidence:Map<String,String> = emptyMap(), // debug samples only, never drawn
+
 )
 
 /** One completed capture + pipeline run. Persisted to history. */

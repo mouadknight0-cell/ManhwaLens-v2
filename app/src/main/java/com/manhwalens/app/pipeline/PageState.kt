@@ -11,6 +11,6 @@ class PageState {
         completed[id(r) to context]=b.copy(region=r.copy(surface=null))
         while(completed.size>128) completed.remove(completed.keys.first())
     }
-    @Synchronized fun find(r:TextRegion,context:Any)=completed[id(r) to context]?.copy(region=r,durationMs=0)
+    @Synchronized fun find(r:TextRegion,context:Any)=completed[id(r) to context]?.copy(region=r,durationMs=0,evidence=mapOf("origin" to "page_cache"))
     @Synchronized fun clear()=completed.clear()
 }

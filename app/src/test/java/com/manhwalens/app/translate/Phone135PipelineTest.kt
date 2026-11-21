@@ -31,7 +31,7 @@ class Phone135PipelineTest {
     }
     @Test fun temporalAndPotentialMetaphorStayInOneCallWithoutInventingScene(){
         val raw="THIS WAS SOMETHING WE WOULD HAVE HAD TO DEAL WITH SOONER OR LATER. NAMGUNG JUN HAS SIMPLY TAKEN THE INITIATIVE AND CLEARED THE WAY FOR US."
-        assertEquals("This was something we would have had to handle sooner or later. 7000 has simply taken the initiative and cleared the way for us.",input(raw))
+        assertEquals("This was something we would eventually have had to handle. 7000 has simply taken the initiative and made it possible for us to proceed.",input(raw))
         assertEquals("Take the clouds and go to 7000.",input("TAKE THE CLOUDS AND HEAD TO HEFEl."))
     }
 }
