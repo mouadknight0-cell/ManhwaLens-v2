@@ -48,7 +48,7 @@ object BubbleContours {
         if(nx<4||ny<4||r.left<=x0||r.right>=x0+nx*step||r.top<=y0||r.bottom>=y0+ny*step)return reject("source_outside_crop")
         val pixels=IntArray(nx*ny);val cells=IntArray(nx*ny);val queue=IntArray(cells.size);var head=0;var tail=0;var glyph=bg;var far=0
         val l=(r.left-x0)/step;val t=(r.top-y0)/step;val rr=(r.right-x0+step-1)/step;val bb=(r.bottom-y0+step-1)/step
-        for(i in cells.indices){if(i%nx==0 && System.nanoTime()>deadline)return reject("budget_14ms");val x=i%nx;val y=i/nx;val c=pixel(x0+x*step+step/2,y0+y*step+step/2);pixels[i]=c;val d=delta(bg,c)
+        for(i in cells.indices){if(i%nx==0 && System.nanoTime()>deadline)return reject("budget_14ms_sampling");val x=i%nx;val y=i/nx;val c=pixel(x0+x*step+step/2,y0+y*step+step/2);pixels[i]=c;val d=delta(bg,c)
             // OCR rectangle seeds the interior, filling negative holes made by letters.
             if(x in l until rr && y in t until bb){cells[i]=2;queue[tail++]=i;if(d>far){glyph=c;far=d}} else if(d<=30)cells[i]=1
         }
@@ -67,7 +67,7 @@ object BubbleContours {
         for(y in 0 until ny){var x=0;while(x<nx){if(cells[y*nx+x]!=2){x++;continue};val a=x;while(x<nx&&cells[y*nx+x]==2)x++;rows.add(y);rows.add(a);rows.add(x);xmin=min(xmin,a);xmax=max(xmax,x);ymin=min(ymin,y);ymax=y+1}}
         if(xmin>=l||xmax<=rr||ymin>=t||ymax<=bb)return reject("insufficient_closed_margin")
         for(i in rows.indices step 3){rows[i]-=ymin;rows[i+1]-=xmin;rows[i+2]-=xmin}
-        if(System.nanoTime()>deadline)return reject("budget_14ms")
+        if(System.nanoTime()>deadline)return reject("budget_14ms_component")
         val box=interior(cells,nx,ny);for(i in box.indices) box[i]=(box[i]-(if(i%2==0)xmin else ymin))*step
         val key=com.manhwalens.app.pipeline.PageState.id(r) to (bg and 0x00f0f0f0)
         val palette=synchronized(palettes){palettes[key]} ?: run {

@@ -19,6 +19,12 @@ class PrecisionBubbleTest {
             val regions=listOf(TextRegion("dialogue",128,432,592,608),TextRegion("short",249,846,471,906));pen.color=Color.BLACK;pen.textSize=32f
             for(r in regions)c.drawText("WAIT HERE!",r.left+5f,r.top+42f,pen)
             val messages=listOf("انتظر قليلًا، لا تُغادِر الآن! لقد عاد المعلم إلى المدينة، وسنذهب إليه بعد أن ينتهي الاجتماع.","انتظر هنا!")
+            // Record cold and steady-state availability separately. Do not turn a time-budget
+            // miss into a successful detection. The raster regression below still needs both masks.
+            for(pass in 0..3){val reasons=mutableListOf<String>();val start=System.nanoTime()
+                for(r in regions){var outcome="accepted";BubbleContours.bitmap(r,Color.WHITE,page){outcome=it};reasons+=outcome}
+                android.util.Log.i("ManhwaLensFunnel","phase5 budget_pass=$pass outcomes=$reasons elapsed_us=${(System.nanoTime()-start)/1000}")
+            }
             val surfaces=regions.map { r -> var reason="";val start=System.nanoTime()
                 val detected=SurfaceDetector.detect(r,720,1600,page::getPixel)
                 val s=BubbleContours.bitmap(r,detected.color,page){reason=it}
