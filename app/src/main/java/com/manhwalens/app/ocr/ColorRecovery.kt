@@ -39,7 +39,11 @@ internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.Bu
     // An unambiguous, flat page only. Ordinary art or an unreviewed/incomplete read falls
     // back to page discovery. Never use a positive crop to silence an unexplored busy page.
     private suspend fun flatCrops(client:TextRecognitionClient,b:Bitmap,lang:String,keep:(TextRegion)->Boolean,log:(String)->Unit):List<TextRegion>? {
-        val proposals=propose(b);if(proposals.size !in 1..3)return null
+        val margin=max(5,max(b.width,b.height)/144)
+        // Proposal extents are quantized to a sample grid. Include the one-cell perimeter
+        // before checking *all* remaining pixels, otherwise an antialiased outline at
+        // x=72 just outside a snapped x=75 box falsely rejects the flat page.
+        val proposals=propose(b).map {Rect(it).apply {inset(-margin,-margin);intersect(0,0,b.width,b.height)}};if(proposals.size !in 1..3)return null
         val bg=b.getPixel(0,0);val row=IntArray(b.width);var outside=0
         // A sparse grid can miss a tiny caption. Check every pixel outside the proposals;
         // abort at the first unexplained pixel rather than caching an incomplete page.
