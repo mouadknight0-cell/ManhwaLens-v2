@@ -77,6 +77,9 @@ class ReplacementTranslationView(context: Context, val message: String,
         layout=plan?.layout?.takeIf { plan.complete && it.width<=width && it.height<=content.height() && it.text==displayMessage }
         fittedSp=plan?.sp?.toFloat() ?: 0f
         measurement="${plan?.metrics(context) ?: "preferred=15 min=14 max=15 no_fit"} interior=${width}x${content.height().toInt()} fits=${layout!=null}"
+        val safe=surface.mask?.covers(content.left.toInt(),content.top.toInt(),kotlin.math.ceil(content.right).toInt(),kotlin.math.ceil(content.bottom).toInt())
+        measurement="safe_span_interior=${safe ?: "not_a_mask"} $measurement"
+        if(safe==false){maskDefect=true;return}
         val ink=layout?.paint ?: return
         val c=surface.color
         ink.color=surface.mask?.ink ?: if(Color.red(c)*.2126+Color.green(c)*.7152+Color.blue(c)*.0722<120) Color.WHITE else Color.rgb(20,20,20)

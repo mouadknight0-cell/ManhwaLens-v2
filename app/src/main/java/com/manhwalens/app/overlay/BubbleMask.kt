@@ -4,7 +4,16 @@ import com.manhwalens.app.pipeline.TextRegion
 import kotlin.math.*
 
 /** Crop-space spans and guaranteed interior text box. Only accept closed components. */
-data class BubbleMask(val step:Int,val spans:IntArray,val inset:IntArray,val ink:Int,val glow:Int=0,val weight:Int=400,val kind:String="dialogue",val texture:IntArray?=null)
+data class BubbleMask(val step:Int,val spans:IntArray,val inset:IntArray,val ink:Int,val glow:Int=0,val weight:Int=400,val kind:String="dialogue",val texture:IntArray?=null) {
+    /** Verify each sampled row of the text box against actual component runs. */
+    fun covers(l:Int,t:Int,r:Int,b:Int):Boolean {
+        if(l<0 || t<0 || r<=l || b<=t || step<=0)return false
+        var next=t/step;val last=(b-1)/step
+        for(i in spans.indices step 3){if(spans[i]>next)return false
+            if(spans[i]==next && spans[i+1]*step<=l && spans[i+2]*step>=r){if(next==last)return true;next++}}
+        return false
+    }
+}
 object BubbleContours {
     private fun channel(c:Int,k:Int)=(c ushr k) and 255
     private fun delta(c:Int,d:Int)=maxOf(abs(channel(c,0)-channel(d,0)),abs(channel(c,8)-channel(d,8)),abs(channel(c,16)-channel(d,16)))

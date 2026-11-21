@@ -138,7 +138,7 @@ class BubbleOverlayService : Service() {
     private var displayedResultId: String? = null
     private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
-    private data class Attached(val owner:ReplacementCommit.Owner,val id:com.manhwalens.app.pipeline.PageState.Id,val hash:Int?,val key:String)
+    private data class Attached(val owner:ReplacementCommit.Owner,val id:com.manhwalens.app.pipeline.PageState.Id,val hash:Int?,val key:String,val trace:String,var lastVisibility:String?=null)
     private val attached=mutableMapOf<View,Attached>()
     private fun discard(view:View){val idx=translationViews.indexOf(view);if(idx<0)return
         runCatching { windowManager.removeViewImmediate(view) };translationViews.removeAt(idx);translationRects.removeAt(idx);attached.remove(view)?.let { displayedBlocks.remove(it.key) };publishBounds() }
@@ -459,7 +459,7 @@ class BubbleOverlayService : Service() {
                 attach={windowManager.addView(it,params)}, remove={windowManager.removeViewImmediate(it)})
             if(committed) {
                 translationViews.add(text); translationRects.add(android.graphics.Rect(surface.left,surface.top,surface.right,surface.bottom))
-                attached[text]=Attached(owner,id,hash,key)
+                attached[text]=Attached(owner,id,hash,key,result.traceId)
                 text.postDelayed({if(text in attached){discard(text);if(CaptureManager.sessionActive)ScreenCaptureService.captureNow(this)}},120_000L)
                 text.onPresented={checkCoverage?.invoke()}
                 text.onRasterLost={ if(text in attached && current()) { discard(text); failed();checkCoverage?.invoke() } }
@@ -491,7 +491,13 @@ class BubbleOverlayService : Service() {
             attached.forEach { (view,stamp) ->
                 val text=view as ReplacementTranslationView
                 val score=com.manhwalens.app.diagnostics.SessionScorecard
-                if(stamp.owner==owner && text.fullyOnScreen()) {
+                val full=text.fullyOnScreen()
+                val state=if(full) "visible_in_image" else if(!text.presented) "awaiting_draw" else "hidden_clipped_or_displaced"
+                if(stamp.owner==owner && state!=stamp.lastVisibility && (application as ManhwaLensApp).settingsRepository.debug.value){
+                    stamp.lastVisibility=state
+                    com.manhwalens.app.diagnostics.Diagnostics.info("overlay","presentation","page=${owner.result} source_id=${stamp.id.l},${stamp.id.t},${stamp.id.r},${stamp.id.b} state=$state",traceId=stamp.trace)
+                }
+                if(stamp.owner==owner && full) {
                     visible[stamp.key]=stamp.owner
                     score.stage(owner.result,stamp.id,"source_mask_drawn")
                     score.outcome(owner.result,stamp.id,"VISIBLE_IN_IMAGE")
