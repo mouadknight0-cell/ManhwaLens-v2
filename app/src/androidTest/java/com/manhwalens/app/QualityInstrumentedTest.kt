@@ -39,6 +39,17 @@ class QualityInstrumentedTest {
             if(mode=="fast"){assertTrue(report,misses.isEmpty());assertTrue(report,times.sorted().let {(it[9]+it[10])/2}<=400);assertTrue(report,totals.sorted().let {(it[9]+it[10])/2}<=700)}
         }}finally{image.recycle()}
     }
+    @Test fun coloredNameTwoBubbleAndNoiseJourney()=runBlocking {
+        val index=requireNotNull(com.manhwalens.app.phrasebook.PhraseLibrary.ready());val client=TextRecognitionClient(true);val translator=com.manhwalens.app.translate.TranslationClient()
+        try {for(lines in listOf(listOf("THIS ISN'T ENOUGH"),listOf("AND THAT WASN'T ALL"),listOf("AND EVEN YEONGJUN TRADING COMPANY"),listOf("THIS SCENT","WHAT IS THIS"),listOf("쿵"))){
+            val b=Bitmap.createBitmap(820,lines.size*185,Bitmap.Config.ARGB_8888);try {val c=Canvas(b);c.drawColor(Color.DKGRAY);val p=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                lines.forEachIndexed {i,line->p.color=when(line){"THIS ISN'T ENOUGH"->Color.rgb(61,17,87);"AND THAT WASN'T ALL"->Color.rgb(99,14,30);else->Color.WHITE};c.drawOval(24f,15f+i*185,796f,167f+i*185,p);p.color=if(p.color==Color.WHITE)Color.BLACK else Color.WHITE;p.textAlign=android.graphics.Paint.Align.CENTER;p.textSize=30f;c.drawText(line,410f,100f+i*185,p)}
+                val got=com.manhwalens.app.ocr.ColorRecovery(false,true).recognize(client,b,"en",{true},{})
+                if(lines.singleOrNull()=="쿵"){for(r in got){val block=translator.translateBlock(r);assertTrue("SFX ${r.text}",block.errorCode!=null || block.translated.isBlank() || block.translated==block.original)}}
+                else for((i,line) in lines.withIndex()){val expected=com.manhwalens.app.phrasebook.ArabicFinish.apply(requireNotNull(index.lookup(line)).text);val blocks=got.filter {it.centerY/185==i}.map {translator.translateBlock(it)};assertTrue("$line => $blocks",blocks.any {it.errorCode==null && it.translated==expected})}
+            }finally{b.recycle()}}
+        }finally{client.close();translator.close()}
+    }
     @Test fun installedApkCannotOpenNetworkSockets() {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         val info = ctx.packageManager.getPackageInfo(ctx.packageName, android.content.pm.PackageManager.GET_PERMISSIONS)

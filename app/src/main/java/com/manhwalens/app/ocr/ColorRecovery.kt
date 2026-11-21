@@ -20,7 +20,7 @@ internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.Bu
         var scene=17L;for(y in 0..63)for(x in 0..47)scene=31*scene+(b.getPixel((b.width-1)*x/47,(b.height-1)*y/63) and 0xf0f0f0)
         lastPage?.takeIf { it.w==b.width && it.h==b.height && it.scene==scene && it.boxes.all(keep) && it.boxes.indices.all { i->hash(b,box(it.boxes[i]))==it.signatures[i] } }?.let {log("pass=unchanged_page regions=${it.boxes.size}");return it.boxes}
         val quick=if(fastFrame) flatCrops(client,b,lang,keep,log) else null
-        val first=quick ?: kotlinxx.coroutines.withTimeoutOrNull(12000){client.recognize(b,lang,log,keep)}?:error("OCR timed out")
+        val first=quick ?: kotlinx.coroutines.withTimeoutOrNull(12000){client.recognize(b,lang,log,keep)}?:error("OCR timed out")
         val got=recover(client,b,lang,first,6500,keep,log)
         lastPage=if(got.isNotEmpty() && got.size<=32 && got.all { it.left>=0 && it.top>=0 && it.right<=b.width && it.bottom<=b.height && it.width>0 && it.height>0 && acceptedFirst(it) }) Page(b.width,b.height,scene,got,got.map { hash(b,box(it)) }) else null
         return got
