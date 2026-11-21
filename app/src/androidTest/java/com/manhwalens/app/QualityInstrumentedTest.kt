@@ -20,7 +20,7 @@ class QualityInstrumentedTest {
         val ctx=InstrumentationRegistry.getInstrumentation().targetContext
         val image=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);val c=Canvas(image);c.drawColor(Color.DKGRAY)
         val p=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);p.color=Color.WHITE;c.drawOval(72f,83f,566f,230f,p);p.color=Color.BLACK;p.textSize=36f;c.drawText("THIS SCENT",210f,168f,p)
-        val client=TextRecognitionClient();val times=mutableListOf<Long>();val totals=mutableListOf<Long>()
+        val client=TextRecognitionClient(true);val times=mutableListOf<Long>();val totals=mutableListOf<Long>()
         try {client.recognize(image,"en");com.manhwalens.app.phrasebook.PhraseLibrary.ready()
             for(cropFirst in listOf(false,true)){times.clear();totals.clear();repeat(5){ val translator=com.manhwalens.app.translate.TranslationClient();try {val start=System.nanoTime()
                 val log=mutableListOf<String>();val found=com.manhwalens.app.ocr.ColorRecovery(cropFirst).recognize(client,image,"en",{true},log::add);val after=System.nanoTime()
@@ -30,7 +30,7 @@ class QualityInstrumentedTest {
             android.util.Log.i("ManhwaLensFunnel","fixture_stage_ms crop_first=$cropFirst ocr=$times processing=$totals")
             if(!cropFirst)continue
             assertTrue("OCR median $times",times.sorted()[2]<=400);assertTrue("processing median $totals",totals.sorted()[2]<=700)}
-        } finally {image.recycle()}
+        } finally {client.close();image.recycle()}
     }
     @Test fun installedApkCannotOpenNetworkSockets() {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext

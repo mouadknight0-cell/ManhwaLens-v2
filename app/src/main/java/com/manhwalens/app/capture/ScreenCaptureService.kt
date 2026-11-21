@@ -112,7 +112,7 @@ class ScreenCaptureService : Service() {
             val i=y*p.rowStride+x*p.pixelStride;((buf.get(i).toInt() and 255)*3+(buf.get(i+1).toInt() and 255)*6+(buf.get(i+2).toInt() and 255))/10 } } }
     }
     private val recovery=com.manhwalens.app.ocr.ColorRecovery()
-    private val textRecognition by lazy { TextRecognitionClient() }
+    private val textRecognition by lazy { TextRecognitionClient(com.manhwalens.app.BuildConfig.CROP_FIRST) }
     private val translation by lazy { TranslationClient(post={ (application as ManhwaLensApp).settingsRepository.corrections.value },debug={ (application as ManhwaLensApp).settingsRepository.debug.value },readings={ (application as ManhwaLensApp).settingsRepository.readings.value }) }
     private val nameGlossary by lazy { NameGlossaryStore(applicationContext) }
 
@@ -976,6 +976,7 @@ class ScreenCaptureService : Service() {
         }
         mediaProjection = null
         scope.cancel()
+        textRecognition.close()
         translation.close()
         com.manhwalens.app.diagnostics.SessionScorecard.end()
         super.onDestroy()

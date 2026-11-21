@@ -33,12 +33,13 @@ object TranslationInput {
         val value=clean(text,key.names);synchronized(memo){memo[key]=value};return value
     }
     private fun clean(text: String, glossaryNames: List<String>): String {
-        val normalized = SentenceReconstructor.normalize(text.trimStart {it.isWhitespace() || it in "„“”«».,;"}.trimEnd {it.isWhitespace() || it in "„“”«»,;"}.replace(Regex("\\.{4,}"),"...").replace(Regex("\\bWOULDNT\\b",RegexOption.IGNORE_CASE),"WOULDN'T").replace(Regex("\\bDONT\\b",RegexOption.IGNORE_CASE),"DON'T"))
+        val normalized = SentenceReconstructor.normalize(text.trimStart {it.isWhitespace() || it in "„“”«».,;"}.trimEnd {it.isWhitespace() || it in "„“”«»"}.replace(Regex("\\.{4,}"),"..."))
         val alias=if(glossaryNames.any { it.equals("Jeong-ah",true) }) normalized.replace(Regex("\\bjeong-4h\\b",RegexOption.IGNORE_CASE),"Jeong-ah") else normalized
         if (!OcrLexicon.needsCleanup(alias) && alias.none(Char::isUpperCase)) return alias
         val masked = NameShield.mask(alias, glossaryNames)
-        val letters=masked.maskedText.filter(Char::isLetter)
-        val fixed=if(letters.isNotEmpty() && letters.count(Char::isUpperCase)*5>=letters.length*3)masked.maskedText.uppercase() else masked.maskedText
+        val cleaned=masked.maskedText.replace(Regex("\\bWOULDNT\\b",RegexOption.IGNORE_CASE),"WOULDN'T")
+        val letters=cleaned.filter(Char::isLetter)
+        val fixed=if(letters.isNotEmpty() && letters.count(Char::isUpperCase)*5>=letters.length*3)cleaned.uppercase() else cleaned
         return NameShield.restore(ReadingEnglish.repair(OcrLexicon.repair(EnglishOcrRepair.repair(fixed))), masked)
     }
     fun unresolved(text: String, glossaryNames: List<String>): Boolean =

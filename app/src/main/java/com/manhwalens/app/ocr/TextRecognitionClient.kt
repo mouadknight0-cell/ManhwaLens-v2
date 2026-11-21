@@ -20,7 +20,21 @@ import kotlinx.coroutines.tasks.await
  * Runs script-aware ML Kit recognizers in parallel, then filters and merges
  * lines into speech-bubble-sized regions.
  */
-class TextRecognitionClient {
+class TextRecognitionClient(private val keepWarm:Boolean=false) : AutoCloseable {
+    // Native Tasks outlive cancelled awaiters. Keep the single-session engine warm,
+    // but do not close it until the native completion listener releases its lease.
+    private val engines=mutableMapOf<LanguageMapper.Script,com.google.mlkit.vision.text.TextRecognizer>()
+    private var leases=0
+    private var closed=false
+    @Synchronized private fun acquire(script:LanguageMapper.Script):com.google.mlkit.vision.text.TextRecognizer {
+        check(!closed);val engine=if(keepWarm) engines.getOrPut(script){recognizerFor(script)} else recognizerFor(script);leases++;return engine
+    }
+    @Synchronized private fun release(engine:com.google.mlkit.vision.text.TextRecognizer){
+        leases--;if(!keepWarm)engine.close();if(closed && leases==0)dispose()
+    }
+    private fun dispose(){engines.values.forEach { it.close() };engines.clear()}
+    @Synchronized override fun close(){closed=true;if(leases==0)dispose()}
+
     private val nativePermit = kotlinx.coroutines.sync.Semaphore(1)
 
     suspend fun recognize(bitmap: Bitmap, sourceLanguage: String, audit: (String) -> Unit = {}, keepLine: (TextRegion) -> Boolean = { true }): List<TextRegion> {
@@ -30,15 +44,15 @@ class TextRecognitionClient {
             scripts.map { script ->
                 async {
                     nativePermit.acquire()
-                    val recognizer = try { recognizerFor(script) } catch (failure: Exception) { nativePermit.release(); throw failure }
-                    val owned = try { bitmap.copy(Bitmap.Config.ARGB_8888, false) } catch (failure: Exception) { nativePermit.release(); recognizer.close(); throw failure }
+                    val recognizer = try { acquire(script) } catch (failure: Exception) { nativePermit.release(); throw failure }
+                    val owned = try { bitmap.copy(Bitmap.Config.ARGB_8888, false) } catch (failure: Exception) { nativePermit.release(); release(recognizer); throw failure }
                     val task = try { recognizer.process(InputImage.fromBitmap(owned, 0)) }
-                    catch (failure: Exception) { nativePermit.release(); owned.recycle(); recognizer.close(); throw failure }
+                    catch (failure: Exception) { nativePermit.release(); owned.recycle(); release(recognizer); throw failure }
                     // Task cancellation is not exposed by ML Kit. Its private bitmap lives until
                     // native completion, even when the caller's coroutine is cancelled by a swipe.
                     task.addOnCompleteListener(java.util.concurrent.Executor { it.run() }) {
                         owned.recycle()
-                        recognizer.close()
+                        release(recognizer)
                         nativePermit.release()
                     }
                     try {
