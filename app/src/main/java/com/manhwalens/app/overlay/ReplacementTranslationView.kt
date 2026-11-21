@@ -41,6 +41,8 @@ class ReplacementTranslationView(context: Context, val message: String,
     private var content = RectF()
     var measurement: String = "not_measured"
         private set
+    var maskDefect=false
+        private set
     var fittedSp: Float = 12f
         private set
     var fitPasses: Int = 0
@@ -56,6 +58,7 @@ class ReplacementTranslationView(context: Context, val message: String,
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         prepared = null
+        maskDefect=false
         presented=false
         val padding = min(4 * resources.displayMetrics.density, min(w, h) * .08f)
         // Largest centered inscribed rectangle with the ellipse’s aspect ratio.
@@ -126,7 +129,16 @@ class ReplacementTranslationView(context: Context, val message: String,
                     text.draw(canvas)
                     canvas.restore()
                 }
-            }.getOrNull()
+            }.getOrNull()?.takeIf { image ->
+                // The complete anchor was filled opaquely before drawing. Verify the
+                // registration and edge pixels of the resulting mask, not an estimate.
+                maskDefect=anchor?.let { a ->
+                    val xs=listOf(a.left-surface.left,a.right-1-surface.left)
+                    val ys=listOf(a.top-surface.top,a.bottom-1-surface.top)
+                    xs.any { x -> ys.any { y -> x !in 0 until w || y !in 0 until h || Color.alpha(image.getPixel(x,y))!=255 } }
+                } ?: false
+                !maskDefect
+            }
         }
     }
 

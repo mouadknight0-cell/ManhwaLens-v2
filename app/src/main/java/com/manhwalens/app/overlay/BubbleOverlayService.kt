@@ -443,7 +443,8 @@ class BubbleOverlayService : Service() {
             fun failed(){outcome(i,if(!current()) "STALE_RESULT" else "RENDER_FAILED");renderFailure=true}
             val prepared=DirectTranslationLayout.anchored(this,block.translated,anchor,source,screen,occupied+others){outcome(i,it)}
             if(prepared==null){failed();return@forEachIndexed}
-            outcome(i,if(prepared.surface.capsule) "expanded_prepared" else "replacement_prepared")
+            outcome(i,if(prepared.surface!==source && prepared.surface.capsule) "expanded_prepared" else "replacement_prepared")
+            outcome(i,prepared.surface.let { "final_surface=${it.left},${it.top},${it.right},${it.bottom} ${prepared.view.measurement}" })
             val surface=prepared.surface; val text=prepared.view
             val params=WindowManager.LayoutParams(surface.width,surface.height,overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply {
@@ -464,7 +465,7 @@ class BubbleOverlayService : Service() {
         publishBounds()
         if(final && renderFailure) CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION)
         CaptureManager.debugBoxes?.takeIf { it.first==result.id }?.let { (_,boxes) ->
-            android.util.Log.i("ManhwaLensFunnel","page=${result.id} translated=${result.blocks.count { it.errorCode==null && it.original!=it.translated }} rendered=${displayedBlocks.size}")
+            android.util.Log.i("ManhwaLensFunnel","page=${result.id} translated=${result.blocks.count { it.errorCode==null && it.original!=it.translated }} attached=${displayedBlocks.size}")
             if(debugView==null) {
                 val outline=object:View(this){
                     val pen=android.graphics.Paint().apply { style=android.graphics.Paint.Style.STROKE; strokeWidth=2f; color=android.graphics.Color.CYAN }

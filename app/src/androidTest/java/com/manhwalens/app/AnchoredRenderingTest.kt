@@ -13,6 +13,30 @@ import org.junit.Test
 
 class AnchoredRenderingTest {
     private val dialogue="هل سنصل قبل الغروب؟ انتظر Namgung Jun... لا تذهب وحدك!\nعلينا أن نتحدث إلى المعلم أولاً."
+    @Test fun attachedInImageRasterMustBeFullyVisibleAndRegisteredAtItsAnchor(){
+        val inst=InstrumentationRegistry.getInstrumentation()
+        val activity=inst.startActivitySync(android.content.Intent(inst.targetContext,com.manhwalens.app.MainActivity::class.java)
+            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+        val ready=java.util.concurrent.CountDownLatch(1)
+        lateinit var view:ReplacementTranslationView
+        try {
+            inst.runOnMainSync {
+                val root=activity.findViewById<android.widget.FrameLayout>(android.R.id.content)
+                val xy=IntArray(2);root.getLocationOnScreen(xy)
+                val screen=ReplacementSurface(xy[0],xy[1],xy[0]+root.width,xy[1]+root.height)
+                val a=ReplacementSurface(xy[0]+32,xy[1]+60,xy[0]+70,xy[1]+90)
+                val p=DirectTranslationLayout.anchored(activity,"انتظر هنا، سأعود قريباً.",a,null,screen,emptyList()){}!!
+                view=p.view;view.onPresented={ready.countDown()}
+                val lp=android.widget.FrameLayout.LayoutParams(p.surface.width,p.surface.height,android.view.Gravity.TOP or android.view.Gravity.LEFT)
+                lp.leftMargin=p.surface.left-xy[0];lp.topMargin=p.surface.top-xy[1];root.addView(view,lp)
+            }
+            assertTrue(ready.await(10,java.util.concurrent.TimeUnit.SECONDS))
+            inst.runOnMainSync {
+                assertTrue(view.fullyOnScreen());view.translationX=8f;assertFalse(view.fullyOnScreen());view.translationX=0f
+                view.visibility=android.view.View.INVISIBLE;assertFalse(view.fullyOnScreen())
+            }
+        } finally {inst.runOnMainSync {activity.finish()}}
+    }
     @Test fun narrowColoredOvalExpandsWithoutLosingAnyLineOrExposingSourcePixels(){
         val inst=InstrumentationRegistry.getInstrumentation();inst.runOnMainSync {
             val config=android.content.res.Configuration(inst.targetContext.resources.configuration).apply {densityDpi=160;fontScale=1f}

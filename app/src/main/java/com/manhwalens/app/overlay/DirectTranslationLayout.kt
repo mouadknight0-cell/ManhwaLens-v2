@@ -72,6 +72,7 @@ object DirectTranslationLayout {
         val view=ReplacementTranslationView(context,message,source,anchor=anchor,minSp=minSp)
         view.measure(View.MeasureSpec.makeMeasureSpec(source.width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(source.height,View.MeasureSpec.EXACTLY))
         view.layout(0,0,source.width,source.height);measured(view.measurement)
+        if(view.maskDefect) measured("mask_defect")
         return if(view.replacementReady) Prepared(view,source) else null
     }
 }
