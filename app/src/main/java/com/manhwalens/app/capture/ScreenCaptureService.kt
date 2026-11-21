@@ -698,7 +698,7 @@ class ScreenCaptureService : Service() {
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text,
                         "", issue, method = "OCR input validation")
                 }
-                val recovered = if ((translated.errorCode == "OCR-UNCERTAIN" || (!retryCase && region.confidence < .55f && translated.errorCode in setOf("TR-INVALID-OUTPUT","TR-UNTRANSLATED"))) && region.width > 0 && region.height > 0 &&
+                val recovered = if (!com.manhwalens.app.BuildConfig.CROP_FIRST && (translated.errorCode == "OCR-UNCERTAIN" || (!retryCase && region.confidence < .55f && translated.errorCode in setOf("TR-INVALID-OUTPUT","TR-UNTRANSLATED"))) && region.width > 0 && region.height > 0 &&
                     region.area in 1..150000 && region.left >= 0 && region.top >= 0 && region.right <= frame.width && region.bottom <= frame.height) {
                     Diagnostics.info("funnel","ocr_retry","page=$journeyId bounds=${region.left},${region.top} attempt=crop",traceId=traceId)
                     val box=region.surface

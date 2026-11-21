@@ -21,10 +21,10 @@ class PhraseIndex(rows:List<Entry>,enabled:Set<String>,presorted:Boolean=false) 
         fun rank(e:Entry)=when {"user" in e.genres->4;"regression-test" in e.genres->3;e.genres.any { it!="general" }->2;else->1}
         val allowed=rows.filter { it.genres.any { g->g in enabled || g=="user" || g=="regression-test" } }
         val active=if(presorted)allowed else allowed.sortedWith(compareByDescending<Entry>{rank(it)}.thenByDescending { it.priority })
-        for(e in active){if(e.type=="template"){val parts=e.en.split("{X}");if(parts.size==2)templates.add(Regex("^"+Regex.escape(key(parts[0]))+" +(.{1,180})"+(key(parts[1]).takeIf(String::isNotEmpty)?.let { " +"+Regex.escape(it) }?:"")+"$") to e);continue}
+        for(e in active){if(e.type=="template"){val parts=e.en.split("{X}");if(parts.size==2 && key(parts.joinToString(" ")).split(' ').size>=3)templates.add(Regex("^"+Regex.escape(key(parts[0]))+" +(.{1,180})"+(key(parts[1]).takeIf(String::isNotEmpty)?.let { " +"+Regex.escape(it) }?:"")+"$") to e);continue}
             val k=e.normalized?:key(e.en);if(k.isEmpty() || exact.putIfAbsent(k,e)!=null)continue
             val words=e.tokens?:k.split(' ');val set=words.toSet();tokenSets[k]=set;set.forEach { inverted.getOrPut(it){mutableListOf()}.add(k) };lengths.getOrPut(k.length){mutableListOf()}.add(k)
-            if(e.type=="term" || e.type=="phrase"){var n=trie;for(w in words)n=n.next.getOrPut(w){Node()};n.end=e}
+            if(e.type=="name" || (words.size>=2 && e.type in setOf("term","phrase","idiom"))){var n=trie;for(w in words)n=n.next.getOrPut(w){Node()};n.end=e}
         }
     }
     private fun distance(a:String,b:String,limit:Int):Int {if(abs(a.length-b.length)>limit)return limit+1;var row=IntArray(b.length+1){it};var next=IntArray(row.size)
@@ -62,13 +62,19 @@ class PhraseIndex(rows:List<Entry>,enabled:Set<String>,presorted:Boolean=false) 
         if(parts.size in 2..8 && parts.any {lookup(it)!=null})return Hit(parts.map {p->lookup(p)?.text?:single(p,mt)?.text?:mt(p,emptyMap())}.joinToString(" "),"sentence")
         return single(text,mt)
     }
+    private fun validArabic(s:String)=s.any {it.isLetter() && it.code in 0x600..0x6ff} && s.none {it in 'a'..'z' || it in 'A'..'Z' || it in "{}"}
+    private val nameMap by lazy {exact.values.filter {it.type=="name"}.associate {it.en.lowercase(Locale.ROOT) to it.ar}}
+    fun names()=nameMap
     private suspend fun single(text:String,mt:suspend(String,Map<String,String>)->String):Hit? {
-        for((rule,e) in templates){val m=rule.matchEntire(key(text))?:continue;val slot=m.groupValues[1];val ar=lookup(slot)?.text?:mt(slot,emptyMap());return Hit(e.ar.replace("{X}",ar),"template")}
+        for((rule,e) in templates){val m=rule.matchEntire(key(text))?:continue;val slot=m.groupValues[1];if(slot.split(' ').size>6)continue;val ar=lookup(slot)?.text?:mt(slot,emptyMap());if(!validArabic(ar))continue;return Hit(e.ar.replace("{X}",ar),"template")}
         val spans=spans(text);if(spans.isEmpty())return null
         val terms=spans.associate {text.substring(it.range).lowercase(Locale.ROOT) to it.ar}
-        try {val result=mt(text,terms);if(terms.values.all(result::contains))return Hit(result,"substitution")}
-        catch(c:kotlinx.coroutines.CancellationException){throw c}catch(_:Exception){ /* native placeholder was lost; translate only gaps */ }
-        var pos=0;val out=mutableListOf<String>();suspend fun gap(end:Int){val s=text.substring(pos,end).trim();if(s.isNotEmpty())out.add(if(s.any(Char::isLetter))lookup(s)?.text?:mt(s,emptyMap()) else s)}
-        for(span in spans){gap(span.range.first);out.add(span.ar);pos=span.range.last+1};gap(text.length);return Hit(out.joinToString(" "),"substitution-segments")
+        // Without a valid plain baseline there is no safe length comparison. Delegate
+        // to the caller's normal retry chain rather than stitching translated fragments.
+        val plain=mt(text,emptyMap())
+        if(validArabic(plain))return Hit(plain,"plain")
+        if(plain.isBlank())return null
+        val result=mt(text,terms)
+        return if(validArabic(result) && terms.values.all { term->Regex(Regex.escape(term)).findAll(result).count()==1 } && result.length in (plain.length+1)/2..plain.length*2) Hit(result,"substitution") else null
     }
 }

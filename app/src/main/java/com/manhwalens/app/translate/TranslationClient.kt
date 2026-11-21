@@ -47,6 +47,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     /** Translates one region, applying the name shield. Never throws — original text on failure. */
     suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null, lexicalRetry:Boolean=false, retryCase:Boolean=false): TranslatedBlock {
         val terms=ReadingGlossary.murim+readings()
+        val nameTerms=com.manhwalens.app.phrasebook.PhraseLibrary.ready()?.names().orEmpty()
+        val safeTerms=terms.filterKeys {it.contains(' ') || it in setOf("luoyang","jeong-ah","geumju") || it in glossaryNames}+nameTerms
         val protectedNames=(glossaryNames+terms.keys).distinct()
         val normalized = try { com.manhwalens.app.pipeline.TranslationInput.prepare(region.text, protectedNames) }
         catch (failure: IllegalArgumentException) {
@@ -58,18 +60,18 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val library=com.manhwalens.app.phrasebook.PhraseLibrary
         val book=library.ready()
         val ambiguous=normalized.trimEnd('.', '…').equals("no",true) && region.confidence<.60f
-        val cacheIdentity=listOf(com.manhwalens.app.phrasebook.PhraseIndex.key(normalized),library.version,terms,post(),glossaryNames.filter { normalized.contains(it,true) }).toString()
+        val cacheIdentity=listOf(com.manhwalens.app.phrasebook.PhraseIndex.key(normalized),"reviewed-v6",library.version,terms,post(),glossaryNames.filter { normalized.contains(it,true) }).toString()
         if(!ambiguous && book!=null && normalized.none { it.isLetter() && Character.UnicodeScript.of(it.code)!=Character.UnicodeScript.LATIN }) {
             phraseCache.get(cacheIdentity)?.let { com.manhwalens.app.diagnostics.SessionScorecard.lookup(true,System.nanoTime()-lookupStart);Diagnostics.info("phrasebook","cache","hit");return TranslatedBlock(region,normalized,it,method="Phrasebook cache") }
             try {
-                val match=book.render(normalized){ part,subs ->translateText(part,glossaryNames,terms+subs,retryCase) }
+                val match=book.render(normalized){ part,subs ->translateText(part,glossaryNames,if(subs.isEmpty())emptyMap() else subs,retryCase) }
                 if(match!=null && ArabicOutput.hasLetters(match.text) && match.text.none { it in 'A'..'Z' || it in 'a'..'z' }){
                     val ar=com.manhwalens.app.phrasebook.ArabicFinish.apply(match.text);phraseCache.put(cacheIdentity,ar)
                     com.manhwalens.app.diagnostics.SessionScorecard.lookup(true,System.nanoTime()-lookupStart)
                     Diagnostics.info("phrasebook","match","stage=${match.stage} repaired=${normalized!=region.text}")
                     return TranslatedBlock(region,normalized,ar,method="Phrasebook ${match.stage}")
                 }
-            }catch(c:kotlinx.coroutines.CancellationException){throw c}catch(_:TranslationFailure){ /* ordinary validated fallback below */ }
+            }catch(c:kotlinx.coroutines.CancellationException){throw c}catch(e:TranslationFailure){Diagnostics.info("phrasebook","discard","reason=${e.code}") }
         }
         val known=com.manhwalens.app.translate.DialogueLexicon.interjection(normalized)
         val reviewed = known ?: terms[normalized.trimEnd('!','?','.','…').lowercase()]?.let { it+normalized.takeLastWhile { c->c in "!?.…" }.replace('?','؟') } ?: if (NameDetector.find(normalized,glossaryNames).none { it.source==com.manhwalens.app.names.NameHit.Source.GLOSSARY && it.name.lowercase() !in terms }) DialogueLexicon.translate(normalized, previous,terms,fuzzy=true) else null
@@ -91,7 +93,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         }
         val block = try {
             val continuation=if(reviewed==null) DialogueLexicon.continuation(normalized,terms) else null
-            val translated = reviewed ?: continuation?.let { it.first+translateText(it.second,glossaryNames,terms,retryCase) } ?: translateText(normalized, glossaryNames,terms,retryCase)
+            val translated = reviewed ?: continuation?.let { it.first+translateText(it.second,glossaryNames,safeTerms,retryCase) } ?: translateText(normalized, glossaryNames,safeTerms,retryCase)
             TranslatedBlock(region, normalized, translated, method = if (reviewed == null) "ML Kit on-device" else "Reviewed dialogue lexicon v1")
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {
@@ -115,7 +117,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
         val corrections=post()
         val identity = corrections.toSortedMap().toString() + terms.toSortedMap().toString() + "\u0000" + com.manhwalens.app.pipeline.TranslationCache.normalize(trimmed) + "\u0000" + glossaryNames.filter { trimmed.contains(it,ignoreCase=true) }.sorted().joinToString("\u0000")
-        val cacheKey = "validated-v5:${com.manhwalens.app.phrasebook.PhraseLibrary.version}:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
+        val cacheKey = "validated-v6:${com.manhwalens.app.phrasebook.PhraseLibrary.version}:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
         cache.get(cacheKey)?.let { Diagnostics.info("translate","cache","validated hit"); return it }
 
         val maskResult = try { NameShield.mask(trimmed, glossaryNames+terms.keys) }
@@ -125,10 +127,10 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val protected = arabicMask.names
 
         if(!LanguageModels.state.value.ready && !ensureModel()) throw TranslationFailure(ErrorCodes.TRANSLATE_DOWNLOAD_FAILED)
-        val raw = try {
+        suspend fun runModel(input:String):String { val output = try {
             withTimeoutOrNull(TRANSLATE_TIMEOUT_MS) {
                 nativePermits.acquire()
-                val task = try { translatorFor(SOURCE, TARGET).translate(modelInput) }
+                val task = try { translatorFor(SOURCE, TARGET).translate(input) }
                     catch (failure: Exception) { nativePermits.release(); throw failure }
                 task.addOnCompleteListener(java.util.concurrent.Executor { it.run() }) { nativePermits.release() }
                 task.await()
@@ -141,17 +143,30 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
                 context = mapOf("chars" to trimmed.length.toString()))
             throw TranslationFailure(ErrorCodes.TRANSLATE_FAILED)
         }
-        if (raw == null) {
+        if (output == null) {
             // An invocation timeout does not invalidate the installed language pair.
             Diagnostics.warn("translate", "translate_timeout", "translation timed out; block marked failed",
                 code = ErrorCodes.TRANSLATE_TIMEOUT,
                 context = mapOf("chars" to trimmed.length.toString()), recovery = "explicit failure shown")
             throw TranslationFailure(ErrorCodes.TRANSLATE_TIMEOUT)
         }
+        return output }
+        var raw=runModel(modelInput)
+        if(TranslationOutput.issue(raw,maskResult)!=null && allowSplit){
+            val cased=com.manhwalens.app.pipeline.TranslationInput.modelCase(trimmed.uppercase())
+            val noMask=NameShield.mask(trimmed,emptyList())
+            val first=runModel(cased)
+            fun accepted(candidate:String)=TranslationOutput.issue(candidate,noMask)==null && !candidate.equals(trimmed,true)
+            fun finish(candidate:String,stage:String):String {val final=com.manhwalens.app.phrasebook.ArabicFinish.apply(candidate);cache.put(cacheKey,final);Diagnostics.info("translate","retry","stage=$stage success=true");return final}
+            if(accepted(first) && maskResult.names.isEmpty())return finish(first,"retry1")
+            val known=com.manhwalens.app.phrasebook.PhraseLibrary.index?.names().orEmpty()+glossaryNames.associate { it.lowercase() to (terms[it.lowercase()] ?: com.manhwalens.app.names.NameRetry.reading(it)) }
+            val plan=com.manhwalens.app.names.NameRetry.plan(trimmed,known)
+            if(plan!=null){val named=plan.restored(runModel(plan.input));if(named!=null && accepted(named))return finish(named,"retry2")}
+        }
         val extreme=trimmed.length>=30 && (raw.length>trimmed.length*5 || (raw.length*12<trimmed.length && maskResult.tokens.isEmpty()))
         (TranslationOutput.issue(raw, maskResult) ?: if(extreme) "TR-EXTREME-RATIO" else null)?.let { issue ->
-            if(allowSplit){val fragments=trimmed.split(Regex("(?<=[,;.!?…])\\s+")).filter(String::isNotBlank)
-                if(fragments.size in 2..8){val result=fragments.map { infer(it,glossaryNames,terms,true,false) }.joinToString(" ");cache.put(cacheKey,result);return result} }
+            if(allowSplit){val fragments=trimmed.split(Regex("(?<=[,;.!?…])\\s+|\\s+(?=(?i:and|but|because|although)\\b)")).filter(String::isNotBlank)
+                if(fragments.size in 2..8){val result=fragments.map { infer(it,glossaryNames,terms,true,false) }.joinToString(" ");cache.put(cacheKey,result);Diagnostics.info("translate","retry","stage=retry3 success=true");return result} }
 
             if(debug()) Diagnostics.warn("translate", "output_validation", "model output failed structural validation",
                 code = issue, context = mapOf("source_chars" to trimmed.length.toString(), "output_chars" to raw.length.toString()))

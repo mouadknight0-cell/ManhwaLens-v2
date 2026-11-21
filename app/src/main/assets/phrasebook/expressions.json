@@ -1,3326 +1,3371 @@
 {
- "version": 1,
- "entries": [
-  {
-   "en": "BACK AWAY",
-   "ar": "تراجع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BACK ME UP",
-   "ar": "ساندني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BACK OUT",
-   "ar": "انسحب",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BACK DOWN",
-   "ar": "تراجع عن موقفك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BACK OFF",
-   "ar": "ابتعد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BACK TO SQUARE ONE",
-   "ar": "عدنا إلى نقطة الصفر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BEHIND YOUR BACK",
-   "ar": "من وراء ظهرك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BEHIND BARS",
-   "ar": "خلف القضبان",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BEND THE RULES",
-   "ar": "تساهل في تطبيق القواعد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BETTER LATE THAN NEVER",
-   "ar": "أن تأتي متأخراً خير من ألا تأتي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BETTER SAFE THAN SORRY",
-   "ar": "الاحتياط خير من الندم",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BETWEEN YOU AND ME",
-   "ar": "بيني وبينك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BITE YOUR TONGUE",
-   "ar": "أمسك لسانك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BITE THE BULLET",
-   "ar": "تحمّل الأمر بشجاعة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BLOW YOUR COVER",
-   "ar": "اكشف هويتك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BLOW OFF STEAM",
-   "ar": "نفّس عن غضبك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BREAK A LEG",
-   "ar": "بالتوفيق",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BREAK EVEN",
-   "ar": "لا ربح ولا خسارة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BREAK FREE",
-   "ar": "تحرّر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BREAK IT DOWN",
-   "ar": "اشرح الأمر بالتفصيل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BREAK THE ICE",
-   "ar": "بدّد التوتر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BREAK THE SILENCE",
-   "ar": "اقطع الصمت",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BREAK THE NEWS",
-   "ar": "أبلغهم بالخبر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BRING IT ON",
-   "ar": "هات ما عندك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BRING HIM AROUND",
-   "ar": "أقنعه",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BRING IT UP",
-   "ar": "اطرح الموضوع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BRUSH IT OFF",
-   "ar": "لا تكترث للأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BRUSH UP ON",
-   "ar": "راجع معلوماتك عن",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BURN BRIDGES",
-   "ar": "اقطع سبل الرجوع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BUY SOME TIME",
-   "ar": "اكسب بعض الوقت",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BY ALL MEANS",
-   "ar": "بكل سرور",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BY ANY MEANS NECESSARY",
-   "ar": "بأي وسيلة ممكنة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BY HEART",
-   "ar": "عن ظهر قلب",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BY THE BOOK",
-   "ar": "وفق القواعد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "BY THE WAY",
-   "ar": "بالمناسبة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CALL IT A DAY",
-   "ar": "لنكتف بهذا اليوم",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CALL IT EVEN",
-   "ar": "نحن متعادلان",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CALL IT QUITS",
-   "ar": "لننه الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CALL OFF THE SEARCH",
-   "ar": "أوقف البحث",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CALL THE SHOTS",
-   "ar": "تولّ زمام القرار",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CALL YOUR BLUFF",
-   "ar": "أتحداك أن تفعلها",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CALM DOWN",
-   "ar": "اهدأ",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CARRY ON",
-   "ar": "واصل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CARRY YOUR WEIGHT",
-   "ar": "قم بنصيبك من العمل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CATCH ME UP",
-   "ar": "أطلعني على ما فاتني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CATCH YOUR BREATH",
-   "ar": "التقط أنفاسك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CATCH UP WITH ME",
-   "ar": "الحق بي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CHANGE OF HEART",
-   "ar": "تغيّر في الموقف",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CHECK IT OUT",
-   "ar": "ألق نظرة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CHEER UP",
-   "ar": "ابتهج",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CHICKEN OUT",
-   "ar": "تراجع خوفاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CHIN UP",
-   "ar": "ارفع رأسك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CLEAN UP YOUR MESS",
-   "ar": "أصلح ما أفسدت",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CLEAR YOUR HEAD",
-   "ar": "صفّ ذهنك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CLEAR THE AIR",
-   "ar": "أزل سوء الفهم",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CLOSE CALL",
-   "ar": "نجونا بأعجوبة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "COME CLEAN",
-   "ar": "قل الحقيقة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "COME FORWARD",
-   "ar": "تقدّم وتكلم",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "COME IN HANDY",
-   "ar": "قد ينفعنا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "COME ON IN",
-   "ar": "تفضّل بالدخول",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "COME TO TERMS WITH IT",
-   "ar": "تقبّل الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "COME TO YOUR SENSES",
-   "ar": "عد إلى رشدك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "COUNT ME IN",
-   "ar": "احسبني معكم",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "COUNT ME OUT",
-   "ar": "لا تحسبني معكم",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "COUNT ON ME",
-   "ar": "اعتمد عليّ",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "COVER FOR ME",
-   "ar": "أنب عني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CROSS MY HEART",
-   "ar": "أقسم لك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CROSS THE LINE",
-   "ar": "تجاوز الحد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CUT CORNERS",
-   "ar": "اختصر على حساب الجودة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CUT IT OUT",
-   "ar": "كفّ عن ذلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CUT ME SOME SLACK",
-   "ar": "هوّن عليّ قليلاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CUT TO THE CHASE",
-   "ar": "ادخل في صلب الموضوع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "CUT TIES",
-   "ar": "اقطع الصلة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DEAL WITH IT",
-   "ar": "تعامل مع الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DEEP DOWN",
-   "ar": "في قرارة نفسي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DIG DEEPER",
-   "ar": "تعمّق في البحث",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DIG IN",
-   "ar": "ابدأ بالأكل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DO ME A FAVOR",
-   "ar": "أسد إليّ معروفاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DO THE HONORS",
-   "ar": "تفضّل أنت",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DOES IT RING A BELL",
-   "ar": "هل يذكّرك بشيء؟",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DON'T COUNT ON IT",
-   "ar": "لا تعوّل على ذلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DON'T FALL FOR IT",
-   "ar": "لا تنخدع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DON'T GET ME WRONG",
-   "ar": "لا تسئ فهمي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DON'T GIVE IT AWAY",
-   "ar": "لا تفش السر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DON'T HOLD BACK",
-   "ar": "لا تتردد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DON'T MENTION IT",
-   "ar": "لا شكر على واجب",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DON'T PUSH YOUR LUCK",
-   "ar": "لا تختبر حظك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DON'T SWEAT IT",
-   "ar": "لا تقلق بشأنه",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DON'T TAKE IT PERSONALLY",
-   "ar": "لا تأخذ الأمر على محمل شخصي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DON'T TEMPT FATE",
-   "ar": "لا تتحدَّ القدر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DON'T TEST ME",
-   "ar": "لا تختبر صبري",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DOUBLE CHECK",
-   "ar": "تحقق مرة أخرى",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DOWN TO EARTH",
-   "ar": "واقعي ومتواضع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DRAW THE LINE",
-   "ar": "ضع حدّاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DROP BY",
-   "ar": "مرّ علينا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DROP IT",
-   "ar": "دع الموضوع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DROP THE ACT",
-   "ar": "كفّ عن التظاهر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "DROP YOUR GUARD",
-   "ar": "أرخ حذرك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "EASY DOES IT",
-   "ar": "على مهلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "EAT YOUR WORDS",
-   "ar": "ستندم على كلامك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "ENOUGH IS ENOUGH",
-   "ar": "لقد طفح الكيل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "EVEN THE ODDS",
-   "ar": "وازن الكفّتين",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "EVERY NOW AND THEN",
-   "ar": "من حين لآخر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "EYE FOR AN EYE",
-   "ar": "العين بالعين",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FACE THE MUSIC",
-   "ar": "تحمّل العواقب",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FAIR AND SQUARE",
-   "ar": "بنزاهة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FAIR ENOUGH",
-   "ar": "هذا معقول",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FALL APART",
-   "ar": "انهَر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FALL BEHIND",
-   "ar": "تخلّف عن الركب",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FALL INTO PLACE",
-   "ar": "اتّضح كل شيء",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FALL THROUGH",
-   "ar": "لم يكتب له النجاح",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FAR FROM IT",
-   "ar": "الأمر بعيد عن ذلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FIGURE IT OUT",
-   "ar": "جد الحل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FILL ME IN",
-   "ar": "أطلعني على التفاصيل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FIND A WAY OUT",
-   "ar": "جد مخرجاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FIND YOUR FEET",
-   "ar": "تأقلم",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FIRST THINGS FIRST",
-   "ar": "لنبدأ بالأهم",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FOLLOW MY LEAD",
-   "ar": "احذُ حذوي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FOR A CHANGE",
-   "ar": "على سبيل التغيير",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FOR GOOD",
-   "ar": "إلى الأبد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FOR OLD TIMES' SAKE",
-   "ar": "إكراماً للأيام الخوالي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FOR THE RECORD",
-   "ar": "للعلم",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FOR THE TIME BEING",
-   "ar": "في الوقت الحالي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FROM SCRATCH",
-   "ar": "من الصفر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "FROM TIME TO TIME",
-   "ar": "من وقت إلى آخر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET A GRIP",
-   "ar": "تماسك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET A MOVE ON",
-   "ar": "أسرع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET ALONG",
-   "ar": "تفاهموا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET AWAY WITH IT",
-   "ar": "افلت بفعلتك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET BACK AT HIM",
-   "ar": "ردّ له الصاع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET BACK HERE",
-   "ar": "عد إلى هنا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET DOWN",
-   "ar": "انبطح",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET IT OVER WITH",
-   "ar": "أنه الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET OFF MY BACK",
-   "ar": "كفّ عن مضايقتي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET ON WITH IT",
-   "ar": "امض في الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET OUT OF HAND",
-   "ar": "خرج عن السيطرة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET OVER IT",
-   "ar": "تجاوز الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET REAL",
-   "ar": "كن واقعياً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET RID OF IT",
-   "ar": "تخلّص منه",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET SOME REST",
-   "ar": "استرح قليلاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET STRAIGHT TO THE POINT",
-   "ar": "تكلّم في صلب الموضوع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET THE HANG OF IT",
-   "ar": "تعلّم أصوله",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET THE PICTURE",
-   "ar": "افهم المقصود",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET THIS STRAIGHT",
-   "ar": "افهم هذا جيداً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET TO WORK",
-   "ar": "ابدأ العمل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GET USED TO IT",
-   "ar": "اعتد على الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GIVE IT A SHOT",
-   "ar": "جرّب",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GIVE IT YOUR ALL",
-   "ar": "ابذل قصارى جهدك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GIVE ME A BREAK",
-   "ar": "أرحني قليلاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GIVE ME A HAND",
-   "ar": "ساعدني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GIVE ME YOUR WORD",
-   "ar": "عدني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GIVE UP",
-   "ar": "استسلم",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GO AFTER HIM",
-   "ar": "الحق به",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GO AHEAD",
-   "ar": "تفضّل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GO ALL OUT",
-   "ar": "ابذل كل ما لديك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GO EASY ON HIM",
-   "ar": "ارفق به",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GO FOR IT",
-   "ar": "أقدم على ذلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GO TOO FAR",
-   "ar": "تمادى",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GO WITH THE FLOW",
-   "ar": "ساير الأمور",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GOOD FOR YOU",
-   "ar": "هنيئاً لك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GOOD GRIEF",
-   "ar": "يا إلهي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GOOD RIDDANCE",
-   "ar": "تخلّصنا منه أخيراً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "GUESS WHAT",
-   "ar": "أتدري ماذا حدث؟",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HANG IN THERE",
-   "ar": "اصمد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HANG ON A SECOND",
-   "ar": "انتظر لحظة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HANDS OFF",
-   "ar": "ارفع يدك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HAVE A POINT",
-   "ar": "معك حق",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HAVE A SEAT",
-   "ar": "تفضّل بالجلوس",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HAVE IT YOUR WAY",
-   "ar": "كما تشاء",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HAVE SECOND THOUGHTS",
-   "ar": "أعد النظر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HEAD OUT",
-   "ar": "انطلق",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HEADS UP",
-   "ar": "انتبه",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HEAR ME OUT",
-   "ar": "اسمعني إلى النهاية",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HEART AND SOUL",
-   "ar": "بكل كياني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HELP YOURSELF",
-   "ar": "تفضّل وخذ ما تشاء",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HERE GOES NOTHING",
-   "ar": "لنجرب ولنرَ",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HERE WE GO AGAIN",
-   "ar": "ها نحن نعيد الكرّة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HIT THE ROAD",
-   "ar": "انطلق",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HOLD IT",
-   "ar": "توقّف",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HOLD ON TIGHT",
-   "ar": "تمسّك جيداً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HOLD STILL",
-   "ar": "اثبت مكانك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HOLD YOUR BREATH",
-   "ar": "احبس أنفاسك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HOLD YOUR HORSES",
-   "ar": "تمهّل قليلاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "HOW COME",
-   "ar": "وكيف ذلك؟",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I CAN'T HELP IT",
-   "ar": "لا أملك حيال ذلك شيئاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I CAN'T STAND IT",
-   "ar": "لا أطيق هذا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I DIDN'T MEAN IT",
-   "ar": "لم أقصد ذلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I DOUBT IT",
-   "ar": "أشك في ذلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I HAD A HUNCH",
-   "ar": "راودني حدس",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I HAVE YOUR BACK",
-   "ar": "أنا أحمي ظهرك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I LOST TRACK",
-   "ar": "فقدت أثره",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I MEAN IT",
-   "ar": "أنا جاد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I OWE YOU ONE",
-   "ar": "أنا مدين لك بمعروف",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I SEE YOUR POINT",
-   "ar": "فهمت وجهة نظرك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I TOLD YOU SO",
-   "ar": "ألم أقل لك؟",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "I WON'T LET YOU DOWN",
-   "ar": "لن أخذلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IF ALL ELSE FAILS",
-   "ar": "إن فشل كل شيء",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IF YOU INSIST",
-   "ar": "إن كنت مصرّاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN A HEARTBEAT",
-   "ar": "بلا تردّد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN A NUTSHELL",
-   "ar": "باختصار",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN A PINCH",
-   "ar": "عند الضيق",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN ANY CASE",
-   "ar": "على أي حال",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN BROAD DAYLIGHT",
-   "ar": "في وضح النهار",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN COLD BLOOD",
-   "ar": "بدم بارد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN DUE TIME",
-   "ar": "في الوقت المناسب",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN MY SHOES",
-   "ar": "لو كنت مكاني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN NO TIME",
-   "ar": "في لمح البصر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN ONE PIECE",
-   "ar": "سالماً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN PLAIN SIGHT",
-   "ar": "على مرأى الجميع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN RETURN",
-   "ar": "في المقابل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN THE LONG RUN",
-   "ar": "على المدى البعيد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN THE MEANTIME",
-   "ar": "في هذه الأثناء",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN THE NICK OF TIME",
-   "ar": "في آخر لحظة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IN THE SAME BOAT",
-   "ar": "نحن في المأزق نفسه",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IS THAT A THREAT",
-   "ar": "أهذا تهديد؟",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IT CAN'T BE HELPED",
-   "ar": "لا حيلة في الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IT GOES WITHOUT SAYING",
-   "ar": "هذا أمر بديهي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IT SLIPPED MY MIND",
-   "ar": "غاب عن بالي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IT WAS WORTH IT",
-   "ar": "كان الأمر يستحق",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IT'S A DEAL",
-   "ar": "اتفقنا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IT'S A LONG SHOT",
-   "ar": "الاحتمال ضئيل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IT'S A TRAP",
-   "ar": "إنه فخ",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IT'S ABOUT TIME",
-   "ar": "لقد آن الأوان",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IT'S NONE OF YOUR BUSINESS",
-   "ar": "هذا لا يعنيك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IT'S NOT YOUR FAULT",
-   "ar": "ليس ذنبك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "IT'S UP TO YOU",
-   "ar": "القرار لك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "JUMP TO CONCLUSIONS",
-   "ar": "تسرّع في الحكم",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "JUST IN CASE",
-   "ar": "من باب الاحتياط",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "JUST MY LUCK",
-   "ar": "يا لسوء حظي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP A LOW PROFILE",
-   "ar": "لا تلفت الأنظار",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP AN EYE ON HIM",
-   "ar": "راقبه",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP GOING",
-   "ar": "واصل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP IT DOWN",
-   "ar": "اخفض صوتك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP IT UP",
-   "ar": "استمر هكذا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP ME POSTED",
-   "ar": "أطلعني على المستجدات",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP OUT OF THIS",
-   "ar": "لا تتدخل في هذا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP QUIET",
-   "ar": "التزم الصمت",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP THE CHANGE",
-   "ar": "احتفظ بالباقي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP UP WITH ME",
-   "ar": "جارني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP YOUR DISTANCE",
-   "ar": "حافظ على مسافة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KEEP YOUR PROMISE",
-   "ar": "أوف بوعدك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "KNOCK IT OFF",
-   "ar": "كفّ عن هذا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LAY LOW",
-   "ar": "توارَ عن الأنظار",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LEAD THE WAY",
-   "ar": "تقدّمنا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LEAVE ME ALONE",
-   "ar": "اتركني وشأني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LEAVE NO TRACE",
-   "ar": "لا تترك أثراً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LEND ME A HAND",
-   "ar": "أعنّي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LET IT BE",
-   "ar": "دعه كما هو",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LET IT SLIDE",
-   "ar": "تغاضَ عن الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LET ME GUESS",
-   "ar": "دعني أخمّن",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LET ME KNOW",
-   "ar": "أخبرني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LET ME THROUGH",
-   "ar": "دعني أمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LET THAT SINK IN",
-   "ar": "فكّر في ذلك ملياً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LET'S CALL A TRUCE",
-   "ar": "لنعقد هدنة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LET'S GET MOVING",
-   "ar": "هيا بنا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LET'S MAKE A DEAL",
-   "ar": "لنتفق",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LIE LOW",
-   "ar": "الزم مخبأك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LIGHTEN UP",
-   "ar": "هوّن عليك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LOOK AFTER YOURSELF",
-   "ar": "اعتن بنفسك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LOOK DOWN ON",
-   "ar": "احتقر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LOOK INTO IT",
-   "ar": "تحرّ الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LOOK ME IN THE EYE",
-   "ar": "انظر في عيني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LOOK THE OTHER WAY",
-   "ar": "تغاضَ عن الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LOOK UP TO",
-   "ar": "اقتدِ بـ",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "LOSE YOUR TEMPER",
-   "ar": "افقد أعصابك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MAKE A RUN FOR IT",
-   "ar": "اهرب الآن",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MAKE ENDS MEET",
-   "ar": "دبّر نفقات المعيشة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MAKE IT COUNT",
-   "ar": "اجعل للفرصة قيمة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MAKE IT UP TO YOU",
-   "ar": "سأعوّضك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MAKE NO MISTAKE",
-   "ar": "لا تخطئ فهمي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MAKE ROOM",
-   "ar": "أفسح المجال",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MAKE SENSE",
-   "ar": "يبدو منطقياً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MAKE UP YOUR MIND",
-   "ar": "احسم أمرك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MARK MY WORDS",
-   "ar": "تذكّر كلامي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MEET ME HALFWAY",
-   "ar": "تنازل قليلاً مثلي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MIND YOUR MANNERS",
-   "ar": "تأدّب",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MIND YOUR OWN BUSINESS",
-   "ar": "اهتم بشؤونك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MISS THE POINT",
-   "ar": "فاتك المقصود",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MOVE ASIDE",
-   "ar": "تنحّ جانباً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MOVE ON",
-   "ar": "تجاوز ما حدث",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "MY HANDS ARE TIED",
-   "ar": "يداي مقيّدتان",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NEVER MIND",
-   "ar": "لا عليك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NO HARD FEELINGS",
-   "ar": "لا ضغينة بيننا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NO KIDDING",
-   "ar": "حقاً؟",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NO MATTER WHAT",
-   "ar": "مهما حدث",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NO OFFENSE",
-   "ar": "لا أقصد الإساءة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NO STRINGS ATTACHED",
-   "ar": "بلا شروط",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NO SUCH LUCK",
-   "ar": "لم يحالفني الحظ",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NOT A CHANCE",
-   "ar": "لا أمل في ذلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NOT A WORD",
-   "ar": "ولا كلمة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NOT ANYMORE",
-   "ar": "لم يعد الأمر كذلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NOT ON MY WATCH",
-   "ar": "لن أسمح بذلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NOT SO FAST",
-   "ar": "ليس بهذه السرعة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NOTHING TO LOSE",
-   "ar": "ليس لدي ما أخسره",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "NOW OR NEVER",
-   "ar": "الآن أو أبداً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "OFF THE RECORD",
-   "ar": "بيننا فقط",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "ON MY WAY",
-   "ar": "أنا في الطريق",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "ON PURPOSE",
-   "ar": "عن عمد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "ON SECOND THOUGHT",
-   "ar": "بعد التفكير",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "ON THE CONTRARY",
-   "ar": "على العكس",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "ON THE HOUSE",
-   "ar": "على حساب المحل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "ON THE OTHER HAND",
-   "ar": "من جهة أخرى",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "ONCE AND FOR ALL",
-   "ar": "مرة وإلى الأبد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "ONE AT A TIME",
-   "ar": "واحداً تلو الآخر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "ONE STEP AHEAD",
-   "ar": "متقدّم بخطوة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "OUT OF NOWHERE",
-   "ar": "من حيث لا ندري",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "OUT OF THE BLUE",
-   "ar": "على حين غرة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "OUT OF THE QUESTION",
-   "ar": "هذا مستبعد تماماً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "OUT OF TIME",
-   "ar": "نفد الوقت",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "OVER MY DEAD BODY",
-   "ar": "على جثتي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "PASS IT ON",
-   "ar": "انقل الخبر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "PAY ATTENTION",
-   "ar": "انتبه",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "PICK A FIGHT",
-   "ar": "افتعل شجاراً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "PICK UP THE PACE",
-   "ar": "أسرع الخطى",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "PIECE OF CAKE",
-   "ar": "الأمر في غاية السهولة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "PLAY ALONG",
-   "ar": "جارِه",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "PLAY DUMB",
-   "ar": "تظاهر بالجهل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "PLAY IT SAFE",
-   "ar": "الزم جانب الحذر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "POINT TAKEN",
-   "ar": "فهمت قصدك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "PULL YOURSELF TOGETHER",
-   "ar": "تماسك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "PUT IT OFF",
-   "ar": "أجّله",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "PUT YOURSELF IN MY PLACE",
-   "ar": "ضع نفسك مكاني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "READ BETWEEN THE LINES",
-   "ar": "اقرأ ما بين السطور",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "REST ASSURED",
-   "ar": "اطمئن",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "RIP OFF",
-   "ar": "احتال على",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "RULE IT OUT",
-   "ar": "استبعده",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "RUN AWAY",
-   "ar": "اهرب",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "RUN OUT OF TIME",
-   "ar": "نفد الوقت",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "SAVE YOUR BREATH",
-   "ar": "وفّر كلامك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "SEE FOR YOURSELF",
-   "ar": "انظر بنفسك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "SET ME FREE",
-   "ar": "أطلق سراحي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "SETTLE DOWN",
-   "ar": "اهدأ",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "SIT TIGHT",
-   "ar": "انتظر مكانك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "SLEEP ON IT",
-   "ar": "فكّر فيه حتى الغد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "SO FAR SO GOOD",
-   "ar": "كل شيء بخير حتى الآن",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "SOONER OR LATER",
-   "ar": "عاجلاً أم آجلاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "SPEAK UP",
-   "ar": "ارفع صوتك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "STAND BACK",
-   "ar": "ابتعد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "STAND BY ME",
-   "ar": "قف إلى جانبي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "STAND YOUR GROUND",
-   "ar": "اثبت مكانك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "STAY OUT OF IT",
-   "ar": "لا تتدخل",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "STEP ASIDE",
-   "ar": "تنحّ",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "STEP DOWN",
-   "ar": "تنحَّ عن منصبك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "STICK TOGETHER",
-   "ar": "ابقوا معاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "TAKE A HINT",
-   "ar": "افهم التلميح",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "TAKE CARE",
-   "ar": "انتبه لنفسك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "TAKE IT EASY",
-   "ar": "على رسلك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "TAKE MY WORD FOR IT",
-   "ar": "صدّقني",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "TAKE YOUR PICK",
-   "ar": "اختر ما تشاء",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "TALK IT OVER",
-   "ar": "لنتناقش فيه",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "THE COAST IS CLEAR",
-   "ar": "الطريق خالٍ",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "THINK IT THROUGH",
-   "ar": "فكّر فيه جيداً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "THROW IN THE TOWEL",
-   "ar": "اعترف بالهزيمة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "TIME IS RUNNING OUT",
-   "ar": "الوقت ينفد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "TURN A BLIND EYE",
-   "ar": "تغاضَ عن الأمر",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "TURN BACK",
-   "ar": "ارجع",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "WAIT AND SEE",
-   "ar": "انتظر وسترى",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "WATCH YOUR BACK",
-   "ar": "احذر ما يدور خلفك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "WE'RE EVEN",
-   "ar": "نحن متعادلان",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "WHAT A RELIEF",
-   "ar": "يا للراحة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "WHAT'S THE CATCH",
-   "ar": "أين الخدعة؟",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "WITHOUT A DOUBT",
-   "ar": "بلا شك",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "WORD FOR WORD",
-   "ar": "كلمة بكلمة",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "WORK IT OUT",
-   "ar": "جد حلاً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "YOU ASKED FOR IT",
-   "ar": "أنت من جلب هذا لنفسه",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "YOU BET",
-   "ar": "بالتأكيد",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "YOU CAN SAY THAT AGAIN",
-   "ar": "صدقت تماماً",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "YOU HAVE MY WORD",
-   "ar": "لك وعدي",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  },
-  {
-   "en": "YOU'LL REGRET THIS",
-   "ar": "ستندم على هذا",
-   "type": "phrase",
-   "genre": [
-    "general"
-   ],
-   "priority": 48
-  }
- ]
+  "version": 1,
+  "entries": [
+    {
+      "en": "BACK AWAY",
+      "ar": "تراجع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BACK ME UP",
+      "ar": "ساندني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BACK OUT",
+      "ar": "انسحب",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BACK DOWN",
+      "ar": "تراجع عن موقفك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BACK OFF",
+      "ar": "ابتعد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BACK TO SQUARE ONE",
+      "ar": "عدنا إلى نقطة الصفر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BEHIND YOUR BACK",
+      "ar": "من وراء ظهرك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BEHIND BARS",
+      "ar": "خلف القضبان",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BEND THE RULES",
+      "ar": "تساهل في تطبيق القواعد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BETTER LATE THAN NEVER",
+      "ar": "أن تأتي متأخراً خير من ألا تأتي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BETTER SAFE THAN SORRY",
+      "ar": "الاحتياط خير من الندم",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BETWEEN YOU AND ME",
+      "ar": "بيني وبينك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BITE YOUR TONGUE",
+      "ar": "أمسك لسانك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BITE THE BULLET",
+      "ar": "تحمّل الأمر بشجاعة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BLOW YOUR COVER",
+      "ar": "اكشف هويتك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BLOW OFF STEAM",
+      "ar": "نفّس عن غضبك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BREAK A LEG",
+      "ar": "بالتوفيق",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BREAK EVEN",
+      "ar": "لا ربح ولا خسارة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BREAK FREE",
+      "ar": "تحرّر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BREAK IT DOWN",
+      "ar": "اشرح الأمر بالتفصيل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BREAK THE ICE",
+      "ar": "بدّد التوتر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BREAK THE SILENCE",
+      "ar": "اقطع الصمت",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BREAK THE NEWS",
+      "ar": "أبلغهم بالخبر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BRING IT ON",
+      "ar": "هات ما عندك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BRING HIM AROUND",
+      "ar": "أقنعه",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BRING IT UP",
+      "ar": "اطرح الموضوع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BRUSH IT OFF",
+      "ar": "لا تكترث للأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BRUSH UP ON",
+      "ar": "راجع معلوماتك عن",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BURN BRIDGES",
+      "ar": "اقطع سبل الرجوع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BUY SOME TIME",
+      "ar": "اكسب بعض الوقت",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BY ALL MEANS",
+      "ar": "بكل سرور",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BY ANY MEANS NECESSARY",
+      "ar": "بأي وسيلة ممكنة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BY HEART",
+      "ar": "عن ظهر قلب",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BY THE BOOK",
+      "ar": "وفق القواعد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "BY THE WAY",
+      "ar": "بالمناسبة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CALL IT A DAY",
+      "ar": "لنكتف بهذا اليوم",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CALL IT EVEN",
+      "ar": "نحن متعادلان",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CALL IT QUITS",
+      "ar": "لننه الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CALL OFF THE SEARCH",
+      "ar": "أوقف البحث",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CALL THE SHOTS",
+      "ar": "تولّ زمام القرار",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CALL YOUR BLUFF",
+      "ar": "أتحداك أن تفعلها",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CALM DOWN",
+      "ar": "اهدأ",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CARRY ON",
+      "ar": "واصل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CARRY YOUR WEIGHT",
+      "ar": "قم بنصيبك من العمل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CATCH ME UP",
+      "ar": "أطلعني على ما فاتني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CATCH YOUR BREATH",
+      "ar": "التقط أنفاسك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CATCH UP WITH ME",
+      "ar": "الحق بي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CHANGE OF HEART",
+      "ar": "تغيّر في الموقف",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CHECK IT OUT",
+      "ar": "ألق نظرة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CHEER UP",
+      "ar": "ابتهج",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CHICKEN OUT",
+      "ar": "تراجع خوفاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CHIN UP",
+      "ar": "ارفع رأسك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CLEAN UP YOUR MESS",
+      "ar": "أصلح ما أفسدت",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CLEAR YOUR HEAD",
+      "ar": "صفّ ذهنك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CLEAR THE AIR",
+      "ar": "أزل سوء الفهم",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CLOSE CALL",
+      "ar": "نجونا بأعجوبة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "COME CLEAN",
+      "ar": "قل الحقيقة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "COME FORWARD",
+      "ar": "تقدّم وتكلم",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "COME IN HANDY",
+      "ar": "قد ينفعنا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "COME ON IN",
+      "ar": "تفضّل بالدخول",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "COME TO TERMS WITH IT",
+      "ar": "تقبّل الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "COME TO YOUR SENSES",
+      "ar": "عد إلى رشدك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "COUNT ME IN",
+      "ar": "احسبني معكم",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "COUNT ME OUT",
+      "ar": "لا تحسبني معكم",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "COUNT ON ME",
+      "ar": "اعتمد عليّ",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "COVER FOR ME",
+      "ar": "أنب عني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CROSS MY HEART",
+      "ar": "أقسم لك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CROSS THE LINE",
+      "ar": "تجاوز الحد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CUT CORNERS",
+      "ar": "اختصر على حساب الجودة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CUT IT OUT",
+      "ar": "كفّ عن ذلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CUT ME SOME SLACK",
+      "ar": "هوّن عليّ قليلاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CUT TO THE CHASE",
+      "ar": "ادخل في صلب الموضوع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "CUT TIES",
+      "ar": "اقطع الصلة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DEAL WITH IT",
+      "ar": "تعامل مع الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DEEP DOWN",
+      "ar": "في قرارة نفسي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DIG DEEPER",
+      "ar": "تعمّق في البحث",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DIG IN",
+      "ar": "ابدأ بالأكل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DO ME A FAVOR",
+      "ar": "أسد إليّ معروفاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DO THE HONORS",
+      "ar": "تفضّل أنت",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DOES IT RING A BELL",
+      "ar": "هل يذكّرك بشيء؟",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DON'T COUNT ON IT",
+      "ar": "لا تعوّل على ذلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DON'T FALL FOR IT",
+      "ar": "لا تنخدع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DON'T GET ME WRONG",
+      "ar": "لا تسئ فهمي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DON'T GIVE IT AWAY",
+      "ar": "لا تفش السر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DON'T HOLD BACK",
+      "ar": "لا تتردد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DON'T MENTION IT",
+      "ar": "لا شكر على واجب",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DON'T PUSH YOUR LUCK",
+      "ar": "لا تختبر حظك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DON'T SWEAT IT",
+      "ar": "لا تقلق بشأنه",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DON'T TAKE IT PERSONALLY",
+      "ar": "لا تأخذ الأمر على محمل شخصي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DON'T TEMPT FATE",
+      "ar": "لا تتحدَّ القدر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DON'T TEST ME",
+      "ar": "لا تختبر صبري",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DOUBLE CHECK",
+      "ar": "تحقق مرة أخرى",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DOWN TO EARTH",
+      "ar": "واقعي ومتواضع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DRAW THE LINE",
+      "ar": "ضع حدّاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DROP BY",
+      "ar": "مرّ علينا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DROP IT",
+      "ar": "دع الموضوع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DROP THE ACT",
+      "ar": "كفّ عن التظاهر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "DROP YOUR GUARD",
+      "ar": "أرخ حذرك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "EASY DOES IT",
+      "ar": "على مهلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "EAT YOUR WORDS",
+      "ar": "ستندم على كلامك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "ENOUGH IS ENOUGH",
+      "ar": "لقد طفح الكيل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "EVEN THE ODDS",
+      "ar": "وازن الكفّتين",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "EVERY NOW AND THEN",
+      "ar": "من حين لآخر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "EYE FOR AN EYE",
+      "ar": "العين بالعين",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FACE THE MUSIC",
+      "ar": "تحمّل العواقب",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FAIR AND SQUARE",
+      "ar": "بنزاهة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FAIR ENOUGH",
+      "ar": "هذا معقول",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FALL APART",
+      "ar": "انهَر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FALL BEHIND",
+      "ar": "تخلّف عن الركب",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FALL INTO PLACE",
+      "ar": "اتّضح كل شيء",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FALL THROUGH",
+      "ar": "لم يكتب له النجاح",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FAR FROM IT",
+      "ar": "الأمر بعيد عن ذلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FIGURE IT OUT",
+      "ar": "جد الحل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FILL ME IN",
+      "ar": "أطلعني على التفاصيل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FIND A WAY OUT",
+      "ar": "جد مخرجاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FIND YOUR FEET",
+      "ar": "تأقلم",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FIRST THINGS FIRST",
+      "ar": "لنبدأ بالأهم",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FOLLOW MY LEAD",
+      "ar": "احذُ حذوي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FOR A CHANGE",
+      "ar": "على سبيل التغيير",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FOR GOOD",
+      "ar": "إلى الأبد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FOR OLD TIMES' SAKE",
+      "ar": "إكراماً للأيام الخوالي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FOR THE RECORD",
+      "ar": "للعلم",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FOR THE TIME BEING",
+      "ar": "في الوقت الحالي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FROM SCRATCH",
+      "ar": "من الصفر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "FROM TIME TO TIME",
+      "ar": "من وقت إلى آخر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET A GRIP",
+      "ar": "تماسك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET A MOVE ON",
+      "ar": "أسرع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET ALONG",
+      "ar": "تفاهموا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET AWAY WITH IT",
+      "ar": "افلت بفعلتك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET BACK AT HIM",
+      "ar": "ردّ له الصاع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET BACK HERE",
+      "ar": "عد إلى هنا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET DOWN",
+      "ar": "انبطح",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET IT OVER WITH",
+      "ar": "أنه الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET OFF MY BACK",
+      "ar": "كفّ عن مضايقتي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET ON WITH IT",
+      "ar": "امض في الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET OUT OF HAND",
+      "ar": "خرج عن السيطرة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET OVER IT",
+      "ar": "تجاوز الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET REAL",
+      "ar": "كن واقعياً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET RID OF IT",
+      "ar": "تخلّص منه",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET SOME REST",
+      "ar": "استرح قليلاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET STRAIGHT TO THE POINT",
+      "ar": "تكلّم في صلب الموضوع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET THE HANG OF IT",
+      "ar": "تعلّم أصوله",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET THE PICTURE",
+      "ar": "افهم المقصود",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET THIS STRAIGHT",
+      "ar": "افهم هذا جيداً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET TO WORK",
+      "ar": "ابدأ العمل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GET USED TO IT",
+      "ar": "اعتد على الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GIVE IT A SHOT",
+      "ar": "جرّب",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GIVE IT YOUR ALL",
+      "ar": "ابذل قصارى جهدك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GIVE ME A BREAK",
+      "ar": "أرحني قليلاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GIVE ME A HAND",
+      "ar": "ساعدني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GIVE ME YOUR WORD",
+      "ar": "عدني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GIVE UP",
+      "ar": "استسلم",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GO AFTER HIM",
+      "ar": "الحق به",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GO AHEAD",
+      "ar": "تفضّل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GO ALL OUT",
+      "ar": "ابذل كل ما لديك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GO EASY ON HIM",
+      "ar": "ارفق به",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GO FOR IT",
+      "ar": "أقدم على ذلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GO TOO FAR",
+      "ar": "تمادى",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GO WITH THE FLOW",
+      "ar": "ساير الأمور",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GOOD FOR YOU",
+      "ar": "هنيئاً لك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GOOD GRIEF",
+      "ar": "يا إلهي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GOOD RIDDANCE",
+      "ar": "تخلّصنا منه أخيراً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "GUESS WHAT",
+      "ar": "أتدري ماذا حدث؟",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HANG IN THERE",
+      "ar": "اصمد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HANG ON A SECOND",
+      "ar": "انتظر لحظة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HANDS OFF",
+      "ar": "ارفع يدك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HAVE A POINT",
+      "ar": "معك حق",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HAVE A SEAT",
+      "ar": "تفضّل بالجلوس",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HAVE IT YOUR WAY",
+      "ar": "كما تشاء",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HAVE SECOND THOUGHTS",
+      "ar": "أعد النظر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HEAD OUT",
+      "ar": "انطلق",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HEADS UP",
+      "ar": "انتبه",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HEAR ME OUT",
+      "ar": "اسمعني إلى النهاية",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HEART AND SOUL",
+      "ar": "بكل كياني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HELP YOURSELF",
+      "ar": "تفضّل وخذ ما تشاء",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HERE GOES NOTHING",
+      "ar": "لنجرب ولنرَ",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HERE WE GO AGAIN",
+      "ar": "ها نحن نعيد الكرّة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HIT THE ROAD",
+      "ar": "انطلق",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HOLD IT",
+      "ar": "توقّف",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HOLD ON TIGHT",
+      "ar": "تمسّك جيداً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HOLD STILL",
+      "ar": "اثبت مكانك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HOLD YOUR BREATH",
+      "ar": "احبس أنفاسك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HOLD YOUR HORSES",
+      "ar": "تمهّل قليلاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "HOW COME",
+      "ar": "وكيف ذلك؟",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I CAN'T HELP IT",
+      "ar": "لا أملك حيال ذلك شيئاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I CAN'T STAND IT",
+      "ar": "لا أطيق هذا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I DIDN'T MEAN IT",
+      "ar": "لم أقصد ذلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I DOUBT IT",
+      "ar": "أشك في ذلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I HAD A HUNCH",
+      "ar": "راودني حدس",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I HAVE YOUR BACK",
+      "ar": "أنا أحمي ظهرك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I LOST TRACK",
+      "ar": "فقدت أثره",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I MEAN IT",
+      "ar": "أنا جاد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I OWE YOU ONE",
+      "ar": "أنا مدين لك بمعروف",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I SEE YOUR POINT",
+      "ar": "فهمت وجهة نظرك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I TOLD YOU SO",
+      "ar": "ألم أقل لك؟",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I WON'T LET YOU DOWN",
+      "ar": "لن أخذلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IF ALL ELSE FAILS",
+      "ar": "إن فشل كل شيء",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IF YOU INSIST",
+      "ar": "إن كنت مصرّاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN A HEARTBEAT",
+      "ar": "بلا تردّد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN A NUTSHELL",
+      "ar": "باختصار",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN A PINCH",
+      "ar": "عند الضيق",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN ANY CASE",
+      "ar": "على أي حال",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN BROAD DAYLIGHT",
+      "ar": "في وضح النهار",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN COLD BLOOD",
+      "ar": "بدم بارد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN DUE TIME",
+      "ar": "في الوقت المناسب",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN MY SHOES",
+      "ar": "لو كنت مكاني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN NO TIME",
+      "ar": "في لمح البصر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN ONE PIECE",
+      "ar": "سالماً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN PLAIN SIGHT",
+      "ar": "على مرأى الجميع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN RETURN",
+      "ar": "في المقابل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN THE LONG RUN",
+      "ar": "على المدى البعيد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN THE MEANTIME",
+      "ar": "في هذه الأثناء",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN THE NICK OF TIME",
+      "ar": "في آخر لحظة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IN THE SAME BOAT",
+      "ar": "نحن في المأزق نفسه",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IS THAT A THREAT",
+      "ar": "أهذا تهديد؟",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IT CAN'T BE HELPED",
+      "ar": "لا حيلة في الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IT GOES WITHOUT SAYING",
+      "ar": "هذا أمر بديهي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IT SLIPPED MY MIND",
+      "ar": "غاب عن بالي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IT WAS WORTH IT",
+      "ar": "كان الأمر يستحق",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IT'S A DEAL",
+      "ar": "اتفقنا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IT'S A LONG SHOT",
+      "ar": "الاحتمال ضئيل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IT'S A TRAP",
+      "ar": "إنه فخ",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IT'S ABOUT TIME",
+      "ar": "لقد آن الأوان",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IT'S NONE OF YOUR BUSINESS",
+      "ar": "هذا لا يعنيك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IT'S NOT YOUR FAULT",
+      "ar": "ليس ذنبك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "IT'S UP TO YOU",
+      "ar": "القرار لك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "JUMP TO CONCLUSIONS",
+      "ar": "تسرّع في الحكم",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "JUST IN CASE",
+      "ar": "من باب الاحتياط",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "JUST MY LUCK",
+      "ar": "يا لسوء حظي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP A LOW PROFILE",
+      "ar": "لا تلفت الأنظار",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP AN EYE ON HIM",
+      "ar": "راقبه",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP GOING",
+      "ar": "واصل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP IT DOWN",
+      "ar": "اخفض صوتك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP IT UP",
+      "ar": "استمر هكذا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP ME POSTED",
+      "ar": "أطلعني على المستجدات",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP OUT OF THIS",
+      "ar": "لا تتدخل في هذا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP QUIET",
+      "ar": "التزم الصمت",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP THE CHANGE",
+      "ar": "احتفظ بالباقي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP UP WITH ME",
+      "ar": "جارني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP YOUR DISTANCE",
+      "ar": "حافظ على مسافة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KEEP YOUR PROMISE",
+      "ar": "أوف بوعدك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "KNOCK IT OFF",
+      "ar": "كفّ عن هذا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LAY LOW",
+      "ar": "توارَ عن الأنظار",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LEAD THE WAY",
+      "ar": "تقدّمنا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LEAVE ME ALONE",
+      "ar": "اتركني وشأني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LEAVE NO TRACE",
+      "ar": "لا تترك أثراً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LEND ME A HAND",
+      "ar": "أعنّي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LET IT BE",
+      "ar": "دعه كما هو",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LET IT SLIDE",
+      "ar": "تغاضَ عن الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LET ME GUESS",
+      "ar": "دعني أخمّن",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LET ME KNOW",
+      "ar": "أخبرني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LET ME THROUGH",
+      "ar": "دعني أمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LET THAT SINK IN",
+      "ar": "فكّر في ذلك ملياً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LET'S CALL A TRUCE",
+      "ar": "لنعقد هدنة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LET'S GET MOVING",
+      "ar": "هيا بنا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LET'S MAKE A DEAL",
+      "ar": "لنتفق",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LIE LOW",
+      "ar": "الزم مخبأك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LIGHTEN UP",
+      "ar": "هوّن عليك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LOOK AFTER YOURSELF",
+      "ar": "اعتن بنفسك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LOOK DOWN ON",
+      "ar": "احتقر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LOOK INTO IT",
+      "ar": "تحرّ الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LOOK ME IN THE EYE",
+      "ar": "انظر في عيني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LOOK THE OTHER WAY",
+      "ar": "تغاضَ عن الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LOOK UP TO",
+      "ar": "اقتدِ بـ",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "LOSE YOUR TEMPER",
+      "ar": "افقد أعصابك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MAKE A RUN FOR IT",
+      "ar": "اهرب الآن",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MAKE ENDS MEET",
+      "ar": "دبّر نفقات المعيشة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MAKE IT COUNT",
+      "ar": "اجعل للفرصة قيمة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MAKE IT UP TO YOU",
+      "ar": "سأعوّضك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MAKE NO MISTAKE",
+      "ar": "لا تخطئ فهمي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MAKE ROOM",
+      "ar": "أفسح المجال",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MAKE SENSE",
+      "ar": "يبدو منطقياً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MAKE UP YOUR MIND",
+      "ar": "احسم أمرك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MARK MY WORDS",
+      "ar": "تذكّر كلامي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MEET ME HALFWAY",
+      "ar": "تنازل قليلاً مثلي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MIND YOUR MANNERS",
+      "ar": "تأدّب",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MIND YOUR OWN BUSINESS",
+      "ar": "اهتم بشؤونك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MISS THE POINT",
+      "ar": "فاتك المقصود",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MOVE ASIDE",
+      "ar": "تنحّ جانباً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MOVE ON",
+      "ar": "تجاوز ما حدث",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "MY HANDS ARE TIED",
+      "ar": "يداي مقيّدتان",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NEVER MIND",
+      "ar": "لا عليك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NO HARD FEELINGS",
+      "ar": "لا ضغينة بيننا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NO KIDDING",
+      "ar": "حقاً؟",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NO MATTER WHAT",
+      "ar": "مهما حدث",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NO OFFENSE",
+      "ar": "لا أقصد الإساءة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NO STRINGS ATTACHED",
+      "ar": "بلا شروط",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NO SUCH LUCK",
+      "ar": "لم يحالفني الحظ",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NOT A CHANCE",
+      "ar": "لا أمل في ذلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NOT A WORD",
+      "ar": "ولا كلمة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NOT ANYMORE",
+      "ar": "لم يعد الأمر كذلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NOT ON MY WATCH",
+      "ar": "لن أسمح بذلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NOT SO FAST",
+      "ar": "ليس بهذه السرعة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NOTHING TO LOSE",
+      "ar": "ليس لدي ما أخسره",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "NOW OR NEVER",
+      "ar": "الآن أو أبداً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "OFF THE RECORD",
+      "ar": "بيننا فقط",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "ON MY WAY",
+      "ar": "أنا في الطريق",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "ON PURPOSE",
+      "ar": "عن عمد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "ON SECOND THOUGHT",
+      "ar": "بعد التفكير",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "ON THE CONTRARY",
+      "ar": "على العكس",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "ON THE HOUSE",
+      "ar": "على حساب المحل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "ON THE OTHER HAND",
+      "ar": "من جهة أخرى",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "ONCE AND FOR ALL",
+      "ar": "مرة وإلى الأبد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "ONE AT A TIME",
+      "ar": "واحداً تلو الآخر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "ONE STEP AHEAD",
+      "ar": "متقدّم بخطوة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "OUT OF NOWHERE",
+      "ar": "من حيث لا ندري",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "OUT OF THE BLUE",
+      "ar": "على حين غرة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "OUT OF THE QUESTION",
+      "ar": "هذا مستبعد تماماً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "OUT OF TIME",
+      "ar": "نفد الوقت",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "OVER MY DEAD BODY",
+      "ar": "على جثتي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "PASS IT ON",
+      "ar": "انقل الخبر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "PAY ATTENTION",
+      "ar": "انتبه",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "PICK A FIGHT",
+      "ar": "افتعل شجاراً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "PICK UP THE PACE",
+      "ar": "أسرع الخطى",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "PIECE OF CAKE",
+      "ar": "الأمر في غاية السهولة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "PLAY ALONG",
+      "ar": "جارِه",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "PLAY DUMB",
+      "ar": "تظاهر بالجهل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "PLAY IT SAFE",
+      "ar": "الزم جانب الحذر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "POINT TAKEN",
+      "ar": "فهمت قصدك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "PULL YOURSELF TOGETHER",
+      "ar": "تماسك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "PUT IT OFF",
+      "ar": "أجّله",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "PUT YOURSELF IN MY PLACE",
+      "ar": "ضع نفسك مكاني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "READ BETWEEN THE LINES",
+      "ar": "اقرأ ما بين السطور",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "REST ASSURED",
+      "ar": "اطمئن",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "RIP OFF",
+      "ar": "احتال على",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "RULE IT OUT",
+      "ar": "استبعده",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "RUN AWAY",
+      "ar": "اهرب",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "RUN OUT OF TIME",
+      "ar": "نفد الوقت",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "SAVE YOUR BREATH",
+      "ar": "وفّر كلامك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "SEE FOR YOURSELF",
+      "ar": "انظر بنفسك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "SET ME FREE",
+      "ar": "أطلق سراحي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "SETTLE DOWN",
+      "ar": "اهدأ",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "SIT TIGHT",
+      "ar": "انتظر مكانك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "SLEEP ON IT",
+      "ar": "فكّر فيه حتى الغد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "SO FAR SO GOOD",
+      "ar": "كل شيء بخير حتى الآن",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "SOONER OR LATER",
+      "ar": "عاجلاً أم آجلاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "SPEAK UP",
+      "ar": "ارفع صوتك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "STAND BACK",
+      "ar": "ابتعد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "STAND BY ME",
+      "ar": "قف إلى جانبي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "STAND YOUR GROUND",
+      "ar": "اثبت مكانك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "STAY OUT OF IT",
+      "ar": "لا تتدخل",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "STEP ASIDE",
+      "ar": "تنحّ",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "STEP DOWN",
+      "ar": "تنحَّ عن منصبك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "STICK TOGETHER",
+      "ar": "ابقوا معاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "TAKE A HINT",
+      "ar": "افهم التلميح",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "TAKE CARE",
+      "ar": "انتبه لنفسك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "TAKE IT EASY",
+      "ar": "على رسلك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "TAKE MY WORD FOR IT",
+      "ar": "صدّقني",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "TAKE YOUR PICK",
+      "ar": "اختر ما تشاء",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "TALK IT OVER",
+      "ar": "لنتناقش فيه",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "THE COAST IS CLEAR",
+      "ar": "الطريق خالٍ",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "THINK IT THROUGH",
+      "ar": "فكّر فيه جيداً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "THROW IN THE TOWEL",
+      "ar": "اعترف بالهزيمة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "TIME IS RUNNING OUT",
+      "ar": "الوقت ينفد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "TURN A BLIND EYE",
+      "ar": "تغاضَ عن الأمر",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "TURN BACK",
+      "ar": "ارجع",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "WAIT AND SEE",
+      "ar": "انتظر وسترى",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "WATCH YOUR BACK",
+      "ar": "احذر ما يدور خلفك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "WE'RE EVEN",
+      "ar": "نحن متعادلان",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "WHAT A RELIEF",
+      "ar": "يا للراحة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "WHAT'S THE CATCH",
+      "ar": "أين الخدعة؟",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "WITHOUT A DOUBT",
+      "ar": "بلا شك",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "WORD FOR WORD",
+      "ar": "كلمة بكلمة",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "WORK IT OUT",
+      "ar": "جد حلاً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "YOU ASKED FOR IT",
+      "ar": "أنت من جلب هذا لنفسه",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "YOU BET",
+      "ar": "بالتأكيد",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "YOU CAN SAY THAT AGAIN",
+      "ar": "صدقت تماماً",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "YOU HAVE MY WORD",
+      "ar": "لك وعدي",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "YOU'LL REGRET THIS",
+      "ar": "ستندم على هذا",
+      "type": "phrase",
+      "genre": [
+        "general"
+      ],
+      "priority": 48
+    },
+    {
+      "en": "I WOULDN'T MIND KILLING HIM",
+      "ar": "لا مانع لديّ من قتله",
+      "type": "sentence",
+      "genre": [
+        "general"
+      ],
+      "priority": 90
+    },
+    {
+      "en": "I WOULDN'T MIND WAITING",
+      "ar": "لا مانع لديّ من الانتظار",
+      "type": "sentence",
+      "genre": [
+        "general"
+      ],
+      "priority": 90
+    },
+    {
+      "en": "I WOULDN'T MIND HELPING",
+      "ar": "لا مانع لديّ من المساعدة",
+      "type": "sentence",
+      "genre": [
+        "general"
+      ],
+      "priority": 90
+    },
+    {
+      "en": "I WOULDN'T MIND TRYING",
+      "ar": "لا مانع لديّ من المحاولة",
+      "type": "sentence",
+      "genre": [
+        "general"
+      ],
+      "priority": 90
+    },
+    {
+      "en": "I WOULDN'T MIND GOING",
+      "ar": "لا مانع لديّ من الذهاب",
+      "type": "sentence",
+      "genre": [
+        "general"
+      ],
+      "priority": 90
+    }
+  ]
 }

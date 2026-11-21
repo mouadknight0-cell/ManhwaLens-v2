@@ -16,6 +16,7 @@ internal class ColorRecovery {
     private var lastPage:Page?=null
     /** Check scene context as well as every crop. A new caption elsewhere must trigger discovery. */
     suspend fun recognize(client:TextRecognitionClient,b:Bitmap,lang:String,keep:(TextRegion)->Boolean,log:(String)->Unit):List<TextRegion> {
+        if(com.manhwalens.app.BuildConfig.CROP_FIRST) return recover(client,b,lang,emptyList(),450,keep,log)
         var scene=17L;for(y in 0..63)for(x in 0..47)scene=31*scene+(b.getPixel((b.width-1)*x/47,(b.height-1)*y/63) and 0xf0f0f0)
         lastPage?.takeIf { it.w==b.width && it.h==b.height && it.scene==scene && it.boxes.all(keep) && it.boxes.indices.all { i->hash(b,box(it.boxes[i]))==it.signatures[i] } }?.let {log("pass=unchanged_page regions=${it.boxes.size}");return it.boxes}
         val first=kotlinx.coroutines.withTimeoutOrNull(12000){client.recognize(b,lang,log,keep)}?:error("OCR timed out")
@@ -61,14 +62,16 @@ internal class ColorRecovery {
         val candidates=(weak.sortedBy { score(it) }.map(::box)+if(initial.size==weak.size)propose(b) else emptyList()).fold(mutableListOf<Rect>()){a,x->if(a.none { overlap(it,x)>.5 })a.add(x);a}.take(4)
         val output=initial.toMutableList()
         for(raw in candidates){if(android.os.SystemClock.elapsedRealtime()>=deadline)break;val r=Rect(max(0,raw.left-10),max(0,raw.top-10),min(b.width,raw.right+10),min(b.height,raw.bottom+10));if(r.width()<4||r.height()<4||r.width()*r.height()>350000)continue
+            val bounded=budgetMs<=450;val regionDeadline=if(bounded)min(deadline,android.os.SystemClock.elapsedRealtime()+200) else deadline
             val fingerprint=hash(b,r);val visual=perceptual(b,r);val tr=tracks.firstOrNull { overlap(it.box,r)>.5 }?:Track(Rect(r)).also { tracks.addLast(it);if(tracks.size>32)tracks.removeFirst() }
-            val cached=tr.votes.lastOrNull()?.takeIf { it.hash==fingerprint && tr.box==r && it.score>=.77 };var best=initial.filter { overlap(raw,box(it))>.5 };var value=best.map(::score).average().takeIf(Double::isFinite)?:0.0
+            val cached=tr.votes.lastOrNull()?.takeIf { it.hash==fingerprint && tr.box==r && it.score>=.60 };var best=initial.filter { overlap(raw,box(it))>.5 };var value=best.map(::score).average().takeIf(Double::isFinite)?:0.0
             if(cached!=null){best=cached.regions;value=cached.score;log("pass=cache score=$value")} else {
                 val colors=IntArray(r.width()*r.height());b.getPixels(colors,0,r.width(),r.left,r.top,r.width(),r.height());val ys=IntArray(colors.size){gray(colors[it])};val hist=IntArray(256);ys.forEach { hist[it]++ };val mean=ys.average();var winner="frame"
-                val variants=listOf("original","invert","clahe","otsu","lab");for(pass in variants){val remaining=deadline-android.os.SystemClock.elapsedRealtime();if(remaining<=0){log("recovery_budget box=$r retained_score=$value");break};if(pass=="invert" && mean>155)continue
-                    val pixels=if(pass=="clahe")LocalContrast.apply(ys,r.width()) else variant(pass,colors,ys,hist);val crop=Bitmap.createBitmap(pixels,r.width(),r.height(),Bitmap.Config.ARGB_8888);val scale=when {r.height()<32->3;r.height()<=100->2;else->1};val input=if(scale==1)crop else Bitmap.createScaledBitmap(crop,r.width()*scale,r.height()*scale,true)
-                    val got=try { kotlinx.coroutines.withTimeoutOrNull(remaining){client.recognize(input,lang)}.orEmpty().map { it.copy(left=r.left+it.left/scale,right=r.left+it.right/scale,top=r.top+it.top/scale,bottom=r.top+it.bottom/scale) }.filter(keep) }catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){log("pass=$pass failure=${e.javaClass.simpleName}");emptyList()}finally{if(input!==crop)input.recycle();crop.recycle()}
-                    val s=got.map(::score).average().takeIf(Double::isFinite)?:0.0;log("pass=$pass score=$s regions=${got.size} box=$r");if(s>value){value=s;winner=pass;best=got}
+                val variants=listOf("original","invert","clahe","otsu","lab");for(pass in variants){val started=android.os.SystemClock.elapsedRealtime();val remaining=regionDeadline-started;if(remaining<=0){log("recovery_budget box=$r retained_score=$value");break};if(pass=="invert" && mean>155)continue
+                    val pixels=if(bounded && pass=="original")colors else if(pass=="clahe")LocalContrast.apply(ys,r.width()) else variant(pass,colors,ys,hist);val crop=Bitmap.createBitmap(pixels,r.width(),r.height(),Bitmap.Config.ARGB_8888);val scale=when {bounded && pass=="original"->1;r.height()<32->3;r.height()<=100->2;else->1};val input=if(scale==1)crop else Bitmap.createScaledBitmap(crop,r.width()*scale,r.height()*scale,true)
+                    val got=try { kotlinx.coroutines.withTimeoutOrNull((regionDeadline-android.os.SystemClock.elapsedRealtime()).coerceAtLeast(1)){client.recognize(input,lang)}.orEmpty().map { it.copy(left=r.left+it.left/scale,right=r.left+it.right/scale,top=r.top+it.top/scale,bottom=r.top+it.bottom/scale) }.filter(keep) }catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){log("pass=$pass failure=${e.javaClass.simpleName}");emptyList()}finally{if(input!==crop)input.recycle();crop.recycle()}
+                    val s=got.map(::score).average().takeIf(Double::isFinite)?:0.0;log("pass=$pass ms=${android.os.SystemClock.elapsedRealtime()-started} score=$s regions=${got.size} box=$r");if(s>value){value=s;winner=pass;best=got}
+                    if(bounded && got.isNotEmpty() && got.all {it.confidence>=.5f && ReadingEnglish.score(it.text,emptyList())>=.5})break
                     // A confident fragment is NOT a successful crop. Early-out only on a
                     // complete reviewed utterance corroborated by the first frame reading.
                     if(s>=.82 && got.size==1 && initial.any { overlap(box(it),box(got.single()))>.65 && it.text.equals(got.single().text,true) } &&

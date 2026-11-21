@@ -410,6 +410,7 @@ class BubbleOverlayService : Service() {
                 else -> null
             }
             if(reason!=null) { outcome(i,reason); return@forEachIndexed }
+            if(com.manhwalens.app.BuildConfig.STRICT_PLACEMENT && block.region.surface?.reliable!=true){outcome(i,"unverified_surface");return@forEachIndexed}
             val source=SurfacePlacement.visible(block.region,screen)
             val r=block.region
             val others=boxes.filterNot { it.left==r.left && it.top==r.top && it.right==r.right && it.bottom==r.bottom }.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }
@@ -422,7 +423,7 @@ class BubbleOverlayService : Service() {
                 val tight=SurfacePlacement.source(block.region,s.color,true)
                 if(tight==s) null else runCatching { DirectTranslationLayout.prepare(this,block.translated,tight,screen,occupied+others) }.getOrNull()
             }
-            val prepared=tightFit ?: source?.takeIf { it.mask==null }?.let { DirectTranslationLayout.nearby(this,block.translated,it,screen,occupied+others) }
+            val prepared=if(com.manhwalens.app.BuildConfig.STRICT_PLACEMENT)tightFit else tightFit ?: source?.takeIf { it.mask==null }?.let { DirectTranslationLayout.nearby(this,block.translated,it,screen,occupied+others) }
             if(tightFit==null && (application as ManhwaLensApp).settingsRepository.debug.value && source!=null){
                 val paint=android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { typeface=ArabicTypeface.get(this@BubbleOverlayService); textSize=12f*resources.displayMetrics.scaledDensity }
                 val width=(source.width-dp(8)).coerceAtLeast(1);val msg=block.translated
@@ -493,7 +494,7 @@ class BubbleOverlayService : Service() {
     private fun showError(message: String) {
         clearTranslations()
         // An automatic error panel is not a valid replacement for captured dialogue.
-        android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show()
+        bubbleView?.alpha = 0.55f // detailed error is available in the activity only
     }
 
     // ── Plumbing ───────────────────────────────────────────────────

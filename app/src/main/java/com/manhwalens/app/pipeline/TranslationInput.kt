@@ -33,7 +33,7 @@ object TranslationInput {
         val value=clean(text,key.names);synchronized(memo){memo[key]=value};return value
     }
     private fun clean(text: String, glossaryNames: List<String>): String {
-        val normalized = SentenceReconstructor.normalize(text)
+        val normalized = SentenceReconstructor.normalize(text.trimStart {it.isWhitespace() || it in "„“”«».,;"}.trimEnd {it.isWhitespace() || it in "„“”«»,;"}.replace(Regex("\\.{4,}"),"...").replace(Regex("\\bWOULDNT\\b",RegexOption.IGNORE_CASE),"WOULDN'T").replace(Regex("\\bDONT\\b",RegexOption.IGNORE_CASE),"DON'T"))
         val alias=if(glossaryNames.any { it.equals("Jeong-ah",true) }) normalized.replace(Regex("\\bjeong-4h\\b",RegexOption.IGNORE_CASE),"Jeong-ah") else normalized
         if (!OcrLexicon.needsCleanup(alias) && alias.none(Char::isUpperCase)) return alias
         val masked = NameShield.mask(alias, glossaryNames)

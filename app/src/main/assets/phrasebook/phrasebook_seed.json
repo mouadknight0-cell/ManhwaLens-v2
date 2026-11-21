@@ -860,12 +860,12 @@
   },
   {
    "en": "WHAT IS THIS",
-   "ar": "ما هذا؟",
+   "ar": "ما هذا...؟",
    "type": "sentence",
    "genre": [
     "general"
    ],
-   "priority": 90
+   "priority": 95
   },
   {
    "en": "WHAT'S GOING ON",
@@ -4228,30 +4228,6 @@
    ]
   },
   {
-   "en": "I WILL {X}",
-   "ar": "سوف {X}",
-   "type": "template",
-   "slots": {
-    "X": "translate"
-   },
-   "priority": 30,
-   "genre": [
-    "general"
-   ]
-  },
-  {
-   "en": "DON'T {X}",
-   "ar": "لا {X}",
-   "type": "template",
-   "slots": {
-    "X": "translate"
-   },
-   "priority": 30,
-   "genre": [
-    "general"
-   ]
-  },
-  {
    "en": "WHAT DO YOU MEAN {X}",
    "ar": "ماذا تقصد؟ {X}",
    "type": "template",
@@ -4276,28 +4252,184 @@
    ]
   },
   {
-   "en": "IS IT {X}",
-   "ar": "هل هو {X}؟",
-   "type": "template",
-   "slots": {
-    "X": "translate"
-   },
-   "priority": 20,
+   "en": "I HAD MY SUSPICIONS BUT I NEVER IMAGINED A SUPPOSEDLY ORTHODOX SECT WOULD STOOP TO SOMETHING SO DESPICABLE",
+   "ar": "كانت لدي شكوكي، لكنني لم أتخيل قط أن طائفة يُفترض أنها مستقيمة قد تنحدر إلى أمر بهذه الدناءة.",
+   "type": "sentence",
    "genre": [
-    "general"
-   ]
+    "regression-test"
+   ],
+   "priority": 95
   },
   {
-   "en": "YOU {X}!",
-   "ar": "أنت {X}!",
-   "type": "template",
-   "slots": {
-    "X": "translate"
-   },
-   "priority": 10,
+   "en": "THERE SEEMS TO BE A MISUNDERSTANDING",
+   "ar": "يبدو أن هناك سوء فهم.",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "BUT THERE ARE TOO MANY WITNESSES",
+   "ar": "لكن هناك شهوداً كثيرين.",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "I WOULDN'T MIND KILLING HIM RIGHT HERE",
+   "ar": "لا مانع لديّ من قتله هنا والآن...",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "THE CHANGCHEON SOCIETY ALREADY KNEW EVERYTHING BEFORE COMING HERE",
+   "ar": "كانت جمعية تشانغتشون تعلم كل شيء قبل مجيئها إلى هنا.",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "AND EVEN YEONGJUN TRADING COMPANY",
+   "ar": "وحتى شركة يونغجون التجارية.",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "YOU HIRED ASSASSINS TO ELIMINATE THE LEADERS OF EVERY ORGANIZATION THAT OPPOSES YOUR ALLIANCE",
+   "ar": "لقد استأجرتم قتلة لتصفية قادة كل منظمة تعارض تحالفكم!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "HYEONGJUNG SECT LEADER IS THAT TRUE",
+   "ar": "يا زعيم طائفة هيونغجونغ! هل هذا صحيح؟!",
+   "type": "sentence",
+   "genre": [
+    "regression-test"
+   ],
+   "priority": 95
+  },
+  {
+   "en": "I WOULDN'T MIND",
+   "ar": "لا مانع لديّ من",
+   "type": "phrase",
    "genre": [
     "general"
-   ]
+   ],
+   "priority": 70
+  },
+  {
+   "en": "WOULDN'T MIND",
+   "ar": "لا مانع لديّ من",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "ORTHODOX SECT",
+   "ar": "الطائفة المستقيمة",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "SOCIETY",
+   "ar": "الجمعية",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "TRADING COMPANY",
+   "ar": "الشركة التجارية",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "WITNESSES",
+   "ar": "الشهود",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "ASSASSINS",
+   "ar": "قتلة",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "MISUNDERSTANDING",
+   "ar": "سوء فهم",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "DESPICABLE",
+   "ar": "دنيء",
+   "type": "phrase",
+   "genre": [
+    "general"
+   ],
+   "priority": 70
+  },
+  {
+   "en": "HYEONGJUNG",
+   "ar": "هيونغجونغ",
+   "type": "name",
+   "genre": [
+    "general"
+   ],
+   "priority": 85
+  },
+  {
+   "en": "CHANGCHEON",
+   "ar": "تشانغتشون",
+   "type": "name",
+   "genre": [
+    "general"
+   ],
+   "priority": 85
+  },
+  {
+   "en": "YEONGJUN",
+   "ar": "يونغجون",
+   "type": "name",
+   "genre": [
+    "general"
+   ],
+   "priority": 85
   }
  ]
 }

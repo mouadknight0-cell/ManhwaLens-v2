@@ -15,6 +15,22 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class QualityInstrumentedTest {
+    /** Fresh crop tracker per sample: unchanged-page or region-cache hits cannot pass this gate. */
+    @Test fun oneBubbleProcessingBudget()=runBlocking {
+        val ctx=InstrumentationRegistry.getInstrumentation().targetContext
+        val image=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);val c=Canvas(image);c.drawColor(Color.DKGRAY)
+        val p=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);p.color=Color.WHITE;c.drawOval(72f,83f,566f,230f,p);p.color=Color.BLACK;p.textSize=36f;c.drawText("THIS SCENT",210f,168f,p)
+        val client=TextRecognitionClient();val times=mutableListOf<Long>();val totals=mutableListOf<Long>()
+        try {client.recognize(image,"en");com.manhwalens.app.phrasebook.PhraseLibrary.ready()
+            repeat(5){ val translator=com.manhwalens.app.translate.TranslationClient();try {val start=System.nanoTime()
+                val log=mutableListOf<String>();val found=com.manhwalens.app.ocr.ColorRecovery().recognize(client,image,"en",{true},log::add);val after=System.nanoTime()
+                val region=found.firstOrNull {it.text.contains("SCENT",true)};assertNotNull("no eligible result: $log",region)
+                val translated=translator.translateBlock(region!!);assertTrue(translated.translated.contains("الرائحة"));times.add((after-start)/1000000);totals.add((System.nanoTime()-start)/1000000)
+            }finally{translator.close()} }
+            android.util.Log.i("ManhwaLensFunnel","fixture_stage_ms ocr=$times processing=$totals")
+            assertTrue("OCR median $times",times.sorted()[2]<=400);assertTrue("processing median $totals",totals.sorted()[2]<=700)
+        } finally {image.recycle()}
+    }
     @Test fun installedApkCannotOpenNetworkSockets() {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         val info = ctx.packageManager.getPackageInfo(ctx.packageName, android.content.pm.PackageManager.GET_PERMISSIONS)
