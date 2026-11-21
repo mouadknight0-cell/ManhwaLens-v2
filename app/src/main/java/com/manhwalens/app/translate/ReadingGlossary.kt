@@ -4,7 +4,7 @@ package com.manhwalens.app.translate
 object ReadingGlossary {
     // Only entries declared as identities participate in native token shielding. A
     // user reading on its own is vocabulary, not confirmation of a proper name.
-    private val titles=mapOf("my lord" to "سيدي", "young master" to "السيد الشاب", "eldest young master" to "السيد الشاب الأكبر", "sword house" to "بيت السيف")
+    private val titles=mapOf("my lord" to "سيدي", "lord muk" to "السيد موك", "young master" to "السيد الشاب", "eldest young master" to "السيد الشاب الأكبر", "sword house" to "بيت السيف")
     private val placeNames=mapOf("luoyang" to "لوه يانغ", "hefei" to "خفي")
     private val characterNames=mapOf("namgung jun" to "نامغونغ جون", "geumju" to "غومجو","jeong-ah" to "جونغ آه")
     private val organizations=mapOf("hyeongjung" to "هيونغجونغ")

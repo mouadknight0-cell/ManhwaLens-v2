@@ -41,7 +41,9 @@ object NameShield {
                     val end=hit.range.last+1
                     if(result.getOrNull(end) in listOf('\'', '’') && result.getOrNull(end+1)?.lowercaseChar()=='s') " $token" else " $token "
                 }
-                used.add(if(preserveSpelling)first.value else name)
+                // Preserve comic casing for lowercase dictionary keys, but retain an
+                // explicitly supplied canonical spelling (e.g. a confirmed mixed-case name).
+                used.add(if(preserveSpelling && name==name.lowercase()) first.value else name)
                 next += 1
                 if (next > MAX) break
             }

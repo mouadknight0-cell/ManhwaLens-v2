@@ -22,6 +22,7 @@ class Phone134QualityTest {
     }
     @Test fun keepMultiwordNameButNotMonthOrCommonWords(){
         assertTrue(input("YOU'RE CERTAIN NAMGUNG JUN WILL SUCCEED, AREN'T YOU?").contains("sure that 7000 will succeed"))
+        val titled=ReadingGlossary.modelMask("Thank you, Lord Muk.",emptyList(),readings);assertEquals(listOf("lord muk"),titled.names)
         assertTrue(ReadingGlossary.modelMask("Jun and the sect will arrive.",emptyList(),readings).tokens.isEmpty())
         val m=ReadingGlossary.modelMask("Namgung Jun met ABC in Hefei.",listOf("ABC"),readings)
         val ar=m.copy(names=m.names.map {readings[it.lowercase()]?:it});val raw=m.maskedText.replace("met","قابل").replace("in","في")
