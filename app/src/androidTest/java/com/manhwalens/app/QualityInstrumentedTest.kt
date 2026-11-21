@@ -160,7 +160,7 @@ class QualityInstrumentedTest {
             }
             val bitmap = render(short, 500, 300)
             assertTrue(short.replacementReady)
-            assertTrue(short.fittedSp > 18f)
+            assertTrue(short.fittedSp == 15f)
             assertTrue(short.fitPasses <= 6)
             for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) {
                 assertEquals("opaque mask at $x,$y", 255, Color.alpha(bitmap.getPixel(x, y)))

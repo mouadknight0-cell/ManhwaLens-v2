@@ -177,6 +177,9 @@ class BubbleOverlayService : Service() {
             CaptureManager.overlayBounds=emptyList(); bubbleView!=null
         }
         CaptureManager.restoreControlsAfterFrame={ bubbleView?.visibility=View.VISIBLE; actionDock?.visibility=View.VISIBLE; publishBounds() }
+        scope.launch { (application as ManhwaLensApp).settingsRepository.debug.collect { enabled ->
+            if(!enabled){debugView?.let { runCatching { windowManager.removeViewImmediate(it) } };debugView=null}
+        } }
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
     }
 
@@ -445,7 +448,7 @@ class BubbleOverlayService : Service() {
             val prepared=DirectTranslationLayout.anchored(this,block.translated,anchor,source,screen,occupied+others,detail){outcome(i,it)}
             if(prepared==null){failed();return@forEachIndexed}
             outcome(i,if(prepared.surface!==source && prepared.surface.capsule) "expanded_prepared" else "replacement_prepared")
-            outcome(i,prepared.surface.let { "final_surface=${it.left},${it.top},${it.right},${it.bottom} ${prepared.view.measurement}" })
+            outcome(i,prepared.surface.let { "mode=${when { it.mask!=null->"mask";it.oval->"oval";it.patch!=null->"patch";it.capsule->"capsule";else->"fallback" }} mask_survived=${it.mask!=null && it.mask===source?.mask} delta_ltrb=${it.left-r.left},${it.top-r.top},${it.right-r.right},${it.bottom-r.bottom} final_surface=${it.left},${it.top},${it.right},${it.bottom} ${prepared.view.measurement}" })
             val surface=prepared.surface; val text=prepared.view
             val params=WindowManager.LayoutParams(surface.width,surface.height,overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply {
@@ -465,7 +468,7 @@ class BubbleOverlayService : Service() {
         }
         publishBounds()
         if(final && renderFailure) CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION)
-        CaptureManager.debugBoxes?.takeIf { it.first==result.id }?.let { (_,boxes) ->
+        CaptureManager.debugBoxes?.takeIf { it.first==result.id && (application as ManhwaLensApp).settingsRepository.debug.value }?.let { (_,boxes) ->
             android.util.Log.i("ManhwaLensFunnel","page=${result.id} translated=${result.blocks.count { it.errorCode==null && it.original!=it.translated }} attached=${displayedBlocks.size}")
             if(debugView==null) {
                 val outline=object:View(this){

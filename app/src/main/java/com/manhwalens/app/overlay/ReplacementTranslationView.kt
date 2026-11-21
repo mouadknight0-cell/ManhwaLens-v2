@@ -17,19 +17,19 @@ import kotlin.math.min
  */
 class ReplacementTranslationView(context: Context, val message: String,
     private val surface: ReplacementSurface, private val failed: Boolean = false,
-    private val anchor:ReplacementSurface?=null, private val minSp:Int=12) : View(context) {
+    private val anchor:ReplacementSurface?=null, private val selected:DialogueType?=null) : View(context) {
     companion object {
         internal fun lines(text:String,ink:TextPaint,width:Int):StaticLayout {
             return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
                 .setAlignment(Layout.Alignment.ALIGN_CENTER)
                 .setTextDirection(if (com.manhwalens.app.pipeline.ArabicDisplay.isArabic(text)) TextDirectionHeuristics.RTL else TextDirectionHeuristics.FIRSTSTRONG_LTR)
-                .setIncludePad(true).setLineSpacing(0f, 1.04f)
+                .setIncludePad(true).setLineSpacing(0f, 1f)
                 .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)
                 .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build()
         }
     }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = surface.color or (0xff shl 24) }
-    private val ink = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = ArabicTypeface.get(context) }
+
     private val displayMessage = com.manhwalens.app.pipeline.ArabicDisplay.isolate(message)
     private var prepared: android.graphics.Bitmap? = null
     val replacementReady: Boolean get() = prepared != null
@@ -69,38 +69,17 @@ class ReplacementTranslationView(context: Context, val message: String,
         surface.mask?.inset?.let { content.set(it[0]+padding,it[1]+padding,it[2]-padding,it[3]-padding) }
         if (!content.intersect(0f,0f,w.toFloat(),h.toFloat())) content.setEmpty()
         val width = content.width().toInt().coerceAtLeast(1)
-        val c = surface.color
-        val luminance = Color.red(c) * .2126 + Color.green(c) * .7152 + Color.blue(c) * .0722
-        ink.color = if (luminance < 120) Color.WHITE else if (failed) Color.rgb(125, 20, 20) else Color.rgb(20, 20, 20)
-        surface.mask?.let { m -> ink.color=m.ink
-            ink.setFontVariationSettings("'wght' ${m.weight}")
-            if(m.glow!=0)ink.setShadowLayer(m.step.coerceIn(2,5).toFloat(),0f,0f,m.glow)
-        }
-        fitPasses = 0
-        fun make(text: String, size: Float): StaticLayout {
-            fitPasses++
-            ink.textSize = size * resources.displayMetrics.scaledDensity
-            return lines(text,ink,width)
-        }
-        fun wordsIntact(candidate: StaticLayout): Boolean = (1 until candidate.lineCount).none {
-            com.manhwalens.app.pipeline.WordBoundary.splitsWord(candidate.text, candidate.getLineStart(it))
-        }
-        // getLineWidth includes trailing spaces that native wrapping leaves past
-        // the line box. getLineMax measures visible content, not that whitespace.
-        fun fits(candidate: StaticLayout): Boolean = candidate.height <= content.height() && wordsIntact(candidate) &&
-            (0 until candidate.lineCount).all { candidate.getLineMax(it) <= width + .5f }
-        var last:StaticLayout?=null
-        var low = minSp; var high = 42; var chosen = 0
-        // Bound pathological text layout cost; bounded layout work, never silent clipping.
-        if (content.width()>=1 && content.height()>=1 && message.length <= 20000) while (low <= high) {
-            val mid = (low + high) / 2
-            val attempt=make(displayMessage,mid.toFloat()); last=attempt
-            if (fits(attempt)) { chosen = mid; low = mid + 1 } else high = mid - 1
-        }
-        fittedSp = if (chosen == 0) 12f else chosen.toFloat()
-        layout = if (chosen == 0) null else make(displayMessage, fittedSp)
-        val measured = layout ?: last
-        measurement = "interior=${width}x${content.height().toInt()} sp=$fittedSp lines=${measured?.lineCount} required_height=${measured?.height} fits=${layout!=null}"
+        fitPasses=0
+        val plan=if(selected!=null) selected else if(message.length <= 20000 && content.width()>=1) sequenceOf(15,14).map { sp ->
+            fitPasses++;DialogueType.measure(context,displayMessage,width,sp,surface.mask)
+        }.firstOrNull { it.complete && it.layout.height<=content.height() } else null
+        layout=plan?.layout?.takeIf { plan.complete && it.width<=width && it.height<=content.height() && it.text==displayMessage }
+        fittedSp=plan?.sp?.toFloat() ?: 0f
+        measurement="${plan?.metrics(context) ?: "preferred=15 min=14 max=15 no_fit"} interior=${width}x${content.height().toInt()} fits=${layout!=null}"
+        val ink=layout?.paint ?: return
+        val c=surface.color
+        ink.color=surface.mask?.ink ?: if(Color.red(c)*.2126+Color.green(c)*.7152+Color.blue(c)*.0722<120) Color.WHITE else Color.rgb(20,20,20)
+        surface.mask?.takeIf { it.glow!=0 }?.let { ink.setShadowLayer(it.step.coerceIn(2,5).toFloat(),0f,0f,it.glow) }
         contentDescription = message
         // A hard allocation budget. Unknown / oversized / failed layouts keep the source visible.
         val text = layout
@@ -108,12 +87,15 @@ class ReplacementTranslationView(context: Context, val message: String,
             prepared = runCatching {
                 rasterize(w, h) { canvas ->
                     // Rounded corners/irregular contours must never expose the source glyphs.
-                    anchor?.let { a -> canvas.drawRect((a.left-surface.left).toFloat(),(a.top-surface.top).toFloat(),
+                    anchor?.takeIf { surface.mask==null }?.let { a -> canvas.drawRect((a.left-surface.left).toFloat(),(a.top-surface.top).toFloat(),
                         (a.right-surface.left).toFloat(),(a.bottom-surface.top).toFloat(),fill) }
                     if (surface.mask != null) {
                         val m=surface.mask; val path=android.graphics.Path(); val d=m.step.toFloat()
                         for(i in m.spans.indices step 3){ val y=m.spans[i]*d;path.addRect(m.spans[i+1]*d,y,m.spans[i+2]*d,y+d,android.graphics.Path.Direction.CW) }
                         canvas.save(); canvas.clipPath(path)
+                        // Preserve the real border and tail pixels: a sampled contour is a
+                        // layout constraint, not a reason to repaint the entire component.
+                        anchor?.let { canvas.clipRect(it.left-surface.left,it.top-surface.top,it.right-surface.left,it.bottom-surface.top) }
                         if(m.texture!=null){val tw=w/m.step;val th=h/m.step;canvas.save();canvas.scale(d,d);canvas.drawBitmap(m.texture,0,tw,0f,0f,tw,th,true,Paint(Paint.FILTER_BITMAP_FLAG));canvas.restore()}
                         else canvas.drawPath(path,fill)
                         canvas.restore()
@@ -125,7 +107,7 @@ class ReplacementTranslationView(context: Context, val message: String,
                     else canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), fill)
                     canvas.save()
                     canvas.clipRect(content)
-                    canvas.translate(content.left, content.top + ((content.height() - text.height) / 2).coerceAtLeast(0f))
+                    canvas.translate(content.left+(content.width()-text.width)/2, content.top + ((content.height() - text.height) / 2).coerceAtLeast(0f))
                     text.draw(canvas)
                     canvas.restore()
                 }
@@ -133,9 +115,13 @@ class ReplacementTranslationView(context: Context, val message: String,
                 // The complete anchor was filled opaquely before drawing. Verify the
                 // registration and edge pixels of the resulting mask, not an estimate.
                 maskDefect=anchor?.let { a ->
-                    val xs=listOf(a.left-surface.left,a.right-1-surface.left)
-                    val ys=listOf(a.top-surface.top,a.bottom-1-surface.top)
-                    xs.any { x -> ys.any { y -> x !in 0 until w || y !in 0 until h || Color.alpha(image.getPixel(x,y))!=255 } }
+                    val l=a.left-surface.left;val t=a.top-surface.top
+                    if(l<0 || t<0 || l+a.width>w || t+a.height>h) true else {
+                        val row=IntArray(a.width);var opaque=0
+                        for(y in t until t+a.height){image.getPixels(row,0,row.size,l,y,row.size,1);opaque+=row.count { it ushr 24==255 }}
+                        measurement+=" anchor_opaque=$opaque/${a.width*a.height} ink_coverage=${if(opaque==a.width*a.height) "100%_by_full_anchor" else "unverified"}"
+                        opaque!=a.width*a.height
+                    }
                 } ?: false
                 !maskDefect
             }

@@ -32,6 +32,22 @@ object SurfacePlacement {
         }
     }
 
-    private fun intersects(a: ReplacementSurface, b: ReplacementSurface) =
+    internal fun intersects(a:ReplacementSurface,b:ReplacementSurface):Boolean {
+        if(!rectHits(a,b))return false
+        val mask=a.mask ?: return if(b.mask!=null) intersects(b,a) else true
+        val other=b.mask
+        var j=0
+        for(i in mask.spans.indices step 3){val y=a.top+mask.spans[i]*mask.step; val bottom=y+mask.step
+            if(y>=b.bottom)break
+            val l=a.left+mask.spans[i+1]*mask.step;val r=a.left+mask.spans[i+2]*mask.step
+            if(bottom<=b.top || l>=b.right || r<=b.left)continue
+            if(other==null)return true
+            while(j<other.spans.size && b.top+(other.spans[j]+1)*other.step<=y)j+=3
+            var k=j;while(k<other.spans.size && b.top+other.spans[k]*other.step<bottom){
+                if(b.left+other.spans[k+1]*other.step<r && b.left+other.spans[k+2]*other.step>l)return true;k+=3
+            }
+        };return false
+    }
+    private fun rectHits(a: ReplacementSurface, b: ReplacementSurface) =
         a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
 }

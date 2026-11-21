@@ -854,10 +854,14 @@ class ScreenCaptureService : Service() {
                     (item.region.right + 2).coerceAtMost(bitmap.width), (item.region.bottom + 2).coerceAtMost(bitmap.height), detected.color, reliable = detected.reliable)
                 else detected
                 val matched=(application as ManhwaLensApp).settingsRepository.matchStyle.value
-                val contour = if (matched) com.manhwalens.app.overlay.BubbleContours.detect(item.region,detected.color,bitmap.width,bitmap.height,bitmap::getPixel)?.takeUnless { s -> classified.any { other -> other!==item && other.region.left<s.right && other.region.right>s.left && other.region.top<s.bottom && other.region.bottom>s.top } } else null
+                var contourReason=if(matched) "accepted" else "style_disabled"
+                val contour = if (matched) com.manhwalens.app.overlay.BubbleContours.detect(item.region,detected.color,bitmap.width,bitmap.height,{contourReason=it},bitmap::getPixel)?.takeUnless { s ->
+                    classified.any { other -> other!==item && com.manhwalens.app.overlay.SurfacePlacement.intersects(s,other.region.let { com.manhwalens.app.overlay.ReplacementSurface(it.left,it.top,it.right,it.bottom) }) }.also { if(it)contourReason="neighbor_source" }
+                } else null
                 val local = contour ?: if (surface.reliable) com.manhwalens.app.overlay.FlatInterior.expand(surface,bitmap.width,bitmap.height,{ s ->
                     classified.any { other -> other!==item && other.region.left-2<s.right && other.region.right+2>s.left && other.region.top-2<s.bottom && other.region.bottom+2>s.top }
                 },bitmap::getPixel) else surface.copy(patch = com.manhwalens.app.overlay.StrokePatch.build(surface, bitmap::getPixel))
+                if((application as ManhwaLensApp).settingsRepository.debug.value) Diagnostics.info("overlay","contour","matchStyle=$matched source=${item.region.let { "${it.left},${it.top},${it.right},${it.bottom}" }} detector=${detected.left},${detected.top},${detected.right},${detected.bottom} reason=$contourReason mask=${contour?.mask?.kind} cells_step=${contour?.mask?.step} spans=${contour?.mask?.spans?.size?.div(3)} inset=${contour?.mask?.inset?.joinToString()}")
                 item.copy(region = item.region.copy(surface = if(matched && local.mask==null && !local.oval && local.patch==null) local.copy(capsule=true) else local))
             }
         }
@@ -872,7 +876,9 @@ class ScreenCaptureService : Service() {
         val matched=(application as ManhwaLensApp).settingsRepository.matchStyle.value
         val resolved = com.manhwalens.app.overlay.SurfacePlacement.resolveOverlaps(comic.map { item -> val r=item.region
             if(matched) r else r.copy(surface=r.surface?.copy(color=0xff272431.toInt(),mask=null,patch=null,reliable=true,capsule=true,oval=false)) })
-        return comic.mapIndexed { index, item -> item.copy(region = resolved[index]) } to bottom
+        return comic.mapIndexed { index, item ->
+            if((application as ManhwaLensApp).settingsRepository.debug.value) Diagnostics.info("overlay","geometry_resolution","source=${item.region.left},${item.region.top} overlap=${if(item.region.surface?.mask!=null && resolved[index].surface?.mask==null) "mask_removed" else "retained"}")
+            item.copy(region = resolved[index]) } to bottom
     }
 
     /** Detect CN/KR names, persist new surname-pattern detections, return glossary + fresh names. */

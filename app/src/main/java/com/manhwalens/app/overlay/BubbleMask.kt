@@ -28,21 +28,23 @@ object BubbleContours {
     }
     private fun rgb(r:Int,g:Int,b:Int)=(255 shl 24) or (r shl 16) or (g shl 8) or b
     private fun chroma(c:Int)=maxOf(channel(c,0),channel(c,8),channel(c,16))-minOf(channel(c,0),channel(c,8),channel(c,16))
-    fun detect(r:TextRegion,bg:Int,w:Int,h:Int,pixel:(Int,Int)->Int):ReplacementSurface? {
+    fun detect(r:TextRegion,bg:Int,w:Int,h:Int,reason:(String)->Unit={},pixel:(Int,Int)->Int):ReplacementSurface? {
         val deadline=System.nanoTime()+14_000_000L
         val cx=(r.left+r.right)/2;val cy=(r.top+r.bottom)/2
-        val dx=min(200,r.width/2+max(24,r.width/3));val dy=min(200,r.height/2+max(24,r.height/2))
+        // Scale field of view, not sample count: at most 48 x 48 cells.
+        val dx=min(384,r.width/2+max(24,r.width/3));val dy=min(384,r.height/2+maxOf(24,r.height/2,r.width/4))
+        fun reject(why:String):ReplacementSurface? { reason(why);return null }
         val x0=max(0,cx-dx);val y0=max(0,cy-dy);val step=max(2,(max(dx,dy)+23)/24)
         val nx=(min(w,cx+dx)-x0)/step;val ny=(min(h,cy+dy)-y0)/step
-        if(nx<4||ny<4||r.left<=x0||r.right>=x0+nx*step||r.top<=y0||r.bottom>=y0+ny*step)return null
+        if(nx<4||ny<4||r.left<=x0||r.right>=x0+nx*step||r.top<=y0||r.bottom>=y0+ny*step)return reject("source_outside_crop")
         val pixels=IntArray(nx*ny);val cells=IntArray(nx*ny);val queue=IntArray(cells.size);var head=0;var tail=0;var glyph=bg;var far=0
         val l=(r.left-x0)/step;val t=(r.top-y0)/step;val rr=(r.right-x0+step-1)/step;val bb=(r.bottom-y0+step-1)/step
-        for(i in cells.indices){if(i%nx==0 && System.nanoTime()>deadline)return null;val x=i%nx;val y=i/nx;val c=pixel(x0+x*step+step/2,y0+y*step+step/2);pixels[i]=c;val d=delta(bg,c)
+        for(i in cells.indices){if(i%nx==0 && System.nanoTime()>deadline)return reject("budget_14ms");val x=i%nx;val y=i/nx;val c=pixel(x0+x*step+step/2,y0+y*step+step/2);pixels[i]=c;val d=delta(bg,c)
             // OCR rectangle seeds the interior, filling negative holes made by letters.
             if(x in l until rr && y in t until bb){cells[i]=2;queue[tail++]=i;if(d>far){glyph=c;far=d}} else if(d<=30)cells[i]=1
         }
         fun visit(i:Int){if(cells[i]==1){cells[i]=2;queue[tail++]=i}}
-        while(head<tail){val i=queue[head++];if(i%nx==0||i%nx==nx-1||i<nx||i>=cells.size-nx)return null
+        while(head<tail){val i=queue[head++];if(i%nx==0||i%nx==nx-1||i<nx||i>=cells.size-nx)return reject("component_at_crop_edge")
             visit(i-1);visit(i+1);visit(i-nx);visit(i+nx)}
         // Close one-cell notches, then fill holes unreachable from the crop perimeter.
         val dilated=BooleanArray(cells.size)
@@ -54,9 +56,9 @@ object BubbleContours {
         for(i in cells.indices)if(cells[i]!=3)cells[i]=2
         var xmin=nx;var ymin=ny;var xmax=0;var ymax=0;val rows=ArrayList<Int>()
         for(y in 0 until ny){var x=0;while(x<nx){if(cells[y*nx+x]!=2){x++;continue};val a=x;while(x<nx&&cells[y*nx+x]==2)x++;rows.add(y);rows.add(a);rows.add(x);xmin=min(xmin,a);xmax=max(xmax,x);ymin=min(ymin,y);ymax=y+1}}
-        if(xmin>=l||xmax<=rr||ymin>=t||ymax<=bb)return null
+        if(xmin>=l||xmax<=rr||ymin>=t||ymax<=bb)return reject("insufficient_closed_margin")
         for(i in rows.indices step 3){rows[i]-=ymin;rows[i+1]-=xmin;rows[i+2]-=xmin}
-        if(System.nanoTime()>deadline)return null
+        if(System.nanoTime()>deadline)return reject("budget_14ms")
         val box=interior(cells,nx,ny);for(i in box.indices) box[i]=(box[i]-(if(i%2==0)xmin else ymin))*step
         val key=com.manhwalens.app.pipeline.PageState.id(r) to (bg and 0x00f0f0f0)
         val palette=synchronized(palettes){palettes[key]} ?: run {

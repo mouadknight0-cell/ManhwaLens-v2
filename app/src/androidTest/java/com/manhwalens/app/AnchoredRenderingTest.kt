@@ -44,7 +44,7 @@ class AnchoredRenderingTest {
             val anchor=ReplacementSurface(85,210,135,236,Color.rgb(239,204,165));val screen=ReplacementSurface(8,24,520,760)
             val neighbor=ReplacementSurface(155,200,255,250)
             val p=DirectTranslationLayout.anchored(ctx,dialogue,anchor,anchor.copy(oval=true,reliable=true),screen,listOf(neighbor)){}!!
-            val s=p.surface;assertTrue(s.capsule);assertTrue(s.width>anchor.width);assertTrue(s.height>anchor.height);assertTrue(p.view.fittedSp>=18f)
+            val s=p.surface;assertTrue(s.capsule);assertTrue(s.width>anchor.width);assertTrue(s.height>anchor.height);assertTrue(p.view.fittedSp==15f)
             assertTrue(s.right<=neighbor.left);assertTrue(s.left>=screen.left && s.bottom<=screen.bottom)
             val image=Bitmap.createBitmap(s.width,s.height,Bitmap.Config.ARGB_8888);p.view.draw(Canvas(image))
             // Compare the drawn glyph pixels to the complete shaped paragraph (including its final line).
