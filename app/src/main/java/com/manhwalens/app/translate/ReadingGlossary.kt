@@ -13,6 +13,27 @@ object ReadingGlossary {
     val defaults=murim + organizations + characterNames + mapOf("wall" to "جدار","headquarters" to "المقر", "formation" to "تشكيل", "barrier" to "حاجز", "sister" to "أختي", "qi" to "تشي", "sect" to "طائفة", "disciple" to "تلميذ")
     internal fun modelMask(source:String, confirmed:List<String>, readings:Map<String,String>) =
         com.manhwalens.app.names.NameShield.mask(source, confirmed + readings.keys.filter { it in identities })
+    // A sentinel is an identifier, not an English adjective or a cardinal number.
+    // Keep a known entity's class visible in the SAME complete sentence. Leave
+    // possessives and compound heads (e.g. "sect leader") alone rather than
+    // reattaching their modifiers to the wrong noun.
+    private val namedSect=Regex("(?i)\\bthe (7[0-9]{3}) sect(?=$|[.,!?;:]| (?:will|has|is|was|maintained)\\b)")
+    private val absence=Regex("(?i)\\bthe void left by the sect named (7[0-9]{3})(?=$|[.,!?;:])")
+    private val charge=Regex("(?i)\\btaking charge of the (7[0-9]{3}) branch\\b")
+    private val civicOrder=Regex("(?i)\\bmaintained order in (7[0-9]{3})(?=$|[.!?,;:])")
+    internal fun nativeSentence(mask:com.manhwalens.app.names.NameShield.MaskResult,retryCase:Boolean=false):String {
+        val input=com.manhwalens.app.pipeline.TranslationInput.nativeInput(if(retryCase) mask.maskedText.uppercase() else mask.maskedText,mask.tokens)
+        if(mask.tokens.isEmpty())return input
+        val names=mask.tokens.zip(mask.names).toMap()
+        return namedSect.replace(input){m -> if(names[m.groupValues[1]]?.lowercase() in organizations.keys)
+            "the sect named ${m.groupValues[1]}" else m.value }
+            .let {absence.replace(it){m -> if(names[m.groupValues[1]]?.lowercase() in organizations.keys)
+                "the gap that the sect named ${m.groupValues[1]} left behind" else m.value }}
+            .let {charge.replace(it){m -> if(names[m.groupValues[1]]?.lowercase() in placeNames.keys)
+                "managing the branch in ${m.groupValues[1]}" else m.value }}
+            .let {civicOrder.replace(it){m -> if(names[m.groupValues[1]]?.lowercase() in placeNames.keys)
+                "maintained public order in ${m.groupValues[1]}" else m.value }}
+    }
     fun parse(lines:String): Map<String,String>? {
         val entries=mutableMapOf<String,String>()
         for(line in lines.lineSequence().filter { it.isNotBlank() }) {
