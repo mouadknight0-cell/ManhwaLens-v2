@@ -8,69 +8,20 @@ import com.manhwalens.app.pipeline.*
 import kotlin.math.*
 
 /** Recovery is exceptional: the ordinary full-frame path still runs once. All boxes here are OCR-bitmap coordinates. */
-internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.BuildConfig.CROP_FIRST,private val fastFrame:Boolean=com.manhwalens.app.BuildConfig.FAST_FRAME) {
+internal class ColorRecovery {
     private data class Vote(val hash:Long,val visual:Long,val regions:List<TextRegion>,val score:Double)
     private class Track(val box:Rect,val votes:ArrayDeque<Vote> = ArrayDeque())
     private val tracks=ArrayDeque<Track>()
     private data class Page(val w:Int,val h:Int,val scene:Long,val boxes:List<TextRegion>,val signatures:List<Long>)
-    private data class InkKey(val w:Int,val h:Int,val lang:String,val sha:String)
-    private val inkCache=object:LinkedHashMap<InkKey,TextRegion>(16,.75f,true){override fun removeEldestEntry(eldest:MutableMap.MutableEntry<InkKey,TextRegion>?)=size>64}
-    private fun key(b:Bitmap,r:Rect,lang:String):InkKey {
-        val hash=java.security.MessageDigest.getInstance("SHA-256");val pixels=IntArray(r.width());val bytes=java.nio.ByteBuffer.allocate(r.width()*4);val ints=bytes.asIntBuffer()
-        for(y in r.top until r.bottom){b.getPixels(pixels,0,pixels.size,r.left,y,pixels.size,1);ints.position(0);ints.put(pixels);hash.update(bytes.array())}
-        return InkKey(r.width(),r.height(),lang,android.util.Base64.encodeToString(hash.digest(),android.util.Base64.NO_WRAP))
-    }
     private var lastPage:Page?=null
     /** Check scene context as well as every crop. A new caption elsewhere must trigger discovery. */
     suspend fun recognize(client:TextRecognitionClient,b:Bitmap,lang:String,keep:(TextRegion)->Boolean,log:(String)->Unit):List<TextRegion> {
-        if(cropFirst) return recover(client,b,lang,emptyList(),450,keep,log)
         var scene=17L;for(y in 0..63)for(x in 0..47)scene=31*scene+(b.getPixel((b.width-1)*x/47,(b.height-1)*y/63) and 0xf0f0f0)
         lastPage?.takeIf { it.w==b.width && it.h==b.height && it.scene==scene && it.boxes.all(keep) && it.boxes.indices.all { i->hash(b,box(it.boxes[i]))==it.signatures[i] } }?.let {log("pass=unchanged_page regions=${it.boxes.size}");return it.boxes}
-        val quick=if(fastFrame) flatCrops(client,b,lang,keep,log) else null
-        val first=quick ?: kotlinx.coroutines.withTimeoutOrNull(12000){client.recognize(b,lang,log,keep)}?:error("OCR timed out")
-        val got=if(fastFrame && first.any(::acceptedFirst) && first.any { !acceptedFirst(it) }) {
-            // Don't hold strong siblings behind weak OCR. The block worker retries the weak
-            // line on its own crop if translation validation fails. Never cache this mixed page.
-            first.map {if(acceptedFirst(it))it else it.copy(ocrPass="deferred")}
-        } else recover(client,b,lang,first,6500,keep,log)
-        lastPage=if(got.isNotEmpty() && got.size<=32 && got.all { it.left>=0 && it.top>=0 && it.right<=b.width && it.bottom<=b.height && it.width>0 && it.height>0 && acceptedFirst(it) }) Page(b.width,b.height,scene,got,got.map { hash(b,box(it)) }) else null
+        val first=kotlinx.coroutines.withTimeoutOrNull(12000){client.recognize(b,lang,log,keep)}?:error("OCR timed out")
+        val got=recover(client,b,lang,first,6500,keep,log)
+        lastPage=if(got.isNotEmpty() && got.size<=32 && got.all { it.left>=0 && it.top>=0 && it.right<=b.width && it.bottom<=b.height && it.width>0 && it.height>0 && score(it)>=.77 }) Page(b.width,b.height,scene,got,got.map { hash(b,box(it)) }) else null
         return got
-    }
-    // An unambiguous, flat page only. Ordinary art or an unreviewed/incomplete read falls
-    // back to page discovery. Never use a positive crop to silence an unexplored busy page.
-    private suspend fun flatCrops(client:TextRecognitionClient,b:Bitmap,lang:String,keep:(TextRegion)->Boolean,log:(String)->Unit):List<TextRegion>? {
-        val margin=max(5,max(b.width,b.height)/144)
-        // Proposal extents are quantized to a sample grid. Include the one-cell perimeter
-        // before checking *all* remaining pixels, otherwise an antialiased outline at
-        // x=72 just outside a snapped x=75 box falsely rejects the flat page.
-        val proposals=propose(b).map {Rect(it).apply {inset(-margin,-margin);intersect(0,0,b.width,b.height)}};if(proposals.size !in 1..3)return null
-        val bg=b.getPixel(0,0);val row=IntArray(b.width);var outside=0
-        // A sparse grid can miss a tiny caption. Check every pixel outside the proposals;
-        // abort at the first unexplained pixel rather than caching an incomplete page.
-        for(y in 0 until b.height){b.getPixels(row,0,row.size,0,y,row.size,1);var x=0
-            while(x<row.size){val inside=proposals.firstOrNull {it.contains(x,y)}
-                if(inside!=null){x=inside.right;continue};if(row[x++]!=bg)return null;outside++}}
-        if(outside<50)return null
-        val result=mutableListOf<TextRegion>()
-        for(rect in proposals){val ink=GlyphCrop.find(b,rect)?:return null;val r=ink.box
-            val k=key(b,r,lang);val cached=inkCache[k];val local=cached ?: run {
-                val crop=Bitmap.createBitmap(b,r.left,r.top,r.width(),r.height());val factor=(20.0/ink.glyphHeight).coerceAtMost(1.0)
-                val input=if(factor<.95 && r.height()*factor>=32)Bitmap.createScaledBitmap(crop,(r.width()*factor).roundToInt(),(r.height()*factor).roundToInt(),true) else crop
-                val sx=r.width().toDouble()/input.width;val sy=r.height().toDouble()/input.height
-                val got=try{client.recognize(input,lang,pass="ink")}finally{if(input!==crop)input.recycle();if(crop!==b)crop.recycle()}
-                if(got.size!=1)return null;val line=got.single();if(!acceptedFirst(line) || com.manhwalens.app.phrasebook.PhraseLibrary.index?.lookup(line.text)?.stage!="exact")return null
-                line.copy(left=(sx*line.left).toInt(),top=(sy*line.top).toInt(),right=kotlin.math.ceil(sx*line.right).toInt(),bottom=kotlin.math.ceil(sy*line.bottom).toInt(),ocrPass="ink").also {inkCache[k]=it}
-            }
-            if(local.left>14 || local.top>14 || local.right<r.width()-14 || local.bottom<r.height()-14)return null
-            val mapped=local.copy(left=r.left+local.left,top=r.top+local.top,right=r.left+local.right,bottom=r.top+local.bottom,ocrPass=if(cached==null)"ink" else "ink_cache");if(!keep(mapped))return null;result.add(mapped)
-        };log("winner=ink reviewed=${result.size}");return result
-    }
-    private fun acceptedFirst(r:TextRegion):Boolean {
-        if(score(r)>=.77 && !(r.confidence<.52f))return true
-        if(!fastFrame)return false
-        val words=r.text.trim().split(Regex("\\s+"));if(words.size<2 || r.confidence.isFinite() && r.confidence<.5f)return false
-        return com.manhwalens.app.phrasebook.PhraseLibrary.index?.lookup(r.text)?.stage=="exact" ||
-            (r.confidence>=.5f && ReadingEnglish.score(r.text,emptyList())==1.0)
     }
     private fun overlap(a:Rect,b:Rect):Double {val i=max(0,min(a.right,b.right)-max(a.left,b.left))*max(0,min(a.bottom,b.bottom)-max(a.top,b.top));return i.toDouble()/max(1,a.width()*a.height()+b.width()*b.height()-i)}
     private fun box(r:TextRegion)=Rect(r.left,r.top,r.right,r.bottom)
@@ -85,8 +36,7 @@ internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.Bu
     /** Flood-fill quantized colour components, rank contrast-bearing interiors rather than entire black pages. */
     private fun propose(b:Bitmap):List<Rect>{
         val step=max(5,max(b.width,b.height)/144);val w=b.width/step;val h=b.height/step;if(w<3||h<3)return emptyList()
-        val samples=ContrastSamples(b,step);val pix=samples.corners;val tiles=samples.tiles
-        val seen=BooleanArray(pix.size);val q=IntArray(pix.size);val hits=mutableListOf<Pair<Rect,Int>>()
+        val pix=IntArray(w*h){i->b.getPixel(i%w*step,i/w*step)};val seen=BooleanArray(pix.size);val q=IntArray(pix.size);val hits=mutableListOf<Pair<Rect,Int>>()
         for(i in pix.indices){if(seen[i])continue;val c=pix[i];if(gray(c) in 153..219 && maxOf(Color.red(c),Color.green(c),Color.blue(c))-minOf(Color.red(c),Color.green(c),Color.blue(c))<55)continue
             var n=1;var head=0;q[0]=i;seen[i]=true;var l=w;var r=0;var t=h;var bot=0;var edges=0
             fun visit(j:Int){val v=pix[j];if(maxOf(abs(Color.red(c)-Color.red(v)),abs(Color.green(c)-Color.green(v)),abs(Color.blue(c)-Color.blue(v)))>34){edges++;return};if(!seen[j]){seen[j]=true;q[n++]=j}}
@@ -95,6 +45,8 @@ internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.Bu
          }
         // A dark full-bleed panel or coloured glyphs on a white page need not have a closed background.
         // Group neighbouring contrast tiles with both light and saturated/dark samples.
+        val tiles=BooleanArray(w*h){j->val x=(j%w)*step;val y=(j/w)*step;var low=255;var high=0;var colour=false
+            for(dy in 0..2)for(dx in 0..2){val v=b.getPixel(x+dx*(step-1)/2,y+dy*(step-1)/2);val g=gray(v);low=min(low,g);high=max(high,g);if(maxOf(Color.red(v),Color.green(v),Color.blue(v))-minOf(Color.red(v),Color.green(v),Color.blue(v))>40)colour=true};high-low>80 && (colour || low<68) }
         for(i in tiles.indices){if(!tiles[i])continue;tiles[i]=false;q[0]=i;var n=1;var head=0;var l=w;var r=0;var t=h;var bot=0
             while(head<n){val j=q[head++];val x=j%w;val y=j/w;l=min(l,x);r=max(r,x);t=min(t,y);bot=max(bot,y);for(dy in -1..1)for(dx in -2..2){val xx=x+dx;val yy=y+dy;if(xx !in 0 until w || yy !in 0 until h)continue;val k=yy*w+xx;if(tiles[k]){tiles[k]=false;q[n++]=k}}}
             if(n>=8 && r-l>=4 && r-l>bot-t && (r-l+1)*(bot-t+1)<w*h/5)hits.add(Rect(l*step,t*step,(r+1)*step,(bot+1)*step) to n)
@@ -106,24 +58,18 @@ internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.Bu
         if(gray(b.getPixel(r.left+(r.width()-1)*x/8,yy))>gray(b.getPixel(r.left+(r.width()-1)*(x+1)/8,yy))+4)sig=sig or (1L shl (y*8+x))};return sig}
     suspend fun recover(client:TextRecognitionClient,b:Bitmap,lang:String,initial:List<TextRegion>,budgetMs:Long=60_000,keep:(TextRegion)->Boolean,log:(String)->Unit):List<TextRegion>{
         val deadline=android.os.SystemClock.elapsedRealtime()+budgetMs
-        val weak=initial.filterNot { acceptedFirst(it) }.also {log("first_gate regions=${initial.size} retry=${it.size} policy=${if(fastFrame) "reviewed" else "legacy"}")};if(initial.isNotEmpty() && weak.isEmpty())return initial
+        val weak=initial.filter { score(it)<.77 || it.confidence<.52f };if(initial.isNotEmpty() && weak.isEmpty())return initial
         val candidates=(weak.sortedBy { score(it) }.map(::box)+if(initial.size==weak.size)propose(b) else emptyList()).fold(mutableListOf<Rect>()){a,x->if(a.none { overlap(it,x)>.5 })a.add(x);a}.take(4)
         val output=initial.toMutableList()
-        for(raw in candidates){if(android.os.SystemClock.elapsedRealtime()>=deadline)break;val outer=Rect(max(0,raw.left-10),max(0,raw.top-10),min(b.width,raw.right+10),min(b.height,raw.bottom+10));val r=if(budgetMs<=450)InkBounds.tighten(b,outer) else outer;if(r.width()<4||r.height()<4||r.width()*r.height()>350000)continue
-            val bounded=budgetMs<=450;val regionDeadline=if(bounded)min(deadline,android.os.SystemClock.elapsedRealtime()+200) else deadline
+        for(raw in candidates){if(android.os.SystemClock.elapsedRealtime()>=deadline)break;val r=Rect(max(0,raw.left-10),max(0,raw.top-10),min(b.width,raw.right+10),min(b.height,raw.bottom+10));if(r.width()<4||r.height()<4||r.width()*r.height()>350000)continue
             val fingerprint=hash(b,r);val visual=perceptual(b,r);val tr=tracks.firstOrNull { overlap(it.box,r)>.5 }?:Track(Rect(r)).also { tracks.addLast(it);if(tracks.size>32)tracks.removeFirst() }
-            val cached=tr.votes.lastOrNull()?.takeIf { it.hash==fingerprint && tr.box==r && it.score>=.60 };var best=initial.filter { overlap(raw,box(it))>.5 };var value=best.map(::score).average().takeIf(Double::isFinite)?:0.0
-            if(cached!=null){best=cached.regions.map {it.copy(ocrPass="cache:${it.ocrPass}")};value=cached.score;log("pass=cache score=$value")} else {
-                val colors=IntArray(r.width()*r.height());b.getPixels(colors,0,r.width(),r.left,r.top,r.width(),r.height());val ys by lazy {IntArray(colors.size){gray(colors[it])}};val hist by lazy {IntArray(256).also {h->ys.forEach {h[it]++}}};val mean by lazy {ys.average()};var winner="frame"
-                val variants=listOf("original","invert","clahe","otsu","lab");for(pass in variants){val started=android.os.SystemClock.elapsedRealtime();val remaining=regionDeadline-started;if(remaining<=0){log("recovery_budget box=$r retained_score=$value");break};if(pass=="invert" && mean>155)continue
-                    val pixels=if(bounded && pass=="original")colors else if(pass=="clahe")LocalContrast.apply(ys,r.width()) else variant(pass,colors,ys,hist);val crop=Bitmap.createBitmap(pixels,r.width(),r.height(),Bitmap.Config.ARGB_8888);val scale=when {bounded && pass=="original"->1;r.height()<32->3;r.height()<=100->2;else->1};val input=if(scale==1)crop else Bitmap.createScaledBitmap(crop,r.width()*scale,r.height()*scale,true)
-                    val got=try { kotlinx.coroutines.withTimeoutOrNull((regionDeadline-android.os.SystemClock.elapsedRealtime()).coerceAtLeast(1)){client.recognize(input,lang,pass=pass)}.orEmpty().map { it.copy(left=r.left+it.left/scale,right=r.left+it.right/scale,top=r.top+it.top/scale,bottom=r.top+it.bottom/scale,ocrPass=pass) }.filter(keep) }catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){log("pass=$pass failure=${e.javaClass.simpleName}");emptyList()}finally{if(input!==crop)input.recycle();crop.recycle()}
-                    val s=got.map(::score).average().takeIf(Double::isFinite)?:0.0;log("pass=$pass ms=${android.os.SystemClock.elapsedRealtime()-started} score=$s regions=${got.size} box=$r");if(s>value){value=s;winner=pass;best=got}
-                    if(bounded && got.isNotEmpty() && got.all {it.confidence>=.5f && ReadingEnglish.score(it.text,emptyList())>=.5})break
-                    // A confident fragment is NOT a successful crop. Early-out only on a
-                    // complete reviewed utterance corroborated by the first frame reading.
-                    if(s>=.82 && got.size==1 && initial.any { overlap(box(it),box(got.single()))>.65 && it.text.equals(got.single().text,true) } &&
-                        com.manhwalens.app.phrasebook.PhraseLibrary.index?.lookup(got.single().text)?.stage=="exact")break
+            val cached=tr.votes.lastOrNull()?.takeIf { it.hash==fingerprint && tr.box==r && it.score>=.77 };var best=initial.filter { overlap(raw,box(it))>.5 };var value=best.map(::score).average().takeIf(Double::isFinite)?:0.0
+            if(cached!=null){best=cached.regions;value=cached.score;log("pass=cache score=$value")} else {
+                val colors=IntArray(r.width()*r.height());b.getPixels(colors,0,r.width(),r.left,r.top,r.width(),r.height());val ys=IntArray(colors.size){gray(colors[it])};val hist=IntArray(256);ys.forEach { hist[it]++ };val mean=ys.average();var winner="frame"
+                val variants=listOf("original","invert","stretch","otsu","lab");for(pass in variants){val remaining=deadline-android.os.SystemClock.elapsedRealtime();if(remaining<=0){log("recovery_budget box=$r retained_score=$value");break};if(pass=="invert" && mean>155)continue
+                    val pixels=variant(pass,colors,ys,hist);val crop=Bitmap.createBitmap(pixels,r.width(),r.height(),Bitmap.Config.ARGB_8888);val scale=when {r.height()<32->3;r.height()<=100->2;else->1};val input=if(scale==1)crop else Bitmap.createScaledBitmap(crop,r.width()*scale,r.height()*scale,true)
+                    val got=try { kotlinx.coroutines.withTimeoutOrNull(remaining){client.recognize(input,lang)}.orEmpty().map { it.copy(left=r.left+it.left/scale,right=r.left+it.right/scale,top=r.top+it.top/scale,bottom=r.top+it.bottom/scale) }.filter(keep) }catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){log("pass=$pass failure=${e.javaClass.simpleName}");emptyList()}finally{if(input!==crop)input.recycle();crop.recycle()}
+                    val s=got.map(::score).average().takeIf(Double::isFinite)?:0.0;log("pass=$pass score=$s regions=${got.size} box=$r");if(s>value){value=s;winner=pass;best=got}
                 };log("winner=$winner score=$value box=$r");tr.box.set(r);tr.votes.addLast(Vote(fingerprint,visual,best,value));if(tr.votes.size>4)tr.votes.removeFirst()
                 // Only vote for aligned current blocks on perceptually similar crops. Never attach yesterday's coordinates.
                 val aligned=tr.votes.filter { v->(v.hash==fingerprint || (visual!=0L && java.lang.Long.bitCount(v.visual xor visual)<=3)) && best.isNotEmpty() && best.size==v.regions.size && best.zip(v.regions).all { (a,b)->overlap(box(a),box(b))>.5 } }

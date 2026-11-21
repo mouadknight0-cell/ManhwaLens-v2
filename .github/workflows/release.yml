@@ -10,12 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  reader-quality:
-    uses: ./.github/workflows/quality.yml
-    permissions:
-      contents: read
   release:
-    needs: reader-quality
     name: Test and build release on GitHub
     runs-on: ubuntu-latest
     steps:

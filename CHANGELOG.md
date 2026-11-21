@@ -1,9 +1,5 @@
 # Changelog
 
-## 1.1.31
-- Local EN→AR phrase packs and Room corrections (global/per-series), import/export and correction from history. Matching precedes on-device MT; reading never triggers model installation.
-- Icon-only adjacent dock, local contrast OCR, bounded frame processing, scroll correlation and source validation. Device acceptance pending.
-
 ## 1.1.30
 - Conditional colour-crop OCR recovery, ranked candidate passes and local text repair. Murim readings, interjection handling, bounded translation timeout and Close control. Physical Redmi metrics pending.
 
@@ -253,12 +249,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Durable recovery uses SIGNING_BACKUP_PASSWORD in repository Actions secrets plus its independent owner-held backup; subsequent releases reuse the same vault.
 - This new signature cannot update v1.1.1–v1.1.6 in place. No uninstall, data clearing or automatic migration was performed.
 - App behavior is unchanged from v1.1.7; this release establishes the new recoverable signing baseline once publication is verified.
-
-### Offline reader audit (development)
-- Enforce offline-only model checks, including dependencies in the merged manifest. Missing models no longer trigger downloads.
-- Batch dark-proposer pixel sampling, reuse immutable frame samples and skip sampling when the screen is off. Add per-block dispatch diagnostics and hardware profiling tools.
-- See `docs/offline-reader-audit.md` for the measured A/B and unverified device targets.
-
-### 1.1.32 candidate — release blocked
-- Updated reviewed EN→AR seed, restricted template/term substitution, added name retries and revised translation cache identity.
-- Improved consent and overlay checks. Added opt-in bounded crop OCR and an output-sensitive Android performance gate. It currently fails on crop-only discovery; see `docs/reader-1.1.32-candidate.md` before enabling.

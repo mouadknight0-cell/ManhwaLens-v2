@@ -18,10 +18,9 @@ object TranslationInput {
                 append(if (start || pronoun) c else c.lowercaseChar())
                 if (c.isLetterOrDigit()) start = false else if (c in ".!?") start = true
             }
-        }.let { s -> acronym.replace(s){it.value.uppercase()} }
+        }
     }
 
-    private val acronym=Regex("\\b(?:USA|UK|TV|DNA|AI|VIP|NPC|CEO|GPS|HP|MP)\\b",RegexOption.IGNORE_CASE)
     // Repeated pages, retries and lexical scoring often normalize the exact same source.
     // RAM-only, bounded; names are part of identity, so edits invalidate old matches.
     private data class Input(val raw:String,val names:List<String>)
@@ -34,14 +33,11 @@ object TranslationInput {
         val value=clean(text,key.names);synchronized(memo){memo[key]=value};return value
     }
     private fun clean(text: String, glossaryNames: List<String>): String {
-        val normalized = SentenceReconstructor.normalize(text.trimStart {it.isWhitespace() || it in "„“”«».,;"}.trimEnd {it.isWhitespace() || it in "„“”«»"}.replace(Regex("\\.{4,}"),"..."))
+        val normalized = SentenceReconstructor.normalize(text)
         val alias=if(glossaryNames.any { it.equals("Jeong-ah",true) }) normalized.replace(Regex("\\bjeong-4h\\b",RegexOption.IGNORE_CASE),"Jeong-ah") else normalized
         if (!OcrLexicon.needsCleanup(alias) && alias.none(Char::isUpperCase)) return alias
         val masked = NameShield.mask(alias, glossaryNames)
-        val cleaned=masked.maskedText.replace(Regex("\\bWOULDNT\\b",RegexOption.IGNORE_CASE),"WOULDN'T")
-        val letters=cleaned.filter(Char::isLetter)
-        val fixed=if(letters.isNotEmpty() && letters.count(Char::isUpperCase)*5>=letters.length*3)cleaned.uppercase() else cleaned
-        return NameShield.restore(ReadingEnglish.repair(OcrLexicon.repair(EnglishOcrRepair.repair(fixed))), masked)
+        return NameShield.restore(ReadingEnglish.repair(OcrLexicon.repair(EnglishOcrRepair.repair(masked.maskedText))), masked)
     }
     fun unresolved(text: String, glossaryNames: List<String>): Boolean =
         OcrLexicon.unresolved(text) && OcrLexicon.unresolved(NameShield.mask(text, glossaryNames).maskedText)

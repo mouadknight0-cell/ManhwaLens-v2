@@ -1,7 +1,6 @@
 name: CI
 
 on:
-  workflow_dispatch:
   push:
   pull_request:
 
@@ -14,7 +13,7 @@ jobs:
     name: Test & assemble debug APK
     runs-on: ubuntu-latest
     env:
-      VERSION_NAME: 1.1.32-dev.${{ github.run_number }}.${{ github.run_attempt }}
+      VERSION_NAME: 1.1.23-candidate
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -92,12 +91,12 @@ jobs:
           exit 1
 
       - name: Assemble debug APK
-        run: ./gradlew assembleDebug -PprofileInstall=true --stacktrace --no-daemon
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Upload debug APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: ManhwaLens-${{ env.VERSION_NAME }}-test-apk
+          name: manhwalens-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 14

@@ -70,10 +70,8 @@ class ScreenCaptureService : Service() {
     private val liveGate = LiveFrameGate()
     private var liveJob: kotlinx.coroutines.Job? = null
     private data class CapturedFrame(val image: Image, val dockVisible: Boolean, val occlusions: List<com.manhwalens.app.pipeline.CapturedOcclusion>) {
-        var sample: IntArray? = null // listener and sampler both run on the main looper
         fun close() = image.close()
     }
-    private val power by lazy { getSystemService(android.os.PowerManager::class.java) }
     private val latestFrame = AtomicReference<CapturedFrame?>(null)
     private var lastSampleNs = 0L
     @Volatile private var sceneRevision = 0L
@@ -112,7 +110,7 @@ class ScreenCaptureService : Service() {
             val i=y*p.rowStride+x*p.pixelStride;((buf.get(i).toInt() and 255)*3+(buf.get(i+1).toInt() and 255)*6+(buf.get(i+2).toInt() and 255))/10 } } }
     }
     private val recovery=com.manhwalens.app.ocr.ColorRecovery()
-    private val textRecognition by lazy { TextRecognitionClient(com.manhwalens.app.BuildConfig.CROP_FIRST || com.manhwalens.app.BuildConfig.FAST_FRAME){ Diagnostics.info("ocr","native_task",it) } }
+    private val textRecognition by lazy { TextRecognitionClient() }
     private val translation by lazy { TranslationClient(post={ (application as ManhwaLensApp).settingsRepository.corrections.value },debug={ (application as ManhwaLensApp).settingsRepository.debug.value },readings={ (application as ManhwaLensApp).settingsRepository.readings.value }) }
     private val nameGlossary by lazy { NameGlossaryStore(applicationContext) }
 
@@ -123,46 +121,30 @@ class ScreenCaptureService : Service() {
     private var pipelineHeight = 0
     private var pipelineDensityDpi = 0
 
-    private var lastRows:DoubleArray?=null
-    private fun trackFrame(image:Image,changed:Boolean,sampleMotion:Boolean=true){
-        if(CaptureManager.pixelHashes.isEmpty())return
-        val p=image.planes[0];val buf=p.buffer;val masks=CaptureManager.overlayBounds
-        fun gray(x:Int,y:Int):Int {if(x !in 0 until image.width || y !in 0 until image.height || masks.any { it.contains(x,y) })return -1;val i=y*p.rowStride+x*p.pixelStride;return ((buf[i].toInt() and 255)*3+(buf[i+1].toInt() and 255)*6+(buf[i+2].toInt() and 255))/10}
-        val dy=if(!sampleMotion)0 else {
-        val rows=DoubleArray(VerticalPhase.N){row->var sum=0;var n=0;for(j in 1..16){val g=gray(image.width*j/17,image.height*(2*row+1)/(2*VerticalPhase.N));if(g>=0){sum+=g;n++}};sum.toDouble()/maxOf(1,n)}
-        val cells=lastRows?.let {if(changed)VerticalPhase.shift(it,rows) else 0};lastRows=rows
-        cells?.takeIf { kotlin.math.abs(it)<=2 }?.let { it*image.height/VerticalPhase.N } }
-        val sigs=verifiedRegions;CaptureManager.followFrame?.invoke(dy,changed){id,offset->sigs.firstOrNull {com.manhwalens.app.pipeline.PageState.id(it.region)==id}?.visibleMatch(offset,::gray)}
-    }
     private val frameListener = ImageReader.OnImageAvailableListener { reader ->
         val image = runCatching { reader.acquireLatestImage() }.getOrElse {
             Diagnostics.error("capture", "frame_acquire", ErrorCodes.CAPTURE_IMAGE_CONVERT_FAILED, "frame acquisition failed", throwable = it)
             null
         } ?: return@OnImageAvailableListener
-        if (!power.isInteractive || CaptureManager.appVisible.value) {
-            image.close();latestFrame.getAndSet(null)?.close();return@OnImageAvailableListener
-        }
-        var sampled:IntArray?=null
         if (liveEnabled && System.nanoTime() - lastSampleNs >= 70_000_000L) {
             lastSampleNs = System.nanoTime()
-            val sample = sampleFrame(image).also {sampled=it}
+            val sample = sampleFrame(image)
             val now=android.os.SystemClock.elapsedRealtime()
             val motion=liveGate.observe(sample,now,captureJob?.isActive==true)
             if ((application as ManhwaLensApp).settingsRepository.debug.value) com.manhwalens.app.diagnostics.SessionScorecard.gate(now,liveGate.fraction,motion,liveGate.ready(now))
-            trackFrame(image,motion)
             if (motion && !(captureJob?.isActive==true && unchanged(image))) {
                 sceneRevision = liveGate.revision
                 CaptureManager.activeResultId = null
                 captureJob?.cancel()
                 CaptureManager.setLive(CaptureManager.LiveStatus.SCROLLING)
             }
-        } else if(liveEnabled)trackFrame(image,false,false)
+        }
         // Retain exactly one newest Image, so a static display does not require another frame.
         // The consumer atomically takes ownership; only the previous unclaimed image is closed.
         val occlusions = CaptureManager.overlayBounds.map {
             com.manhwalens.app.pipeline.CapturedOcclusion(it.left, it.top, it.right, it.bottom)
         }
-        latestFrame.getAndSet(CapturedFrame(image, CaptureManager.dockVisible, occlusions).also {it.sample=sampled})?.close()
+        latestFrame.getAndSet(CapturedFrame(image, CaptureManager.dockVisible, occlusions))?.close()
     }
 
     private fun sampleFrame(image: Image): IntArray {
@@ -199,7 +181,7 @@ class ScreenCaptureService : Service() {
             try {
             var pausedForApp = false
             while (liveEnabled && mediaProjection != null) {
-                if (!power.isInteractive || CaptureManager.appVisible.value) {
+                if (CaptureManager.appVisible.value) {
                     CaptureManager.activeResultId = null
                     captureJob?.cancel()
                     pausedForApp = true
@@ -210,8 +192,7 @@ class ScreenCaptureService : Service() {
                     // thread, where the listener owns/replaces it, to avoid closing races.
                     kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
                         latestFrame.get()?.let { image ->
-                            if (liveGate.observe(image.sample ?: sampleFrame(image.image).also {image.sample=it}, android.os.SystemClock.elapsedRealtime(),captureJob?.isActive==true) && !(captureJob?.isActive==true && unchanged(image.image))) {
-                                trackFrame(image.image,true)
+                            if (liveGate.observe(sampleFrame(image.image), android.os.SystemClock.elapsedRealtime(),captureJob?.isActive==true) && !(captureJob?.isActive==true && unchanged(image.image))) {
                                 sceneRevision = liveGate.revision
                                 CaptureManager.activeResultId = null
                                 captureJob?.cancel()
@@ -225,7 +206,7 @@ class ScreenCaptureService : Service() {
                         launchCapture()
                     }
                 }
-                kotlinx.coroutines.delay(if(pausedForApp) 250L else 80L) // sampling cadence; settle gate, not an OCR retry delay
+                kotlinx.coroutines.delay(80) // sampling cadence; settle gate, not an OCR retry delay
             }
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (failure: Exception) {
@@ -237,7 +218,7 @@ class ScreenCaptureService : Service() {
 
     private fun endLive(status: CaptureManager.LiveStatus = CaptureManager.LiveStatus.OFF) {
         pageState.clear()
-        lastRows=null;verifiedRegions=emptyList();CaptureManager.pixelHashes=emptyMap()
+        verifiedRegions=emptyList();CaptureManager.pixelHashes=emptyMap()
         CaptureManager.currentBoxes=null
         liveEnabled = false
         liveJob?.cancel()
@@ -502,12 +483,7 @@ class ScreenCaptureService : Service() {
             if (BenchmarkTracker.isActive()) BenchmarkTracker.finish("cancelled")
             kotlinx.coroutines.delay(delayMs)
             try {
-                com.manhwalens.app.diagnostics.CompleteReport.captureWrites.withLock {
-                    if(withTimeoutOrNull(2500){captureFrame();true}!=true){
-                        CaptureManager.activeResultId=null;CaptureManager.setState(CaptureManager.CaptureState.Idle);CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION)
-                        Diagnostics.info("capture","frame_deadline","2500ms elapsed; original retained");BenchmarkTracker.finish("timeout")
-                    }
-                }
+                com.manhwalens.app.diagnostics.CompleteReport.captureWrites.withLock { captureFrame() }
                 if (CaptureManager.state.value is CaptureManager.CaptureState.Error && liveEnabled) {
                     endLive(CaptureManager.LiveStatus.ERROR)
                 }
@@ -534,8 +510,7 @@ class ScreenCaptureService : Service() {
 
         // A journey = one capture → Arabic on screen. Trace id chains every stage.
         val traceId = Diagnostics.newTrace()
-        val origin=requestNs.takeIf { it > 0 } ?: System.nanoTime()
-        val journeyId = BenchmarkTracker.beginSession(traceId,origin)
+        val journeyId = BenchmarkTracker.beginSession(traceId, requestNs.takeIf { it > 0 } ?: System.nanoTime())
         CaptureManager.activeResultId = journeyId
         Diagnostics.info("capture", "capture_start", "capture journey started", traceId = traceId,
             context = mapOf("journey_id" to journeyId))
@@ -678,15 +653,13 @@ class ScreenCaptureService : Service() {
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.map { it.region },
             onException = { Diagnostics.warn("translate","worker_exception","block attempt failed",throwable=it,traceId=traceId) },
-            deferred = { it.ocrPass=="deferred" },
             identity = { workByRegion.getValue(it).key to contextParts[it] },
             translate = { region ->
                 val started = System.nanoTime()
                 val work = workByRegion.getValue(region)
                 contextParts[region]?.let { return@progressiveTranslation com.manhwalens.app.pipeline.TranslatedBlock(region,region.text,it,method="Connected dialogue") }
-                val contextKey=Triple(work.key,dictionaryContext,com.manhwalens.app.phrasebook.PhraseLibrary.version)
-                val blockStart=System.nanoTime()
-                pageState.find(region,contextKey)?.let { Diagnostics.info("funnel","block","page=$journeyId bounds=${region.left},${region.top} stage=${it.method} cache=page elapsed_us=${(System.nanoTime()-blockStart)/1000}",traceId=traceId);return@progressiveTranslation it }
+                val contextKey=work.key to dictionaryContext
+                pageState.find(region,contextKey)?.let { return@progressiveTranslation it }
                 val retryCase=!attempted.add(region)
                 val previousSource = work.key.previous
                 val issue = work.key.issue
@@ -698,9 +671,9 @@ class ScreenCaptureService : Service() {
                     Diagnostics.warn("ocr", "input_quality", "OCR input requires a clearer or complete frame", code = issue,
                         context = mapOf("bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text,
-                        "", issue, method = "OCR input validation")
+                        com.manhwalens.app.pipeline.OcrInputQuality.message(issue, region.text), issue, method = "OCR input validation")
                 }
-                val recovered = if (!com.manhwalens.app.BuildConfig.CROP_FIRST && (translated.errorCode == "OCR-UNCERTAIN" || (!retryCase && region.confidence < .55f && translated.errorCode in setOf("TR-INVALID-OUTPUT","TR-UNTRANSLATED"))) && region.width > 0 && region.height > 0 &&
+                val recovered = if ((translated.errorCode == "OCR-UNCERTAIN" || (!retryCase && region.confidence < .55f && translated.errorCode in setOf("TR-INVALID-OUTPUT","TR-UNTRANSLATED"))) && region.width > 0 && region.height > 0 &&
                     region.area in 1..150000 && region.left >= 0 && region.top >= 0 && region.right <= frame.width && region.bottom <= frame.height) {
                     Diagnostics.info("funnel","ocr_retry","page=$journeyId bounds=${region.left},${region.top} attempt=crop",traceId=traceId)
                     val box=region.surface
@@ -716,7 +689,7 @@ class ScreenCaptureService : Service() {
                             val row=floatArrayOf(.299f*f,.587f*f,.114f*f,0f,shift)
                             val paint=android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply { colorFilter=android.graphics.ColorMatrixColorFilter(row+row+row+floatArrayOf(0f,0f,0f,1f,0f)) }
                             android.graphics.Canvas(input).drawBitmap(frame,android.graphics.Rect(l,t,l+w,t+h),android.graphics.Rect(0,0,w*2,h*2),paint)
-                            withTimeoutOrNull(2500){ textRecognition.recognize(input,OCR_SOURCE,pass="translation_retry") }?.map { it.copy(left=l+it.left/2,top=t+it.top/2,right=l+it.right/2,bottom=t+it.bottom/2) }?.filter {
+                            withTimeoutOrNull(2500){ textRecognition.recognize(input,OCR_SOURCE) }?.map { it.copy(left=l+it.left/2,top=t+it.top/2,right=l+it.right/2,bottom=t+it.bottom/2) }?.filter {
                                 it.confidence>=.30f && com.manhwalens.app.pipeline.ReadingEnglish.retryFits(region,it) && lexical(it)>=.8
                             }?.maxByOrNull(::lexical)
                         } catch(cancelled:kotlinx.coroutines.CancellationException){ throw cancelled }
@@ -725,7 +698,6 @@ class ScreenCaptureService : Service() {
                     val chosen=if(best!=null && lexical(best)>=lexical(region)) region.copy(text=best.text,confidence=best.confidence) else region
                     if((chosen.text!=region.text || translated.errorCode=="OCR-UNCERTAIN") && chosen.confidence>=.30f && lexical(chosen)>=.8) translation.translateBlock(chosen,learnedNames,previousSource,true) else translated
                 } else translated
-                Diagnostics.info("funnel","block","page=$journeyId bounds=${region.left},${region.top} stage=${recovered.method} ocr=${region.ocrPass} repaired=${recovered.original!=region.text} elapsed_us=${(System.nanoTime()-blockStart)/1000}",traceId=traceId)
                 pageState.save(region,contextKey,recovered)
                 recovered.also {
                     Diagnostics.info("translate", "block_complete", "block processing complete",
@@ -741,7 +713,7 @@ class ScreenCaptureService : Service() {
                 if (completed.any { it.errorCode == null && it.translated != it.original }) BenchmarkTracker.mark("T9")
                 BenchmarkTracker.setJourneyCounts(frame.width, frame.height, prepared.size, completed.size)
                 CaptureManager.setState(CaptureManager.CaptureState.Partial(CaptureResult(
-                    id, System.currentTimeMillis(), OCR_SOURCE, TARGET, completed,requestedNs=origin)))
+                    id, System.currentTimeMillis(), OCR_SOURCE, TARGET, completed)))
                 try { com.manhwalens.app.history.TranslationSamples.collect(id, traceId, completed) }
                 catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (failure: Exception) { Diagnostics.warn("samples", "save", "could not save translation sample", throwable = failure) }
@@ -762,7 +734,7 @@ class ScreenCaptureService : Service() {
             sourceLanguage = OCR_SOURCE,
             targetLanguage = TARGET,
             blocks = blocks.toList(),
-            thumbnailPath = thumbnailPath,requestedNs=origin,
+            thumbnailPath = thumbnailPath,
         )
         runCatching { history.add(result) }
             .onFailure {
@@ -978,7 +950,6 @@ class ScreenCaptureService : Service() {
         }
         mediaProjection = null
         scope.cancel()
-        textRecognition.close()
         translation.close()
         com.manhwalens.app.diagnostics.SessionScorecard.end()
         super.onDestroy()

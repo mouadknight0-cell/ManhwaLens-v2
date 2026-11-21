@@ -48,8 +48,8 @@ class BubbleOverlayService : Service() {
     private var acceptResults = false
     private var requestedAt = Long.MAX_VALUE
     private var running = false
-    private var stopControl: ImageView? = null
-    private var startControl: ImageView? = null
+    private var stopControl: TextView? = null
+    private var startControl: TextView? = null
     private fun updateControlState() {
         val phase = CaptureManager.sessionPhase.value
         val label = when (phase) {
@@ -69,7 +69,6 @@ class BubbleOverlayService : Service() {
         startControl?.isEnabled = phase in listOf(CaptureManager.SessionPhase.INACTIVE, CaptureManager.SessionPhase.FAILED)
         stopControl?.isEnabled = phase == CaptureManager.SessionPhase.ACTIVE
         stopControl?.alpha = if (stopControl?.isEnabled == true) 1f else 0.45f
-        startControl?.setColorFilter(if(phase==CaptureManager.SessionPhase.ACTIVE) PANEL_ACCENT else PANEL_TEXT)
         startControl?.alpha = if (startControl?.isEnabled == true) 1f else 0.45f
     }
     private val translationRects = mutableListOf<android.graphics.Rect>()
@@ -139,7 +138,7 @@ class BubbleOverlayService : Service() {
     private var displayedResultId: String? = null
     private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
-    private data class Attached(val id:com.manhwalens.app.pipeline.PageState.Id,val hash:Int?,val key:String,var dy:Int=0)
+    private data class Attached(val id:com.manhwalens.app.pipeline.PageState.Id,val hash:Int?,val key:String)
     private val attached=mutableMapOf<View,Attached>()
     private fun discard(view:View){val idx=translationViews.indexOf(view);if(idx<0)return
         runCatching { windowManager.removeView(view) };translationViews.removeAt(idx);translationRects.removeAt(idx);attached.remove(view)?.let { displayedBlocks.remove(it.key) };publishBounds() }
@@ -165,12 +164,6 @@ class BubbleOverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        CaptureManager.followFrame={ step,motion,check -> attached.toMap().forEach { (view,s)->
-            if(view.visibility==View.VISIBLE){val delta=step?:0;val same=check(s.id,s.dy+delta)
-                if(same==false || (motion && (step==null || same!=true)))discard(view)
-                else if(delta!=0 && same==true){val p=view.layoutParams as WindowManager.LayoutParams;val r=translationRects[translationViews.indexOf(view)]
-                    if(p.y+delta<0 || p.y+delta+p.height>resources.displayMetrics.heightPixels)discard(view) else {p.y+=delta;windowManager.updateViewLayout(view,p);s.dy+=delta;r.offset(0,delta);publishBounds()}}
-            } } }
         CaptureManager.validateOverlays={ hashes-> attached.toMap().forEach { (view,stamp)->if(stamp.hash==null || hashes[stamp.id]!=stamp.hash)discard(view) else if(!CaptureManager.appVisible.value)view.visibility=View.VISIBLE };publishBounds() }
         CaptureManager.hideControlsForFrame = {
             bubbleView?.visibility=View.INVISIBLE; actionDock?.visibility=View.INVISIBLE
@@ -216,8 +209,7 @@ class BubbleOverlayService : Service() {
         scope.launch {
             CaptureManager.live.collect { status ->
                 when (status) {
-                    CaptureManager.LiveStatus.SCROLLING -> Unit // frame callback already validated or discarded each view
-                    CaptureManager.LiveStatus.PAUSED_APP -> clearTranslations()
+                    CaptureManager.LiveStatus.SCROLLING, CaptureManager.LiveStatus.PAUSED_APP -> clearTranslations()
                     CaptureManager.LiveStatus.PROCESSING -> {
                         acceptResults = !CaptureManager.appVisible.value
                         requestedAt = System.currentTimeMillis()
@@ -309,9 +301,9 @@ class BubbleOverlayService : Service() {
     private fun onBubbleTapped() {
         event("bubble_tap")
         if (actionDock != null) { collapseActions(); return }
-        val bubble = bubbleView ?: return
+        val bubble = bubbleParams ?: return
         val bounds = availableBounds()
-        val buttonSize = dp(48)
+        val buttonSize = (bounds.width()/3).coerceIn(dp(48),dp(110))
         val width = buttonSize * 3
         val height = dp(52)
         val dock = LinearLayout(this).apply {
@@ -320,8 +312,19 @@ class BubbleOverlayService : Service() {
             background = GradientDrawable().apply { cornerRadius = dp(18).toFloat(); setColor(PANEL_BACKGROUND) }
         }
         FloatingAction.entries.forEach { action ->
-            val button=dockButton(this,action,PANEL_TEXT){
-                collapseActions();when(action){FloatingAction.START->startTranslation();FloatingAction.STOP->stopTranslation();FloatingAction.CLOSE->closeService()}
+            val button=TextView(this).apply {
+                text=if(action==FloatingAction.CLOSE)getString(R.string.action_close) else action.label
+                if(action==FloatingAction.CLOSE){contentDescription=text;setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_close,0,0,0)}
+                 gravity=Gravity.CENTER; textSize=14f; maxLines=1
+                ellipsize=android.text.TextUtils.TruncateAt.END; setTextColor(PANEL_TEXT)
+                setOnClickListener {
+                    collapseActions()
+                    when(action) {
+                        FloatingAction.START -> startTranslation()
+                        FloatingAction.STOP -> stopTranslation()
+                        FloatingAction.CLOSE -> closeService()
+                    }
+                }
             }
             if(action==FloatingAction.START) startControl=button
             if(action==FloatingAction.STOP) stopControl=button
@@ -331,16 +334,19 @@ class BubbleOverlayService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT).apply {
             gravity = Gravity.TOP or Gravity.LEFT
+            x = (if (bubble.x > bounds.width() / 2) bubble.x - width else bubble.x + dp(BUBBLE_SIZE_DP))
+                .coerceIn(0, (bounds.width() - width).coerceAtLeast(0))
+            y = bubble.y.coerceIn(0, (bounds.height() - height).coerceAtLeast(0))
         }
-        fun position(){
-            val xy=IntArray(2);bubble.getLocationOnScreen(xy)
-            val frame=android.graphics.Rect();bubble.getWindowVisibleDisplayFrame(frame)
-            if(frame.isEmpty)frame.set(0,0,bounds.width(),bounds.height())
-            val pos=DockPosition.place(xy[0]-frame.left,xy[1]-frame.top,bubble.width,bubble.height,width,height,frame.width(),frame.height())
-            params.x=pos.first;params.y=pos.second
-        }
-        position()
-        dock.setOnApplyWindowInsetsListener { v,insets-> v.post { if(actionDock===dock){val x=params.x;val y=params.y;position();if(params.x!=x || params.y!=y)windowManager.updateViewLayout(dock,params)} };insets }
+        val dialogue=(CaptureManager.state.value as? CaptureManager.CaptureState.Done)?.result?.blocks.orEmpty()
+        val maxY=(bounds.height()-height).coerceAtLeast(0)
+        val offset=if(Build.VERSION.SDK_INT>=30) windowManager.currentWindowMetrics.windowInsets.getInsets(android.view.WindowInsets.Type.statusBars()).top else 0
+        val candidates=listOf(params.y,0,maxY,maxY/2)
+        params.y=candidates.minByOrNull { y -> dialogue.sumOf { block ->
+            val r=block.region
+            (minOf(params.x+width,r.right)-maxOf(params.x,r.left)).coerceAtLeast(0).toLong()*
+                (minOf(y+offset+height,r.bottom)-maxOf(y+offset,r.top)).coerceAtLeast(0)
+        } } ?: params.y
         dock.setOnTouchListener { _,e -> if(e.actionMasked==MotionEvent.ACTION_OUTSIDE) { collapseActions(); true } else false }
         runCatching { windowManager.addView(dock, params) }.onSuccess {
             CaptureManager.dockVisible = true
@@ -410,7 +416,6 @@ class BubbleOverlayService : Service() {
                 else -> null
             }
             if(reason!=null) { outcome(i,reason); return@forEachIndexed }
-            if(com.manhwalens.app.BuildConfig.STRICT_PLACEMENT && block.region.surface?.reliable!=true){outcome(i,"unverified_surface");return@forEachIndexed}
             val source=SurfacePlacement.visible(block.region,screen)
             val r=block.region
             val others=boxes.filterNot { it.left==r.left && it.top==r.top && it.right==r.right && it.bottom==r.bottom }.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }
@@ -423,7 +428,7 @@ class BubbleOverlayService : Service() {
                 val tight=SurfacePlacement.source(block.region,s.color,true)
                 if(tight==s) null else runCatching { DirectTranslationLayout.prepare(this,block.translated,tight,screen,occupied+others) }.getOrNull()
             }
-            val prepared=if(com.manhwalens.app.BuildConfig.STRICT_PLACEMENT)tightFit else tightFit ?: source?.takeIf { it.mask==null }?.let { DirectTranslationLayout.nearby(this,block.translated,it,screen,occupied+others) }
+            val prepared=tightFit ?: source?.takeIf { it.mask==null }?.let { DirectTranslationLayout.nearby(this,block.translated,it,screen,occupied+others) }
             if(tightFit==null && (application as ManhwaLensApp).settingsRepository.debug.value && source!=null){
                 val paint=android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { typeface=ArabicTypeface.get(this@BubbleOverlayService); textSize=12f*resources.displayMetrics.scaledDensity }
                 val width=(source.width-dp(8)).coerceAtLeast(1);val msg=block.translated
@@ -434,9 +439,6 @@ class BubbleOverlayService : Service() {
             if(tightFit==null) outcome(i,"fit_fallback source=${source?.width}x${source?.height} chars=${block.translated.length} minSp=12 occupied=${occupied.size} nearby=${prepared!=null}")
             if(prepared==null) { outcome(i,"source_fit_or_obstruction"); renderFailure=true; return@forEachIndexed }
             val surface=prepared.surface; val text=prepared.view
-            if(result.requestedNs>0)text.firstDraw={if(lastDrawnPage!=result.id && CaptureManager.activeResultId==result.id && !CaptureManager.appVisible.value){
-                lastDrawnPage=result.id;com.manhwalens.app.diagnostics.Diagnostics.info("render","first_draw","page=${result.id} prepared_to_canvas=true",durationMs=(System.nanoTime()-result.requestedNs)/1000000)
-            }}
             val params=WindowManager.LayoutParams(surface.width,surface.height,overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply {
                 gravity=Gravity.TOP or Gravity.LEFT; x=surface.left; y=surface.top
@@ -473,7 +475,6 @@ class BubbleOverlayService : Service() {
         if(displayedBlocks.isNotEmpty()) markRendered(result,final && !renderFailure && result.blocks.none { it.errorCode!=null })
     }
 
-    private var lastDrawnPage:String?=null
     private fun markRendered(result: CaptureResult, final: Boolean) {
         // Exact result identity prevents a queued callback marking a newer journey.
         bubbleView?.post {
@@ -498,7 +499,7 @@ class BubbleOverlayService : Service() {
     private fun showError(message: String) {
         clearTranslations()
         // An automatic error panel is not a valid replacement for captured dialogue.
-        bubbleView?.alpha = 0.55f // detailed error is available in the activity only
+        android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show()
     }
 
     // ── Plumbing ───────────────────────────────────────────────────
@@ -537,7 +538,6 @@ class BubbleOverlayService : Service() {
         bubbleView = null
         CaptureManager.overlayBounds = emptyList()
         CaptureManager.hideControlsForFrame = null
-        CaptureManager.followFrame=null
         CaptureManager.validateOverlays=null
         CaptureManager.restoreControlsAfterFrame=null
         super.onDestroy()

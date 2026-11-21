@@ -7,5 +7,5 @@ object WordBoundary {
     private fun word(c: Char): Boolean = c.isLetterOrDigit() ||
         Character.getType(c) in listOf(Character.NON_SPACING_MARK.toInt(), Character.COMBINING_SPACING_MARK.toInt())
     fun splitsWord(text: CharSequence, offset: Int): Boolean =
-        offset > 0 && offset < text.length && ((word(text[offset - 1]) && word(text[offset])) || text[offset]=='…')
+        offset > 0 && offset < text.length && word(text[offset - 1]) && word(text[offset])
 }

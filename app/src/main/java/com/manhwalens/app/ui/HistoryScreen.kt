@@ -179,7 +179,6 @@ private fun HistoryCard(entry: CaptureResult, onDelete: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            HistoryCorrection(entry)
             IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Filled.Delete,

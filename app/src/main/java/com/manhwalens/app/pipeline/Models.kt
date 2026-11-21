@@ -16,7 +16,6 @@ data class TextRegion(
     val languageHint: String? = null,
     /** Ephemeral screen-space rendering evidence, never a translation-model input. */
     val surface: com.manhwalens.app.overlay.ReplacementSurface? = null,
-    val ocrPass:String="frame",
 ) {
     val width: Int get() = (right - left).coerceAtLeast(0)
     val height: Int get() = (bottom - top).coerceAtLeast(0)
@@ -43,7 +42,6 @@ data class CaptureResult(
     val targetLanguage: String,
     val blocks: List<TranslatedBlock>,
     val thumbnailPath: String? = null,
-    val requestedNs:Long=0L, // transient monotonic origin; never use after reload
 ) {
     val translatedText: String get() = blocks.joinToString("\n") { it.translated }
     val preview: String get() = previewOf(blocks)

@@ -9,12 +9,10 @@ object ReadingEnglish {
     private val observed=mapOf("aheao" to "ahead","dio" to "did","angwer" to "answer","commano" to "command","headouarters" to "headquarters","1s" to "is")
     private val context=mapOf("1 SEE" to "I SEE", "THE GARTH" to "THE EARTH", "STILL ALVE" to "STILL ALIVE", "GET YO," to "GET YOU,","A NALL" to "A WALL","THIG IG" to "THIS IS","THEY SAV" to "THEY SAY")
     private val swap=mapOf('8' to "b",'p' to "f",'f' to "p",'o' to "dq",'d' to "o",'g' to "es",'e' to "g",'v' to "y",'y' to "v",'3' to "e",'5' to "s",'s' to "g",'4' to "a",'1' to "il",'0' to "o",'q' to "o")
-    private fun recognised(w:String)=w in words || w.replace("'","") in words || (w.contains("'") && w.substringBefore("'") in words && w.substringAfter("'") in suffixes)
-    private val suffixes=setOf("s","t","ve","d","ll","re","m")
-    fun validCount(text:String)=tokens.findAll(text.lowercase()).count { recognised(it.value) }
+    fun validCount(text:String)=tokens.findAll(text.lowercase()).count { it.value in words || it.value.replace("'","") in words }
     fun score(s:String,names:List<String>):Double {
         val ts=tokens.findAll(s.lowercase()).map { it.value }.toList(); if(ts.isEmpty()) return 0.0
-        return ts.count { recognised(it) || names.any { n->n.equals(it,true) } }.toDouble()/ts.size
+        return ts.count { it in words || it.replace("'","") in words || names.any { n->n.equals(it,true) } }.toDouble()/ts.size
     }
     // Only replace a split if both halves are common words; never segment a valid token.
     private fun segment(w:String):String? = (2..w.length-2).mapNotNull { cut ->
@@ -33,8 +31,7 @@ object ReadingEnglish {
         val contextual=context.entries.fold(stutter.replace(ComicSpelling.context(masked),"$2")){s,e->s.replace(e.key,e.value,ignoreCase=true)}
         return tokens.replace(contextual){ m -> val raw=m.value;val w=raw.lowercase()
             if((raw.any(Char::isLowerCase) && raw.count(Char::isUpperCase)<raw.length/2 && !raw.any(Char::isDigit)) || raw.all(Char::isDigit)) return@replace raw
-            val doubled=if(w.length>=4 && w[0]==w[1] && w !in words && w.drop(1) in words) w.drop(1) else null
-            val corrected=observed[w] ?: doubled ?: if(w.length in 4..18 && w !in words) {
+            val corrected=observed[w] ?: if(w.length in 4..18 && w !in words) {
                 val hits=mutableSetOf<String>();val chars=w.toCharArray()
                 for(i in chars.indices) for(a in swap[w[i]].orEmpty()) { chars[i]=a
                     String(chars).takeIf(words::contains)?.let(hits::add)

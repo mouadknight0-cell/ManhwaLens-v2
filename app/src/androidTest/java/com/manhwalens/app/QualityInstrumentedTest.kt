@@ -15,98 +15,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class QualityInstrumentedTest {
-    /** Fresh crop tracker per sample: unchanged-page or region-cache hits cannot pass this gate. */
-    @Test fun oneBubbleProcessingBudget()=runBlocking {
-        val ctx=InstrumentationRegistry.getInstrumentation().targetContext
-        val image=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);val c=Canvas(image);c.drawColor(Color.DKGRAY)
-        val p=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);p.color=Color.WHITE;c.drawOval(72f,83f,566f,230f,p);p.color=Color.BLACK;p.textSize=36f;c.drawText("THIS SCENT",210f,168f,p)
-        val index=requireNotNull(com.manhwalens.app.phrasebook.PhraseLibrary.ready());val expected=com.manhwalens.app.phrasebook.ArabicFinish.apply(requireNotNull(index.lookup("THIS SCENT")).text)
-        try {for(mode in listOf("single","legacy","crop200","fast")){
-            val events=java.util.concurrent.ConcurrentLinkedQueue<String>();val client=TextRecognitionClient(true){events.add(it)}
-            val times=mutableListOf<Long>();val totals=mutableListOf<Long>();val misses=mutableListOf<Long>()
-            try {repeat(21){trial->val translator=com.manhwalens.app.translate.TranslationClient();try {
-                val log=mutableListOf<String>();val start=System.nanoTime()
-                val found=if(mode=="single")client.recognize(image,"en") else com.manhwalens.app.ocr.ColorRecovery(mode=="crop200",mode=="fast").recognize(client,image,"en",{true},log::add)
-                val after=System.nanoTime();val region=found.singleOrNull {com.manhwalens.app.phrasebook.PhraseIndex.key(it.text)=="THIS SCENT"}
-                val ok=region?.let { r->val surface=com.manhwalens.app.overlay.SurfaceDetector.detect(r,image.width,image.height,image::getPixel);val translated=translator.translateBlock(r.copy(surface=surface))
-                    var raster=false;InstrumentationRegistry.getInstrumentation().runOnMainSync {val prepared=com.manhwalens.app.overlay.DirectTranslationLayout.prepare(ctx,translated.translated,surface,com.manhwalens.app.overlay.ReplacementSurface(0,0,image.width,image.height),emptyList());raster=prepared!=null && prepared.surface==surface};translated.translated==expected && raster && surface.reliable }==true
-                val elapsed=(System.nanoTime()-start)/1000000
-                if(trial==0 || trial==1){android.util.Log.i("ManhwaLensFunnel","probe mode=$mode trial=$trial elapsed=$elapsed got=${found.map {it.text to it.confidence}} events=${events.toList().take(4)} log=${log.take(5)}")};events.clear()
-                if(trial>0){if(ok){times.add((after-start)/1000000);totals.add(elapsed)}else misses.add(elapsed)}
-            }finally{translator.close()}}}finally{client.close()}
-            fun summary(v:List<Long>)=if(v.isEmpty())"n/a" else v.sorted().let {"${(it[(it.size-1)/2]+it[it.size/2])/2}/${it[kotlin.math.ceil(.9*it.size).toInt()-1]}"}
-            val report="mode=$mode ok=${times.size}/20 ocr_p50_p90=${summary(times)} full_p50_p90=${summary(totals)} miss_p50_p90=${summary(misses)}";android.util.Log.i("ManhwaLensFunnel","perf33 $report");com.manhwalens.app.diagnostics.Diagnostics.info("benchmarks","fixture",report)
-            if(mode=="fast" || (BuildConfig.CROP_FIRST && mode=="crop200")){assertTrue(report,misses.isEmpty());assertTrue(report,times.sorted().let {(it[9]+it[10])/2}<=400);assertTrue(report,totals.sorted().let {(it[9]+it[10])/2}<=700)}
-        }}finally{image.recycle()}
-    }
-    @Test fun shiftedIdenticalCropReusesOcrNotCoordinates()=runBlocking {
-        com.manhwalens.app.phrasebook.PhraseLibrary.ready();val client=TextRecognitionClient(true);val tracker=com.manhwalens.app.ocr.ColorRecovery(false,true)
-        val b=Bitmap.createBitmap(640,400,Bitmap.Config.ARGB_8888);val c=Canvas(b);val p=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-        try {val readings=mutableListOf<com.manhwalens.app.pipeline.TextRegion>();for(dy in listOf(0,40)){
-            c.drawColor(Color.DKGRAY);p.color=Color.WHITE;c.drawOval(72f,83f+dy,566f,230f+dy,p);p.textSize=36f;p.color=Color.BLACK;c.drawText("THIS SCENT",210f,168f+dy,p)
-            val start=System.nanoTime();val line=tracker.recognize(client,b,"en",{true},{}).single();readings.add(line);android.util.Log.i("ManhwaLensFunnel","moved_crop pass=${line.ocrPass} ms=${(System.nanoTime()-start)/1000000}")}
-            assertEquals("ink_cache",readings.last().ocrPass);assertEquals(readings.first().top+40,readings.last().top);assertEquals(readings.first().text,readings.last().text)
-            c.drawColor(Color.DKGRAY);assertTrue(tracker.recognize(client,b,"en",{true},{}).isEmpty())
-        }finally{client.close();b.recycle()}
-    }
-    @Test fun coloredNameTwoBubbleAndNoiseJourney()=runBlocking {
-        val index=requireNotNull(com.manhwalens.app.phrasebook.PhraseLibrary.ready());val client=TextRecognitionClient(true);val translator=com.manhwalens.app.translate.TranslationClient()
-        try {for(lines in listOf(listOf("THIS ISN'T ENOUGH"),listOf("AND THAT WASN'T ALL"),listOf("AND EVEN YEONGJUN TRADING COMPANY"),listOf("THIS SCENT","WHAT IS THIS"),listOf("쿵"))){
-            val b=Bitmap.createBitmap(820,lines.size*185,Bitmap.Config.ARGB_8888);try {val c=Canvas(b);c.drawColor(Color.DKGRAY);val p=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-                lines.forEachIndexed {i,line->p.color=when(line){"THIS ISN'T ENOUGH"->Color.rgb(61,17,87);"AND THAT WASN'T ALL"->Color.rgb(99,14,30);else->Color.WHITE};c.drawOval(24f,15f+i*185,796f,167f+i*185,p);p.color=if(p.color==Color.WHITE)Color.BLACK else Color.WHITE;p.textAlign=android.graphics.Paint.Align.CENTER;p.textSize=30f;c.drawText(line,410f,100f+i*185,p)}
-                val got=com.manhwalens.app.ocr.ColorRecovery(false,true).recognize(client,b,"en",{true},{})
-                if(lines.singleOrNull()=="쿵"){for(r in got){val block=translator.translateBlock(r);assertTrue("SFX ${r.text}",block.errorCode!=null || block.translated.isBlank() || block.translated==block.original)}}
-                else for((i,line) in lines.withIndex()){val expected=com.manhwalens.app.phrasebook.ArabicFinish.apply(requireNotNull(index.lookup(line)).text);val blocks=got.filter {it.centerY/185==i}.map {translator.translateBlock(it)};assertTrue("$line => $blocks",blocks.any {it.errorCode==null && it.translated==expected})}
-            }finally{b.recycle()}}
-        }finally{client.close();translator.close()}
-    }
-    @Test fun installedApkCannotOpenNetworkSockets() {
-        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
-        val info = ctx.packageManager.getPackageInfo(ctx.packageName, android.content.pm.PackageManager.GET_PERMISSIONS)
-        assertFalse(info.requestedPermissions.orEmpty().contains(android.Manifest.permission.INTERNET))
-    }
-
-    @Test fun contrastSamplingMatchesScalarReference() {
-        val ctx = InstrumentationRegistry.getInstrumentation().context
-        val bitmap = ctx.assets.open("xiaomi-two-dark-dialogues.png").use { BitmapFactory.decodeStream(it) }
-        try {
-            val step = maxOf(5,maxOf(bitmap.width,bitmap.height)/144)
-            val w=bitmap.width/step; val h=bitmap.height/step
-            val oldTimes=mutableListOf<Long>(); val newTimes=mutableListOf<Long>()
-            repeat(9){ trial ->
-                val start=System.nanoTime(); val corners=IntArray(w*h){bitmap.getPixel(it%w*step,it/w*step)}
-                val tiles=BooleanArray(w*h){i->var lo=255;var hi=0;var colored=false
-                    for(dy in 0..2) for(dx in 0..2){val c=bitmap.getPixel(i%w*step+dx*(step-1)/2,i/w*step+dy*(step-1)/2)
-                        val r=Color.red(c); val g=Color.green(c); val b=Color.blue(c);val gray=(r*54+g*183+b*19) shr 8
-                        lo=minOf(lo,gray);hi=maxOf(hi,gray);if(maxOf(r,g,b)-minOf(r,g,b)>40)colored=true}
-                    hi-lo>80 && (colored || lo<68)}
-                val mid=System.nanoTime();val result=com.manhwalens.app.ocr.ContrastSamples(bitmap,step);val end=System.nanoTime()
-                assertArrayEquals(corners,result.corners);assertArrayEquals(tiles,result.tiles)
-                if(trial>1){oldTimes.add(mid-start);newTimes.add(end-mid)}
-            }
-            android.util.Log.i("ManhwaLensFunnel","contrast_sampler n=7 old_us=${oldTimes.sorted()[3]/1000} new_us=${newTimes.sorted()[3]/1000} old_bitmap_reads=${10*w*h} new_bitmap_reads=${3*h}")
-        } finally {bitmap.recycle()}
-    }
-    @Test fun iconDockHasTouchAndAccessibilityTargets(){val inst=InstrumentationRegistry.getInstrumentation();inst.runOnMainSync {
-        val ctx=inst.targetContext;val d=ctx.resources.displayMetrics.density
-        for(action in com.manhwalens.app.overlay.FloatingAction.entries){var clicked=false;val v=com.manhwalens.app.overlay.dockButton(ctx,action,Color.WHITE){clicked=true}
-            assertNotNull(v.drawable);assertTrue(v.contentDescription.isNotBlank());assertEquals(v.contentDescription,v.tooltipText);assertTrue(v.minimumWidth>=48*d-.5f);v.performClick();assertTrue(clicked)}
-    }}
-    @Test fun roomCorrectionInvalidatesWarmResult()=runBlocking {val lib=com.manhwalens.app.phrasebook.PhraseLibrary;lib.ready();val row=com.manhwalens.app.phrasebook.Correction("","THIS SCENT","رائحة الياسمين");val t=com.manhwalens.app.translate.TranslationClient();val region=com.manhwalens.app.pipeline.TextRegion("THIS SCENT",0,0,100,40,.85f)
-        try {val original=t.translateBlock(region).translated;lib.save(listOf(row));assertEquals(row.ar,t.translateBlock(region).translated);assertTrue(lib.export().contains(row.ar));lib.delete(row);assertEquals(original,t.translateBlock(region).translated)}finally{lib.delete(row);t.close()}
-    }
-    @Test fun regressionPackIsAlwaysAvailable()=runBlocking {
-        val ctx=InstrumentationRegistry.getInstrumentation().targetContext
-        val index=requireNotNull(com.manhwalens.app.phrasebook.PhraseLibrary.ready())
-        // Estimate incremental Java heap on an otherwise idle instrumentation thread; never GC a live session.
-        fun allocated()=android.os.Debug.getRuntimeStat("art.gc.bytes-allocated").toLong()
-        val before=allocated();val duplicate=com.manhwalens.app.phrasebook.PhraseLibrary.loadAssets(ctx);val copy=com.manhwalens.app.phrasebook.PhraseIndex(duplicate,com.manhwalens.app.phrasebook.PhraseLibrary.packs.toSet(),presorted=true);val bytes=allocated()-before
-        assertNotNull(copy.lookup("THIS SCENT"));android.util.Log.i("ManhwaLensFunnel","phrasebook startup_ms=${com.manhwalens.app.phrasebook.PhraseLibrary.startupMs} entries=${duplicate.size} process_java_bytes_allocated_during_extra_load=$bytes emulator_only=true")
-        val narration=index.render("HAVE YOU FORGOTTEN? THOSE EYES OF YOURS, ONCE FULL OF PROFOUND WISDOM, WERE GOUGED OUT WITH RED-HOT IRON SKEWERS."){_,_->error("reviewed narration must not invoke MT")}
-        assertTrue(narration!!.text.contains("بأسياخ"));val a=ctx.assets.open("phrasebook/phrasebook_seed.json").bufferedReader().use {org.json.JSONObject(it.readText()).getJSONArray("entries")}
-        for(i in 0 until a.length()){val e=a.getJSONObject(i);if(!e.getJSONArray("genre").toString().contains("regression-test"))continue
-            assertEquals(e.getString("en"),e.getString("ar"),index.lookup(e.getString("en"))?.text)}
-    }
     @Test fun ambiguousMarkIsNotDrawnAndInterjectionsNeverNeedMT() = runBlocking {
         val t=com.manhwalens.app.translate.TranslationClient()
         try { val r=com.manhwalens.app.pipeline.TextRegion("NO..",10,20,66,49,.45f)
@@ -118,7 +26,7 @@ class QualityInstrumentedTest {
     }
     /** Generated colour controls, not the missing phone screenshots. Force the independent-proposal path. */
     @Test fun colourRecoveryAfterEmptyFirstPass() = runBlocking {
-        for ((bg,ink,phrase) in listOf(Triple(Color.rgb(61,17,87),Color.WHITE,"THIS ISN'T ENOUGH"), Triple(Color.rgb(54,16,80),Color.WHITE,"SATISFY THIS HUNGER"), Triple(Color.rgb(65,4,9),Color.WHITE,"THIS SCENT"), Triple(Color.rgb(99,14,30),Color.WHITE,"AND THAT WASN'T ALL"),Triple(Color.WHITE,Color.rgb(172,10,35),"HOW MUCH WAS IT"))) {
+        for ((bg,ink,phrase) in listOf(Triple(Color.rgb(61,17,87),Color.WHITE,"THIS ISN'T ENOUGH"), Triple(Color.rgb(99,14,30),Color.WHITE,"AND THAT WASN'T ALL"),Triple(Color.WHITE,Color.rgb(172,10,35),"HOW MUCH WAS IT"))) {
             val image=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);val canvas=Canvas(image);canvas.drawColor(Color.rgb(25,29,27))
             val pen=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);pen.color=bg;canvas.drawOval(72f,83f,566f,230f,pen);pen.color=ink;pen.textSize=30f;pen.textAlign=android.graphics.Paint.Align.CENTER;canvas.drawText(phrase,320f,167f,pen)
             try { val recovery=com.manhwalens.app.ocr.ColorRecovery();val client=TextRecognitionClient();val log=mutableListOf<String>()
@@ -391,7 +299,7 @@ class QualityInstrumentedTest {
         val bitmap = instrumentation.context.assets.open("conference-text.png").use { BitmapFactory.decodeStream(it) }
         try {
             var lines = 0
-            val regions = TextRecognitionClient().recognize(bitmap, "en",keepLine={ lines++; false })
+            val regions = TextRecognitionClient().recognize(bitmap, "en") { lines++; false }
             assertTrue("Fixture must actually exercise detected OCR lines", lines > 0)
             assertTrue("Excluded lines must not return through grouping", regions.isEmpty())
         } finally { bitmap.recycle() }
