@@ -132,7 +132,7 @@ class ScreenCaptureService : Service() {
         val rows=DoubleArray(VerticalPhase.N){row->var sum=0;var n=0;for(j in 1..16){val g=gray(image.width*j/17,image.height*(2*row+1)/(2*VerticalPhase.N));if(g>=0){sum+=g;n++}};sum.toDouble()/maxOf(1,n)}
         val cells=lastRows?.let {if(changed)VerticalPhase.shift(it,rows) else 0};lastRows=rows
         cells?.takeIf { kotlin.math.abs(it)<=2 }?.let { it*image.height/VerticalPhase.N } }
-        val sigs=verifiedRegions;CaptureManager.followFrame?.invoke(dy,changed){id,offset->sigs.firstOrNull {com.manhwalens.app.pipeline.PageState.id(it.region)==id}?.perimeter(offset,::gray)}
+        val sigs=verifiedRegions;CaptureManager.followFrame?.invoke(dy,changed){id,offset->sigs.firstOrNull {com.manhwalens.app.pipeline.PageState.id(it.region)==id}?.visibleMatch(offset,::gray)}
     }
     private val frameListener = ImageReader.OnImageAvailableListener { reader ->
         val image = runCatching { reader.acquireLatestImage() }.getOrElse {

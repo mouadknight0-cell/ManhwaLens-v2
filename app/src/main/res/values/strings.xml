@@ -150,4 +150,5 @@
     <string name="model_verify_failed">Could not verify the local model</string>
     <string name="model_verify_action">Check installed model</string>
     <string name="model_local_only">No files are downloaded. Model translation requires an already installed Arabic model.</string>
+    <string name="consent_foreground_hint">Open ManhwaLens and press Start to request screen capture.</string>
 </resources>

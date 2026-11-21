@@ -150,4 +150,5 @@
     <string name="model_verify_failed">تعذر فحص النموذج المحلي</string>
     <string name="model_verify_action">فحص النموذج المثبت</string>
     <string name="model_local_only">لا تُنزّل ملفات. تتطلب الترجمة الآلية نموذجاً عربياً مثبتاً مسبقاً.</string>
+    <string name="consent_foreground_hint">افتح تطبيق ManhwaLens واضغط على بدء لطلب إذن التقاط الشاشة.</string>
 </resources>

@@ -37,8 +37,7 @@ class CaptureConsentActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enteredGeneration = intent.getLongExtra("consent_generation", -1)
-        if (enteredGeneration != CaptureManager.consentGeneration.get()) { finish(); return }
+        if (intent.getLongExtra("consent_generation", -1) != CaptureManager.consentGeneration.get()) { finish(); return }
         com.manhwalens.app.diagnostics.Diagnostics.info("capture", "consent_activity", "permission activity entered")
         val manager = projectionManager
         if (manager == null) {
@@ -50,7 +49,7 @@ class CaptureConsentActivity : ComponentActivity() {
     }
     private var requested=false
     override fun onSaveInstanceState(outState:Bundle){outState.putBoolean("requested",requested);super.onSaveInstanceState(outState)}
-    override fun onResume(){super.onResume();if(isFinishing || requested)return;val manager=projectionManager ?: return;requested=true;try { captureLauncher.launch(if (android.os.Build.VERSION.SDK_INT >= 34) manager.createScreenCaptureIntent(android.media.projection.MediaProjectionConfig.createConfigForDefaultDisplay()) else manager.createScreenCaptureIntent()) }
+    override fun onResume(){super.onResume();if(isFinishing || requested)return;val manager=projectionManager ?: return;requested=true;enteredGeneration=intent.getLongExtra("consent_generation",-1);if(enteredGeneration!=CaptureManager.consentGeneration.get()){finish();return};try { captureLauncher.launch(if (android.os.Build.VERSION.SDK_INT >= 34) manager.createScreenCaptureIntent(android.media.projection.MediaProjectionConfig.createConfigForDefaultDisplay()) else manager.createScreenCaptureIntent()) }
         catch (failure: Exception) {
             CaptureManager.setState(CaptureManager.CaptureState.Error("تعذر عرض إذن التقاط الشاشة؛ أعد المحاولة من الفقاعة.", "CAP-CONSENT-DIALOG"))
             com.manhwalens.app.diagnostics.Diagnostics.error("capture", "consent_dialog", "CAP-CONSENT-DIALOG", "system consent launch failed", throwable = failure)
@@ -78,13 +77,13 @@ class CaptureConsentActivity : ComponentActivity() {
                         CaptureManager.sessionPhase.value == CaptureManager.SessionPhase.STARTING) {
                         CaptureManager.consentGeneration.incrementAndGet()
                         CaptureManager.setState(CaptureManager.CaptureState.Error(
-                            "لم تظهر نافذة الإذن. افتح التطبيق وابدأ الالتقاط من الإعدادات.", "CAP-CONSENT-BLOCKED"))
+                            context.getString(com.manhwalens.app.R.string.consent_foreground_hint), "CAP-CONSENT-BLOCKED"))
                         com.manhwalens.app.diagnostics.Diagnostics.warn("capture", "consent_blocked", "permission activity did not enter within 1 second", code = "CAP-CONSENT-BLOCKED")
                     }
                 }, 1000)
             }
             catch (failure: Exception) {
-                CaptureManager.setState(CaptureManager.CaptureState.Error("Unable to open Android screen-capture permission. Retry from the floating controls.", "CAP-CONSENT-LAUNCH"))
+                CaptureManager.setState(CaptureManager.CaptureState.Error(context.getString(com.manhwalens.app.R.string.consent_foreground_hint), "CAP-CONSENT-LAUNCH"))
                 com.manhwalens.app.diagnostics.Diagnostics.error("capture", "consent_launch", "CAP-CONSENT-LAUNCH", "consent activity launch failed", throwable = failure)
             }
         }

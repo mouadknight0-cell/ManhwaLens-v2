@@ -2,6 +2,7 @@ package com.manhwalens.app.capture
 import org.junit.Assert.*
 import org.junit.Test
 class LiveFrameGateTest {
+    @Test fun scrolledArtworkInvalidatesVisibleTextOrChangedMargins(){val r=com.manhwalens.app.pipeline.TextRegion("text",30,40,130,80);val signature=RegionPixels.capture(r){x,y->if(y in 40..80 && x%4==0)10 else 220};assertEquals(false,signature.visibleMatch(0){_,_->60});assertEquals(false,signature.visibleMatch(0){_,y->if(y in 40..80)-1 else 60})}
     @Test fun regionSignaturesDoNotTreatOccludedSamplesAsEvidence(){val r=com.manhwalens.app.pipeline.TextRegion("x",10,10,120,45)
         val s=RegionPixels.capture(r){x,y->(x+y)%255};assertTrue(s.matches{x,y->(x+y)%255});assertFalse(s.matches{_,_->-1});assertFalse(s.matches{_,_->240})}
     @Test fun oneChangedSampleDoesNotCancelActiveTranslation(){val g=LiveFrameGate();val a=IntArray(100){80};val b=IntArray(100){120}

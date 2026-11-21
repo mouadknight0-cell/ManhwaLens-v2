@@ -25,7 +25,7 @@ class QualityInstrumentedTest {
             repeat(5){ val translator=com.manhwalens.app.translate.TranslationClient();try {val start=System.nanoTime()
                 val log=mutableListOf<String>();val found=com.manhwalens.app.ocr.ColorRecovery().recognize(client,image,"en",{true},log::add);val after=System.nanoTime()
                 val region=found.firstOrNull {it.text.contains("SCENT",true)};assertNotNull("no eligible result: $log",region)
-                val translated=translator.translateBlock(region!!);assertTrue(translated.translated.contains("الرائحة"));times.add((after-start)/1000000);totals.add((System.nanoTime()-start)/1000000)
+                val surface=com.manhwalens.app.overlay.SurfaceDetector.detect(region!!,image.width,image.height,image::getPixel);val translated=translator.translateBlock(region.copy(surface=surface));assertTrue(translated.translated.contains("الرائحة"));times.add((after-start)/1000000);totals.add((System.nanoTime()-start)/1000000)
             }finally{translator.close()} }
             android.util.Log.i("ManhwaLensFunnel","fixture_stage_ms ocr=$times processing=$totals")
             assertTrue("OCR median $times",times.sorted()[2]<=400);assertTrue("processing median $totals",totals.sorted()[2]<=700)
