@@ -667,7 +667,7 @@ class ScreenCaptureService : Service() {
             if(chain.any { it.text.any { ch->ch.isLetter() && Character.UnicodeScript.of(ch.code)!=Character.UnicodeScript.LATIN } })continue
             val joined=try { translation.translateBlock(chain.first().copy(text=sources.joinToString(" ")),learnedNames) }
             catch(e:kotlinx.coroutines.CancellationException){currentCoroutineContext().ensureActive();stage(chain.first(),"joined_fallback","request_cancelled");continue}
-            if(joined.errorCode==null) com.manhwalens.app.pipeline.ConnectedDialogue.split(joined.translated,sources)?.forEachIndexed { i,value -> contextParts[chain[i]]=joined.copy(region=chain[i],original=chain[i].text,translated=value,method="Connected dialogue: ${joined.method}") }
+            if(joined.errorCode==null) com.manhwalens.app.pipeline.ConnectedDialogue.split(joined.translated,sources)?.forEachIndexed { i,value -> contextParts[chain[i]]=joined.copy(region=chain[i],original=chain[i].text,translated=value,method="Connected dialogue: ${joined.method}",evidence=if(debug)joined.evidence+mapOf("scope" to "joined_request", "part" to "$i/${chain.size}") else emptyMap()) }
         }
         val workByRegion = plan.associateBy { it.input.region }
         com.manhwalens.app.pipeline.progressiveTranslation(

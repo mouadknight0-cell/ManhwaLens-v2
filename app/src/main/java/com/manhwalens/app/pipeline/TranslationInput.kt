@@ -29,7 +29,7 @@ object TranslationInput {
     // Only predicative heavy-handed; don't reinterpret a literal description of hands.
     private val heavy=Regex("(?i)\\b(too|rather|overly) heavy-handed\\b")
     private val obligation=Regex("(?i)\\b(had to|have to|must) deal with\\b")
-    private val timeObligation=Regex("(?i)\\bwould have had to ([a-z]+(?: [a-z]+){0,5}) sooner or later(?=[.!?]|$)")
+    private val timeObligation=Regex("(?i)\\bwould have had to (handle(?: (?:it|this|that|them))?) sooner or later(?=[.!?]|$)")
     private val initiative=Regex("(?i)\\b(taken the initiative) and cleared the way for (us|them|me|him|her)\\b(?=[.!?]|$)")
     private val travel=Regex("(?i)^(head to)|(?<= and )head to")
     private val certain=Regex("(?i)\\byou're certain (?=7[0-9]{3} will\\b)")
