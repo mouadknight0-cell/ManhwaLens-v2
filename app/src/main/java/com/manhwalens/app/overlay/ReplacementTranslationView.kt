@@ -19,11 +19,11 @@ class ReplacementTranslationView(context: Context, val message: String,
     private val surface: ReplacementSurface, private val failed: Boolean = false,
     private val anchor:ReplacementSurface?=null, private val selected:DialogueType?=null) : View(context) {
     companion object {
-        internal fun lines(text:String,ink:TextPaint,width:Int):StaticLayout {
+        internal fun lines(text:String,ink:TextPaint,width:Int,spacing:Float=.90f):StaticLayout {
             return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
                 .setAlignment(Layout.Alignment.ALIGN_CENTER)
                 .setTextDirection(if (com.manhwalens.app.pipeline.ArabicDisplay.isArabic(text)) TextDirectionHeuristics.RTL else TextDirectionHeuristics.FIRSTSTRONG_LTR)
-                .setIncludePad(true).setLineSpacing(0f, 1f)
+                .setIncludePad(true).setLineSpacing(0f, spacing)
                 .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)
                 .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build()
         }
@@ -103,7 +103,11 @@ class ReplacementTranslationView(context: Context, val message: String,
                     } else if (surface.patch != null) {
                         canvas.drawBitmap(surface.patch,0,w,0f,0f,w,h,true,null)
                         ink.setShadowLayer(1f,0f,0f,if (ink.color == Color.WHITE) Color.BLACK else Color.WHITE)
-                    } else if (surface.oval) canvas.drawOval(0f, 0f, w.toFloat(), h.toFloat(), fill)
+                    } else if (surface.oval) {
+                        // On a verified oval the real balloon is already the background.
+                        // The anchor underlay above erased the source; do not repaint its rim.
+                        if(anchor==null) canvas.drawOval(0f, 0f, w.toFloat(), h.toFloat(), fill)
+                    }
                     else if(surface.capsule) canvas.drawRoundRect(0f,0f,w.toFloat(),h.toFloat(),padding*2,padding*2,fill)
                     else canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), fill)
                     canvas.save()

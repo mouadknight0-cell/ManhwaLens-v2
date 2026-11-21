@@ -13,7 +13,7 @@ class DialogueType private constructor(val sp:Int,val layout:StaticLayout) {
         (0 until layout.lineCount).all {layout.getLineMax(it)<=layout.width+.5f} && layout.getLineEnd(layout.lineCount-1)==layout.text.length
     fun metrics(context:Context):String {
         val dm=context.resources.displayMetrics; val p=layout.paint;val rows=0 until minOf(12,layout.lineCount)
-        return "preferred=15 min=14 max=15 fittedSp=$sp px=${p.textSize} density=${dm.density} scaledDensity=${dm.scaledDensity} fontScale=${context.resources.configuration.fontScale} width=${layout.width} lines=${layout.lineCount} height=${layout.height} ascent=${p.ascent()} descent=${p.descent()} pad=${layout.topPadding},${layout.bottomPadding} widths=${rows.map { layout.getLineMax(it).toInt() }} starts=${rows.map(layout::getLineStart)} baselines=${rows.map(layout::getLineBaseline)}"
+        return "preferred=15 min=14 max=15 fittedSp=$sp px=${p.textSize} density=${dm.density} scaledDensity=${dm.scaledDensity} fontScale=${context.resources.configuration.fontScale} width=${layout.width} lines=${layout.lineCount} height=${layout.height} ascent=${p.ascent()} descent=${p.descent()} spacing=${layout.spacingMultiplier} pad=${layout.topPadding},${layout.bottomPadding} widths=${rows.map { layout.getLineMax(it).toInt() }} starts=${rows.map(layout::getLineStart)} baselines=${rows.map(layout::getLineBaseline)}"
     }
     companion object {
         fun measure(ctx:Context,text:String,width:Int,sp:Int=15,mask:BubbleMask?=null):DialogueType {

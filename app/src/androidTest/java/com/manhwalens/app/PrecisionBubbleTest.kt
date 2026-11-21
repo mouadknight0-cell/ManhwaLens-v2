@@ -8,6 +8,23 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class PrecisionBubbleTest {
+    @Test fun compactLeadingPreservesEveryReferenceInkPixelIncludingDiacritics(){
+        val ctx=InstrumentationRegistry.getInstrumentation().targetContext
+        val text="أَتَنْتَظِرُ هُنَا؟!\nنَعَمْ، هٰذَا صَحِيحٌ.\nعادَ Namgung Jun."
+        for(px in listOf(30f,42f)) {
+            val ink=android.text.TextPaint(Paint.ANTI_ALIAS_FLAG).apply {typeface=ArabicTypeface.get(ctx);textSize=px;color=Color.BLACK}
+            val normal=ReplacementTranslationView.lines(text,ink,540,1f);val compact=ReplacementTranslationView.lines(text,ink,540)
+            assertEquals(normal.lineCount,compact.lineCount);assertTrue(compact.height<normal.height)
+            fun raster(l:android.text.StaticLayout)=Bitmap.createBitmap(540,l.height,Bitmap.Config.ARGB_8888).also {l.draw(Canvas(it))}
+            val ref=raster(normal);val actual=raster(compact);val expected=IntArray(540*compact.height)
+            for(i in 0 until normal.lineCount){val shift=compact.getLineBaseline(i)-normal.getLineBaseline(i)
+                for(y in normal.getLineTop(i) until normal.getLineTop(i+1))for(x in 0 until 540){val c=ref.getPixel(x,y);if(c ushr 24!=0){
+                    val dest=y+shift;assertTrue(dest in 0 until compact.height);val at=dest*540+x;assertEquals(0,expected[at]);expected[at]=c
+                }}
+            }
+            val got=IntArray(expected.size);actual.getPixels(got,0,540,0,0,540,compact.height);assertArrayEquals(expected,got)
+        }
+    }
     @Test fun twoIndependentBubblesPreserveArtworkAndAllSourceInkIsCovered(){
         val inst=InstrumentationRegistry.getInstrumentation();inst.runOnMainSync {
             val ctx=inst.targetContext.createConfigurationContext(android.content.res.Configuration(inst.targetContext.resources.configuration).apply {densityDpi=320;fontScale=1f})
