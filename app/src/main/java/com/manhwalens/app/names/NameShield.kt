@@ -17,7 +17,7 @@ object NameShield {
     data class MaskResult(val maskedText: String, val names: List<String>,
         val tokens: List<String> = names.indices.map { (BASE + it).toString() })
 
-    fun mask(text: String, names: List<String>): MaskResult {
+    fun mask(text: String, names: List<String>, preserveSpelling:Boolean=false): MaskResult {
         if (names.isEmpty() || text.isBlank()) return MaskResult(text, emptyList())
         // longest first, unique
         val unique = names.map { it.trim() }.filter { it.isNotBlank() }.distinctBy { it.lowercase() }
@@ -31,13 +31,17 @@ object NameShield {
         for (name in unique) {
             if(!result.contains(name,ignoreCase=true)) continue
             val regex = Regex("(?<![\\p{L}\\p{N}_])" + Regex.escape(name) + "(?![\\p{L}\\p{N}_])", RegexOption.IGNORE_CASE)
-            if (regex.containsMatchIn(result)) {
+            val first = regex.find(result)
+            if (first != null) {
                 while (next <= MAX && originalDigits.contains(next.toString())) next++
                 require(next <= MAX) { "No collision-free name sentinel available" }
                 val token = next.toString()
                 tokens.add(token)
-                result = result.replace(regex, " $token ")
-                used.add(name)
+                result = regex.replace(result) { hit ->
+                    val end=hit.range.last+1
+                    if(result.getOrNull(end) in listOf('\'', '’') && result.getOrNull(end+1)?.lowercaseChar()=='s') " $token" else " $token "
+                }
+                used.add(if(preserveSpelling)first.value else name)
                 next += 1
                 if (next > MAX) break
             }

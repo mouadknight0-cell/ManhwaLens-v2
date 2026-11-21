@@ -83,6 +83,9 @@ object DialogueLexicon {
     /** Keep provenance on the same branch that actually produced the text. */
     internal suspend fun render(text:String,local:Match?,terms:Map<String,String>,native:suspend (String)->String):Match {
         if(local!=null)return local
+        challenge.matchEntire(text.trim())?.let { m ->
+            return Match(native(m.groupValues[1])+" ما هذه الجرأة"+m.groupValues[2].replace('?','؟'),"ML Kit + dialogue suffix")
+        }
         val prefix=continuation(text,terms) ?: return Match(native(text),"ML Kit on-device")
         return Match(prefix.first+native(prefix.second),"Dialogue prefix + ML Kit")
     }
@@ -93,7 +96,11 @@ object DialogueLexicon {
     private val trapped = Regex("^((?:\\.{2,}|…) )?how long (have i|have we|has he|has she) been trapped (here|there)$")
     private val unable = mapOf("have i" to "وأنا لا أستطيع", "have we" to "ونحن لا نستطيع",
         "has he" to "وهو لا يستطيع", "has she" to "وهي لا تستطيع")
+    // Litotes: preserve the speaker's qualified endorsement and additive "either".
+    private val reasonable=Regex("^(?:it's|it is|this is|that is) not unreasonable(,? either)?$")
+    private val challenge=Regex("^(.{1,300}[!.?]) +how dare you([!?]+)$",RegexOption.IGNORE_CASE)
     private fun pattern(k:String,terms:Map<String,String>):String? {
+        reasonable.matchEntire(k)?.let {return if(it.groupValues[1].isEmpty()) "ليس ذلك ببعيد عن المعقول" else "وهذا أيضًا ليس ببعيد عن المعقول"}
         trapped.matchEntire(k)?.let { m ->
             val pause = if (m.groupValues[1].isEmpty()) "" else "… "
             val place = if (m.groupValues[3] == "here") "هنا" else "هناك"

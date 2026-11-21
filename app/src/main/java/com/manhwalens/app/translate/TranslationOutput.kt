@@ -18,7 +18,8 @@ object TranslationOutput {
             }
             return mask.names.isNotEmpty() && rest.none { it.isLetterOrDigit() }
         }
-        if (!ArabicOutput.hasLetters(restored) && !(onlyNames(mask.maskedText) && onlyNames(raw)))
+        if (onlyNames(mask.maskedText) && onlyNames(raw)) return null
+        if (!ArabicOutput.hasLetters(restored))
             return "TR-INVALID-OUTPUT"
         if (ArabicOutput.hasLetters(restored)) {
             if (raw.any { Character.UnicodeScript.of(it.code)==Character.UnicodeScript.LATIN }) return "TR-UNTRANSLATED"

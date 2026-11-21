@@ -66,9 +66,13 @@ internal class ColorRecovery {
             val cached=tr.votes.lastOrNull()?.takeIf { it.hash==fingerprint && tr.box==r && it.score>=.77 };var best=initial.filter { overlap(raw,box(it))>.5 };var value=best.map(::score).average().takeIf(Double::isFinite)?:0.0
             if(cached!=null){best=cached.regions;value=cached.score;log("pass=cache score=$value")} else {
                 val colors=IntArray(r.width()*r.height());b.getPixels(colors,0,r.width(),r.left,r.top,r.width(),r.height());val ys=IntArray(colors.size){gray(colors[it])};val hist=IntArray(256);ys.forEach { hist[it]++ };val mean=ys.average();var winner="frame"
+                var originalRecognized=false
                 val variants=listOf("original","invert","stretch","otsu","lab");for(pass in variants){val remaining=deadline-android.os.SystemClock.elapsedRealtime();if(remaining<=0){log("recovery_budget box=$r retained_score=$value");break};if(pass=="invert" && mean>155)continue
-                    val pixels=variant(pass,colors,ys,hist);val crop=Bitmap.createBitmap(pixels,r.width(),r.height(),Bitmap.Config.ARGB_8888);val scale=when {r.height()<32->3;r.height()<=100->2;else->1};val input=if(scale==1)crop else Bitmap.createScaledBitmap(crop,r.width()*scale,r.height()*scale,true)
+                    val pixels=variant(pass,colors,ys,hist)
+                    if(pass!="original" && duplicateInput(originalRecognized,colors,pixels)){log("pass=$pass skipped=identical_pixels");continue}
+                    val crop=Bitmap.createBitmap(pixels,r.width(),r.height(),Bitmap.Config.ARGB_8888);val scale=when {r.height()<32->3;r.height()<=100->2;else->1};val input=if(scale==1)crop else Bitmap.createScaledBitmap(crop,r.width()*scale,r.height()*scale,true)
                     val got=try { kotlinx.coroutines.withTimeoutOrNull(remaining){client.recognize(input,lang)}.orEmpty().map { it.copy(left=r.left+it.left/scale,right=r.left+it.right/scale,top=r.top+it.top/scale,bottom=r.top+it.bottom/scale) }.filter(keep) }catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){log("pass=$pass failure=${e.javaClass.simpleName}");emptyList()}finally{if(input!==crop)input.recycle();crop.recycle()}
+                    if(pass=="original") originalRecognized=got.isNotEmpty()
                     val s=got.map(::score).average().takeIf(Double::isFinite)?:0.0;log("pass=$pass score=$s regions=${got.size} box=$r");if(s>value){value=s;winner=pass;best=got}
                 };log("winner=$winner score=$value box=$r");tr.box.set(r);tr.votes.addLast(Vote(fingerprint,visual,best,value));if(tr.votes.size>4)tr.votes.removeFirst()
                 // Only vote for aligned current blocks on perceptually similar crops. Never attach yesterday's coordinates.
@@ -78,6 +82,7 @@ internal class ColorRecovery {
             };if(best.isNotEmpty() && value>=.60){for(hit in best){val same=output.filter { overlap(box(it),box(hit))>.45 };if(same.none { score(it)>score(hit) }){output.removeAll(same);output.add(hit)}}}
         };return output.sortedWith(compareBy({it.top},{it.left}))
     }
+    internal fun duplicateInput(success:Boolean,original:IntArray,other:IntArray)=success && original.contentEquals(other)
     private fun variant(pass:String,c:IntArray,y:IntArray,h:IntArray):IntArray {
         if(pass=="original")return c
         fun percentile(n:Int):Int{var sum=0;for(i in h.indices){sum+=h[i];if(sum>n)return i};return 255}
