@@ -23,6 +23,7 @@ class Phone137ReliabilityTest {
     @Test fun highConfidenceIsNotACorrectionAndOnlyTheImageCanConfirm(){
         val region=TextRegion("ONCE IT CLOSES ITS GATES, THE UNORTHODOX FACTIONS WILL RUN RAMPANT. WHAT WNILL YOU DO ABOUT THAT?",97,288,445,412,.7902119f)
         val hint=QuestionCrop.hint(region.text,terms.keys.toList())!!;val candidate=region.copy(text=region.text.replace("WNILL","WILL"))
+        assertTrue(hint.eligible("TR-UNTRANSLATED",false));assertFalse(hint.eligible("TR-UNTRANSLATED",true));assertFalse(hint.eligible(null,false))
         assertTrue(hint.confirmed(region,candidate));assertFalse(hint.confirmed(region,region));assertFalse(hint.confirmed(region,candidate.copy(top=1363,bottom=1490)))
         assertFalse(hint.confirmed(region,candidate.copy(text="WHAT WILL YOU DO ABOUT THAT?")));assertFalse(hint.confirmed(region,candidate.copy(text=candidate.text.replace("WILL RUN","MAY RUN"))))
         assertNull(QuestionCrop.hint(candidate.text,emptyList()));assertNotNull(QuestionCrop.hint("WHEN WLL WE LEAVE?",emptyList()))

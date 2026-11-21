@@ -698,7 +698,7 @@ class ScreenCaptureService : Service() {
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text,
                         com.manhwalens.app.pipeline.OcrInputQuality.message(issue, region.text), issue, method = "OCR input validation")
                 }
-                val hint=hints[region]?.takeIf { translated.errorCode=="TR-UNTRANSLATED" }
+                val hint=hints[region]?.takeIf { it.eligible(translated.errorCode,retryCase) }
                 val trigger=when {
                     retryCase -> null // one crop maximum per dispatched block
                     hint!=null -> "internal_auxiliary"
@@ -724,8 +724,8 @@ class ScreenCaptureService : Service() {
                             val paint=android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply { colorFilter=android.graphics.ColorMatrixColorFilter(row+row+row+floatArrayOf(0f,0f,0f,1f,0f)) }
                             android.graphics.Canvas(input).drawBitmap(frame,android.graphics.Rect(l,t,l+w,t+h),android.graphics.Rect(0,0,w*2,h*2),paint)
                             withTimeoutOrNull(2500){ textRecognition.recognize(input,OCR_SOURCE) }?.map { it.copy(left=l+it.left/2,top=t+it.top/2,right=l+it.right/2,bottom=t+it.bottom/2) }?.filter {
-                                it.confidence>=.30f && com.manhwalens.app.pipeline.ReadingEnglish.retryFits(region,it) && lexical(it)>=.8
-                            }?.onEach { if(observed==null)observed=it.text }?.filter { hint==null || hint.confirmed(region,it) }?.maxByOrNull(::lexical)
+                                com.manhwalens.app.pipeline.ReadingEnglish.retryFits(region,it)
+                            }?.onEach { if(observed==null)observed=it.text }?.filter { it.confidence>=.30f && lexical(it)>=.8 && (hint==null || hint.confirmed(region,it)) }?.maxByOrNull(::lexical)
                         } catch(cancelled:kotlinx.coroutines.CancellationException){ throw cancelled }
                         catch(e:Exception){ Diagnostics.warn("ocr","crop","retry failed",throwable=e);null } finally { input.recycle() }
                     }
