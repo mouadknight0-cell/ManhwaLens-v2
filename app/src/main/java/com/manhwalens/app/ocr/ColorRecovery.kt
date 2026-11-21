@@ -61,7 +61,7 @@ internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.Bu
         val weak=initial.filter { score(it)<.77 || it.confidence<.52f };if(initial.isNotEmpty() && weak.isEmpty())return initial
         val candidates=(weak.sortedBy { score(it) }.map(::box)+if(initial.size==weak.size)propose(b) else emptyList()).fold(mutableListOf<Rect>()){a,x->if(a.none { overlap(it,x)>.5 })a.add(x);a}.take(4)
         val output=initial.toMutableList()
-        for(raw in candidates){if(android.os.SystemClock.elapsedRealtime()>=deadline)break;val r=Rect(max(0,raw.left-10),max(0,raw.top-10),min(b.width,raw.right+10),min(b.height,raw.bottom+10));if(r.width()<4||r.height()<4||r.width()*r.height()>350000)continue
+        for(raw in candidates){if(android.os.SystemClock.elapsedRealtime()>=deadline)break;val outer=Rect(max(0,raw.left-10),max(0,raw.top-10),min(b.width,raw.right+10),min(b.height,raw.bottom+10));val r=if(budgetMs<=450)InkBounds.tighten(b,outer) else outer;if(r.width()<4||r.height()<4||r.width()*r.height()>350000)continue
             val bounded=budgetMs<=450;val regionDeadline=if(bounded)min(deadline,android.os.SystemClock.elapsedRealtime()+200) else deadline
             val fingerprint=hash(b,r);val visual=perceptual(b,r);val tr=tracks.firstOrNull { overlap(it.box,r)>.5 }?:Track(Rect(r)).also { tracks.addLast(it);if(tracks.size>32)tracks.removeFirst() }
             val cached=tr.votes.lastOrNull()?.takeIf { it.hash==fingerprint && tr.box==r && it.score>=.60 };var best=initial.filter { overlap(raw,box(it))>.5 };var value=best.map(::score).average().takeIf(Double::isFinite)?:0.0

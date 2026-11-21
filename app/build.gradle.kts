@@ -4,7 +4,7 @@ import groovy.json.JsonSlurper
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // Release builds can inject version info (CI sets VERSION_NAME / VERSION_CODE from the git tag).
-val appVersionName: String = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "1.1.31-dev"
+val appVersionName: String = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "1.1.32-dev"
 val appVersionCode: Int = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
 // Stable release signing: CI decodes the keystore from the MANHWALENS_KEYSTORE_FILE secret.
