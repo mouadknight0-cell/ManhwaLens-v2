@@ -8,7 +8,7 @@ import kotlin.math.*
  * No bitmap allocation, OCR pass, learning or invented contour.
  */
 data class ReplacementSurface(val left: Int, val top: Int, val right: Int, val bottom: Int,
-    val color: Int = -1, val oval: Boolean = false, val reliable: Boolean = false) {
+    val color: Int = -1, val oval: Boolean = false, val reliable: Boolean = false, val patch: IntArray? = null,val capsule:Boolean=false,val mask:BubbleMask?=null) {
     val width get() = right - left
     val height get() = bottom - top
 }
@@ -39,7 +39,7 @@ object SurfaceDetector {
         fun median(shift: Int) = samples.map { channel(it, shift) }.sorted().let { it[it.size / 2] }
         val color = if (samples.isEmpty()) -1 else (0xff shl 24) or (median(16) shl 16) or (median(8) shl 8) or median(0)
         val uniform = samples.count { distance(it, color) <= 26 } >= 24
-        val fallback = ReplacementSurface(l, t, r, b, if (uniform) color else -1, reliable = uniform)
+        val fallback = ReplacementSurface(l, t, r, b, color, reliable = uniform)
         if (!uniform || minOf(channel(color,16), channel(color,8), channel(color,0)) < 220) return fallback
         // Search from outside the text, never through its black glyphs.
         fun boundary(x: Int, y: Int, dx: Int, dy: Int): Pair<Int, Int>? {

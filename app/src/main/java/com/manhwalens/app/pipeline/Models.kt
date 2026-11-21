@@ -32,6 +32,8 @@ data class TranslatedBlock(
     val errorCode: String? = null,
     val durationMs: Long? = null,
     val method: String = "ML Kit on-device",
+    val evidence:Map<String,String> = emptyMap(), // debug samples only, never drawn
+
 )
 
 /** One completed capture + pipeline run. Persisted to history. */
@@ -42,6 +44,8 @@ data class CaptureResult(
     val targetLanguage: String,
     val blocks: List<TranslatedBlock>,
     val thumbnailPath: String? = null,
+    val sceneRevision:Long = -1,
+    val traceId:String = "", // live ownership only; history is never attachable
 ) {
     val translatedText: String get() = blocks.joinToString("\n") { it.translated }
     val preview: String get() = previewOf(blocks)

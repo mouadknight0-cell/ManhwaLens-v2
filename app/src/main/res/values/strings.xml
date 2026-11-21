@@ -120,4 +120,6 @@
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
     <string name="delete">Delete</string>
+    <string name="action_close">Close</string>
+    <string name="capture_launch_blocked">The permission screen did not open. Start capture from the app. On Xiaomi, check background popup permissions.</string>
 </resources>

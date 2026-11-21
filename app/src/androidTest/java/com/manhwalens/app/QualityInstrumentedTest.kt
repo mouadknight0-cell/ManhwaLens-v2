@@ -15,6 +15,73 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class QualityInstrumentedTest {
+    @Test fun ambiguousMarkIsNotDrawnAndInterjectionsNeverNeedMT() = runBlocking {
+        val t=com.manhwalens.app.translate.TranslationClient()
+        try { val r=com.manhwalens.app.pipeline.TextRegion("NO..",10,20,66,49,.45f)
+            val no=t.translateBlock(r);assertEquals("OCR-UNCERTAIN",no.errorCode);assertEquals("",no.translated)
+            assertEquals("هم؟",t.translateBlock(r.copy(text="HM..?" )).translated)
+            assertEquals("سيدي",t.translateBlock(r.copy(text="MY LORD")).translated)
+            assertTrue(t.translateBlock(r.copy(text="A HUNG AY GHOST PROM HELL!!!!!!",confidence=.7f)).translated.contains("شبح جائع من الجحيم"))
+        } finally { t.close() }
+    }
+    /** Generated colour controls, not the missing phone screenshots. Force the independent-proposal path. */
+    @Test fun colourRecoveryAfterEmptyFirstPass() = runBlocking {
+        for ((bg,ink,phrase) in listOf(Triple(Color.rgb(61,17,87),Color.WHITE,"THIS ISN'T ENOUGH"), Triple(Color.rgb(99,14,30),Color.WHITE,"AND THAT WASN'T ALL"),Triple(Color.WHITE,Color.rgb(172,10,35),"HOW MUCH WAS IT"))) {
+            val image=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);val canvas=Canvas(image);canvas.drawColor(Color.rgb(25,29,27))
+            val pen=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);pen.color=bg;canvas.drawOval(72f,83f,566f,230f,pen);pen.color=ink;pen.textSize=30f;pen.textAlign=android.graphics.Paint.Align.CENTER;canvas.drawText(phrase,320f,167f,pen)
+            try { val recovery=com.manhwalens.app.ocr.ColorRecovery();val client=TextRecognitionClient();val log=mutableListOf<String>()
+                val got=recovery.recover(client,image,"en",emptyList(),60_000,{true}){log.add(it)}
+                assertTrue("$phrase $log ${got.map { it.text }}",got.any { it.text.contains(phrase.substringBefore(' '),true) && it.text.contains(phrase.substringAfterLast(' '),true) })
+                assertTrue(log.any { it.startsWith("winner=") });assertTrue(log.any { it.startsWith("pass=lab") })
+            } finally { image.recycle() }
+        }
+    }
+    @Test fun scorecardDoesNotCountDuplicateAttachmentsOrFailedRetriesTwice(){
+        val score=com.manhwalens.app.diagnostics.SessionScorecard
+        val r=com.manhwalens.app.pipeline.TextRegion("Hello",20,20,120,80)
+        score.start();try {score.plan("unit",listOf(r));score.outcome("unit",r,"source_fit_or_obstruction");score.outcome("unit",r,"attached");score.outcome("unit",r,"attached")
+            val row=score.report().lines().last();assertTrue(row.contains("eligible=1 rendered=1 (100.0%)"));assertTrue(row.contains("source_fit_or_obstruction=0"))
+        } finally { score.end() }
+    }
+
+    @Test fun report25RealCropsFunnel() = runBlocking {
+        val inst=InstrumentationRegistry.getInstrumentation()
+        for (sample in listOf("watching","voice","question")) {
+            val bitmap=inst.context.assets.open("report25-$sample.png").use { BitmapFactory.decodeStream(it) }
+            try {
+                fun log(s:String) { android.util.Log.i("ManhwaLensFunnel","$sample $s") }
+                val blocks=TextRecognitionClient().recognize(bitmap,"en",audit=::log)
+                assertTrue(sample,blocks.isNotEmpty())
+                for (r in blocks) {
+                    val input=com.manhwalens.app.pipeline.TranslationInput.prepare(r.text,emptyList())
+                    val reviewed=com.manhwalens.app.translate.DialogueLexicon.translate(input)
+                    log("source=${r.text} confidence=${r.confidence} reviewed=${reviewed!=null}; offline model not exercised")
+                    if(reviewed!=null) inst.runOnMainSync {
+                        val s=com.manhwalens.app.overlay.ReplacementSurface(r.left-2,r.top-2,r.right+2,r.bottom+2,Color.BLACK,reliable=true)
+                        val view=com.manhwalens.app.overlay.DirectTranslationLayout.prepare(inst.targetContext,reviewed,s,s,emptyList())
+                        log("native prepared=${view!=null}")
+                    }
+                }
+            } finally { bitmap.recycle() }
+        }
+    }
+
+    @Test fun xiaomiDarkDialogueCropsKeepOneRegionPerBalloon() = runBlocking {
+        val assets = InstrumentationRegistry.getInstrumentation().context.assets
+        for ((name, expected) in listOf("xiaomi-two-dark-dialogues.png" to 2, "xiaomi-three-lines.png" to 1)) {
+            val bitmap = assets.open(name).use { BitmapFactory.decodeStream(it) }
+            try {
+                val regions = TextRecognitionClient().recognize(bitmap, "en").sortedBy { it.top }
+                assertEquals("$name: $regions", expected, regions.size)
+                val last = regions.last()
+                if (expected == 2) {
+                    assertTrue("Separated greeting: $regions", regions.first().bottom < 130 && last.top in 530..600)
+                    assertTrue("Includes HOUSE line: $last", last.bottom >= 730)
+                } else assertTrue("Includes first and last lines: $last", last.top < 35 && last.bottom >= 130)
+            } finally { bitmap.recycle() }
+        }
+    }
+
     @Test fun realPhoneCropRunsThroughBundledOcr() = runBlocking {
         val assets = InstrumentationRegistry.getInstrumentation().context.assets
         val bitmap = assets.open("conference-text.png").use { BitmapFactory.decodeStream(it) }
@@ -24,6 +91,19 @@ class QualityInstrumentedTest {
             assertTrue("OCR should recognize POISON from the user's image: $text", text.contains("POISON"))
             assertTrue("OCR should recognize SECT from the user's image: $text", text.contains("SECT"))
         } finally { bitmap.recycle() }
+    }
+
+    @Test fun resetReportDropsHistoryButNotReadings() = runBlocking {
+        val context=InstrumentationRegistry.getInstrumentation().targetContext
+        val app=context.applicationContext as ManhwaLensApp
+        val before=app.settingsRepository.readings.value.toMap()
+        val r=com.manhwalens.app.pipeline.TextRegion("OldReportFixture",1,1,50,50)
+        val b=com.manhwalens.app.pipeline.TranslatedBlock(r,r.text,"نص قديم")
+        app.historyStore.add(com.manhwalens.app.pipeline.CaptureResult("old-report",1,"en","ar",listOf(b)))
+        com.manhwalens.app.history.TranslationSamples.collect("old-report","old-trace",listOf(b))
+        com.manhwalens.app.diagnostics.CompleteReport.reset(context)
+        val file=com.manhwalens.app.diagnostics.CompleteReport.create(context)
+        try {val text=file.readText(); assertTrue(text.startsWith("reset at "));assertFalse(text.contains("OldReportFixture"));assertEquals(before,app.settingsRepository.readings.value);assertTrue(file.length()<=1048576) } finally {file.delete()}
     }
 
     @Test fun unifiedReportIsUtf8AndIncludesAllRetainedSections() = runBlocking {
@@ -166,6 +246,12 @@ class QualityInstrumentedTest {
             val paragraph = android.text.StaticLayout.Builder.obtain(display,0,display.length,paint,500)
                 .setTextDirection(android.text.TextDirectionHeuristics.RTL).build()
             assertEquals(-1, paragraph.getParagraphDirection(0))
+            val greeting = com.manhwalens.app.pipeline.ArabicDisplay.prepare("... تحياتي.")
+            val native = android.text.StaticLayout.Builder.obtain(greeting,0,greeting.length,paint,500)
+                .setTextDirection(android.text.TextDirectionHeuristics.RTL).build()
+            assertEquals('…',greeting.first())
+            assertTrue("Leading ellipsis is right of greeting", native.getPrimaryHorizontal(0) > native.getPrimaryHorizontal(1))
+            assertTrue("Final stop is on the left", native.getPrimaryHorizontal(greeting.length-1) > native.getPrimaryHorizontal(greeting.length))
             val latinStart = display.indexOf("Guardian")
             assertTrue("Latin name remains LTR inside RTL paragraph", paragraph.getPrimaryHorizontal(latinStart) < paragraph.getPrimaryHorizontal(latinStart + 7))
             for (scale in listOf(1f, 1.4f)) {
@@ -346,43 +432,17 @@ class QualityInstrumentedTest {
         android.util.Log.i("ManhwaLensBenchmark", measurement)
     }
 
-    @Test fun shortLongVeryLongAndEdgeDialogueRenderImmediatelyAwayFromCaptureButton() {
+    @Test fun replacementNeverMovesToAnotherBubble() {
         val inst=InstrumentationRegistry.getInstrumentation()
         inst.runOnMainSync {
-            for ((w,h) in listOf(720 to 1600,1600 to 720,360 to 640)) for(scale in listOf(1f,1.4f)) {
-                val config=android.content.res.Configuration(inst.targetContext.resources.configuration).apply {
-                    densityDpi=if(w>=720) 320 else 160
-                    fontScale=scale
-                }
-                val context=inst.targetContext.createConfigurationContext(config)
-                val screen=com.manhwalens.app.overlay.ReplacementSurface(0,0,w,h)
-                val button=com.manhwalens.app.overlay.ReplacementSurface(w-100,0,w,100)
-                val sources=listOf(
-                    com.manhwalens.app.overlay.ReplacementSurface(20,120,180,158),
-                    com.manhwalens.app.overlay.ReplacementSurface(w-180,h-40,w,h),
-                    com.manhwalens.app.overlay.ReplacementSurface(w-100,0,w,38))
-                val messages=listOf("مرحبا", "هذه ترجمة عربية كاملة تظهر مباشرة على الصفحة. ".repeat(4),
-                    "هذه ترجمة عربية كاملة تظهر مباشرة على الصفحة. ".repeat(if(w==360 && scale>1f) 12 else 18))
-                for(source in sources) for(message in messages) {
-                    val result=com.manhwalens.app.overlay.DirectTranslationLayout.prepare(context,message,source,screen,listOf(button))
-                    val metrics=context.resources.displayMetrics
-                    val debugPaint=android.text.TextPaint().apply { typeface=com.manhwalens.app.overlay.ArabicTypeface.get(context);textSize=12f*metrics.scaledDensity }
-                    val debugLayout=android.text.StaticLayout.Builder.obtain(message,0,message.length,debugPaint,(w-8*metrics.density).toInt().coerceAtLeast(1))
-                        .setIncludePad(true).setLineSpacing(0f,1.04f).setBreakStrategy(android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY).build()
-                    assertNotNull("Full immediate text required: size=$w,$h scale=$scale chars=${message.length} density=${metrics.density} scaled=${metrics.scaledDensity} minimumHeight=${debugLayout.height} lines=${debugLayout.lineCount} maxAdvance=${(0 until debugLayout.lineCount).maxOf { debugLayout.getLineWidth(it) }} maxVisible=${(0 until debugLayout.lineCount).maxOf { debugLayout.getLineMax(it) }}",result)
-                    val prepared=result!!
-                    assertTrue(prepared.view.replacementReady)
-                    assertFalse(prepared.view.isClickable)
-                    assertFalse(prepared.view.isVerticalScrollBarEnabled)
-                    assertTrue(prepared.view.fittedSp>=12f)
-                    assertFalse(com.manhwalens.app.overlay.DirectPlacement.intersects(prepared.surface,button))
-                    assertTrue(prepared.surface.left>=0 && prepared.surface.top>=0 && prepared.surface.right<=w && prepared.surface.bottom<=h)
-                    val image=Bitmap.createBitmap(prepared.surface.width,prepared.surface.height,Bitmap.Config.ARGB_8888)
-                    prepared.view.draw(Canvas(image)) // no performClick, no second render phase
-                    assertTrue((0 until image.height).any { y -> (0 until image.width).any { x -> Color.alpha(image.getPixel(x,y))>0 && Color.red(image.getPixel(x,y))<100 } })
-                    image.recycle()
-                }
-            }
+            val s=com.manhwalens.app.overlay.ReplacementSurface(30,120,300,220)
+            val screen=s.copy(left=0,top=0,right=720,bottom=1600)
+            val ok=com.manhwalens.app.overlay.DirectTranslationLayout.prepare(inst.targetContext,"من أنت؟",s,screen,emptyList())
+            assertEquals(s,ok?.surface)
+            val tiny=s.copy(right=40,bottom=126)
+            val near=com.manhwalens.app.overlay.DirectTranslationLayout.nearby(inst.targetContext,"من أنت؟",tiny,screen,emptyList())
+            assertNotNull(near); assertTrue(near!!.view.replacementReady)
+            assertNull(com.manhwalens.app.overlay.DirectTranslationLayout.prepare(inst.targetContext,"من أنت؟",s,screen,listOf(s)))
         }
     }
 

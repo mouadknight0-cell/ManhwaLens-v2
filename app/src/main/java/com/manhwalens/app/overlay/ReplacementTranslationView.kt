@@ -16,10 +16,21 @@ import kotlin.math.min
  * Unfit/error layouts are transparent, never an opaque ellipsis or scrolling slice.
  */
 class ReplacementTranslationView(context: Context, val message: String,
-    private val surface: ReplacementSurface, private val failed: Boolean = false) : View(context) {
+    private val surface: ReplacementSurface, private val failed: Boolean = false,
+    private val anchor:ReplacementSurface?=null, private val minSp:Int=12) : View(context) {
+    companion object {
+        internal fun lines(text:String,ink:TextPaint,width:Int):StaticLayout {
+            return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
+                .setAlignment(Layout.Alignment.ALIGN_CENTER)
+                .setTextDirection(if (com.manhwalens.app.pipeline.ArabicDisplay.isArabic(text)) TextDirectionHeuristics.RTL else TextDirectionHeuristics.FIRSTSTRONG_LTR)
+                .setIncludePad(true).setLineSpacing(0f, 1.04f)
+                .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)
+                .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build()
+        }
+    }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = surface.color or (0xff shl 24) }
     private val ink = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = ArabicTypeface.get(context) }
-    private val displayMessage = com.manhwalens.app.pipeline.ArabicDisplay.prepare(message)
+    private val displayMessage = com.manhwalens.app.pipeline.ArabicDisplay.isolate(message)
     private var prepared: android.graphics.Bitmap? = null
     val replacementReady: Boolean get() = prepared != null
     internal var rasterize: (Int, Int, (Canvas) -> Unit) -> android.graphics.Bitmap = { w, h, draw ->
@@ -28,6 +39,10 @@ class ReplacementTranslationView(context: Context, val message: String,
     }
     private var layout: StaticLayout? = null
     private var content = RectF()
+    var measurement: String = "not_measured"
+        private set
+    var maskDefect=false
+        private set
     var fittedSp: Float = 12f
         private set
     var fitPasses: Int = 0
@@ -43,24 +58,29 @@ class ReplacementTranslationView(context: Context, val message: String,
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         prepared = null
+        maskDefect=false
+        presented=false
         val padding = min(4 * resources.displayMetrics.density, min(w, h) * .08f)
-        val insetX = if (surface.oval) w * .15f else 0f
-        val insetY = if (surface.oval) h * .15f else 0f
+        // Largest centered inscribed rectangle with the ellipse’s aspect ratio.
+        val ovalMargin = ((1.0 - kotlin.math.sqrt(0.5)) / 2).toFloat()
+        val insetX = if (surface.oval) w * ovalMargin else 0f
+        val insetY = if (surface.oval) h * ovalMargin else 0f
         content.set(insetX + padding, insetY + padding, w - insetX - padding, h - insetY - padding)
+        surface.mask?.inset?.let { content.set(it[0]+padding,it[1]+padding,it[2]-padding,it[3]-padding) }
+        if (!content.intersect(0f,0f,w.toFloat(),h.toFloat())) content.setEmpty()
         val width = content.width().toInt().coerceAtLeast(1)
         val c = surface.color
         val luminance = Color.red(c) * .2126 + Color.green(c) * .7152 + Color.blue(c) * .0722
         ink.color = if (luminance < 120) Color.WHITE else if (failed) Color.rgb(125, 20, 20) else Color.rgb(20, 20, 20)
+        surface.mask?.let { m -> ink.color=m.ink
+            ink.setFontVariationSettings("'wght' ${m.weight}")
+            if(m.glow!=0)ink.setShadowLayer(m.step.coerceIn(2,5).toFloat(),0f,0f,m.glow)
+        }
         fitPasses = 0
         fun make(text: String, size: Float): StaticLayout {
             fitPasses++
             ink.textSize = size * resources.displayMetrics.scaledDensity
-            return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
-                .setAlignment(if (com.manhwalens.app.pipeline.ArabicDisplay.isShort(message) || text == "…") Layout.Alignment.ALIGN_CENTER else Layout.Alignment.ALIGN_NORMAL)
-                .setTextDirection(if (com.manhwalens.app.pipeline.ArabicDisplay.isArabic(message)) TextDirectionHeuristics.RTL else TextDirectionHeuristics.FIRSTSTRONG_LTR)
-                .setIncludePad(true).setLineSpacing(0f, 1.04f)
-                .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)
-                .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build()
+            return lines(text,ink,width)
         }
         fun wordsIntact(candidate: StaticLayout): Boolean = (1 until candidate.lineCount).none {
             com.manhwalens.app.pipeline.WordBoundary.splitsWord(candidate.text, candidate.getLineStart(it))
@@ -69,21 +89,39 @@ class ReplacementTranslationView(context: Context, val message: String,
         // the line box. getLineMax measures visible content, not that whitespace.
         fun fits(candidate: StaticLayout): Boolean = candidate.height <= content.height() && wordsIntact(candidate) &&
             (0 until candidate.lineCount).all { candidate.getLineMax(it) <= width + .5f }
-        var low = 12; var high = 30; var chosen = 0
+        var last:StaticLayout?=null
+        var low = minSp; var high = 42; var chosen = 0
         // Bound pathological text layout cost; bounded layout work, never silent clipping.
-        if (message.length <= 20000) while (low <= high) {
+        if (content.width()>=1 && content.height()>=1 && message.length <= 20000) while (low <= high) {
             val mid = (low + high) / 2
-            if (fits(make(displayMessage, mid.toFloat()))) { chosen = mid; low = mid + 1 } else high = mid - 1
+            val attempt=make(displayMessage,mid.toFloat()); last=attempt
+            if (fits(attempt)) { chosen = mid; low = mid + 1 } else high = mid - 1
         }
         fittedSp = if (chosen == 0) 12f else chosen.toFloat()
         layout = if (chosen == 0) null else make(displayMessage, fittedSp)
+        val measured = layout ?: last
+        measurement = "interior=${width}x${content.height().toInt()} sp=$fittedSp lines=${measured?.lineCount} required_height=${measured?.height} fits=${layout!=null}"
         contentDescription = message
         // A hard allocation budget. Unknown / oversized / failed layouts keep the source visible.
         val text = layout
         if (!failed && text != null && message.any { it.isLetterOrDigit() } && w.toLong() * h in 1..8_000_000L) {
             prepared = runCatching {
                 rasterize(w, h) { canvas ->
-                    if (surface.oval) canvas.drawOval(0f, 0f, w.toFloat(), h.toFloat(), fill)
+                    // Rounded corners/irregular contours must never expose the source glyphs.
+                    anchor?.let { a -> canvas.drawRect((a.left-surface.left).toFloat(),(a.top-surface.top).toFloat(),
+                        (a.right-surface.left).toFloat(),(a.bottom-surface.top).toFloat(),fill) }
+                    if (surface.mask != null) {
+                        val m=surface.mask; val path=android.graphics.Path(); val d=m.step.toFloat()
+                        for(i in m.spans.indices step 3){ val y=m.spans[i]*d;path.addRect(m.spans[i+1]*d,y,m.spans[i+2]*d,y+d,android.graphics.Path.Direction.CW) }
+                        canvas.save(); canvas.clipPath(path)
+                        if(m.texture!=null){val tw=w/m.step;val th=h/m.step;canvas.save();canvas.scale(d,d);canvas.drawBitmap(m.texture,0,tw,0f,0f,tw,th,true,Paint(Paint.FILTER_BITMAP_FLAG));canvas.restore()}
+                        else canvas.drawPath(path,fill)
+                        canvas.restore()
+                    } else if (surface.patch != null) {
+                        canvas.drawBitmap(surface.patch,0,w,0f,0f,w,h,true,null)
+                        ink.setShadowLayer(1f,0f,0f,if (ink.color == Color.WHITE) Color.BLACK else Color.WHITE)
+                    } else if (surface.oval) canvas.drawOval(0f, 0f, w.toFloat(), h.toFloat(), fill)
+                    else if(surface.capsule) canvas.drawRoundRect(0f,0f,w.toFloat(),h.toFloat(),padding*2,padding*2,fill)
                     else canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), fill)
                     canvas.save()
                     canvas.clipRect(content)
@@ -91,15 +129,34 @@ class ReplacementTranslationView(context: Context, val message: String,
                     text.draw(canvas)
                     canvas.restore()
                 }
-            }.getOrNull()
+            }.getOrNull()?.takeIf { image ->
+                // The complete anchor was filled opaquely before drawing. Verify the
+                // registration and edge pixels of the resulting mask, not an estimate.
+                maskDefect=anchor?.let { a ->
+                    val xs=listOf(a.left-surface.left,a.right-1-surface.left)
+                    val ys=listOf(a.top-surface.top,a.bottom-1-surface.top)
+                    xs.any { x -> ys.any { y -> x !in 0 until w || y !in 0 until h || Color.alpha(image.getPixel(x,y))!=255 } }
+                } ?: false
+                !maskDefect
+            }
         }
     }
 
+    internal fun fullyOnScreen():Boolean {
+        if(!isShown || !isAttachedToWindow || !presented || !replacementReady || width!=surface.width || height!=surface.height) return false
+        val xy=IntArray(2);getLocationOnScreen(xy)
+        val clip=android.graphics.Rect()
+        return xy[0]==surface.left && xy[1]==surface.top && getLocalVisibleRect(clip) && clip==android.graphics.Rect(0,0,width,height)
+    }
+    var presented=false
+        private set
+    var onPresented:(()->Unit)?=null
+    var onRasterLost:(()->Unit)?=null
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val image = prepared ?: return // no independent background paint exists
-        try { canvas.drawBitmap(image, 0f, 0f, null) }
-        catch (failure: Exception) { prepared = null; postInvalidate() }
+        try { canvas.drawBitmap(image, 0f, 0f, null); if(!presented){presented=true; post { onPresented?.invoke() }} }
+        catch (failure: Exception) { prepared = null; post { onRasterLost?.invoke() }; postInvalidate() }
     }
 
     override fun onDetachedFromWindow() {

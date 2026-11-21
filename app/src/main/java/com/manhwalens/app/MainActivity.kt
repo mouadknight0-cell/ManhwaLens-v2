@@ -3,7 +3,6 @@ package com.manhwalens.app
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Build
@@ -104,23 +103,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private val projectionManager: MediaProjectionManager? by lazy {
-        getSystemService(MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
-    }
-
     private var overlayGranted by mutableStateOf(false)
     private var notificationsGranted by mutableStateOf(false)
 
-    private val captureConsentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val data = result.data
-        if (result.resultCode == RESULT_OK && data != null) {
-            ScreenCaptureService.startSession(this, result.resultCode, data, autoCapture = true)
-        } else {
-            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_capture_denied)))
-        }
-    }
-
     private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if(!granted) com.manhwalens.app.diagnostics.Diagnostics.warn("permissions","notifications","Enable notifications in Android settings for visible session controls",code="PERM-NOTIFICATIONS")
         notificationsGranted = granted
     }
 
@@ -167,6 +154,7 @@ class MainActivity : ComponentActivity() {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             },
         )
+        com.manhwalens.app.diagnostics.Diagnostics.warn("permissions","overlay","Grant Display over other apps in Android settings",code="PERM-OVERLAY")
         Toast.makeText(this, getString(R.string.settings_bubble_permission_missing), Toast.LENGTH_LONG).show()
     }
 
@@ -183,11 +171,7 @@ class MainActivity : ComponentActivity() {
             ScreenCaptureService.captureNow(this)
             return
         }
-        val manager = projectionManager ?: run {
-            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_capture_denied)))
-            return
-        }
-        captureConsentLauncher.launch(manager.createScreenCaptureIntent())
+        com.manhwalens.app.capture.CaptureConsentActivity.launch(this, source="main")
     }
 
     private fun onBubbleToggled(enabled: Boolean) {
@@ -226,7 +210,7 @@ private fun ManhwaLensRoot(
     val onboardingSeen by activity.settingsRepository.onboardingSeen.collectAsState()
     val bubbleEnabled by activity.settingsRepository.bubbleEnabled.collectAsState()
 
-    var tab by remember { mutableStateOf(Tab.HOME) }
+    var tab by remember { mutableStateOf(if(activity.intent.getBooleanExtra("show_settings",false)) Tab.SETTINGS else Tab.HOME) }
     var entries by remember { mutableStateOf(emptyList<CaptureResult>()) }
     var selectedResult by remember { mutableStateOf<CaptureResult?>(null) }
     var resultIsFinal by remember { mutableStateOf(true) }

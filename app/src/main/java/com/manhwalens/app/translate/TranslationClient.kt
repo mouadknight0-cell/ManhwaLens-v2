@@ -28,7 +28,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  *  - translations are cached (chapter-wide consistency of terminology and tone);
  *  - timeouts and failures keep the original text instead of crashing the journey.
  */
-class TranslationClient(private val cache: TranslationCache = TranslationCache(512)) {
+class TranslationClient(private val cache: TranslationCache = TranslationCache(512), private val post:()->Map<String,String> = {emptyMap()}, private val debug:()->Boolean={false}, private val readings: () -> Map<String,String> = { ReadingGlossary.defaults }) {
 
     private val nativePermits = kotlinx.coroutines.sync.Semaphore(2)
     private val translators = mutableMapOf<Pair<String, String>, Translator>()
@@ -43,15 +43,31 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     }
 
     /** Translates one region, applying the name shield. Never throws — original text on failure. */
-    suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null): TranslatedBlock {
-        val normalized = try { com.manhwalens.app.pipeline.TranslationInput.prepare(region.text, glossaryNames) }
+    suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null, lexicalRetry:Boolean=false, retryCase:Boolean=false): TranslatedBlock {
+        val terms=ReadingGlossary.murim+readings()
+        val protectedNames=(glossaryNames+terms.keys).distinct()
+        val normalized = try { com.manhwalens.app.pipeline.TranslationInput.prepare(region.text, protectedNames) }
         catch (failure: IllegalArgumentException) {
             Diagnostics.error("translate", "input_name_shield", "TR-NAME-SHIELD", "name protection failed before OCR repair", throwable = failure)
-            return TranslatedBlock(region, region.text, "تعذّرت حماية الأسماء — راجع القاموس", "TR-NAME-SHIELD")
+            return TranslatedBlock(region, region.text, "", "TR-NAME-SHIELD")
         }
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
-        if ((region.confidence.isFinite() && region.confidence < .5f) ||
-            com.manhwalens.app.pipeline.TranslationInput.unresolved(normalized, glossaryNames)) {
+        val lookupStart=System.nanoTime()
+        val match=DialogueLexicon.interjection(normalized)?.let { DialogueLexicon.Match(it,"Exact dialogue lexicon") }
+            ?: terms[normalized.trimEnd('!','?','.','…').lowercase()]?.let { DialogueLexicon.Match(it+normalized.takeLastWhile { c->c in "!?.…" }.replace('?','؟'),"Exact glossary") }
+            ?: if(NameDetector.find(normalized,glossaryNames).none { it.source==com.manhwalens.app.names.NameHit.Source.GLOSSARY && it.name.lowercase() !in terms }) DialogueLexicon.match(normalized,previous,terms,true) else null
+        val reviewed=match?.text
+        com.manhwalens.app.diagnostics.SessionScorecard.lookup(reviewed!=null,System.nanoTime()-lookupStart)
+        val letters=normalized.filter(Char::isLetter)
+        val scriptNoise=letters.any { Character.UnicodeScript.of(it.code)!=Character.UnicodeScript.LATIN }
+        val properName=glossaryNames.any { normalized.trimEnd('!','?','.','…').equals(it,true) }
+        val ambiguousMark=normalized.trimEnd('.','…').equals("no",true) && region.confidence<.60f
+        if(reviewed==null && com.manhwalens.app.pipeline.ReadingEnglish.fragmented(region.text,protectedNames))
+            return TranslatedBlock(region,normalized,"","OCR-UNCERTAIN",method="Fragmented OCR: multiple short unknowns and clipped tail")
+        if(ambiguousMark || scriptNoise || (reviewed==null && !properName && !com.manhwalens.app.pipeline.OcrInputQuality.isNumericContent(normalized) &&
+            (com.manhwalens.app.pipeline.ReadingEnglish.validCount(normalized)<2 || (region.surface?.reliable==false && region.confidence<.62f)))) return TranslatedBlock(region,normalized,"","OCR-UNCERTAIN",method="Script or lexical validation")
+        if ((reviewed == null && region.confidence.isFinite() && region.confidence < .5f && !(region.confidence>=.30f && com.manhwalens.app.pipeline.ReadingEnglish.score(normalized,protectedNames)>=.8)) ||
+            com.manhwalens.app.pipeline.TranslationInput.unresolved(normalized, protectedNames)) {
             return TranslatedBlock(region, normalized, "", "OCR-UNCERTAIN", method = "OCR input validation")
         }
         val began = System.nanoTime()
@@ -59,42 +75,41 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             return TranslatedBlock(region, normalized, normalized, durationMs = (System.nanoTime() - began) / 1_000_000,
                 method = "Numeric content preserved (not translated)")
         }
+        val evidence=if(debug()) mutableMapOf<String,String>() else null
         val block = try {
-            val reviewed = if (NameDetector.find(normalized, glossaryNames).isEmpty()) DialogueLexicon.translate(normalized, previous) else null
-            val translated = reviewed ?: TranslationRetry.run(
-                retryable = { it is TranslationFailure && it.code == ErrorCodes.TRANSLATE_FAILED }
-            ) { translateText(normalized, glossaryNames) }
-            TranslatedBlock(region, normalized, translated, method = if (reviewed == null) "ML Kit on-device" else "Reviewed dialogue lexicon v1")
+            val output=DialogueLexicon.render(normalized,match,terms){ translateText(it,glossaryNames,terms,retryCase,evidence) }
+            TranslatedBlock(region, normalized, output.text, method = output.method)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {
-            Diagnostics.error("translate", "block_failed", failure.code, "translation block failed; source retained, failure shown", throwable = failure,
+            Diagnostics.info("translate","rejected","reason=${failure.code} retry_case=$retryCase source_retained=true")
+            if(debug()) Diagnostics.error("translate", "block_failed", failure.code, "translation block failed; source retained, failure shown", throwable = failure,
                 context = mapOf("source_chars" to normalized.length.toString(), "word_count" to normalized.split(Regex("\\s+")).size.toString(),
                     "bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
-            TranslatedBlock(region, normalized, "تعذّرت الترجمة — أعد المحاولة", failure.code)
+            TranslatedBlock(region, normalized, "", failure.code)
         }
-        return block.copy(durationMs = (System.nanoTime() - began) / 1_000_000)
+        if(evidence!=null && block.errorCode==null)TranslationOutput.reviewReason(normalized,block.translated)?.let {evidence["review_reason"]=it}
+        return block.copy(evidence=evidence.orEmpty(),durationMs = (System.nanoTime() - began) / 1_000_000)
     }
 
     /** Core translate path used for every complete utterance. */
-    suspend fun translateText(text: String, glossaryNames: List<String> = emptyList()): String {
+    suspend fun translateText(text: String, glossaryNames: List<String> = emptyList(),terms: Map<String,String> = readings(),retryCase:Boolean=false,evidence:MutableMap<String,String>?=null): String {
         val trimmed = text.trim()
         if (trimmed.isBlank() || trimmed.none { it.isLetter() }) return trimmed
 
-        val identity = trimmed + "\u0000" + glossaryNames.sorted().joinToString("\u0000")
-        val cacheKey = "validated-v3:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
-        cache.get(cacheKey)?.let { return it }
-
-        val namesInText = NameDetector.find(trimmed, glossaryNames)
-            .filter { it.source == com.manhwalens.app.names.NameHit.Source.GLOSSARY }.map { it.name }
-            .distinctBy { it.lowercase() }
-        val maskResult = try { NameShield.mask(trimmed, namesInText) }
+        val corrections=post()
+        val maskResult = try { ReadingGlossary.modelMask(trimmed, glossaryNames,terms) }
             catch (failure: IllegalArgumentException) { throw TranslationFailure("TR-NAME-SHIELD") }
-        val protected = maskResult.names
+        val modelInput = ReadingGlossary.nativeSentence(maskResult,retryCase)
+        val arabicMask=maskResult.copy(names=maskResult.names.map { terms[it.lowercase()] ?: it })
 
+        evidence?.apply {put("prepared",trimmed.take(512));put("masked",maskResult.maskedText.take(512));put("model_input",modelInput.take(512))}
+        val cacheKey=nativeCacheKey(trimmed,modelInput,arabicMask,terms,corrections)
+        cache.get(cacheKey)?.let {evidence?.put("origin","native_cache");return it}
+        if(!LanguageModels.state.value.ready && !ensureModel()) throw TranslationFailure(ErrorCodes.TRANSLATE_DOWNLOAD_FAILED)
         val raw = try {
             withTimeoutOrNull(TRANSLATE_TIMEOUT_MS) {
                 nativePermits.acquire()
-                val task = try { translatorFor(SOURCE, TARGET).translate(maskResult.maskedText) }
+                val task = try { translatorFor(SOURCE, TARGET).translate(modelInput) }
                     catch (failure: Exception) { nativePermits.release(); throw failure }
                 task.addOnCompleteListener(java.util.concurrent.Executor { it.run() }) { nativePermits.release() }
                 task.await()
@@ -108,21 +123,23 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             throw TranslationFailure(ErrorCodes.TRANSLATE_FAILED)
         }
         if (raw == null) {
-            LanguageModels.invalidate()
+            // An invocation timeout does not invalidate the installed language pair.
             Diagnostics.warn("translate", "translate_timeout", "translation timed out; block marked failed",
                 code = ErrorCodes.TRANSLATE_TIMEOUT,
                 context = mapOf("chars" to trimmed.length.toString()), recovery = "explicit failure shown")
             throw TranslationFailure(ErrorCodes.TRANSLATE_TIMEOUT)
         }
-        TranslationOutput.issue(raw, maskResult)?.let { issue ->
-            Diagnostics.warn("translate", "output_validation", "model output failed structural validation",
-                code = issue, context = mapOf("source_chars" to trimmed.length.toString(), "output_chars" to raw.length.toString()))
-            throw TranslationFailure(issue)
-        }
-        val restored = NameShield.restore(raw, maskResult)
-        if (protected.any { !restored.contains(it, ignoreCase = true) }) throw TranslationFailure("TR-NAME-LOST")
-        cache.put(cacheKey, restored)
-        return restored
+        evidence?.apply {put("origin","native");put("raw_native",raw.take(512));put("restored_before_edits",NameShield.restore(raw,arabicMask).take(512))}
+        val issue=TranslationOutput.issue(raw,maskResult)
+        val finished=if(issue==null) TranslationOutput.finish(trimmed,raw,arabicMask,corrections) else {
+            val recovered=if(issue=="TR-UNTRANSLATED") TranslationOutput.recoverOrganization(trimmed,raw,arabicMask,corrections) else null
+            Diagnostics.info("translate","native_validation","ready=${LanguageModels.state.value.ready} issue=$issue raw_chars=${raw.length} arabic_letters=${raw.count(ArabicOutput::isLetter)} latin_letters=${raw.count { it in 'A'..'Z' || it in 'a'..'z' }} tokens=${maskResult.tokens.size} recovered=${recovered!=null}")
+            recovered ?: throw TranslationFailure(issue)
+        } ?: throw TranslationFailure("TR-INVALID-OUTPUT")
+        if(finished.correctionRejected) Diagnostics.warn("translate","post_validation","Invalid correction ignored; kept validated translation")
+        val final=finished.text
+        cache.put(cacheKey,final)
+        return final
     }
 
     /** Back-compat helper: translate a list sequentially. Used by tests and simple flows. */
@@ -146,6 +163,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
     private fun normalize(code: String?): String = code?.trim()?.lowercase().orEmpty()
 
+    fun clearCache() = cache.clear()
     fun close() {
         synchronized(translators) {
             translators.values.forEach { runCatching { it.close() } }
@@ -157,9 +175,13 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     private class TranslationFailure(val code: String) : Exception(code)
 
     companion object {
+        internal fun nativeCacheKey(trimmed:String,modelInput:String,arabicMask:NameShield.MaskResult,terms:Map<String,String>,corrections:Map<String,String>):String {
+            val identity=listOf(trimmed,modelInput,arabicMask.tokens,arabicMask.names,terms.toSortedMap(),corrections.toSortedMap()).joinToString("\u0000")
+            return "validated-v9:"+java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString(""){"%02x".format(it)}
+        }
         const val SOURCE = "en"
         const val TARGET = "ar"
         private const val MODEL_DOWNLOAD_TIMEOUT_MS = 45_000L
-        private const val TRANSLATE_TIMEOUT_MS = 15_000L
+        private const val TRANSLATE_TIMEOUT_MS = 2_500L
     }
 }

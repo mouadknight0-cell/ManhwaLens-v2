@@ -2,7 +2,7 @@ name: Android quality regression
 on:
   workflow_dispatch:
   push:
-    branches: [arena/ae360a1c-manhwalens-v2]
+    branches: [arena/ae360a1c-manhwalens-v2, arena/f6ce5fe4-manhwalens-v2]
     paths:
       - '.github/workflows/quality.yml'
       - '.github/scripts/android-quality.sh'

@@ -26,7 +26,7 @@ object SurfacePlacement {
         val candidates = regions.map { it.surface ?: source(it) }
         return regions.mapIndexed { index, region ->
             val surface = candidates[index]
-            if (surface.oval && candidates.indices.any { other -> other != index && intersects(surface, candidates[other]) }) {
+            if ((surface.oval || surface.mask!=null) && candidates.indices.any { other -> other != index && intersects(surface, candidates[other]) }) {
                 region.copy(surface = source(region, surface.color, surface.reliable))
             } else region
         }

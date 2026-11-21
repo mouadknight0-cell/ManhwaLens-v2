@@ -52,6 +52,7 @@ fun SettingsScreen(
     val phase by CaptureManager.sessionPhase.collectAsState()
     val live by CaptureManager.live.collectAsState()
     val model by LanguageModels.state.collectAsState()
+    var reportGeneration by remember { mutableIntStateOf(0) }
     var confirmation by remember { mutableStateOf<Pair<String, () -> Unit>?>(null) }
     Column(modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("الإعدادات · Settings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
@@ -64,6 +65,7 @@ fun SettingsScreen(
             }
             Text("نسبة التنزيل وحجم الملف غير متاحين من ML Kit. لا يُعلن الاستعداد قبل التحقق من التثبيت والترجمة.", style = MaterialTheme.typography.bodySmall)
         }
+        XiaomiSetup()
         SettingsGroup("الفقاعة وجلسة الالتقاط", "الحالة: $phase · التحكم متاح من الفقاعة") {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("إظهار الفقاعة العائمة", Modifier.weight(1f))
@@ -94,7 +96,27 @@ fun SettingsScreen(
             if (learnedNames.isNotEmpty()) OutlinedButton(onClick = { confirmation = "مسح مسرد الأسماء؟" to onClearNames }) { Text("مسح المسرد") }
         }
         Text("التشخيص والأدوات", style = MaterialTheme.typography.titleLarge)
-        DiagnosticTools()
+        val repo=(context.applicationContext as com.manhwalens.app.ManhwaLensApp).settingsRepository
+        val matched by repo.matchStyle.collectAsState()
+        OutlinedButton(onClick={ repo.setMatchStyle(!matched) }) { Text("نمط الرسم: " + if(matched) "مطابق للأصل" else "موحّد") }
+        SettingsGroup("قاموس النطق والمصطلحات", "اسم أو مصطلح إنجليزي = المقابل العربي") {
+            var draft by remember { mutableStateOf(repo.readings.value.entries.joinToString("\n") { "${it.key}=${it.value}" }) }
+            var status by remember { mutableStateOf("") }
+            OutlinedTextField(value=draft,onValueChange={ draft=it },label={Text("سطر لكل مدخل")})
+            Button(onClick={ status=if(repo.saveReadings(draft)) "تم الحفظ" else "تحقق من صيغة كل سطر والمقابل العربي" }) { Text("حفظ القاموس") }
+            var post by remember { mutableStateOf(repo.corrections.value.entries.joinToString("\n"){ "${it.key}=${it.value}" }) }
+            OutlinedTextField(value=post,onValueChange={post=it},label={Text("تصحيحات عربية بعد الترجمة")})
+            Button(onClick={status=if(repo.saveCorrections(post)) "تم الحفظ" else "تحقق من التصحيحات"}) { Text("حفظ التصحيحات") }
+            Text(status)
+        }
+        val debug by repo.debug.collectAsState()
+        Row(verticalAlignment=Alignment.CenterVertically) { Text("وضع التشخيص: حدود النص وسجل العدادات",Modifier.weight(1f)); Switch(debug,repo::setDebug) }
+        OutlinedButton(enabled=phase in setOf(CaptureManager.SessionPhase.INACTIVE,CaptureManager.SessionPhase.FAILED), onClick={
+            confirmation="مسح بيانات التقرير والصور والقياسات؟ ستبقى الإعدادات والقواميس." to {
+                scope.launch { val message=try { com.manhwalens.app.diagnostics.CompleteReport.reset(context); reportGeneration++; "تمت إعادة تعيين التقرير" } catch(e:Exception){ "تعذرت إعادة التعيين: ${e.message}" }; android.widget.Toast.makeText(context,message,android.widget.Toast.LENGTH_LONG).show() }; Unit
+            }
+        }) { Text("إعادة تعيين التقرير") }
+        key(reportGeneration) { DiagnosticTools() }
         SettingsGroup("متقدم · Advanced", "الأداء، سجل القراءة، معلومات التطبيق") {
             Text("المعالجة محلية. OCR أصلي واحد كحد أقصى، ومهمتا ترجمة أصليتان. الكاش تلقائي ولا توجد إعدادات جودة وهمية.")
             OutlinedButton(onClick = onExportDiagnostics, modifier = Modifier.fillMaxWidth()) { Text("مشاركة حزمة التشخيص الكاملة") }

@@ -1,88 +1,58 @@
 package com.manhwalens.app.capture
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import com.manhwalens.app.R
+import com.manhwalens.app.capture.CaptureManager.ConsentStep.*
+import com.manhwalens.app.diagnostics.Diagnostics
 
-/**
- * Transparent trampoline that requests the MediaProjection consent.
- * MediaProjection tokens may only be created from an Activity result,
- * so both the in-app button and the floating bubble go through this.
- */
 class CaptureConsentActivity : ComponentActivity() {
-
-    private val projectionManager: MediaProjectionManager? by lazy {
-        getSystemService(Context.MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
-    }
-
-    private val captureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val data = result.data
-        if (intent.getLongExtra("consent_generation", -1) != CaptureManager.consentGeneration.get()) {
-            finish()
-            return@registerForActivityResult
-        }
-        if (result.resultCode == RESULT_OK && data != null) {
-            val autoCapture = intent.getBooleanExtra(ScreenCaptureService.EXTRA_AUTO_CAPTURE, true)
-            ScreenCaptureService.startSession(this, result.resultCode, data, autoCapture, intent.getLongExtra("request_ns", System.nanoTime()))
-        } else {
-            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(com.manhwalens.app.R.string.error_capture_denied)))
+    private val id get()=intent.getLongExtra("consent_generation",-1)
+    private val launcher=registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
+        val data=result.data
+        when {
+            !CaptureManager.pending(id,DIALOG) -> Diagnostics.info("capture","stale_result","id=$id")
+            result.resultCode!=RESULT_OK || data==null -> fail(this,id,"CAP-CONSENT-DENIED",R.string.error_capture_denied)
+            CaptureManager.advance(id,DIALOG,DISPATCH) -> {
+                Diagnostics.info("capture","consent_accepted","id=$id starting foreground service")
+                ScreenCaptureService.startSession(this,id,result.resultCode,data,intent.getBooleanExtra(ScreenCaptureService.EXTRA_AUTO_CAPTURE,true),intent.getLongExtra("request_ns",System.nanoTime()))
+            }
         }
         finish()
-        @Suppress("DEPRECATION")
-        overridePendingTransition(0, 0)
     }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState:Bundle?){
         super.onCreate(savedInstanceState)
-        enteredGeneration = intent.getLongExtra("consent_generation", -1)
-        if (enteredGeneration != CaptureManager.consentGeneration.get()) { finish(); return }
-        com.manhwalens.app.diagnostics.Diagnostics.info("capture", "consent_activity", "permission activity entered")
-        val manager = projectionManager
-        if (manager == null) {
-            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(com.manhwalens.app.R.string.error_capture_denied)))
-            finish()
-            return
-        }
-        if (savedInstanceState == null) try { captureLauncher.launch(if (android.os.Build.VERSION.SDK_INT >= 34) manager.createScreenCaptureIntent(android.media.projection.MediaProjectionConfig.createConfigForDefaultDisplay()) else manager.createScreenCaptureIntent()) }
-        catch (failure: Exception) {
-            CaptureManager.setState(CaptureManager.CaptureState.Error("تعذر عرض إذن التقاط الشاشة؛ أعد المحاولة من الفقاعة.", "CAP-CONSENT-DIALOG"))
-            com.manhwalens.app.diagnostics.Diagnostics.error("capture", "consent_dialog", "CAP-CONSENT-DIALOG", "system consent launch failed", throwable = failure)
-            finish()
-        }
+        if(savedInstanceState!=null && CaptureManager.pending(id,DIALOG)) return // registry owns the outstanding system result
+        if(!CaptureManager.advance(id,LAUNCH,DIALOG)){Diagnostics.info("capture","stale_activity","id=$id");finish();return}
+        Diagnostics.info("capture","consent_entered","id=$id opening system dialog")
+        try {
+            val manager=getSystemService(MediaProjectionManager::class.java) ?: error("MediaProjectionManager unavailable")
+            launcher.launch(if(android.os.Build.VERSION.SDK_INT>=34)manager.createScreenCaptureIntent(android.media.projection.MediaProjectionConfig.createConfigForDefaultDisplay()) else manager.createScreenCaptureIntent())
+        }catch(e:Exception){fail(this,id,"CAP-CONSENT-DIALOG",R.string.error_capture_generic,e);finish()}
     }
-
     companion object {
-        @Volatile private var enteredGeneration = -1L
-        /** autoCapture: immediately capture one frame once the session starts (bubble tap flow). */
-        fun launch(context: Context, autoCapture: Boolean = true, requestedAtNs: Long = System.nanoTime()) {
-            if (!CaptureManager.beginConsent()) return
-            val generation = CaptureManager.consentGeneration.incrementAndGet()
-            val intent = Intent(context, CaptureConsentActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                putExtra("request_ns", requestedAtNs)
-                putExtra("consent_generation", CaptureManager.consentGeneration.get())
-                putExtra(ScreenCaptureService.EXTRA_AUTO_CAPTURE, autoCapture)
-            }
+        private fun fail(context:Context,id:Long,code:String,message:Int,e:Exception?=null){
+            Diagnostics.error("capture","consent_failure",code,"id=$id",throwable=e)
+            CaptureManager.setState(CaptureManager.CaptureState.Error(context.getString(message),code))
+        }
+        fun launch(context:Context,autoCapture:Boolean=true,requestedAtNs:Long=System.nanoTime(),source:String="settings"){
+            if(CaptureManager.sessionActive){ScreenCaptureService.captureNow(context,requestedAtNs);return}
+            val id=CaptureManager.requestConsent() ?: return
+            Diagnostics.info("capture","consent_launch","source=$source id=$id stage=starting")
             try {
-                context.startActivity(intent)
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    if (CaptureManager.consentGeneration.get() == generation && enteredGeneration != generation &&
-                        CaptureManager.sessionPhase.value == CaptureManager.SessionPhase.STARTING) {
-                        CaptureManager.consentGeneration.incrementAndGet()
-                        CaptureManager.setState(CaptureManager.CaptureState.Error(
-                            "منع النظام فتح الإذن. في إعدادات Xiaomi اسمح بالنوافذ المنبثقة أثناء العمل في الخلفية، ثم أعد المحاولة من الفقاعة.", "CAP-CONSENT-BLOCKED"))
-                        com.manhwalens.app.diagnostics.Diagnostics.warn("capture", "consent_blocked", "permission activity did not enter within 5 seconds", code = "CAP-CONSENT-BLOCKED")
-                    }
-                }, 5000)
-            }
-            catch (failure: Exception) {
-                CaptureManager.setState(CaptureManager.CaptureState.Error("Unable to open Android screen-capture permission. Retry from the floating controls.", "CAP-CONSENT-LAUNCH"))
-                com.manhwalens.app.diagnostics.Diagnostics.error("capture", "consent_launch", "CAP-CONSENT-LAUNCH", "consent activity launch failed", throwable = failure)
-            }
+                context.startActivity(Intent(context,CaptureConsentActivity::class.java).apply {
+                    if(context !is Activity)addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);putExtra("request_ns",requestedAtNs);putExtra("consent_generation",id);putExtra(ScreenCaptureService.EXTRA_AUTO_CAPTURE,autoCapture)
+                })
+                Handler(Looper.getMainLooper()).postDelayed({if(CaptureManager.pending(id,LAUNCH))fail(context,id,"CAP-CONSENT-BLOCKED",R.string.capture_launch_blocked)},5000)
+            }catch(e:Exception){fail(context,id,"CAP-CONSENT-LAUNCH",R.string.capture_launch_blocked,e)}
         }
     }
 }

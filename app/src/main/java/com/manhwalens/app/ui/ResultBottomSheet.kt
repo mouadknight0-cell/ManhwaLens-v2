@@ -55,13 +55,7 @@ fun ResultBottomSheet(
 ) {
     val context = LocalContext.current
 
-    // T12 = full translation visible on screen; marks/finishes the benchmark journey.
-    LaunchedEffect(result.id, result.blocks.size, isFinal) {
-        androidx.compose.runtime.withFrameNanos { }
-        if (result.blocks.any { it.errorCode == null && it.translated != it.original }) BenchmarkTracker.markForResult(result.id, "T10")
-        if (isFinal && result.blocks.all { it.errorCode == null }) BenchmarkTracker.markForResult(result.id, "T12")
-    }
-
+    // Reading history in the app is not proof of a translation drawn over the manga.
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
