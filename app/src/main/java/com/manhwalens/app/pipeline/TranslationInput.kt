@@ -31,12 +31,14 @@ object TranslationInput {
     private val obligation=Regex("(?i)\\b(had to|have to|must) deal with\\b")
     private val timeObligation=Regex("(?i)\\bwould have had to (handle(?: (?:it|this|that|them))?) sooner or later(?=[.!?]|$)")
     private val initiative=Regex("(?i)\\b(taken the initiative) and cleared the way for (us|them|me|him|her)\\b(?=[.!?]|$)")
+    private val exclusiveQuestion=Regex("(?i)^who else (could|can|would) (do (?:it|this|that)) but (you|him|her|them|us|me)([?!]+)$")
+    private val chivalrous=Regex("(?i)(?:\\b(a) )?\\bchivalrous (?=hero(?:es)?\\b)")
     private val travel=Regex("(?i)^(head to)|(?<= and )head to")
     private val certain=Regex("(?i)\\byou're certain (?=7[0-9]{3} will\\b)")
     fun nativeInput(masked:String, protectedTokens:List<String> = emptyList()):String = blindEye.replace(modelCase(masked)) { m ->
         val verb = ignore.getValue(m.groupValues[1].lowercase())
         if (m.value.first().isUpperCase()) verb.replaceFirstChar(Char::uppercaseChar) else verb
-    }.replace(heavy,"$1 harsh").replace(obligation,"$1 handle").replace(timeObligation,"would eventually have had to $1")
+    }.replace(exclusiveQuestion,"Who besides $3 $1 $2$4").replace(chivalrous){m -> when(m.groupValues[1]){"A"->"An honorable ";"a"->"an honorable ";else->"honorable "}}.replace(heavy,"$1 harsh").replace(obligation,"$1 handle").replace(timeObligation,"would eventually have had to $1")
         .replace(initiative,"$1 and made it possible for $2 to proceed").let { text -> certain.replace(text) { m -> if(text.substring(m.range.last+1).take(4) in protectedTokens) "you are sure that " else m.value } }
         .let { text -> travel.replace(text) { m ->
             // Rewrite only before a shielded destination, never "turn your head to ...".

@@ -87,6 +87,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
                     "bounds" to "${region.left},${region.top},${region.right},${region.bottom}"))
             TranslatedBlock(region, normalized, "", failure.code)
         }
+        if(evidence!=null && block.errorCode==null)TranslationOutput.reviewReason(normalized,block.translated)?.let {evidence["review_reason"]=it}
         return block.copy(evidence=evidence.orEmpty(),durationMs = (System.nanoTime() - began) / 1_000_000)
     }
 
@@ -102,8 +103,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val arabicMask=maskResult.copy(names=maskResult.names.map { terms[it.lowercase()] ?: it })
 
         evidence?.apply {put("prepared",trimmed.take(512));put("masked",maskResult.maskedText.take(512));put("model_input",modelInput.take(512))}
-        val identity=listOf(trimmed,modelInput,arabicMask.tokens,arabicMask.names,terms.toSortedMap(),corrections.toSortedMap()).joinToString("\u0000")
-        val cacheKey="validated-v9:"+java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString(""){"%02x".format(it)}
+        val cacheKey=nativeCacheKey(trimmed,modelInput,arabicMask,terms,corrections)
         cache.get(cacheKey)?.let {evidence?.put("origin","native_cache");return it}
         if(!LanguageModels.state.value.ready && !ensureModel()) throw TranslationFailure(ErrorCodes.TRANSLATE_DOWNLOAD_FAILED)
         val raw = try {
@@ -175,6 +175,10 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     private class TranslationFailure(val code: String) : Exception(code)
 
     companion object {
+        internal fun nativeCacheKey(trimmed:String,modelInput:String,arabicMask:NameShield.MaskResult,terms:Map<String,String>,corrections:Map<String,String>):String {
+            val identity=listOf(trimmed,modelInput,arabicMask.tokens,arabicMask.names,terms.toSortedMap(),corrections.toSortedMap()).joinToString("\u0000")
+            return "validated-v9:"+java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString(""){"%02x".format(it)}
+        }
         const val SOURCE = "en"
         const val TARGET = "ar"
         private const val MODEL_DOWNLOAD_TIMEOUT_MS = 45_000L

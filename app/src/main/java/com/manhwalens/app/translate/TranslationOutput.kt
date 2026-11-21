@@ -4,6 +4,12 @@ import com.manhwalens.app.names.NameShield
 
 /** Structural checks only: never describe these as semantic/fluency validation. */
 object TranslationOutput {
+    // Advisory only. In this exclusive question a trailing "but you?" introduces
+    // contrast without a predicate. Do not reject Arabic on a semantic heuristic.
+    internal fun reviewReason(source:String,output:String):String? =
+        if(exclusive.containsMatchIn(source.trim()) && danglingContrast.containsMatchIn(output.trim())) "review_exclusion_as_contrast" else null
+    private val exclusive=Regex("(?i)^who else (?:could|can|would) do (?:it|this|that) but you[?!]+$")
+    private val danglingContrast=Regex("(?:^|\\s)ولكنك[؟?!]+$")
     fun issue(raw: String, mask: NameShield.MaskResult): String? {
         if (raw.isBlank() || raw.any { it == '\uFFFD' || (it.isISOControl() && it !in "\n\r\t") })
             return "TR-INVALID-OUTPUT"

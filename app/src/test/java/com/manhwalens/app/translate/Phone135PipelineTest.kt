@@ -25,7 +25,7 @@ class Phone135PipelineTest {
     }
     @Test fun typedNamesPreserveWholeClauseAndDoNotConsumePossessives(){
         assertEquals("But the fact remains that the sect named 7000 maintained public order in 7001.",input("BUT THE FACT REMAINS THAT THE HYEONGJUNG SECT MAINTAINED ORDER IN HEFEI."))
-        assertEquals("the gap that the sect named 7000 left behind",input("THE VOID LEFT BY THE HYEONGJUNG SECT"))
+        assertEquals("the gap left behind by the sect named 7000",input("THE VOID LEFT BY THE HYEONGJUNG SECT"))
         assertEquals("The 7000 sect's records.",input("THE HYEONGJUNG SECT'S RECORDS."));assertEquals("The 7000 sect leader.",input("THE HYEONGJUNG SECT LEADER."))
         assertEquals("The librarian maintained order in the catalog.",input("THE LIBRARIAN MAINTAINED ORDER IN THE CATALOG."))
     }

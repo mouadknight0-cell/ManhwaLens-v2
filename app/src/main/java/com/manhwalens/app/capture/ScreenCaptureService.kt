@@ -653,6 +653,10 @@ class ScreenCaptureService : Service() {
         val dictionaryContext=Triple(learnedNames.toList(),prefs.readings.value,prefs.corrections.value)
         val attempted=java.util.concurrent.ConcurrentHashMap.newKeySet<TextRegion>()
         val contextParts=mutableMapOf<TextRegion,com.manhwalens.app.pipeline.TranslatedBlock>()
+        val namesForCrop=learnedNames+prefs.readings.value.keys
+        val hints=plan.mapNotNull { work -> val r=work.input.region
+            com.manhwalens.app.pipeline.QuestionCrop.hint(r.text,namesForCrop)?.let { r to it }
+        }.toMap()
         val pending=plan.map { it.input.region }.toMutableSet()
         fun stage(r:TextRegion,event:String, why:String="") = Diagnostics.info("funnel",event,"page=$id bounds=${r.left},${r.top},${r.right},${r.bottom} $why",traceId=traceId)
         pending.forEach { stage(it,"queued") }
@@ -663,7 +667,7 @@ class ScreenCaptureService : Service() {
             while(index<plan.size && index-first<4 && plan[index].key.issue==null && !plan[index].key.preserveSoundEffect && com.manhwalens.app.pipeline.ConnectedDialogue.linked(plan[index-1].input.region,plan[index].input.region))index++
             if(index-first==1)continue
             val chain=plan.subList(first,index).map { it.input.region };val sources=chain.map { it.text }
-            if(chain.any { com.manhwalens.app.pipeline.ReadingEnglish.fragmented(it.text,learnedNames+prefs.readings.value.keys) })continue
+            if(chain.any { it in hints || com.manhwalens.app.pipeline.ReadingEnglish.fragmented(it.text,learnedNames+prefs.readings.value.keys) })continue
             if(chain.any { it.text.any { ch->ch.isLetter() && Character.UnicodeScript.of(ch.code)!=Character.UnicodeScript.LATIN } })continue
             val joined=try { translation.translateBlock(chain.first().copy(text=sources.joinToString(" ")),learnedNames) }
             catch(e:kotlinx.coroutines.CancellationException){currentCoroutineContext().ensureActive();stage(chain.first(),"joined_fallback","request_cancelled");continue}
@@ -673,7 +677,7 @@ class ScreenCaptureService : Service() {
         com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.map { it.region },
             onException = { Diagnostics.warn("translate","worker_exception","block attempt failed",throwable=it,traceId=traceId) },
-            identity = { workByRegion.getValue(it).key to contextParts[it]?.translated },
+            identity = { Triple(workByRegion.getValue(it).key,contextParts[it]?.translated,it.takeIf(hints::containsKey)) },
             translate = { region ->
                 val started = System.nanoTime()
                 val work = workByRegion.getValue(region)
@@ -694,33 +698,42 @@ class ScreenCaptureService : Service() {
                     com.manhwalens.app.pipeline.TranslatedBlock(region, region.text,
                         com.manhwalens.app.pipeline.OcrInputQuality.message(issue, region.text), issue, method = "OCR input validation")
                 }
-                val recovered = if ((translated.errorCode == "OCR-UNCERTAIN" || (!retryCase && region.confidence < .55f && translated.errorCode in setOf("TR-INVALID-OUTPUT","TR-UNTRANSLATED"))) && region.width > 0 && region.height > 0 &&
+                val hint=hints[region]?.takeIf { translated.errorCode=="TR-UNTRANSLATED" }
+                val trigger=when {
+                    retryCase -> null // one crop maximum per dispatched block
+                    hint!=null -> "internal_auxiliary"
+                    translated.errorCode=="OCR-UNCERTAIN" -> "input_uncertain"
+                    region.confidence<.55f && translated.errorCode in setOf("TR-INVALID-OUTPUT","TR-UNTRANSLATED") -> "low_confidence_rejection"
+                    else -> null
+                }
+                val recovered = if (trigger!=null && region.width > 0 && region.height > 0 &&
                     region.area in 1..150000 && region.left >= 0 && region.top >= 0 && region.right <= frame.width && region.bottom <= frame.height) {
-                    Diagnostics.info("funnel","ocr_retry","page=$journeyId bounds=${region.left},${region.top} attempt=crop",traceId=traceId)
-                    val box=region.surface
+                    Diagnostics.info("funnel","ocr_retry","page=$journeyId bounds=${region.left},${region.top} reason=$trigger",traceId=traceId)
+                    val box=region.surface.takeIf { hint==null }
                     val l=((box?.left ?: region.left)-8).coerceAtLeast(0); val t=((box?.top ?: region.top)-8).coerceAtLeast(0)
                     val w=((box?.right ?: region.right)+8).coerceAtMost(frame.width)-l; val h=((box?.bottom ?: region.bottom)+8).coerceAtMost(frame.height)-t
                     val names=learnedNames+(application as ManhwaLensApp).settingsRepository.readings.value.keys
                     fun lexical(r:TextRegion)=com.manhwalens.app.pipeline.ReadingEnglish.score(com.manhwalens.app.pipeline.TranslationInput.prepare(r.text,names),names)
+                    var observed:String?=null
                     val best=if(w*h !in 1..200000) null else {
                         val input=Bitmap.createBitmap(w*2,h*2,Bitmap.Config.ARGB_8888)
                         try {
-                            val dark=android.graphics.Color.red(box?.color ?: -1)<100
+                            val dark=android.graphics.Color.red(region.surface?.color ?: -1)<100
                             val f=if(dark) -1.5f else 1.5f;val shift=if(dark) 320f else -64f
                             val row=floatArrayOf(.299f*f,.587f*f,.114f*f,0f,shift)
                             val paint=android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply { colorFilter=android.graphics.ColorMatrixColorFilter(row+row+row+floatArrayOf(0f,0f,0f,1f,0f)) }
                             android.graphics.Canvas(input).drawBitmap(frame,android.graphics.Rect(l,t,l+w,t+h),android.graphics.Rect(0,0,w*2,h*2),paint)
                             withTimeoutOrNull(2500){ textRecognition.recognize(input,OCR_SOURCE) }?.map { it.copy(left=l+it.left/2,top=t+it.top/2,right=l+it.right/2,bottom=t+it.bottom/2) }?.filter {
                                 it.confidence>=.30f && com.manhwalens.app.pipeline.ReadingEnglish.retryFits(region,it) && lexical(it)>=.8
-                            }?.maxByOrNull(::lexical)
+                            }?.onEach { if(observed==null)observed=it.text }?.filter { hint==null || hint.confirmed(region,it) }?.maxByOrNull(::lexical)
                         } catch(cancelled:kotlinx.coroutines.CancellationException){ throw cancelled }
                         catch(e:Exception){ Diagnostics.warn("ocr","crop","retry failed",throwable=e);null } finally { input.recycle() }
                     }
-                    val chosen=if(best!=null && lexical(best)>=lexical(region)) region.copy(text=best.text,confidence=best.confidence) else region
+                    val chosen=if(best!=null && (if(hint!=null) hint.confirmed(region,best) else lexical(best)>=lexical(region))) region.copy(text=best.text,confidence=best.confidence) else region
                     val improved=chosen.text!=region.text && chosen.confidence>=.30f && lexical(chosen)>=.8
                     val result=if(improved)translation.translateBlock(chosen,learnedNames,previousSource,true) else translated
-                    if(debug) result.copy(evidence=result.evidence+mapOf("initial_status" to (translated.errorCode?:"ok"),"crop_candidate" to best?.text.orEmpty().take(512),"crop_decision" to if(improved)"accepted" else "no_improvement")) else result
-                } else translated
+                    if(debug) result.copy(evidence=result.evidence+mapOf("crop_total_ms" to ((System.nanoTime()-started)/1_000_000).toString(),"initial_model_input" to translated.evidence["model_input"].orEmpty(),"initial_status" to (translated.errorCode?:"ok"),"initial_raw_native" to translated.evidence["raw_native"].orEmpty(),"crop_trigger" to trigger,"crop_attempts" to if(w*h in 1..200000)"1" else "0","crop_candidate" to (best?.text?:observed).orEmpty().take(512),"crop_decision" to if(improved)"accepted" else "no_confirmed_improvement")) else result
+                } else if(debug && trigger!=null) translated.copy(evidence=translated.evidence+mapOf("crop_trigger" to trigger,"crop_attempts" to "0","crop_decision" to "ineligible_geometry")) else translated
                 commit("page_cache"){pageState.save(region,contextKey,recovered)}
                 recovered.also {
                     Diagnostics.info("translate", "block_complete", "block processing complete",
