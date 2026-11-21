@@ -145,7 +145,6 @@ class BubbleOverlayService : Service() {
         panel=null; panelRect=null
         publishBounds()
     }
-    private fun vPresented() = panel?.presented.orEmpty()
     private fun placeOverflow(entry:OverflowPanel.Entry, owner:ReplacementCommit.Owner, bounds:android.graphics.Rect,
         obstacles:List<ReplacementSurface>, valid:()->Boolean):Boolean {
         if(!valid()) return false
@@ -153,10 +152,13 @@ class BubbleOverlayService : Service() {
         val w=minOf(bounds.width(),dp(320)); val h=minOf(bounds.height()/3,dp(204))
         if(w<=0 || h<=dp(52)) return false
         val corners=listOf(bounds.bottom-h,bounds.top).flatMap { y -> listOf(bounds.right-w,bounds.left).map { x -> android.graphics.Rect(x,y,x+w,y+h) } }
-        val r=corners.minByOrNull { c -> obstacles.sumOf { o ->
+        fun box(s:ReplacementSurface)=CardPlacement.Box(s.left,s.top,s.right,s.bottom)
+        val preferred=CardPlacement.Box(bounds.right-w,bounds.bottom-h,bounds.right,bounds.bottom)
+        val free=CardPlacement.place(preferred,CardPlacement.Box(bounds.left,bounds.top,bounds.right,bounds.bottom),obstacles.map(::box),0)
+        val r=free?.let { android.graphics.Rect(it.left,it.top,it.right,it.bottom) } ?: corners.minByOrNull { c -> obstacles.sumOf { o ->
             (minOf(c.right,o.right)-maxOf(c.left,o.left)).coerceAtLeast(0).toLong() * (minOf(c.bottom,o.bottom)-maxOf(c.top,o.top)).coerceAtLeast(0)
         } } ?: return false
-        val v=OverflowPanel(this){ panel?.entries?.values?.forEach { dismissed.add(it.key); if(it.id !in vPresented()) com.manhwalens.app.diagnostics.SessionScorecard.outcome(owner.result,it.id,"CANCELLED") }; closePanel() }
+        val v=OverflowPanel(this){ panel?.entries?.values?.forEach { dismissed.add(it.key); if(it.id !in panel?.presented.orEmpty()) com.manhwalens.app.diagnostics.SessionScorecard.outcome(owner.result,it.id,"CANCELLED") }; closePanel() }
         v.put(entry)
         val lp=WindowManager.LayoutParams(w,h,overlayType(),WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply {
             gravity=Gravity.LEFT or Gravity.TOP; x=r.left; y=r.top
@@ -427,13 +429,18 @@ class BubbleOverlayService : Service() {
         if(displayedResultId!=result.id){clearTranslations();displayedResultId=result.id}
         val expected=mutableSetOf<String>()
         val bounds = if (Build.VERSION.SDK_INT >= 30) {
-            val metrics = windowManager.maximumWindowMetrics
+            val metrics = windowManager.currentWindowMetrics
             val inset = metrics.windowInsets.getInsetsIgnoringVisibility(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
             android.graphics.Rect(inset.left, inset.top, metrics.bounds.width() - inset.right, metrics.bounds.height() - inset.bottom)
-        } else availableBounds()
+        } else android.graphics.Rect().also { r ->
+            bubbleView?.getWindowVisibleDisplayFrame(r)
+            if(r.isEmpty) r.set(availableBounds())
+        }
         fun outcome(i:Int,reason:String){
+            if(reason in setOf("replacement_prepared","balloon_attached","fallback_attached"))
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(result.blocks[i].region),reason)
             if(reason in setOf("RENDER_FAILED","TRANSLATION_FAILED","CANCELLED","STALE_RESULT","fallback_attached","balloon_attached")) com.manhwalens.app.diagnostics.SessionScorecard.outcome(result.id,result.blocks[i].region,reason)
-            com.manhwalens.app.diagnostics.Diagnostics.info("funnel","render","page=${result.id} bounds=${result.blocks[i].region.let { "${it.left},${it.top},${it.right},${it.bottom}" }} outcome=$reason")
+            com.manhwalens.app.diagnostics.Diagnostics.info("funnel","render","page=${result.id} bounds=${result.blocks[i].region.let { "${it.left},${it.top},${it.right},${it.bottom}" }} outcome=$reason",traceId=result.traceId)
         }
         val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,bounds.bottom)
         val occupied = translationRects.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }.toMutableList()
@@ -483,7 +490,7 @@ class BubbleOverlayService : Service() {
                 if(tight==s) null else runCatching { DirectTranslationLayout.prepare(this,block.translated,tight,screen,obstacles) { metrics -> measured=true; outcome(i,metrics) } }.getOrNull()
             }
             val prepared=tightFit ?: source?.takeIf { !measured && it.mask==null }?.let { DirectTranslationLayout.nearby(this,block.translated,it,screen,obstacles) }
-            if(prepared==null) { fallback(); return@forEachIndexed }
+            if(prepared==null) { outcome(i,if(measured) "unfit_or_raster_failed" else "no_safe_surface"); fallback(); return@forEachIndexed }
             outcome(i,"replacement_prepared")
             val surface=prepared.surface; val text=prepared.view
             val params=WindowManager.LayoutParams(surface.width,surface.height,overlayType(),
@@ -498,6 +505,7 @@ class BubbleOverlayService : Service() {
                 attached[text]=Attached(owner,id,hash,key)
                 text.postDelayed({if(text in attached){discard(text);if(CaptureManager.sessionActive)ScreenCaptureService.captureNow(this)}},120_000L)
                 text.onPresented={checkCoverage?.invoke()}
+                text.onRasterLost={ if(text in attached && current()) { discard(text); fallback();checkCoverage?.invoke() } }
                 occupied.add(surface); displayedBlocks.add(key); outcome(i,"balloon_attached")
             } else { fallback() }
         }
@@ -533,6 +541,7 @@ class BubbleOverlayService : Service() {
             } } }
             val status=ReplacementCommit.coverage(owner,active,expected,visible,final,failed)
             com.manhwalens.app.diagnostics.Diagnostics.info("overlay","render_coverage","id=${owner.result} revision=${owner.scene} visible=${expected.count { visible[it]==owner }} expected=${expected.size} status=$status")
+            if(status!=ReplacementCommit.Coverage.NONE && CaptureManager.sessionActive) CaptureManager.setLive(CaptureManager.LiveStatus.READY)
             if(status!=ReplacementCommit.Coverage.NONE) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(owner.result,"T10")
             if(status==ReplacementCommit.Coverage.COMPLETE) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(owner.result,"T12")
         }

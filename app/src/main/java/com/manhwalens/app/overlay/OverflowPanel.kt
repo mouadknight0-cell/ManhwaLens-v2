@@ -26,6 +26,7 @@ internal class OverflowPanel(context: Context, dismiss: () -> Unit) : LinearLayo
         setBackgroundColor(Color.rgb(32,32,36))
         addView(Button(context).apply { setText(R.string.result_close); setOnClickListener { dismiss() } }, -1,-2)
         addView(reader, LayoutParams(-1,0,1f))
+        reader.setOnScrollChangeListener { _,_,_,_,_ -> invalidate() }
     }
     val presented=mutableSetOf<PageState.Id>()
     var onPresented:(()->Unit)?=null

@@ -745,7 +745,11 @@ class ScreenCaptureService : Service() {
             onReady = { completed ->
                 currentCoroutineContext().ensureActive()
                 if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
-                completed.filter { pending.remove(it.region) }.forEach { b->stage(b.region,"translation_outcome",b.errorCode ?: b.method) }
+                completed.filter { pending.remove(it.region) }.forEach { b->
+                    stage(b.region,"translation_outcome",b.errorCode ?: b.method)
+                    if(b.errorCode==null && b.translated.isNotBlank() && b.translated!=b.original)
+                        com.manhwalens.app.diagnostics.SessionScorecard.stage(id,com.manhwalens.app.pipeline.PageState.id(b.region),"translated")
+                }
                 completed.forEach { b->b.errorCode?.let { com.manhwalens.app.diagnostics.SessionScorecard.outcome(id,b.region,it) } }
                 if (completed.any { it.errorCode == null && it.translated != it.original }) BenchmarkTracker.mark("T9")
                 BenchmarkTracker.setJourneyCounts(frame.width, frame.height, prepared.size, completed.size)
@@ -786,7 +790,7 @@ class ScreenCaptureService : Service() {
         if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
         if (liveEnabled) {
             val translated = blocks.filterNot { it.method.startsWith("Sound effect") || it.method.startsWith("Numeric") }.let { dialogue -> dialogue.isNotEmpty() && dialogue.all { it.errorCode == null && it.translated.isNotBlank() && it.original != it.translated } }
-            CaptureManager.setLive(if (translated) CaptureManager.LiveStatus.READY else CaptureManager.LiveStatus.NO_TRANSLATION)
+            if(!translated) CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION) // READY belongs to the drawn overlay.
         }
         commit("final"){CaptureManager.setState(CaptureManager.CaptureState.Done(result))}
         scope.launch {

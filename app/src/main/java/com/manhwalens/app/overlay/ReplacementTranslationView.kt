@@ -52,7 +52,7 @@ class ReplacementTranslationView(context: Context, val message: String,
         val insetY = if (surface.oval) h * ovalMargin else 0f
         content.set(insetX + padding, insetY + padding, w - insetX - padding, h - insetY - padding)
         surface.mask?.inset?.let { content.set(it[0]+padding,it[1]+padding,it[2]-padding,it[3]-padding) }
-        content.intersect(0f,0f,w.toFloat(),h.toFloat())
+        if (!content.intersect(0f,0f,w.toFloat(),h.toFloat())) content.setEmpty()
         val width = content.width().toInt().coerceAtLeast(1)
         val c = surface.color
         val luminance = Color.red(c) * .2126 + Color.green(c) * .7152 + Color.blue(c) * .0722
@@ -79,16 +79,18 @@ class ReplacementTranslationView(context: Context, val message: String,
         // the line box. getLineMax measures visible content, not that whitespace.
         fun fits(candidate: StaticLayout): Boolean = candidate.height <= content.height() && wordsIntact(candidate) &&
             (0 until candidate.lineCount).all { candidate.getLineMax(it) <= width + .5f }
+        var last:StaticLayout?=null
         var low = 12; var high = 42; var chosen = 0
         // Bound pathological text layout cost; bounded layout work, never silent clipping.
-        if (message.length <= 20000) while (low <= high) {
+        if (content.width()>=1 && content.height()>=1 && message.length <= 20000) while (low <= high) {
             val mid = (low + high) / 2
-            if (fits(make(displayMessage, mid.toFloat()))) { chosen = mid; low = mid + 1 } else high = mid - 1
+            val attempt=make(displayMessage,mid.toFloat()); last=attempt
+            if (fits(attempt)) { chosen = mid; low = mid + 1 } else high = mid - 1
         }
         fittedSp = if (chosen == 0) 12f else chosen.toFloat()
         layout = if (chosen == 0) null else make(displayMessage, fittedSp)
-        val measured = layout ?: make(displayMessage.take(20000), 12f)
-        measurement = "interior=${width}x${content.height().toInt()} sp=$fittedSp lines=${measured.lineCount} required_height=${measured.height} fits=${layout!=null}"
+        val measured = layout ?: last
+        measurement = "interior=${width}x${content.height().toInt()} sp=$fittedSp lines=${measured?.lineCount} required_height=${measured?.height} fits=${layout!=null}"
         contentDescription = message
         // A hard allocation budget. Unknown / oversized / failed layouts keep the source visible.
         val text = layout
@@ -121,11 +123,12 @@ class ReplacementTranslationView(context: Context, val message: String,
     var presented=false
         private set
     var onPresented:(()->Unit)?=null
+    var onRasterLost:(()->Unit)?=null
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val image = prepared ?: return // no independent background paint exists
         try { canvas.drawBitmap(image, 0f, 0f, null); if(!presented){presented=true; post { onPresented?.invoke() }} }
-        catch (failure: Exception) { prepared = null; postInvalidate() }
+        catch (failure: Exception) { prepared = null; post { onRasterLost?.invoke() }; postInvalidate() }
     }
 
     override fun onDetachedFromWindow() {
