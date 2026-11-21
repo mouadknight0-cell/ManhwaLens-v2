@@ -723,7 +723,7 @@ class ScreenCaptureService : Service() {
                     val chosen=if(best!=null && lexical(best)>=lexical(region)) region.copy(text=best.text,confidence=best.confidence) else region
                     if((chosen.text!=region.text || translated.errorCode=="OCR-UNCERTAIN") && chosen.confidence>=.30f && lexical(chosen)>=.8) translation.translateBlock(chosen,learnedNames,previousSource,true) else translated
                 } else translated
-                Diagnostics.info("funnel","block","page=$journeyId bounds=${region.left},${region.top} stage=${recovered.method} repaired=${recovered.original!=region.text} elapsed_us=${(System.nanoTime()-blockStart)/1000}",traceId=traceId)
+                Diagnostics.info("funnel","block","page=$journeyId bounds=${region.left},${region.top} stage=${recovered.method} ocr=${region.ocrPass} repaired=${recovered.original!=region.text} elapsed_us=${(System.nanoTime()-blockStart)/1000}",traceId=traceId)
                 pageState.save(region,contextKey,recovered)
                 recovered.also {
                     Diagnostics.info("translate", "block_complete", "block processing complete",

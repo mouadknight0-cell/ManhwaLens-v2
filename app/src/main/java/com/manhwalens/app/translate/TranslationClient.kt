@@ -49,7 +49,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val terms=ReadingGlossary.murim+readings()
         val nameTerms=com.manhwalens.app.phrasebook.PhraseLibrary.ready()?.names().orEmpty()
         val safeTerms=terms.filterKeys {it.contains(' ') || it in setOf("luoyang","jeong-ah","geumju") || it in glossaryNames}+nameTerms
-        val protectedNames=(glossaryNames+terms.keys).distinct()
+        val protectedNames=(glossaryNames+terms.keys+nameTerms.keys).distinct()
         val normalized = try { com.manhwalens.app.pipeline.TranslationInput.prepare(region.text, protectedNames) }
         catch (failure: IllegalArgumentException) {
             Diagnostics.error("translate", "input_name_shield", "TR-NAME-SHIELD", "name protection failed before OCR repair", throwable = failure)
@@ -65,13 +65,13 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             phraseCache.get(cacheIdentity)?.let { com.manhwalens.app.diagnostics.SessionScorecard.lookup(true,System.nanoTime()-lookupStart);Diagnostics.info("phrasebook","cache","hit");return TranslatedBlock(region,normalized,it,method="Phrasebook cache") }
             try {
                 val match=book.render(normalized){ part,subs ->translateText(part,glossaryNames,if(subs.isEmpty())emptyMap() else subs,retryCase) }
-                if(match!=null && ArabicOutput.hasLetters(match.text) && match.text.none { it in 'A'..'Z' || it in 'a'..'z' }){
+                if(match!=null && ArabicOutput.hasLetters(match.text) && ReplacementQuality.issue(normalized,match.text)==null && match.text.none { it in 'A'..'Z' || it in 'a'..'z' }){
                     val ar=com.manhwalens.app.phrasebook.ArabicFinish.apply(match.text);phraseCache.put(cacheIdentity,ar)
                     com.manhwalens.app.diagnostics.SessionScorecard.lookup(true,System.nanoTime()-lookupStart)
                     Diagnostics.info("phrasebook","match","stage=${match.stage} repaired=${normalized!=region.text}")
                     return TranslatedBlock(region,normalized,ar,method="Phrasebook ${match.stage}")
-                }
-            }catch(c:kotlinx.coroutines.CancellationException){throw c}catch(e:TranslationFailure){Diagnostics.info("phrasebook","discard","reason=${e.code}") }
+                }else if(match!=null){com.manhwalens.app.diagnostics.SessionScorecard.discard();Diagnostics.info("phrasebook","discard","reason=output_gate stage=${match.stage}")}
+            }catch(c:kotlinx.coroutines.CancellationException){throw c}catch(e:TranslationFailure){com.manhwalens.app.diagnostics.SessionScorecard.discard();Diagnostics.info("phrasebook","discard","reason=${e.code}") }
         }
         val known=com.manhwalens.app.translate.DialogueLexicon.interjection(normalized)
         val reviewed = known ?: terms[normalized.trimEnd('!','?','.','…').lowercase()]?.let { it+normalized.takeLastWhile { c->c in "!?.…" }.replace('?','؟') } ?: if (NameDetector.find(normalized,glossaryNames).none { it.source==com.manhwalens.app.names.NameHit.Source.GLOSSARY && it.name.lowercase() !in terms }) DialogueLexicon.translate(normalized, previous,terms,fuzzy=true) else null

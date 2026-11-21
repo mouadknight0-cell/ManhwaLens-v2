@@ -16,6 +16,7 @@ data class TextRegion(
     val languageHint: String? = null,
     /** Ephemeral screen-space rendering evidence, never a translation-model input. */
     val surface: com.manhwalens.app.overlay.ReplacementSurface? = null,
+    val ocrPass:String="frame",
 ) {
     val width: Int get() = (right - left).coerceAtLeast(0)
     val height: Int get() = (bottom - top).coerceAtLeast(0)

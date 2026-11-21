@@ -22,13 +22,14 @@ class QualityInstrumentedTest {
         val p=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);p.color=Color.WHITE;c.drawOval(72f,83f,566f,230f,p);p.color=Color.BLACK;p.textSize=36f;c.drawText("THIS SCENT",210f,168f,p)
         val client=TextRecognitionClient();val times=mutableListOf<Long>();val totals=mutableListOf<Long>()
         try {client.recognize(image,"en");com.manhwalens.app.phrasebook.PhraseLibrary.ready()
-            repeat(5){ val translator=com.manhwalens.app.translate.TranslationClient();try {val start=System.nanoTime()
-                val log=mutableListOf<String>();val found=com.manhwalens.app.ocr.ColorRecovery().recognize(client,image,"en",{true},log::add);val after=System.nanoTime()
+            for(cropFirst in listOf(false,true)){times.clear();totals.clear();repeat(5){ val translator=com.manhwalens.app.translate.TranslationClient();try {val start=System.nanoTime()
+                val log=mutableListOf<String>();val found=com.manhwalens.app.ocr.ColorRecovery(cropFirst).recognize(client,image,"en",{true},log::add);val after=System.nanoTime()
                 val region=found.firstOrNull {it.text.contains("SCENT",true)};assertNotNull("no eligible result: $log",region)
-                val surface=com.manhwalens.app.overlay.SurfaceDetector.detect(region!!,image.width,image.height,image::getPixel);val translated=translator.translateBlock(region.copy(surface=surface));assertTrue(translated.translated.contains("الرائحة"));times.add((after-start)/1000000);totals.add((System.nanoTime()-start)/1000000)
+                val surface=com.manhwalens.app.overlay.SurfaceDetector.detect(region!!,image.width,image.height,image::getPixel);val translated=translator.translateBlock(region.copy(surface=surface));assertTrue(translated.translated.contains("الرائحة"));times.add((after-start)/1000000);InstrumentationRegistry.getInstrumentation().runOnMainSync {assertNotNull(com.manhwalens.app.overlay.DirectTranslationLayout.prepare(ctx,translated.translated,surface,com.manhwalens.app.overlay.ReplacementSurface(0,0,image.width,image.height),emptyList()))};totals.add((System.nanoTime()-start)/1000000)
             }finally{translator.close()} }
-            android.util.Log.i("ManhwaLensFunnel","fixture_stage_ms ocr=$times processing=$totals")
-            assertTrue("OCR median $times",times.sorted()[2]<=400);assertTrue("processing median $totals",totals.sorted()[2]<=700)
+            android.util.Log.i("ManhwaLensFunnel","fixture_stage_ms crop_first=$cropFirst ocr=$times processing=$totals")
+            if(!cropFirst)continue
+            assertTrue("OCR median $times",times.sorted()[2]<=400);assertTrue("processing median $totals",totals.sorted()[2]<=700)}
         } finally {image.recycle()}
     }
     @Test fun installedApkCannotOpenNetworkSockets() {
