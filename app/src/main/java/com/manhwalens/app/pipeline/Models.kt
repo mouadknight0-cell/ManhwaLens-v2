@@ -43,6 +43,7 @@ data class CaptureResult(
     val targetLanguage: String,
     val blocks: List<TranslatedBlock>,
     val thumbnailPath: String? = null,
+    val requestedNs:Long=0L, // transient monotonic origin; never use after reload
 ) {
     val translatedText: String get() = blocks.joinToString("\n") { it.translated }
     val preview: String get() = previewOf(blocks)

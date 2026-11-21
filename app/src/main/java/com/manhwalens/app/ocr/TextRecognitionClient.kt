@@ -35,7 +35,7 @@ class TextRecognitionClient(private val keepWarm:Boolean=false,private val timin
     private fun dispose(){engines.values.forEach { it.close() };engines.clear()}
     @Synchronized override fun close(){closed=true;if(leases==0)dispose()}
 
-    private val ids=java.util.concurrent.atomic.AtomicLong()
+    private companion object {val ids=java.util.concurrent.atomic.AtomicLong()}
     private val holder=java.util.concurrent.atomic.AtomicLong()
     private val nativePermit = kotlinx.coroutines.sync.Semaphore(1)
 

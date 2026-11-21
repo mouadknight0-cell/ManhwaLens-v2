@@ -434,6 +434,9 @@ class BubbleOverlayService : Service() {
             if(tightFit==null) outcome(i,"fit_fallback source=${source?.width}x${source?.height} chars=${block.translated.length} minSp=12 occupied=${occupied.size} nearby=${prepared!=null}")
             if(prepared==null) { outcome(i,"source_fit_or_obstruction"); renderFailure=true; return@forEachIndexed }
             val surface=prepared.surface; val text=prepared.view
+            if(result.requestedNs>0)text.firstDraw={if(lastDrawnPage!=result.id && CaptureManager.activeResultId==result.id && !CaptureManager.appVisible.value){
+                lastDrawnPage=result.id;com.manhwalens.app.diagnostics.Diagnostics.info("render","first_draw","page=${result.id} prepared_to_canvas=true",durationMs=(System.nanoTime()-result.requestedNs)/1000000)
+            }}
             val params=WindowManager.LayoutParams(surface.width,surface.height,overlayType(),
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply {
                 gravity=Gravity.TOP or Gravity.LEFT; x=surface.left; y=surface.top
@@ -470,6 +473,7 @@ class BubbleOverlayService : Service() {
         if(displayedBlocks.isNotEmpty()) markRendered(result,final && !renderFailure && result.blocks.none { it.errorCode!=null })
     }
 
+    private var lastDrawnPage:String?=null
     private fun markRendered(result: CaptureResult, final: Boolean) {
         // Exact result identity prevents a queued callback marking a newer journey.
         bubbleView?.post {

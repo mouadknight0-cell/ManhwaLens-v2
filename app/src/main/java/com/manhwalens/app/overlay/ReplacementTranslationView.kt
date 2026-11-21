@@ -112,10 +112,11 @@ class ReplacementTranslationView(context: Context, val message: String,
         }
     }
 
+    internal var firstDraw:(()->Unit)?=null
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val image = prepared ?: return // no independent background paint exists
-        try { canvas.drawBitmap(image, 0f, 0f, null) }
+        try { canvas.drawBitmap(image, 0f, 0f, null);firstDraw?.let {firstDraw=null;it()} }
         catch (failure: Exception) { prepared = null; postInvalidate() }
     }
 

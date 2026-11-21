@@ -534,7 +534,8 @@ class ScreenCaptureService : Service() {
 
         // A journey = one capture → Arabic on screen. Trace id chains every stage.
         val traceId = Diagnostics.newTrace()
-        val journeyId = BenchmarkTracker.beginSession(traceId, requestNs.takeIf { it > 0 } ?: System.nanoTime())
+        val origin=requestNs.takeIf { it > 0 } ?: System.nanoTime()
+        val journeyId = BenchmarkTracker.beginSession(traceId,origin)
         CaptureManager.activeResultId = journeyId
         Diagnostics.info("capture", "capture_start", "capture journey started", traceId = traceId,
             context = mapOf("journey_id" to journeyId))
@@ -740,7 +741,7 @@ class ScreenCaptureService : Service() {
                 if (completed.any { it.errorCode == null && it.translated != it.original }) BenchmarkTracker.mark("T9")
                 BenchmarkTracker.setJourneyCounts(frame.width, frame.height, prepared.size, completed.size)
                 CaptureManager.setState(CaptureManager.CaptureState.Partial(CaptureResult(
-                    id, System.currentTimeMillis(), OCR_SOURCE, TARGET, completed)))
+                    id, System.currentTimeMillis(), OCR_SOURCE, TARGET, completed,requestedNs=origin)))
                 try { com.manhwalens.app.history.TranslationSamples.collect(id, traceId, completed) }
                 catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (failure: Exception) { Diagnostics.warn("samples", "save", "could not save translation sample", throwable = failure) }
@@ -761,7 +762,7 @@ class ScreenCaptureService : Service() {
             sourceLanguage = OCR_SOURCE,
             targetLanguage = TARGET,
             blocks = blocks.toList(),
-            thumbnailPath = thumbnailPath,
+            thumbnailPath = thumbnailPath,requestedNs=origin,
         )
         runCatching { history.add(result) }
             .onFailure {

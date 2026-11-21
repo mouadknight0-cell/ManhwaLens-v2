@@ -23,4 +23,7 @@ if [ -n "$measurement" ]; then
 fi
 adb logcat -d -s ManhwaLensFunnel:I '*:S' | tee app/build/reports/overlay-evidence/report25-funnel.txt
 grep "ManhwaLensFunnel:" app/build/reports/overlay-evidence/report25-funnel.txt | while read -r line; do echo "::notice::$line"; done
+# Keep all comparison arms in one annotation (GitHub caps annotations per step).
+summary=$(grep -E 'perf33 mode=|moved_crop pass=' app/build/reports/overlay-evidence/report25-funnel.txt | sed 's/^.*ManhwaLensFunnel: //' | paste -sd ';' -)
+[ -z "$summary" ] || echo "::notice::OCR comparison: $summary"
 exit "$status"
