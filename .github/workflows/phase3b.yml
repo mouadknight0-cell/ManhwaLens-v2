@@ -17,7 +17,3 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
       - run: bash tools/phase3b/build.sh "$RUNNER_TEMP/apks"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: phase3b-offline-instrument
-          path: ${{ runner.temp }}/apks/*.apk
