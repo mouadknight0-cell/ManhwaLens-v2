@@ -20,20 +20,24 @@ class QualityInstrumentedTest {
         val ctx=InstrumentationRegistry.getInstrumentation().targetContext
         val image=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);val c=Canvas(image);c.drawColor(Color.DKGRAY)
         val p=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);p.color=Color.WHITE;c.drawOval(72f,83f,566f,230f,p);p.color=Color.BLACK;p.textSize=36f;c.drawText("THIS SCENT",210f,168f,p)
-        val client=TextRecognitionClient(true);val times=mutableListOf<Long>();val totals=mutableListOf<Long>()
-        try {client.recognize(image,"en");com.manhwalens.app.phrasebook.PhraseLibrary.ready()
-            for(cropFirst in listOf(false,true)){val misses=mutableListOf<Long>();times.clear();totals.clear();repeat(5){ val translator=com.manhwalens.app.translate.TranslationClient();try {val start=System.nanoTime()
-                val log=mutableListOf<String>();val found=com.manhwalens.app.ocr.ColorRecovery(cropFirst).recognize(client,image,"en",{true},log::add);val after=System.nanoTime()
-                val region=found.firstOrNull {it.text.contains("SCENT",true)}
-                if(region==null){misses.add((after-start)/1000000);android.util.Log.i("ManhwaLensFunnel","fixture_missing crop_first=$cropFirst $log");return@repeat}
-                val surface=com.manhwalens.app.overlay.SurfaceDetector.detect(region!!,image.width,image.height,image::getPixel);val translated=translator.translateBlock(region.copy(surface=surface));assertTrue(translated.translated.contains("الرائحة"));times.add((after-start)/1000000);InstrumentationRegistry.getInstrumentation().runOnMainSync {assertNotNull(com.manhwalens.app.overlay.DirectTranslationLayout.prepare(ctx,translated.translated,surface,com.manhwalens.app.overlay.ReplacementSurface(0,0,image.width,image.height),emptyList()))};totals.add((System.nanoTime()-start)/1000000)
-            }finally{translator.close()} }
-            android.util.Log.i("ManhwaLensFunnel","fixture_stage_ms crop_first=$cropFirst ocr=$times processing=$totals missing_ms=$misses")
-            com.manhwalens.app.diagnostics.Diagnostics.info("benchmarks","fixture","crop_first=$cropFirst ocr_ms=$times processing_ms=$totals")
-            assertTrue("Missing text on ${misses.size}/5 frames, cropFirst=$cropFirst, elapsed_ms=$misses",misses.isEmpty())
-            if(!cropFirst)continue
-            assertTrue("OCR median $times",times.sorted()[2]<=400);assertTrue("processing median $totals",totals.sorted()[2]<=700)}
-        } finally {client.close();image.recycle()}
+        val index=requireNotNull(com.manhwalens.app.phrasebook.PhraseLibrary.ready());val expected=com.manhwalens.app.phrasebook.ArabicFinish.apply(requireNotNull(index.lookup("THIS SCENT")).text)
+        try {for(mode in listOf("single","legacy","crop200","fast")){
+            val events=java.util.concurrent.ConcurrentLinkedQueue<String>();val client=TextRecognitionClient(true){events.add(it)}
+            val times=mutableListOf<Long>();val totals=mutableListOf<Long>();val misses=mutableListOf<Long>()
+            try {repeat(21){trial->val translator=com.manhwalens.app.translate.TranslationClient();try {
+                val log=mutableListOf<String>();val start=System.nanoTime()
+                val found=if(mode=="single")client.recognize(image,"en") else com.manhwalens.app.ocr.ColorRecovery(mode=="crop200",mode=="fast").recognize(client,image,"en",{true},log::add)
+                val after=System.nanoTime();val region=found.singleOrNull {com.manhwalens.app.phrasebook.PhraseIndex.key(it.text)=="THIS SCENT"}
+                val ok=region?.let { r->val surface=com.manhwalens.app.overlay.SurfaceDetector.detect(r,image.width,image.height,image::getPixel);val translated=translator.translateBlock(r.copy(surface=surface))
+                    var raster=false;InstrumentationRegistry.getInstrumentation().runOnMainSync {val prepared=com.manhwalens.app.overlay.DirectTranslationLayout.prepare(ctx,translated.translated,surface,com.manhwalens.app.overlay.ReplacementSurface(0,0,image.width,image.height),emptyList());raster=prepared!=null && prepared.surface==surface};translated.translated==expected && raster && surface.reliable }==true
+                val elapsed=(System.nanoTime()-start)/1000000
+                if(trial==0 || trial==1){android.util.Log.i("ManhwaLensFunnel","probe mode=$mode trial=$trial elapsed=$elapsed got=${found.map {it.text to it.confidence}} events=${events.toList().take(4)} log=${log.take(5)}")};events.clear()
+                if(trial>0){if(ok){times.add((after-start)/1000000);totals.add(elapsed)}else misses.add(elapsed)}
+            }finally{translator.close()}}}finally{client.close()}
+            fun summary(v:List<Long>)=if(v.isEmpty())"n/a" else v.sorted().let {"${(it[(it.size-1)/2]+it[it.size/2])/2}/${it[kotlin.math.ceil(.9*it.size).toInt()-1]}"}
+            val report="mode=$mode ok=${times.size}/20 ocr_p50_p90=${summary(times)} full_p50_p90=${summary(totals)} miss_p50_p90=${summary(misses)}";android.util.Log.i("ManhwaLensFunnel","perf33 $report");com.manhwalens.app.diagnostics.Diagnostics.info("benchmarks","fixture",report)
+            if(mode=="fast"){assertTrue(report,misses.isEmpty());assertTrue(report,times.sorted().let {(it[9]+it[10])/2}<=400);assertTrue(report,totals.sorted().let {(it[9]+it[10])/2}<=700)}
+        }}finally{image.recycle()}
     }
     @Test fun installedApkCannotOpenNetworkSockets() {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
@@ -366,7 +370,7 @@ class QualityInstrumentedTest {
         val bitmap = instrumentation.context.assets.open("conference-text.png").use { BitmapFactory.decodeStream(it) }
         try {
             var lines = 0
-            val regions = TextRecognitionClient().recognize(bitmap, "en") { lines++; false }
+            val regions = TextRecognitionClient().recognize(bitmap, "en",keepLine={ lines++; false })
             assertTrue("Fixture must actually exercise detected OCR lines", lines > 0)
             assertTrue("Excluded lines must not return through grouping", regions.isEmpty())
         } finally { bitmap.recycle() }

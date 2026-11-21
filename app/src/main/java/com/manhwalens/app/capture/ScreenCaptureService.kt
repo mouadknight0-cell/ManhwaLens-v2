@@ -112,7 +112,7 @@ class ScreenCaptureService : Service() {
             val i=y*p.rowStride+x*p.pixelStride;((buf.get(i).toInt() and 255)*3+(buf.get(i+1).toInt() and 255)*6+(buf.get(i+2).toInt() and 255))/10 } } }
     }
     private val recovery=com.manhwalens.app.ocr.ColorRecovery()
-    private val textRecognition by lazy { TextRecognitionClient(com.manhwalens.app.BuildConfig.CROP_FIRST) }
+    private val textRecognition by lazy { TextRecognitionClient(com.manhwalens.app.BuildConfig.CROP_FIRST || com.manhwalens.app.BuildConfig.FAST_FRAME){ Diagnostics.info("ocr","native_task",it) } }
     private val translation by lazy { TranslationClient(post={ (application as ManhwaLensApp).settingsRepository.corrections.value },debug={ (application as ManhwaLensApp).settingsRepository.debug.value },readings={ (application as ManhwaLensApp).settingsRepository.readings.value }) }
     private val nameGlossary by lazy { NameGlossaryStore(applicationContext) }
 
@@ -714,7 +714,7 @@ class ScreenCaptureService : Service() {
                             val row=floatArrayOf(.299f*f,.587f*f,.114f*f,0f,shift)
                             val paint=android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply { colorFilter=android.graphics.ColorMatrixColorFilter(row+row+row+floatArrayOf(0f,0f,0f,1f,0f)) }
                             android.graphics.Canvas(input).drawBitmap(frame,android.graphics.Rect(l,t,l+w,t+h),android.graphics.Rect(0,0,w*2,h*2),paint)
-                            withTimeoutOrNull(2500){ textRecognition.recognize(input,OCR_SOURCE) }?.map { it.copy(left=l+it.left/2,top=t+it.top/2,right=l+it.right/2,bottom=t+it.bottom/2) }?.filter {
+                            withTimeoutOrNull(2500){ textRecognition.recognize(input,OCR_SOURCE,pass="translation_retry") }?.map { it.copy(left=l+it.left/2,top=t+it.top/2,right=l+it.right/2,bottom=t+it.bottom/2) }?.filter {
                                 it.confidence>=.30f && com.manhwalens.app.pipeline.ReadingEnglish.retryFits(region,it) && lexical(it)>=.8
                             }?.maxByOrNull(::lexical)
                         } catch(cancelled:kotlinx.coroutines.CancellationException){ throw cancelled }

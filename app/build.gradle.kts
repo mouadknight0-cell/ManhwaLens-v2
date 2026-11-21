@@ -30,6 +30,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
+        buildConfigField("boolean", "FAST_FRAME", providers.gradleProperty("fastFrame").orElse("false").get())
         buildConfigField("boolean", "CROP_FIRST", providers.gradleProperty("cropFirst").orElse("false").get())
         buildConfigField("boolean", "STRICT_PLACEMENT", providers.gradleProperty("strictPlacement").orElse("true").get())
         // Permanent application id — must never change between releases.
