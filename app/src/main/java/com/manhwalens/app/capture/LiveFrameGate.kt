@@ -10,13 +10,14 @@ class LiveFrameGate(private val settleMs: Long = 180) {
     var revision = 0L
         private set
 
-    private var waitingSince:Long?=null
+    private var stableSamples=0
     var fraction=0.0; private set
     private var motionSince:Long?=null
     @Synchronized fun observe(sample: IntArray, nowMs: Long, confirmMotion:Boolean=false): Boolean {
         val previous = anchor
         val changed = previous == null || previous.size != sample.size || significant(previous, sample)
-        if(!changed) motionSince=null
+        if(!changed) { motionSince=null; if(previous!=null && sample.indices.any { sample[it]>=0 && previous[it]>=0 })stableSamples=(stableSamples+1).coerceAtMost(2) else stableSamples=0 }
+        else { stableSamples=0;changedAt=nowMs }
         if(changed && previous!=null && confirmMotion) {
             val first=motionSince ?: nowMs.also { motionSince=it }
             if(nowMs-first<90) return false // a single compositor transition is not a scroll
@@ -24,7 +25,6 @@ class LiveFrameGate(private val settleMs: Long = 180) {
         if (changed) {
             motionSince=null
             anchor = sample.copyOf()
-            if(waitingSince==null) waitingSince=nowMs
             changedAt = nowMs
             revision++
         }
@@ -45,13 +45,12 @@ class LiveFrameGate(private val settleMs: Long = 180) {
         fraction=if(compared>0) changed.toDouble()/compared else 0.0
         return compared > 0 && (changed.toDouble() / compared >= 0.015 || total.toDouble() / compared >= 2.5)
     }
-    @Synchronized fun ready(nowMs: Long): Boolean = anchor != null && consumed != revision && (nowMs - changedAt >= settleMs || nowMs-(waitingSince ?: nowMs)>=1200)
+    @Synchronized fun ready(nowMs: Long): Boolean = anchor != null && consumed != revision && stableSamples>=2 && nowMs-changedAt>=settleMs
     @Synchronized fun claim(nowMs: Long): Long? {
         if (!ready(nowMs)) return null
-        waitingSince=null
         consumed = revision
         return revision
     }
-    @Synchronized fun reset() { waitingSince=null; motionSince=null; anchor = null; consumed = -1; revision++; changedAt = 0 }
-    @Synchronized fun retry(nowMs: Long) { consumed = -1; changedAt = nowMs }
+    @Synchronized fun reset() { stableSamples=0; motionSince=null; anchor = null; consumed = -1; revision++; changedAt = 0 }
+    @Synchronized fun retry(nowMs: Long) { consumed = -1; stableSamples=0; changedAt = nowMs }
 }

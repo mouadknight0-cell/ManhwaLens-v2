@@ -11,7 +11,7 @@ import kotlin.math.ceil
 object SessionScorecard {
     private var archive:android.content.SharedPreferences?=null
     private val decisions=ArrayDeque<String>()
-    @Synchronized fun gate(ms:Long,fraction:Double,motion:Boolean,ready:Boolean){if(decisions.size>=96)decisions.removeFirst();decisions.addLast("t_ms=$ms changed_pct=${(fraction*10000).toInt()/100.0} motion=$motion ready=$ready max_wait_ms=1200")}
+    @Synchronized fun gate(ms:Long,fraction:Double,motion:Boolean,ready:Boolean){if(decisions.size>=96)decisions.removeFirst();decisions.addLast("t_ms=$ms changed_pct=${(fraction*10000).toInt()/100.0} motion=$motion ready=$ready stability_required=true")}
     private var current:Counts?=null
     private class Counts {
         val since=System.currentTimeMillis(); var page="";val ledger=mutableMapOf<PageState.Id,String>()

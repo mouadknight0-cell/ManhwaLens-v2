@@ -138,12 +138,12 @@ class BubbleOverlayService : Service() {
     private var displayedResultId: String? = null
     private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
-    private data class Attached(val id:com.manhwalens.app.pipeline.PageState.Id,val hash:Int?,val key:String)
+    private data class Attached(val owner:ReplacementCommit.Owner,val id:com.manhwalens.app.pipeline.PageState.Id,val hash:Int?,val key:String)
     private val attached=mutableMapOf<View,Attached>()
     private fun discard(view:View){val idx=translationViews.indexOf(view);if(idx<0)return
-        runCatching { windowManager.removeView(view) };translationViews.removeAt(idx);translationRects.removeAt(idx);attached.remove(view)?.let { displayedBlocks.remove(it.key) };publishBounds() }
+        runCatching { windowManager.removeViewImmediate(view) };translationViews.removeAt(idx);translationRects.removeAt(idx);attached.remove(view)?.let { displayedBlocks.remove(it.key) };publishBounds() }
     private fun clearTranslations() {
-        translationViews.forEach { it.visibility = View.INVISIBLE; runCatching { windowManager.removeView(it) } }
+        translationViews.forEach { it.visibility = View.INVISIBLE; runCatching { windowManager.removeViewImmediate(it) } }
         debugView?.let { runCatching { windowManager.removeViewImmediate(it) } }; debugView=null
         attached.clear();translationViews.clear()
         displayedBlocks.clear()
@@ -164,6 +164,11 @@ class BubbleOverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        CaptureManager.invalidateWindows={
+            val obsolete=attached.filterValues { it.owner.scene!=CaptureManager.scene.current }.keys.toList()
+            obsolete.forEach(::discard)
+            if(obsolete.isNotEmpty()) com.manhwalens.app.diagnostics.Diagnostics.info("overlay","scene_remove","revision=${CaptureManager.scene.current} windows=${obsolete.size}")
+        }
         CaptureManager.validateOverlays={ hashes-> attached.toMap().forEach { (view,stamp)->if(stamp.hash==null || hashes[stamp.id]!=stamp.hash)discard(view) else if(!CaptureManager.appVisible.value)view.visibility=View.VISIBLE };publishBounds() }
         CaptureManager.hideControlsForFrame = {
             bubbleView?.visibility=View.INVISIBLE; actionDock?.visibility=View.INVISIBLE
@@ -209,7 +214,7 @@ class BubbleOverlayService : Service() {
         scope.launch {
             CaptureManager.live.collect { status ->
                 when (status) {
-                    CaptureManager.LiveStatus.SCROLLING, CaptureManager.LiveStatus.PAUSED_APP -> clearTranslations()
+                    CaptureManager.LiveStatus.PAUSED_APP -> clearTranslations()
                     CaptureManager.LiveStatus.PROCESSING -> {
                         acceptResults = !CaptureManager.appVisible.value
                         requestedAt = System.currentTimeMillis()
@@ -379,8 +384,11 @@ class BubbleOverlayService : Service() {
     private fun showPanel(result: CaptureResult, final: Boolean) {
         // StateFlow replays its last result to new subscribers: never render history over a different app.
         if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt) return
-        if (!ReplacementCommit.eligible(result.id, CaptureManager.activeResultId, final)) return
-        if (displayedResultId != result.id) displayedResultId = result.id
+        val owner=ReplacementCommit.Owner(result.id,result.sceneRevision)
+        fun current()=result.sceneRevision==CaptureManager.scene.current && result.id==CaptureManager.activeResultId
+        if(!current()){com.manhwalens.app.diagnostics.Diagnostics.info("overlay","stale_result","id=${result.id} revision=${result.sceneRevision}");return}
+        if(displayedResultId!=result.id){clearTranslations();displayedResultId=result.id}
+        val expected=mutableSetOf<String>()
         val bounds = if (Build.VERSION.SDK_INT >= 30) {
             val metrics = windowManager.maximumWindowMetrics
             val inset = metrics.windowInsets.getInsetsIgnoringVisibility(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
@@ -406,7 +414,8 @@ class BubbleOverlayService : Service() {
         var renderFailure = false
         result.blocks.forEachIndexed { i,block ->
             val id=com.manhwalens.app.pipeline.PageState.id(block.region);val hash=CaptureManager.pixelHashes[id]
-            val key="$id:$hash:${block.translated}"
+            val key="${block.region.left}:${block.region.top}:${block.region.right}:${block.region.bottom}:$id:$hash:${block.translated}"
+            if(block.errorCode==null && block.translated.isNotBlank() && block.translated!=block.original)expected.add(key)
             attached.filterValues { it.id==id && it.key!=key }.keys.toList().forEach(::discard)
             if (key in displayedBlocks) { outcome(i,"attached");return@forEachIndexed }
             val reason=when {
@@ -444,11 +453,11 @@ class BubbleOverlayService : Service() {
                 gravity=Gravity.TOP or Gravity.LEFT; x=surface.left; y=surface.top
             }
             text.setOnLongClickListener { clearTranslations(); true }
-            val committed=ReplacementCommit.commit(listOf(text),current={ acceptResults && !CaptureManager.appVisible.value && ReplacementCommit.eligible(result.id,CaptureManager.activeResultId,final) },
+            val committed=ReplacementCommit.commit(listOf(text),current={ acceptResults && !CaptureManager.appVisible.value && current() },
                 attach={windowManager.addView(it,params)}, remove={windowManager.removeViewImmediate(it)})
             if(committed) {
                 translationViews.add(text); translationRects.add(android.graphics.Rect(surface.left,surface.top,surface.right,surface.bottom))
-                attached[text]=Attached(id,hash,key)
+                attached[text]=Attached(owner,id,hash,key)
                 text.postDelayed({if(text in attached){discard(text);if(CaptureManager.sessionActive)ScreenCaptureService.captureNow(this)}},120_000L)
                 occupied.add(surface); displayedBlocks.add(key); outcome(i,"attached")
             } else { outcome(i,"attach_failed_or_stale"); renderFailure=true }
@@ -472,21 +481,17 @@ class BubbleOverlayService : Service() {
                 runCatching { windowManager.addView(outline,lp) }.onSuccess { debugView=outline }
             }
         }
-        if(displayedBlocks.isNotEmpty()) markRendered(result,final && !renderFailure && result.blocks.none { it.errorCode!=null })
+        markRendered(owner,expected,final,renderFailure || result.blocks.any { it.errorCode!=null || it.translated.isBlank() })
     }
 
-    private fun markRendered(result: CaptureResult, final: Boolean) {
-        // Exact result identity prevents a queued callback marking a newer journey.
+    private fun markRendered(owner:ReplacementCommit.Owner,expected:Set<String>,final:Boolean,failed:Boolean) {
         bubbleView?.post {
-            val current = CaptureManager.state.value
-            val currentId = when (current) {
-                is CaptureManager.CaptureState.Partial -> current.result.id
-                is CaptureManager.CaptureState.Done -> current.result.id
-                else -> null
-            }
-            if (currentId != result.id || displayedResultId != result.id || translationViews.isEmpty()) return@post
-            if (result.blocks.any { it.errorCode == null && it.translated != it.original }) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T10")
-            if (final) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T12")
+            val active=CaptureManager.activeResultId?.let { ReplacementCommit.Owner(it,CaptureManager.scene.current) }
+            val visible=attached.filterKeys { it.isAttachedToWindow && it.visibility==View.VISIBLE }.values.associate { it.key to it.owner }
+            val status=ReplacementCommit.coverage(owner,active,expected,visible,final,failed)
+            com.manhwalens.app.diagnostics.Diagnostics.info("overlay","render_coverage","id=${owner.result} revision=${owner.scene} visible=${expected.count { visible[it]==owner }} expected=${expected.size} status=$status")
+            if(status!=ReplacementCommit.Coverage.NONE) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(owner.result,"T10")
+            if(status==ReplacementCommit.Coverage.COMPLETE) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(owner.result,"T12")
         }
     }
 
@@ -538,6 +543,7 @@ class BubbleOverlayService : Service() {
         bubbleView = null
         CaptureManager.overlayBounds = emptyList()
         CaptureManager.hideControlsForFrame = null
+        CaptureManager.invalidateWindows=null
         CaptureManager.validateOverlays=null
         CaptureManager.restoreControlsAfterFrame=null
         super.onDestroy()

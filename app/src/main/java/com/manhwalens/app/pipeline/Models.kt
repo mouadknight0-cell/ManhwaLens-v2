@@ -42,6 +42,7 @@ data class CaptureResult(
     val targetLanguage: String,
     val blocks: List<TranslatedBlock>,
     val thumbnailPath: String? = null,
+    val sceneRevision:Long = -1, // live ownership only; history is never attachable
 ) {
     val translatedText: String get() = blocks.joinToString("\n") { it.translated }
     val preview: String get() = previewOf(blocks)
