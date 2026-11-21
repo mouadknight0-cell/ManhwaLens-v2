@@ -253,3 +253,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Durable recovery uses SIGNING_BACKUP_PASSWORD in repository Actions secrets plus its independent owner-held backup; subsequent releases reuse the same vault.
 - This new signature cannot update v1.1.1–v1.1.6 in place. No uninstall, data clearing or automatic migration was performed.
 - App behavior is unchanged from v1.1.7; this release establishes the new recoverable signing baseline once publication is verified.
+
+### Offline reader audit (development)
+- Enforce offline-only model checks, including dependencies in the merged manifest. Missing models no longer trigger downloads.
+- Batch dark-proposer pixel sampling, reuse immutable frame samples and skip sampling when the screen is off. Add per-block dispatch diagnostics and hardware profiling tools.
+- See `docs/offline-reader-audit.md` for the measured A/B and unverified device targets.
