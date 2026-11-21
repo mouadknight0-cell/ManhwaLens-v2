@@ -18,9 +18,10 @@ object TranslationInput {
                 append(if (start || pronoun) c else c.lowercaseChar())
                 if (c.isLetterOrDigit()) start = false else if (c in ".!?") start = true
             }
-        }
+        }.let { s -> acronym.replace(s){it.value.uppercase()} }
     }
 
+    private val acronym=Regex("\\b(?:USA|UK|TV|DNA|AI|VIP|NPC|CEO|GPS|HP|MP)\\b",RegexOption.IGNORE_CASE)
     // Repeated pages, retries and lexical scoring often normalize the exact same source.
     // RAM-only, bounded; names are part of identity, so edits invalidate old matches.
     private data class Input(val raw:String,val names:List<String>)

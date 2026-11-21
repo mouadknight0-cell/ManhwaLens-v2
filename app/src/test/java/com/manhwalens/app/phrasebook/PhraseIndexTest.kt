@@ -24,6 +24,7 @@ class PhraseIndexTest {
         assertEquals("substitution",p.render("cross Silver Lake"){_,terms->if(terms.isEmpty())"cross the lake" else "اعبر بحيرة الفضة"}?.stage)
     }
     @Test fun namedRetryRequiresEveryAliasOnce(){val plan=com.manhwalens.app.names.NameRetry.plan("HYEONGJUNG LEFT",mapOf("hyeongjung" to "هيونغجونغ"))!!;assertNull(plan.restored("غادر"));assertNull(plan.restored("آدم آدم"));assertEquals("غادر هيونغجونغ",plan.restored("غادر آدم"));assertNull(com.manhwalens.app.names.NameRetry.plan("THE ASSASSINS LEFT", emptyMap()))}
+    @Test fun comicHygieneAndAcronyms(){val pairs=listOf("PROM HELL" to "FROM HELL","PROM NOW" to "FROM NOW","PROM THE" to "FROM THE","DONT GO" to "DON'T GO","ST0P" to "STOP","TH1S" to "THIS","IT WAS....." to "IT WAS...","I WILL gO" to "I WILL GO");for((raw,want) in pairs)assertEquals(raw,want,TranslationInput.prepare(raw,emptyList()));assertEquals("I saw the VIP.",TranslationInput.modelCase("I SAW THE VIP."))}
     @Test fun arabic(){assertEquals("توقف الآن…؟",ArabicFinish.apply("توقف توقف الآن ...?"))}
     @Test fun fourCorners(){for(x in listOf(0,312))for(y in listOf(0,652)){val (l,t)=DockPosition.place(x,y,48,48,144,48,360,700);assertEquals(y,t);assertEquals(if(x==0)48 else 168,l)};assertEquals(72 to 277,DockPosition.place(24,277,48,48,144,48,360,700))}
     @Test fun scroll(){val a=DoubleArray(48){((it*it*37+it*13)%119).toDouble()};assertEquals(2,VerticalPhase.shift(a,DoubleArray(48){a[(it+46)%48]}));assertNull(VerticalPhase.shift(DoubleArray(48),DoubleArray(48)))}

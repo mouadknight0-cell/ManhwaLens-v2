@@ -22,13 +22,15 @@ class QualityInstrumentedTest {
         val p=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);p.color=Color.WHITE;c.drawOval(72f,83f,566f,230f,p);p.color=Color.BLACK;p.textSize=36f;c.drawText("THIS SCENT",210f,168f,p)
         val client=TextRecognitionClient(true);val times=mutableListOf<Long>();val totals=mutableListOf<Long>()
         try {client.recognize(image,"en");com.manhwalens.app.phrasebook.PhraseLibrary.ready()
-            for(cropFirst in listOf(false,true)){times.clear();totals.clear();repeat(5){ val translator=com.manhwalens.app.translate.TranslationClient();try {val start=System.nanoTime()
+            for(cropFirst in listOf(false,true)){val misses=mutableListOf<Long>();times.clear();totals.clear();repeat(5){ val translator=com.manhwalens.app.translate.TranslationClient();try {val start=System.nanoTime()
                 val log=mutableListOf<String>();val found=com.manhwalens.app.ocr.ColorRecovery(cropFirst).recognize(client,image,"en",{true},log::add);val after=System.nanoTime()
-                val region=found.firstOrNull {it.text.contains("SCENT",true)};assertNotNull("no eligible result: $log",region)
+                val region=found.firstOrNull {it.text.contains("SCENT",true)}
+                if(region==null){misses.add((after-start)/1000000);android.util.Log.i("ManhwaLensFunnel","fixture_missing crop_first=$cropFirst $log");return@repeat}
                 val surface=com.manhwalens.app.overlay.SurfaceDetector.detect(region!!,image.width,image.height,image::getPixel);val translated=translator.translateBlock(region.copy(surface=surface));assertTrue(translated.translated.contains("الرائحة"));times.add((after-start)/1000000);InstrumentationRegistry.getInstrumentation().runOnMainSync {assertNotNull(com.manhwalens.app.overlay.DirectTranslationLayout.prepare(ctx,translated.translated,surface,com.manhwalens.app.overlay.ReplacementSurface(0,0,image.width,image.height),emptyList()))};totals.add((System.nanoTime()-start)/1000000)
             }finally{translator.close()} }
-            android.util.Log.i("ManhwaLensFunnel","fixture_stage_ms crop_first=$cropFirst ocr=$times processing=$totals")
+            android.util.Log.i("ManhwaLensFunnel","fixture_stage_ms crop_first=$cropFirst ocr=$times processing=$totals missing_ms=$misses")
             com.manhwalens.app.diagnostics.Diagnostics.info("benchmarks","fixture","crop_first=$cropFirst ocr_ms=$times processing_ms=$totals")
+            assertTrue("Missing text on ${misses.size}/5 frames, cropFirst=$cropFirst, elapsed_ms=$misses",misses.isEmpty())
             if(!cropFirst)continue
             assertTrue("OCR median $times",times.sorted()[2]<=400);assertTrue("processing median $totals",totals.sorted()[2]<=700)}
         } finally {client.close();image.recycle()}

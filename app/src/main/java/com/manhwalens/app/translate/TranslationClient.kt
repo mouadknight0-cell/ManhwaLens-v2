@@ -48,7 +48,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null, lexicalRetry:Boolean=false, retryCase:Boolean=false): TranslatedBlock {
         val terms=ReadingGlossary.murim+readings()
         val nameTerms=com.manhwalens.app.phrasebook.PhraseLibrary.ready()?.names().orEmpty()
-        val safeTerms=terms.filterKeys {it.contains(' ') || it in setOf("luoyang","jeong-ah","geumju") || it in glossaryNames}+nameTerms
+        val safeTerms=terms.filterKeys {it in setOf("luoyang","jeong-ah","geumju") || it in glossaryNames}+nameTerms
         val protectedNames=(glossaryNames+terms.keys+nameTerms.keys).distinct()
         val normalized = try { com.manhwalens.app.pipeline.TranslationInput.prepare(region.text, protectedNames) }
         catch (failure: IllegalArgumentException) {
@@ -60,7 +60,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val library=com.manhwalens.app.phrasebook.PhraseLibrary
         val book=library.ready()
         val ambiguous=normalized.trimEnd('.', '…').equals("no",true) && region.confidence<.60f
-        val cacheIdentity=listOf(com.manhwalens.app.phrasebook.PhraseIndex.key(normalized),"reviewed-v6",library.version,terms,post(),glossaryNames.filter { normalized.contains(it,true) }).toString()
+        val cacheIdentity=java.security.MessageDigest.getInstance("SHA-256").digest(listOf(com.manhwalens.app.phrasebook.PhraseIndex.key(normalized),"reviewed-v6",library.version,terms,post(),glossaryNames.filter { normalized.contains(it,true) }).toString().toByteArray()).let { android.util.Base64.encodeToString(it, android.util.Base64.NO_WRAP) }
         if(!ambiguous && book!=null && normalized.none { it.isLetter() && Character.UnicodeScript.of(it.code)!=Character.UnicodeScript.LATIN }) {
             phraseCache.get(cacheIdentity)?.let { com.manhwalens.app.diagnostics.SessionScorecard.lookup(true,System.nanoTime()-lookupStart);Diagnostics.info("phrasebook","cache","hit");return TranslatedBlock(region,normalized,it,method="Phrasebook cache") }
             try {
