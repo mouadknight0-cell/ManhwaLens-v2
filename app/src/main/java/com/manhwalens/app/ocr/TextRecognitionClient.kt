@@ -52,8 +52,8 @@ class TextRecognitionClient(private val keepWarm:Boolean=false,private val timin
                     val recognizer = try { acquire(script) } catch (failure: Exception) { nativePermit.release(); throw failure }
                     val copying=System.nanoTime()
                     val owned = try { bitmap.copy(Bitmap.Config.ARGB_8888, false) } catch (failure: Exception) { nativePermit.release(); release(recognizer); throw failure }
-                    val input=InputImage.fromBitmap(owned,0);val started=System.nanoTime()
-                    val task = try { recognizer.process(input) }
+                    val started=System.nanoTime()
+                    val task = try { recognizer.process(InputImage.fromBitmap(owned,0)) }
                     catch (failure: Exception) { nativePermit.release(); owned.recycle(); release(recognizer); throw failure }
                     // Task cancellation is not exposed by ML Kit. Its private bitmap lives until
                     // native completion, even when the caller's coroutine is cancelled by a swipe.
