@@ -30,8 +30,8 @@ object DirectTranslationLayout {
     fun nearby(context:Context,message:String,source:ReplacementSurface,screen:ReplacementSurface,occupied:List<ReplacementSurface>):Prepared? =
         anchored(context,message,source,null,screen,occupied){}
 
-    fun anchored(context:Context,message:String,anchor:ReplacementSurface,evidence:ReplacementSurface?,screen:ReplacementSurface,
-        occupied:List<ReplacementSurface>,report:(String)->Unit):Prepared? {
+    internal fun anchored(context:Context,message:String,anchor:ReplacementSurface,evidence:ReplacementSurface?,screen:ReplacementSurface,
+        occupied:List<ReplacementSurface>,detail:PageDetail?=null,report:(String)->Unit):Prepared? {
         if(!screen.contains(anchor) || anchor.width<=0 || anchor.height<=0){ report("out_of_bounds");return null }
         if(occupied.any { anchor.hits(it) }){ report("overlay_collision");return null }
         if(message.length>20000){report("text_capacity");return null}
@@ -55,10 +55,11 @@ object DirectTranslationLayout {
             val h=maxOf(anchor.height,layout.height+2*pad)
             if(h>screen.height || w.toLong()*h>8_000_000)continue
             fitsScreen=true
-            val candidate=positions(anchor,screen,w,h,occupied).firstOrNull() ?: continue
-            val score=w.toDouble()*h + (h-anchor.height)*anchor.width*.45 +
-                (abs(candidate.left+candidate.right-anchor.left-anchor.right)+abs(candidate.top+candidate.bottom-anchor.top-anchor.bottom))*dm.density
-            if(score<cost){cost=score;best=candidate}
+            for(candidate in positions(anchor,screen,w,h,occupied)) {
+                val score=w.toDouble()*h + (h-anchor.height)*anchor.width*.45 + (detail?.cost(candidate) ?: 0.0) +
+                    (abs(candidate.left+candidate.right-anchor.left-anchor.right)+abs(candidate.top+candidate.bottom-anchor.top-anchor.bottom))*dm.density
+                if(score<cost){cost=score;best=candidate}
+            }
         }
         val candidate=best ?: run {report(if(fitsScreen) "overlay_collision" else "text_capacity");return null}
         val c=candidate.color

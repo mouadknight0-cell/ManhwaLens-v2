@@ -14,6 +14,7 @@ object CaptureManager {
     internal var invalidateWindows:(()->Unit)?=null
     /** Called on main before acquiring a reader frame. */
     @Volatile var currentBoxes:Pair<String,List<android.graphics.Rect>>?=null
+    @Volatile internal var pageDetail:Pair<String,com.manhwalens.app.overlay.PageDetail>?=null
     @Volatile var debugBoxes: Pair<String,List<android.graphics.Rect>>? = null
     @Volatile var pixelHashes:Map<com.manhwalens.app.pipeline.PageState.Id,Int> = emptyMap()
     var validateOverlays:((Map<com.manhwalens.app.pipeline.PageState.Id,Int>)->Unit)?=null

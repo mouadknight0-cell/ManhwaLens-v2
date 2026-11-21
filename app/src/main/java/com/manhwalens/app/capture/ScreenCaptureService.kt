@@ -105,7 +105,7 @@ class ScreenCaptureService : Service() {
 
     private fun invalidateScene(reason:String) {
         val revision=CaptureManager.scene.advance {
-            CaptureManager.activeResultId=null; CaptureManager.currentBoxes=null
+            CaptureManager.activeResultId=null; CaptureManager.currentBoxes=null; CaptureManager.pageDetail=null
             CaptureManager.debugBoxes=null; CaptureManager.pixelHashes=emptyMap();pageState.clear()
         }
         if(Looper.myLooper()==Looper.getMainLooper()) CaptureManager.invalidateWindows?.invoke()
@@ -620,10 +620,11 @@ class ScreenCaptureService : Service() {
         val debug=(application as ManhwaLensApp).settingsRepository.debug.value
         val boxes=journeyId to scaledRegions.map { android.graphics.Rect(it.left,it.top,it.right,it.bottom) }
         val (prepared,readerContentBottom)=prepareRegions(scaledRegions,frame)
+        val detail=if(prepared.isEmpty()) null else journeyId to com.manhwalens.app.overlay.PageDetail.sample(frame.width,frame.height,readerContentBottom,frame::getPixel)
         val signatures=prepared.take(32).map { item->RegionPixels.capture(item.region){x,y->val c=frame.getPixel(x.coerceIn(0,frame.width-1),y.coerceIn(0,frame.height-1));(android.graphics.Color.red(c)*3+android.graphics.Color.green(c)*6+android.graphics.Color.blue(c))/10} }
         val hashes=signatures.associate { com.manhwalens.app.pipeline.PageState.id(it.region) to it.hash }
         kotlinx.coroutines.withContext(Dispatchers.Main.immediate){
-            commit("ocr_geometry"){CaptureManager.currentBoxes=boxes;CaptureManager.debugBoxes=boxes.takeIf {debug};CaptureManager.pixelHashes=hashes}
+            commit("ocr_geometry"){CaptureManager.currentBoxes=boxes;CaptureManager.pageDetail=detail;CaptureManager.debugBoxes=boxes.takeIf {debug};CaptureManager.pixelHashes=hashes}
             CaptureManager.validateOverlays?.invoke(hashes)
         }
         if(debug) android.util.Log.i("ManhwaLensFunnel","page=$journeyId detected=${scaledRegions.size} filtered=${prepared.size}")

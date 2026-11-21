@@ -405,7 +405,8 @@ class BubbleOverlayService : Service() {
             if(reason in setOf("RENDER_FAILED","TRANSLATION_FAILED","CANCELLED","STALE_RESULT","balloon_attached")) com.manhwalens.app.diagnostics.SessionScorecard.outcome(result.id,result.blocks[i].region,reason)
             com.manhwalens.app.diagnostics.Diagnostics.info("funnel","render","page=${result.id} bounds=${result.blocks[i].region.let { "${it.left},${it.top},${it.right},${it.bottom}" }} outcome=$reason",traceId=result.traceId)
         }
-        val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,bounds.bottom)
+        val detail=CaptureManager.pageDetail?.takeIf { it.first==result.id }?.second
+        val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,minOf(bounds.bottom,detail?.bottom ?: bounds.bottom))
         val occupied = translationRects.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }.toMutableList()
         val boxes=CaptureManager.currentBoxes?.takeIf { it.first==result.id }?.second.orEmpty()
         dockRect?.let { occupied.add(ReplacementSurface(it.left,it.top,it.right,it.bottom)) }
@@ -441,7 +442,7 @@ class BubbleOverlayService : Service() {
                     b.region.let { ReplacementSurface(it.left,it.top,it.right,it.bottom) }
                 }
             fun failed(){outcome(i,if(!current()) "STALE_RESULT" else "RENDER_FAILED");renderFailure=true}
-            val prepared=DirectTranslationLayout.anchored(this,block.translated,anchor,source,screen,occupied+others){outcome(i,it)}
+            val prepared=DirectTranslationLayout.anchored(this,block.translated,anchor,source,screen,occupied+others,detail){outcome(i,it)}
             if(prepared==null){failed();return@forEachIndexed}
             outcome(i,if(prepared.surface!==source && prepared.surface.capsule) "expanded_prepared" else "replacement_prepared")
             outcome(i,prepared.surface.let { "final_surface=${it.left},${it.top},${it.right},${it.bottom} ${prepared.view.measurement}" })
