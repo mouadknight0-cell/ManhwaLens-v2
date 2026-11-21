@@ -65,6 +65,10 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             phraseCache.get(cacheIdentity)?.let { com.manhwalens.app.diagnostics.SessionScorecard.lookup(true,System.nanoTime()-lookupStart);Diagnostics.info("phrasebook","cache","hit");return TranslatedBlock(region,normalized,it,method="Phrasebook cache") }
             try {
                 val match=book.render(normalized){ part,subs ->translateText(part,glossaryNames,if(subs.isEmpty())emptyMap() else subs,retryCase) }
+                if(match?.stage=="plain" && ReplacementQuality.issue(normalized,match.text)==null){
+                    com.manhwalens.app.diagnostics.SessionScorecard.lookup(false,System.nanoTime()-lookupStart)
+                    return TranslatedBlock(region,normalized,match.text,method="ML Kit plain")
+                }
                 if(match!=null && ArabicOutput.hasLetters(match.text) && ReplacementQuality.issue(normalized,match.text)==null && match.text.none { it in 'A'..'Z' || it in 'a'..'z' }){
                     val ar=com.manhwalens.app.phrasebook.ArabicFinish.apply(match.text);phraseCache.put(cacheIdentity,ar)
                     com.manhwalens.app.diagnostics.SessionScorecard.lookup(true,System.nanoTime()-lookupStart)

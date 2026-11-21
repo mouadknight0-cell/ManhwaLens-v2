@@ -28,6 +28,7 @@ class QualityInstrumentedTest {
                 val surface=com.manhwalens.app.overlay.SurfaceDetector.detect(region!!,image.width,image.height,image::getPixel);val translated=translator.translateBlock(region.copy(surface=surface));assertTrue(translated.translated.contains("الرائحة"));times.add((after-start)/1000000);InstrumentationRegistry.getInstrumentation().runOnMainSync {assertNotNull(com.manhwalens.app.overlay.DirectTranslationLayout.prepare(ctx,translated.translated,surface,com.manhwalens.app.overlay.ReplacementSurface(0,0,image.width,image.height),emptyList()))};totals.add((System.nanoTime()-start)/1000000)
             }finally{translator.close()} }
             android.util.Log.i("ManhwaLensFunnel","fixture_stage_ms crop_first=$cropFirst ocr=$times processing=$totals")
+            com.manhwalens.app.diagnostics.Diagnostics.info("benchmarks","fixture","crop_first=$cropFirst ocr_ms=$times processing_ms=$totals")
             if(!cropFirst)continue
             assertTrue("OCR median $times",times.sorted()[2]<=400);assertTrue("processing median $totals",totals.sorted()[2]<=700)}
         } finally {client.close();image.recycle()}

@@ -13,6 +13,7 @@ class PhraseIndex(rows:List<Entry>,enabled:Set<String>,presorted:Boolean=false) 
         fun key(s:String)=separators.replace(stutter.replace(s.uppercase(Locale.ROOT).replace('’','\''),"")," ").trim()
         private val token=Regex("[A-Za-z0-9]+(?:['’][A-Za-z]+)*")
         private val sentence=Regex("[^.!?…]+[.!?…]*")
+        private val sentinel=Regex("(?<![0-9])[7٧][0-9٠-٩]{3}(?![0-9])")
         private val neg=setOf("NOT","NEVER","NO","CAN'T","WON'T","DON'T","ISN'T","WASN'T")
     }
     private class Node { val next=HashMap<String,Node>();var end:Entry?=null }
@@ -62,7 +63,7 @@ class PhraseIndex(rows:List<Entry>,enabled:Set<String>,presorted:Boolean=false) 
         if(parts.size in 2..8 && parts.any {lookup(it)!=null})return Hit(parts.map {p->lookup(p)?.text?:single(p,mt)?.text?:mt(p,emptyMap())}.joinToString(" "),"sentence")
         return single(text,mt)
     }
-    private fun validArabic(s:String)=!Regex("(?<![0-9])[7٧][0-9٠-٩]{3}(?![0-9])").containsMatchIn(s) && s.any {it.isLetter() && it.code in 0x600..0x6ff} && s.none {it in 'a'..'z' || it in 'A'..'Z' || it in "{}"}
+    private fun validArabic(s:String)=!sentinel.containsMatchIn(s) && s.any {it.isLetter() && it.code in 0x600..0x6ff} && s.none {it in 'a'..'z' || it in 'A'..'Z' || it in "{}"}
     private val nameMap by lazy {exact.values.filter {it.type=="name"}.associate {it.en.lowercase(Locale.ROOT) to it.ar}}
     fun names()=nameMap
     private suspend fun single(text:String,mt:suspend(String,Map<String,String>)->String):Hit? {
