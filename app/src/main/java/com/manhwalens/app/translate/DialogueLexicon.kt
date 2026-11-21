@@ -86,7 +86,19 @@ object DialogueLexicon {
         val prefix=continuation(text,terms) ?: return Match(native(text),"ML Kit on-device")
         return Match(prefix.first+native(prefix.second),"Dialogue prefix + ML Kit")
     }
+    // Interrupted contractions carry a subject but no recoverable predicate. Require
+    // an actual trailing hesitation, not a complete clause or a bare ambiguous word.
+    private val interrupted = Regex("^(i'm|we're|she's|he's)(?:\\.{2,}|…)$", RegexOption.IGNORE_CASE)
+    private val subjects = mapOf("i'm" to "أنا", "we're" to "نحن", "she's" to "هي", "he's" to "هو")
+    private val trapped = Regex("^((?:\\.{2,}|…) )?how long (have i|have we|has he|has she) been trapped (here|there)$")
+    private val unable = mapOf("have i" to "وأنا لا أستطيع", "have we" to "ونحن لا نستطيع",
+        "has he" to "وهو لا يستطيع", "has she" to "وهي لا تستطيع")
     private fun pattern(k:String,terms:Map<String,String>):String? {
+        trapped.matchEntire(k)?.let { m ->
+            val pause = if (m.groupValues[1].isEmpty()) "" else "… "
+            val place = if (m.groupValues[3] == "here") "هنا" else "هناك"
+            return "${pause}منذ متى ${unable.getValue(m.groupValues[2])} الخروج من $place"
+        }
         title.matchEntire(k)?.let { m -> val rank=terms[m.groupValues[1]] ?:return null;val house=terms[m.groupValues[3]]?:return null;val name=terms[m.groupValues[2]]?:return null;return "$rank في $house في $name" }
         alive.matchEntire(k)?.let { m -> terms[m.groupValues[1]]?.let { return "$it على قيد الحياة حتى الآن" } }
         ahead.matchEntire(k)?.let { return terms[it.groupValues[1]]?.let { term->"هناك $term أمامنا" } }
@@ -119,6 +131,9 @@ object DialogueLexicon {
         return match(text,previous,terms,fuzzy)?.text
     }
     internal fun match(text:String,previous:String?,terms:Map<String,String>,fuzzy:Boolean):Match? {
+        interrupted.matchEntire(text.trim().replace('’', '\''))?.let {
+            return Match(subjects.getValue(it.groupValues[1].lowercase()) + "…", "Dialogue pattern")
+        }
         val k=key(text)
         val hit=when {
             k=="am i" && previous?.let(::key)=="where" -> Match("أنا","Dialogue pattern")

@@ -21,6 +21,16 @@ object TranslationInput {
         }
     }
 
+    // Paraphrase the multiword predicate, not the surrounding sentence. Run only
+    // after shielding: objects, speaker, negation, and clause boundaries stay intact.
+    private val blindEye = Regex("\\b(turn|turns|turned|turning) a blind eye to(?= [a-z0-9])", RegexOption.IGNORE_CASE)
+    private val ignore = mapOf("turn" to "deliberately ignore", "turns" to "deliberately ignores",
+        "turned" to "deliberately ignored", "turning" to "deliberately ignoring")
+    fun nativeInput(masked:String):String = blindEye.replace(modelCase(masked)) { m ->
+        val verb = ignore.getValue(m.groupValues[1].lowercase())
+        if (m.value.first().isUpperCase()) verb.replaceFirstChar(Char::uppercaseChar) else verb
+    }
+
     // Repeated pages, retries and lexical scoring often normalize the exact same source.
     // RAM-only, bounded; names are part of identity, so edits invalidate old matches.
     private data class Input(val raw:String,val names:List<String>)

@@ -94,12 +94,12 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
         val corrections=post()
         val identity = corrections.toSortedMap().toString() + terms.toSortedMap().toString() + "\u0000" + com.manhwalens.app.pipeline.TranslationCache.normalize(trimmed) + "\u0000" + glossaryNames.filter { trimmed.contains(it,ignoreCase=true) }.sorted().joinToString("\u0000")
-        val cacheKey = "validated-v5:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
+        val cacheKey = "validated-v6:en>ar:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
         cache.get(cacheKey)?.let { return it }
 
         val maskResult = try { ReadingGlossary.modelMask(trimmed, glossaryNames,terms) }
             catch (failure: IllegalArgumentException) { throw TranslationFailure("TR-NAME-SHIELD") }
-        val modelInput = com.manhwalens.app.pipeline.TranslationInput.modelCase(if(retryCase) maskResult.maskedText.uppercase() else maskResult.maskedText)
+        val modelInput = com.manhwalens.app.pipeline.TranslationInput.nativeInput(if(retryCase) maskResult.maskedText.uppercase() else maskResult.maskedText)
         val arabicMask=maskResult.copy(names=maskResult.names.map { terms[it.lowercase()] ?: it })
         val protected = arabicMask.names
 
