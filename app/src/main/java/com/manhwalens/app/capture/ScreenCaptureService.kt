@@ -750,7 +750,11 @@ class ScreenCaptureService : Service() {
                     if(b.errorCode==null && b.translated.isNotBlank() && b.translated!=b.original)
                         com.manhwalens.app.diagnostics.SessionScorecard.stage(id,com.manhwalens.app.pipeline.PageState.id(b.region),"translated")
                 }
-                completed.forEach { b->b.errorCode?.let { com.manhwalens.app.diagnostics.SessionScorecard.outcome(id,b.region,it) } }
+                completed.forEach { b->b.errorCode?.let { error ->
+                    val score=com.manhwalens.app.diagnostics.SessionScorecard
+                    score.stage(id,com.manhwalens.app.pipeline.PageState.id(b.region),error)
+                    score.outcome(id,b.region,"TRANSLATION_FAILED")
+                } }
                 if (completed.any { it.errorCode == null && it.translated != it.original }) BenchmarkTracker.mark("T9")
                 BenchmarkTracker.setJourneyCounts(frame.width, frame.height, prepared.size, completed.size)
                 commit("partial"){CaptureManager.setState(CaptureManager.CaptureState.Partial(CaptureResult(

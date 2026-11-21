@@ -138,6 +138,11 @@ class BubbleOverlayService : Service() {
     private var panel: OverflowPanel? = null
     private var panelRect: android.graphics.Rect? = null
     private var panelScene = -1L
+    // Failed panel adds are sticky for this page and window environment. A replay
+    // cannot remeasure the same balloon. Only a changed environment permits one
+    // further panel add; a panel attached for another row can always accept text.
+    private data class WindowState(val bounds:android.graphics.Rect,val token:android.os.IBinder?,val permitted:Boolean)
+    private val blockedWindows=mutableMapOf<String,Pair<WindowState,Int>>()
     private val dismissed = mutableSetOf<String>()
     private var checkCoverage: (() -> Unit)? = null
     private fun closePanel() {
@@ -149,6 +154,9 @@ class BubbleOverlayService : Service() {
         obstacles:List<ReplacementSurface>, valid:()->Boolean):Boolean {
         if(!valid()) return false
         panel?.let { it.put(entry); return true }
+        val environment=WindowState(bounds,bubbleView?.windowToken,Settings.canDrawOverlays(this))
+        val previous=blockedWindows[entry.key]
+        if(previous!=null && (previous.first==environment || previous.second>=2)) return false
         val w=minOf(bounds.width(),dp(320)); val h=minOf(bounds.height()/3,dp(204))
         if(w<=0 || h<=dp(52)) return false
         val corners=listOf(bounds.bottom-h,bounds.top).flatMap { y -> listOf(bounds.right-w,bounds.left).map { x -> android.graphics.Rect(x,y,x+w,y+h) } }
@@ -163,7 +171,10 @@ class BubbleOverlayService : Service() {
         val lp=WindowManager.LayoutParams(w,h,overlayType(),WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply {
             gravity=Gravity.LEFT or Gravity.TOP; x=r.left; y=r.top
         }
-        if(!ReplacementCommit.commit(listOf(v),valid,{windowManager.addView(it,lp)},{windowManager.removeViewImmediate(it)})) return false
+        if(!ReplacementCommit.commit(listOf(v),valid,{windowManager.addView(it,lp)},{windowManager.removeViewImmediate(it)})) {
+            blockedWindows[entry.key]=environment to ((previous?.second ?: 0)+1)
+            return false
+        }
         panel=v; panelRect=r; panelScene=owner.scene; publishBounds()
         v.onPresented={checkCoverage?.invoke()}
         return true
@@ -176,7 +187,7 @@ class BubbleOverlayService : Service() {
     private fun discard(view:View){val idx=translationViews.indexOf(view);if(idx<0)return
         runCatching { windowManager.removeViewImmediate(view) };translationViews.removeAt(idx);translationRects.removeAt(idx);attached.remove(view)?.let { displayedBlocks.remove(it.key) };publishBounds() }
     private fun clearTranslations() {
-        checkCoverage=null;closePanel();dismissed.clear()
+        checkCoverage=null;closePanel();dismissed.clear();blockedWindows.clear()
         translationViews.forEach { it.visibility = View.INVISIBLE; runCatching { windowManager.removeViewImmediate(it) } }
         debugView?.let { runCatching { windowManager.removeViewImmediate(it) } }; debugView=null
         attached.clear();translationViews.clear()
@@ -257,7 +268,7 @@ class BubbleOverlayService : Service() {
                         acceptResults = !CaptureManager.appVisible.value
                         requestedAt = System.currentTimeMillis()
                     }
-                    CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR -> clearTranslations()
+                    CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR -> { acceptResults=false; clearTranslations() }
                     else -> Unit
                 }
                 updateControlState()
@@ -475,9 +486,10 @@ class BubbleOverlayService : Service() {
             val others=boxes.filterNot { it.left==r.left && it.top==r.top && it.right==r.right && it.bottom==r.bottom }.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }
             fun fallback() {
                 val ok=placeOverflow(OverflowPanel.Entry(block,result.traceId,key,hash),owner,bounds,occupied+others+listOfNotNull(source)) { current() && acceptResults && !CaptureManager.appVisible.value }
-                outcome(i,if(ok) "fallback_attached" else if(!current()) "STALE_RESULT" else "RENDER_FAILED")
+                outcome(i,if(ok) "fallback_attached" else if(!current()) "STALE_RESULT" else if(!acceptResults) "CANCELLED" else "RENDER_FAILED")
                 if(!ok) renderFailure=true
             }
+            if(key in blockedWindows) { fallback(); return@forEachIndexed }
             var measured=false
             val obstacles=occupied+others+listOfNotNull(panelRect?.let { ReplacementSurface(it.left,it.top,it.right,it.bottom) })
             val expanded=source?.takeIf { it.reliable || it.patch?.size?.toLong()==it.width.toLong()*it.height }?.let {
