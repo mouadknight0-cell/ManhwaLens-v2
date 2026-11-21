@@ -1,0 +1,41 @@
+id	scene	category	original_en	context_for_reviewer_only	independent_ar_reference
+01	Kitchen mishap	everyday	Never mind.	Withdraws a request, no anger.	لا عليك.
+02	Kitchen mishap	everyday	What are you doing?	A cook catches her brother hiding the pan.	ماذا تفعل؟
+03	Kitchen mishap	surprise	Seriously?	He cannot believe the pan was a gift.	حقًّا؟
+04	Kitchen mishap	embarrassment	Don't look at me like that.	He blushes under his sister's gaze.	لا تنظري إليّ هكذا.
+05	Kitchen mishap	humor	What a genius.	She surveys the pan he tried to mend with wax.	يا له من عبقري!
+06	Bridge rescue	idiom	Hang on!	To a boy slipping from a ledge.	تمسّك جيدًا!
+07	Bridge rescue	desperation	Please, please don't let go!	Boy pleading with his sister; keep emphasis.	أرجوكِ، أرجوكِ لا تفلتي يدي!
+08	Bridge rescue	relief	That was close.	A stone just missed her head.	كدتُ أُصاب!
+09	Bridge rescue	group	We can't leave them behind.	Two rescuers see survivors across the river.	لا يمكننا أن نتركهم هنا ونرحل.
+10	Bridge rescue	command	Retreat!	Captain calls to the whole group.	تراجعوا!
+11	Council vote	idiom	Hang on!	Interjects to ask the chairwoman to wait.	مهلًا!
+12	Council vote	addressee	You were right.	Acknowledging one woman's judgment.	كنتِ على حق.
+13	Council vote	addressee	You were right.	Acknowledging a group of advisers.	كنتم على حق.
+14	Council vote	addressee	You were right.	Unseen correspondent; number and gender unknown.	كان رأيك صائبًا.
+15	Council vote	suspicion	That doesn't sit right with me.	Treasurer doubts the witness's explanation.	لا أرتاح إلى هذا التفسير.
+16	Duel final	idiom	That was close.	A narrow win by one point, not physical danger.	فزنا بفارق ضئيل.
+17	Duel final	excitement	I knew it!	Fan celebrates a prediction coming true.	كنت أعرف أنه سيفوز!
+18	Duel final	idiom	Don't get ahead of yourself.	Coach cautions a male rookie celebrating before the result.	لا تستبق الأحداث.
+19	Duel final	sarcasm	Yeah, that went well.	Loser's dry aside after his plan backfires.	أجل، نجحت الخطة فعلًا!
+20	Duel final	term	His rank went up, not his skill.	Boy was promoted but fights no better.	ارتفعت رتبته، أما مهارته فلم تتحسن.
+21	Parting	anger	I'm done with you.	Woman ending her relationship with a man.	انتهى كل شيء بيننا.
+22	Parting	sadness	My sister is waiting.	Grieving narrator has to leave the funeral.	أختي تنتظرني.
+23	Parting	pronoun	I told her.	Brother told their mother the news.	أخبرتُها.
+24	Parting	pronoun	She knows.	Sister confirms their mother already knows.	إنها تعرف.
+25	War council	argument	I'm done with you.	Commander refuses to argue further, not ending relationship.	لن أواصل الجدال معك.
+26	War council	military	Keep the formation tight.	Orders to soldiers marching shoulder to shoulder.	حافظوا على تراصّ الصفوف.
+27	War council	relationship	His master called him.	Disciple hears his own teacher summon him.	ناداه معلّمه.
+28	War council	condition	If the sect sends another disciple, tell him the pass is closed because the bridge fell.	Commander instructs one male sentry. Preserve condition, recipient and cause.	إذا أرسلت الطائفة تلميذًا آخر فأخبره بأن الممر مغلق لأن الجسر انهار.
+29	Dungeon gate	magic	The formation feeds the barrier.	Inscribed magical array powers a defensive shield.	تمدّ المصفوفة السحرية الحاجز بالطاقة.
+30	Dungeon gate	fantasy	Since her awakening, she can sense mana inside the dungeon.	Narration about a novice gaining powers.	منذ أن استيقظت قواها، صارت تحسّ بالمانا داخل الدهليز.
+31	Dungeon gate	thought	If I spend my last drop of mana now,	First of two adjacent bubbles of one internal thought; evaluate clauses jointly too.	إذا استنفدت الآن آخر قطرة من المانا لديّ،
+32	Dungeon gate	thought	who will hold the barrier when the others return?	Second bubble, same speaker; hold means sustain.	فمن سيُبقي الحاجز قائمًا عندما يعود الآخرون؟
+33	Dungeon gate	fear	I have a bad feeling about this.	Whispered foreboding, not a physical illness.	يراودني شعور بأن مكروهًا سيقع.
+34	Night watch	interrupted	I thought you were—	Guard cut off mid-thought; do not supply missing predicate.	ظننت أنك…
+35	Night watch	sarcasm	Great. Just what we needed.	A second alarm sounds as the first dies down.	رائع. هذا ما كان ينقصنا.
+36	Night watch	idiom	Give me a break.	Exasperated guard rejects a weak excuse, not asking for time off.	كفى أعذارًا.
+37	Night watch	OCR control	Is everyone safe?	Patrol leader asks about survivors, not sanity.	هل الجميع بخير؟
+38	Night watch	disbelief	You have got to be kidding me.	Guard learns there is a third alarm.	لا بدّ أنك تمزح!
+39	Panel controls	image dialogue	WHO ARE YOU?	Identity question; addressee not established in crop.	من أنت؟
+40	Panel controls	image dialogue	I HAVE BEEN WATCHING YOU SINCE THEY PULLED OUT YOUR TONGUE.	Threatening disclosure of prolonged surveillance; plural perpetrators.	وأنا أراقبك منذ أن اقتلعوا لسانك.
