@@ -57,6 +57,7 @@ android {
 
     buildTypes {
         debug {
+            if (providers.gradleProperty("profileInstall").orNull == "true") applicationIdSuffix = ".profile"
             isMinifyEnabled = false
             isDebuggable = true
             if (hasReleaseKeystore) signingConfig = signingConfigs.getByName("release")

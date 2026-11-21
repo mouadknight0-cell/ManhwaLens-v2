@@ -48,7 +48,7 @@
         <!-- Read-only access for sharing exported diagnostic bundles. -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.manhwalens.app.fileprovider"
+            android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

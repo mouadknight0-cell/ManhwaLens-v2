@@ -40,8 +40,13 @@ internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.Bu
     // back to page discovery. Never use a positive crop to silence an unexplored busy page.
     private suspend fun flatCrops(client:TextRecognitionClient,b:Bitmap,lang:String,keep:(TextRegion)->Boolean,log:(String)->Unit):List<TextRegion>? {
         val proposals=propose(b);if(proposals.size !in 1..3)return null
-        val bg=b.getPixel(0,0);var outside=0
-        for(y in 0 until b.height step 5)for(x in 0 until b.width step 5){if(proposals.any { it.contains(x,y) })continue;outside++;if(b.getPixel(x,y)!=bg)return null};if(outside<50)return null
+        val bg=b.getPixel(0,0);val row=IntArray(b.width);var outside=0
+        // A sparse grid can miss a tiny caption. Check every pixel outside the proposals;
+        // abort at the first unexplained pixel rather than caching an incomplete page.
+        for(y in 0 until b.height){b.getPixels(row,0,row.size,0,y,row.size,1);var x=0
+            while(x<row.size){val inside=proposals.firstOrNull {it.contains(x,y)}
+                if(inside!=null){x=inside.right;continue};if(row[x++]!=bg)return null;outside++}}
+        if(outside<50)return null
         val result=mutableListOf<TextRegion>()
         for(rect in proposals){val ink=GlyphCrop.find(b,rect)?:return null;val r=ink.box
             val k=key(b,r,lang);val cached=inkCache[k];val local=cached ?: run {
@@ -52,6 +57,7 @@ internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.Bu
                 if(got.size!=1)return null;val line=got.single();if(!acceptedFirst(line) || com.manhwalens.app.phrasebook.PhraseLibrary.index?.lookup(line.text)?.stage!="exact")return null
                 line.copy(left=(sx*line.left).toInt(),top=(sy*line.top).toInt(),right=kotlin.math.ceil(sx*line.right).toInt(),bottom=kotlin.math.ceil(sy*line.bottom).toInt(),ocrPass="ink").also {inkCache[k]=it}
             }
+            if(local.left>14 || local.top>14 || local.right<r.width()-14 || local.bottom<r.height()-14)return null
             val mapped=local.copy(left=r.left+local.left,top=r.top+local.top,right=r.left+local.right,bottom=r.top+local.bottom,ocrPass=if(cached==null)"ink" else "ink_cache");if(!keep(mapped))return null;result.add(mapped)
         };log("winner=ink reviewed=${result.size}");return result
     }

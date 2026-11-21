@@ -22,8 +22,14 @@ if [ -n "$measurement" ]; then
   echo "::notice::$measurement"
 fi
 adb logcat -d -s ManhwaLensFunnel:I '*:S' | tee app/build/reports/overlay-evidence/report25-funnel.txt
-grep "ManhwaLensFunnel:" app/build/reports/overlay-evidence/report25-funnel.txt | while read -r line; do echo "::notice::$line"; done
-# Keep all comparison arms in one annotation (GitHub caps annotations per step).
+# GitHub caps notices per step. Emit paired measurements and test outcomes BEFORE verbose events.
 summary=$(grep -E 'perf33 mode=|moved_crop pass=' app/build/reports/overlay-evidence/report25-funnel.txt | sed 's/^.*ManhwaLensFunnel: //' | paste -sd ';' -)
 [ -z "$summary" ] || echo "::notice::OCR comparison: $summary"
+python3 - <<'PYXML'
+from pathlib import Path
+from xml.etree import ElementTree as ET
+for p in Path('app/build/outputs/androidTest-results').rglob('TEST-*.xml'):
+    cases=list(ET.parse(p).getroot().iter('testcase')); bad=[c.get('name') for c in cases if any(c.find(k) is not None for k in ('failure','error','skipped'))];print(f'::notice::Android cases={len(cases)} failed_or_skipped={bad}')
+PYXML
+grep "ManhwaLensFunnel:" app/build/reports/overlay-evidence/report25-funnel.txt | while read -r line; do echo "::notice::$line"; done
 exit "$status"
