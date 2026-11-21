@@ -638,7 +638,7 @@ class ScreenCaptureService : Service() {
         val prefs=(application as ManhwaLensApp).settingsRepository
         val dictionaryContext=Triple(learnedNames.toList(),prefs.readings.value,prefs.corrections.value)
         val attempted=java.util.concurrent.ConcurrentHashMap.newKeySet<TextRegion>()
-        val contextParts=mutableMapOf<TextRegion,String>()
+        val contextParts=mutableMapOf<TextRegion,com.manhwalens.app.pipeline.TranslatedBlock>()
         var index=0
         while(index<plan.size){val first=index++
             if(plan[first].key.issue!=null || plan[first].key.preserveSoundEffect) continue
@@ -647,17 +647,17 @@ class ScreenCaptureService : Service() {
             val chain=plan.subList(first,index).map { it.input.region };val sources=chain.map { it.text }
             if(chain.any { it.text.any { ch->ch.isLetter() && Character.UnicodeScript.of(ch.code)!=Character.UnicodeScript.LATIN } })continue
             val joined=translation.translateBlock(chain.first().copy(text=sources.joinToString(" ")),learnedNames)
-            if(joined.errorCode==null) com.manhwalens.app.pipeline.ConnectedDialogue.split(joined.translated,sources)?.forEachIndexed { i,value -> contextParts[chain[i]]=value }
+            if(joined.errorCode==null) com.manhwalens.app.pipeline.ConnectedDialogue.split(joined.translated,sources)?.forEachIndexed { i,value -> contextParts[chain[i]]=joined.copy(region=chain[i],original=chain[i].text,translated=value,method="Connected dialogue: ${joined.method}") }
         }
         val workByRegion = plan.associateBy { it.input.region }
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.map { it.region },
             onException = { Diagnostics.warn("translate","worker_exception","block attempt failed",throwable=it,traceId=traceId) },
-            identity = { workByRegion.getValue(it).key to contextParts[it] },
+            identity = { workByRegion.getValue(it).key to contextParts[it]?.translated },
             translate = { region ->
                 val started = System.nanoTime()
                 val work = workByRegion.getValue(region)
-                contextParts[region]?.let { return@progressiveTranslation com.manhwalens.app.pipeline.TranslatedBlock(region,region.text,it,method="Connected dialogue") }
+                contextParts[region]?.let { return@progressiveTranslation it }
                 val contextKey=work.key to dictionaryContext
                 pageState.find(region,contextKey)?.let { return@progressiveTranslation it }
                 val retryCase=!attempted.add(region)

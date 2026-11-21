@@ -2,8 +2,16 @@ package com.manhwalens.app.translate
 
 /** Explicit local readings, separate from unconfirmed OCR name suggestions. */
 object ReadingGlossary {
-    val murim=mapOf("my lord" to "سيدي", "young master" to "السيد الشاب", "eldest young master" to "السيد الشاب الأكبر", "sword house" to "بيت السيف", "hungry ghost" to "شبح جائع", "from hell" to "من الجحيم", "luoyang" to "لوه يانغ")
-    val defaults=murim+mapOf("wall" to "جدار","headquarters" to "المقر","geumju" to "غومجو","jeong-ah" to "جونغ آه", "formation" to "تشكيل", "barrier" to "حاجز", "sister" to "أختي", "qi" to "تشي", "sect" to "طائفة", "disciple" to "تلميذ")
+    // Only entries declared as identities participate in native token shielding. A
+    // user reading on its own is vocabulary, not confirmation of a proper name.
+    private val titles=mapOf("my lord" to "سيدي", "young master" to "السيد الشاب", "eldest young master" to "السيد الشاب الأكبر", "sword house" to "بيت السيف")
+    private val placeNames=mapOf("luoyang" to "لوه يانغ")
+    private val characterNames=mapOf("geumju" to "غومجو","jeong-ah" to "جونغ آه")
+    private val identities=titles.keys + placeNames.keys + characterNames.keys
+    val murim=titles + placeNames + mapOf("hungry ghost" to "شبح جائع", "from hell" to "من الجحيم")
+    val defaults=murim + characterNames + mapOf("wall" to "جدار","headquarters" to "المقر", "formation" to "تشكيل", "barrier" to "حاجز", "sister" to "أختي", "qi" to "تشي", "sect" to "طائفة", "disciple" to "تلميذ")
+    internal fun modelMask(source:String, confirmed:List<String>, readings:Map<String,String>) =
+        com.manhwalens.app.names.NameShield.mask(source, confirmed + readings.keys.filter { it in identities })
     fun parse(lines:String): Map<String,String>? {
         val entries=mutableMapOf<String,String>()
         for(line in lines.lineSequence().filter { it.isNotBlank() }) {

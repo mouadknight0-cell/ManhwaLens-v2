@@ -5,8 +5,14 @@ package com.manhwalens.app.translate
  * Model output is not labelled semantically verified merely because Arabic exists.
  */
 object DialogueLexicon {
-    fun interjection(text:String):String? = when(text.trim().lowercase().trimEnd('.','!','?','…').replace(Regex("(.)\\1{2,}"),"$1")) {
-        "hm","hmm"->"هم؟";"ugh","urgh"->"آخ";"huh"->"هاه؟";"tch"->"تسك";else->null
+    internal data class Match(val text:String,val method:String)
+    fun interjection(text:String):String? {
+        val input=text.trim().lowercase();val tail=input.takeLastWhile { it in ".!?…" }
+        val ar=when(input.dropLast(tail.length).replace(Regex("(.)\\1{2,}"),"$1")){
+            "hm","hmm"->"هم";"ugh","urgh"->"آخ";"huh"->"هاه";"tch"->"تسك";"oh"->"أوه";else->return null
+        }
+        // Keep the existing interrogative reading of HM..?; don't turn a statement into a question.
+        return ar + tail.replace("..?","?").replace(Regex("\\.{2,}"),"…").replace('?','؟')
     }
     private val entries = mapOf(
         "a hungry ghost from hell" to "{hungry ghost} {from hell}", "a hungry ghost from hell has appeared" to "ظهر {hungry ghost} {from hell}",
@@ -33,9 +39,8 @@ object DialogueLexicon {
         "thank goodness" to "الحمد لله",
         "never mind" to "لا عليك",
         "no way" to "مستحيل",
-        "watch out" to "احترس",
+        "watch out" to "حذارِ",
         "look out" to "انتبه",
-        "hang on" to "انتظر",
         "hold on" to "تمهّل",
         "calm down" to "اهدأ",
         "take it easy" to "على رسلك",
@@ -75,9 +80,15 @@ object DialogueLexicon {
         val reading=terms[m.groupValues[1].lowercase()] ?: return null
         return "فور موت $reading، " to m.groupValues[2]
     }
+    /** Keep provenance on the same branch that actually produced the text. */
+    internal suspend fun render(text:String,local:Match?,terms:Map<String,String>,native:suspend (String)->String):Match {
+        if(local!=null)return local
+        val prefix=continuation(text,terms) ?: return Match(native(text),"ML Kit on-device")
+        return Match(prefix.first+native(prefix.second),"Dialogue prefix + ML Kit")
+    }
     private fun pattern(k:String,terms:Map<String,String>):String? {
         title.matchEntire(k)?.let { m -> val rank=terms[m.groupValues[1]] ?:return null;val house=terms[m.groupValues[3]]?:return null;val name=terms[m.groupValues[2]]?:return null;return "$rank في $house في $name" }
-        alive.matchEntire(k)?.let { m -> terms[m.groupValues[1]]?.let { return "$it ما زال على قيد الحياة" } }
+        alive.matchEntire(k)?.let { m -> terms[m.groupValues[1]]?.let { return "$it على قيد الحياة حتى الآن" } }
         ahead.matchEntire(k)?.let { return terms[it.groupValues[1]]?.let { term->"هناك $term أمامنا" } }
         justNow.matchEntire(k)?.let { return terms[it.groupValues[1]]?.let { term->"ما كان ذلك ${if(term.startsWith("ال")) term else "ال$term"} قبل قليل" } }
         kin.matchEntire(k)?.let { if(it.groupValues[1] in setOf("sister","brother")) return terms[it.groupValues[1]]?.let { term->"جئت لآخذك يا $term" } }
@@ -87,13 +98,17 @@ object DialogueLexicon {
         var row=IntArray(b.length+1){it};var next=IntArray(b.length+1)
         for(i in a.indices){next[0]=i+1;for(j in b.indices)next[j+1]=minOf(next[j]+1,row[j+1]+1,row[j]+if(a[i]==b[j])0 else 1); val tmp=row;row=next;next=tmp};return row.last()
     }
-    private fun near(k:String,deadline:Long):String? {
+    private fun near(k:String):String? {
         if(k.length !in 8..200) return null
         val words=k.split(' '); var best:String?=null;var score=0.0
+        val unknown=words.indices.filter { com.manhwalens.app.pipeline.ReadingEnglish.validCount(words[it])==0 };if(unknown.size!=1)return null
+        val deadline=System.nanoTime()+5_000_000L
         val margin=if(k.length<=40) 2 else k.length/7
         for(bucket in (k.length-margin)/4..(k.length+margin)/4) for(candidate in (if(words.first() in firstWords) index[words.first() to bucket] else byLength[bucket]).orEmpty()) {
             if(System.nanoTime()>deadline) return null
             val cw=candidate.split(' '); if(words.size!=cw.size || words.count { it in negatives }!=cw.count { it in negatives }) continue
+            if(words.indices.any { it!=unknown.single() && words[it]!=cw[it] })continue
+            if(distance(words[unknown.single()],cw[unknown.single()])!=1)continue
             val hit=if(k.length<=40) {val d=distance(k,candidate);if(d<=2) 1.0-d.toDouble()/k.length else 0.0}
                 else words.zip(cw).count { it.first==it.second }.toDouble()/words.size
             if(hit>=.85 && hit>=score){best=if(hit==score)null else candidate;score=hit}
@@ -101,11 +116,18 @@ object DialogueLexicon {
     }
     private val negatives=setOf("not","never","no","won't","can't","don't")
     fun translate(text: String, previous: String? = null, terms: Map<String,String> = ReadingGlossary.defaults, fuzzy:Boolean=false): String? {
-        val deadline=System.nanoTime()+5_000_000L
-        val k = key(text)
-        val value = if (k == "am i" && previous?.let(::key) == "where") "أنا" else entries[k] ?: pattern(k,terms) ?: (if(fuzzy) near(k,deadline) else null) ?: return null
-        val tail = text.trim().takeLastWhile { it in ".!?…" }
-        if (k == "who are you" && tail.none { it == '?' }) return "$value؟"
-        return (ReadingGlossary.expand(value,terms) ?: return null) + tail.replace(Regex("\\.{2,}"), "…").replace('?', '؟')
+        return match(text,previous,terms,fuzzy)?.text
+    }
+    internal fun match(text:String,previous:String?,terms:Map<String,String>,fuzzy:Boolean):Match? {
+        val k=key(text)
+        val hit=when {
+            k=="am i" && previous?.let(::key)=="where" -> Match("أنا","Dialogue pattern")
+            k in entries -> Match(entries.getValue(k),"Exact dialogue lexicon")
+            else -> pattern(k,terms)?.let { Match(it,"Dialogue pattern") }
+                ?: (if(fuzzy) near(k)?.let { Match(it,"Fuzzy dialogue lexicon") } else null) ?: return null
+        }
+        val tail=text.trim().takeLastWhile { it in ".!?…" }
+        val punctuation=if(k=="who are you" && '?' !in tail) "؟" else tail.replace(Regex("\\.{2,}"),"…").replace('?','؟')
+        return hit.copy(text=(ReadingGlossary.expand(hit.text,terms) ?: return null)+punctuation)
     }
 }

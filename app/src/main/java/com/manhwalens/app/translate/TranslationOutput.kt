@@ -27,4 +27,39 @@ object TranslationOutput {
         }
         return null
     }
+    internal data class Finished(val text:String,val correctionRejected:Boolean=false)
+
+    /** Corrections are literal, non-cascading edits. Apply while identities are still
+     * shielded so an Arabic correction cannot rewrite part of a confirmed name.
+     * A malformed edit falls back to the checked original, never to an invalid cache hit. */
+    internal fun finish(source:String,raw:String,mask:NameShield.MaskResult,corrections:Map<String,String>):Finished? {
+        fun validated(masked:String):String? {
+            if(issue(masked,mask)!=null)return null
+            val final=NameShield.restore(masked,mask).replace(Regex("\\.{2,}"),"…")
+            if(mask.names.any { !final.contains(it,ignoreCase=true) })return null
+            // issue(masked,mask) already checked the untranslated body and name-only case.
+            // Check the actual final string too. For the script ratio only, exclude Latin
+            // names inserted by this restore; they must not make valid Arabic fail.
+            var scriptSample=final
+            for(name in mask.names.filter {n->n.any {Character.UnicodeScript.of(it.code)==Character.UnicodeScript.LATIN}}.sortedByDescending {it.length}){
+                scriptSample=scriptSample.replace(name, "")
+            }
+            if(scriptSample.any {Character.UnicodeScript.of(it.code)==Character.UnicodeScript.LATIN})return null
+            val error=ReplacementQuality.issue(source,final)
+            if(error!=null){
+                val protectedOnly=mask.names.isNotEmpty() && scriptSample.none(Char::isLetterOrDigit) && issue(masked,mask)==null
+                val authorizedMixed=error=="TR-UNTRANSLATED" && !source.equals(final,true) &&
+                    scriptSample!=final && ReplacementQuality.issue(source,scriptSample)==null
+                if(!protectedOnly && !authorizedMixed)return null
+            }
+            return final
+        }
+        val original=validated(raw) ?: return null
+        val keys=corrections.keys.filter {ArabicOutput.hasLetters(it)}.sortedByDescending {it.length}
+        if(keys.isEmpty())return Finished(original)
+        val pattern=Regex("(?<![\\p{L}])(?:"+keys.joinToString("|"){Regex.escape(it)}+")(?![\\p{L}])")
+        val edited=pattern.replace(raw){corrections.getValue(it.value)}
+        if(edited==raw)return Finished(original)
+        return validated(edited)?.let {Finished(it)} ?: Finished(original,correctionRejected=true)
+    }
 }
