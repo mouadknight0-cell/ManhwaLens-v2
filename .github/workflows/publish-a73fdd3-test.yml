@@ -1,0 +1,23 @@
+name: Publish existing a73fdd3 test APK
+on:
+  push:
+    branches: [arena/f6ce5fe4-manhwalens-v2]
+    paths: ['.github/workflows/publish-a73fdd3-test.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify original archive and publish APK as a separate prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/actions/artifacts/14700901845/zip" > artifact.zip
+          echo '018fd7b1be0da258ee5a8a0e352a1ba578a944129d47ce8903a09bab5f377d6c  artifact.zip' | sha256sum -c -
+          unzip -p artifact.zip app-debug.apk > ManhwaLens-test-a73fdd3.apk
+          unzip -tq ManhwaLens-test-a73fdd3.apk
+          gh release create test-a73fdd3 ManhwaLens-test-a73fdd3.apk --target a73fdd382355f5d7a3c662f3ca088826c7c52cd2 --prerelease --latest=false --title 'ManhwaLens test · a73fdd3' --notes 'Original debug APK from CI run 44888724111. Test build only; not a stable update.'
