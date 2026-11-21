@@ -28,6 +28,15 @@ object BubbleContours {
     }
     private fun rgb(r:Int,g:Int,b:Int)=(255 shl 24) or (r shl 16) or (g shl 8) or b
     private fun chroma(c:Int)=maxOf(channel(c,0),channel(c,8),channel(c,16))-minOf(channel(c,0),channel(c,8),channel(c,16))
+    /** The grid is traversed in scanlines. One JNI call per sampled row rather than per cell. */
+    fun bitmap(r:TextRegion,bg:Int,bitmap:android.graphics.Bitmap,reason:(String)->Unit={}):ReplacementSurface? {
+        val row=IntArray(minOf(bitmap.width,768));var lastY=-1;var left=0
+        return detect(r,bg,bitmap.width,bitmap.height,reason){x,y->
+            if(y!=lastY || x !in left until left+row.size){left=x.coerceAtMost(bitmap.width-row.size);lastY=y
+                bitmap.getPixels(row,0,row.size,left,y,row.size,1)}
+            row[x-left]
+        }
+    }
     fun detect(r:TextRegion,bg:Int,w:Int,h:Int,reason:(String)->Unit={},pixel:(Int,Int)->Int):ReplacementSurface? {
         val deadline=System.nanoTime()+14_000_000L
         val cx=(r.left+r.right)/2;val cy=(r.top+r.bottom)/2

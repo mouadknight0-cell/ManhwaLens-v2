@@ -855,7 +855,7 @@ class ScreenCaptureService : Service() {
                 else detected
                 val matched=(application as ManhwaLensApp).settingsRepository.matchStyle.value
                 var contourReason=if(matched) "accepted" else "style_disabled"
-                val contour = if (matched) com.manhwalens.app.overlay.BubbleContours.detect(item.region,detected.color,bitmap.width,bitmap.height,{contourReason=it},bitmap::getPixel)?.takeUnless { s ->
+                val contour = if (matched) com.manhwalens.app.overlay.BubbleContours.bitmap(item.region,detected.color,bitmap){contourReason=it}?.takeUnless { s ->
                     classified.any { other -> other!==item && com.manhwalens.app.overlay.SurfacePlacement.intersects(s,other.region.let { com.manhwalens.app.overlay.ReplacementSurface(it.left,it.top,it.right,it.bottom) }) }.also { if(it)contourReason="neighbor_source" }
                 } else null
                 val local = contour ?: if (surface.reliable) com.manhwalens.app.overlay.FlatInterior.expand(surface,bitmap.width,bitmap.height,{ s ->

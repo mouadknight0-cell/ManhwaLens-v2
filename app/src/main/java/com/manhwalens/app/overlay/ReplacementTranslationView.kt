@@ -28,6 +28,7 @@ class ReplacementTranslationView(context: Context, val message: String,
                 .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE).build()
         }
     }
+    internal val geometry get()=surface
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = surface.color or (0xff shl 24) }
 
     private val displayMessage = com.manhwalens.app.pipeline.ArabicDisplay.isolate(message)
@@ -112,8 +113,7 @@ class ReplacementTranslationView(context: Context, val message: String,
                     canvas.restore()
                 }
             }.getOrNull()?.takeIf { image ->
-                // The complete anchor was filled opaquely before drawing. Verify the
-                // registration and edge pixels of the resulting mask, not an estimate.
+                // Validate every anchor pixel, including anti-aliased source ink.
                 maskDefect=anchor?.let { a ->
                     val l=a.left-surface.left;val t=a.top-surface.top
                     if(l<0 || t<0 || l+a.width>w || t+a.height>h) true else {

@@ -410,7 +410,7 @@ class BubbleOverlayService : Service() {
         }
         val detail=CaptureManager.pageDetail?.takeIf { it.first==result.id }?.second
         val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,minOf(bounds.bottom,detail?.bottom ?: bounds.bottom))
-        val occupied = translationRects.map { ReplacementSurface(it.left,it.top,it.right,it.bottom) }.toMutableList()
+        val occupied = translationViews.mapNotNull { (it as? ReplacementTranslationView)?.geometry }.toMutableList()
         val boxes=CaptureManager.currentBoxes?.takeIf { it.first==result.id }?.second.orEmpty()
         dockRect?.let { occupied.add(ReplacementSurface(it.left,it.top,it.right,it.bottom)) }
         bubbleView?.takeIf { it.visibility==View.VISIBLE }?.let { button ->

@@ -32,7 +32,7 @@ object DirectTranslationLayout {
     internal fun anchored(context:Context,message:String,anchor:ReplacementSurface,evidence:ReplacementSurface?,screen:ReplacementSurface,
         occupied:List<ReplacementSurface>,detail:PageDetail?=null,report:(String)->Unit):Prepared? {
         if(!screen.contains(anchor) || anchor.width<=0 || anchor.height<=0){ report("out_of_bounds");return null }
-        if(occupied.any { anchor.hits(it) }){ report("overlay_collision");return null }
+        if(occupied.any { SurfacePlacement.intersects(anchor,it) }){ report("overlay_collision");return null }
         if(message.length>20000){report("text_capacity");return null}
         if(evidence!=null && (evidence.reliable || evidence.patch!=null) && evidence.contains(anchor))
             prepare(context,message,evidence,screen,occupied,anchor=anchor,measured=report)?.let { return it }

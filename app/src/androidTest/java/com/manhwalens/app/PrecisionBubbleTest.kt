@@ -19,11 +19,11 @@ class PrecisionBubbleTest {
             val regions=listOf(TextRegion("dialogue",128,432,592,608),TextRegion("short",249,846,471,906));pen.color=Color.BLACK;pen.textSize=32f
             for(r in regions)c.drawText("WAIT HERE!",r.left+5f,r.top+42f,pen)
             val messages=listOf("انتظر قليلًا، لا تُغادِر الآن! لقد عاد المعلم إلى المدينة، وسنذهب إليه بعد أن ينتهي الاجتماع.","انتظر هنا!")
-            val surfaces=regions.map { r -> var reason="";var probes=0;val start=System.nanoTime()
+            val surfaces=regions.map { r -> var reason="";val start=System.nanoTime()
                 val detected=SurfaceDetector.detect(r,720,1600,page::getPixel)
-                val s=BubbleContours.detect(r,detected.color,720,1600,{reason=it}){x,y->probes++;page.getPixel(x,y)}
-                assertNotNull("$reason $r",s?.mask);assertTrue(probes<=48*48)
-                android.util.Log.i("ManhwaLensFunnel","phase5 contour accepted probes=$probes us=${(System.nanoTime()-start)/1000}");s!! }
+                val s=BubbleContours.bitmap(r,detected.color,page){reason=it}
+                assertNotNull("$reason $r",s?.mask)
+                android.util.Log.i("ManhwaLensFunnel","phase5 contour accepted step=${s!!.mask!!.step} us=${(System.nanoTime()-start)/1000}");s!! }
             val resolved=SurfacePlacement.resolveOverlaps(regions.mapIndexed { i,r->r.copy(surface=surfaces[i]) });assertTrue(resolved.all { it.surface?.mask!=null })
             val screen=ReplacementSurface(0,0,720,1600);var total=0
             for(i in regions.indices){val r=regions[i];val a=ReplacementSurface(r.left,r.top,r.right,r.bottom);val s=surfaces[i];val mask=s.mask!!
