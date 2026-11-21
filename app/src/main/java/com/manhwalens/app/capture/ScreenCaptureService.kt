@@ -677,6 +677,7 @@ class ScreenCaptureService : Service() {
         val blocks = com.manhwalens.app.pipeline.progressiveTranslation(
             prepared.map { it.region },
             onException = { Diagnostics.warn("translate","worker_exception","block attempt failed",throwable=it,traceId=traceId) },
+            deferred = { it.ocrPass=="deferred" },
             identity = { workByRegion.getValue(it).key to contextParts[it] },
             translate = { region ->
                 val started = System.nanoTime()

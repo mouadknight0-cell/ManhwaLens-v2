@@ -36,8 +36,18 @@ class QualityInstrumentedTest {
             }finally{translator.close()}}}finally{client.close()}
             fun summary(v:List<Long>)=if(v.isEmpty())"n/a" else v.sorted().let {"${(it[(it.size-1)/2]+it[it.size/2])/2}/${it[kotlin.math.ceil(.9*it.size).toInt()-1]}"}
             val report="mode=$mode ok=${times.size}/20 ocr_p50_p90=${summary(times)} full_p50_p90=${summary(totals)} miss_p50_p90=${summary(misses)}";android.util.Log.i("ManhwaLensFunnel","perf33 $report");com.manhwalens.app.diagnostics.Diagnostics.info("benchmarks","fixture",report)
-            if(mode=="fast"){assertTrue(report,misses.isEmpty());assertTrue(report,times.sorted().let {(it[9]+it[10])/2}<=400);assertTrue(report,totals.sorted().let {(it[9]+it[10])/2}<=700)}
+            if(mode=="fast" || (BuildConfig.CROP_FIRST && mode=="crop200")){assertTrue(report,misses.isEmpty());assertTrue(report,times.sorted().let {(it[9]+it[10])/2}<=400);assertTrue(report,totals.sorted().let {(it[9]+it[10])/2}<=700)}
         }}finally{image.recycle()}
+    }
+    @Test fun shiftedIdenticalCropReusesOcrNotCoordinates()=runBlocking {
+        com.manhwalens.app.phrasebook.PhraseLibrary.ready();val client=TextRecognitionClient(true);val tracker=com.manhwalens.app.ocr.ColorRecovery(false,true)
+        val b=Bitmap.createBitmap(640,400,Bitmap.Config.ARGB_8888);val c=Canvas(b);val p=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+        try {val readings=mutableListOf<com.manhwalens.app.pipeline.TextRegion>();for(dy in listOf(0,40)){
+            c.drawColor(Color.DKGRAY);p.color=Color.WHITE;c.drawOval(72f,83f+dy,566f,230f+dy,p);p.textSize=36f;p.color=Color.BLACK;c.drawText("THIS SCENT",210f,168f+dy,p)
+            val start=System.nanoTime();val line=tracker.recognize(client,b,"en",{true},{}).single();readings.add(line);android.util.Log.i("ManhwaLensFunnel","moved_crop pass=${line.ocrPass} ms=${(System.nanoTime()-start)/1000000}")}
+            assertEquals("ink_cache",readings.last().ocrPass);assertEquals(readings.first().top+40,readings.last().top);assertEquals(readings.first().text,readings.last().text)
+            c.drawColor(Color.DKGRAY);assertTrue(tracker.recognize(client,b,"en",{true},{}).isEmpty())
+        }finally{client.close();b.recycle()}
     }
     @Test fun coloredNameTwoBubbleAndNoiseJourney()=runBlocking {
         val index=requireNotNull(com.manhwalens.app.phrasebook.PhraseLibrary.ready());val client=TextRecognitionClient(true);val translator=com.manhwalens.app.translate.TranslationClient()

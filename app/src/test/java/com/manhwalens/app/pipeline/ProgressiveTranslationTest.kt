@@ -8,6 +8,11 @@ import org.junit.Test
 
 class ProgressiveTranslationTest {
     private fun region(text: String, top: Int = 0) = TextRegion(text, 0, top, 100, top + 30)
+    @Test fun acceptedSiblingDispatchedBeforeWeakCrop()=runTest {
+        val weak=region("weak");val strong=region("strong",50);val ready=mutableListOf<String>()
+        val output=progressiveTranslation(listOf(weak,strong),concurrency=1,deferred={it==weak},translate={TranslatedBlock(it,it.text,"عربي")},onReady={ready.add(it.first().original)})
+        assertEquals("strong",ready.first());assertEquals(listOf(weak,strong),output.map {it.region})
+    }
     @Test fun deduplicatesAndPreservesCoordinates() = runTest {
         var calls = 0
         val result = progressiveTranslation(listOf(region("Hello"), region("Hello", 50)), translate = {

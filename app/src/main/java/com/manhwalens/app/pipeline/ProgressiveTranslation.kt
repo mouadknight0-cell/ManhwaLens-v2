@@ -12,10 +12,11 @@ suspend fun progressiveTranslation(
     onReady: suspend (List<TranslatedBlock>) -> Unit,
     // Callers with position-dependent validation/context must include those inputs.
     onException: (Exception) -> Unit = {},
+    deferred: (TextRegion) -> Boolean = { false },
     identity: (TextRegion) -> Any = { it.text.trim() },
 ): List<TranslatedBlock> = coroutineScope {
     require(concurrency > 0)
-    val groups = regions.withIndex().groupBy { identity(it.value) }.values.toList()
+    val groups = regions.withIndex().groupBy { identity(it.value) }.values.sortedBy { group -> if(deferred(group.first().value))1 else 0 }
     val jobs = Channel<List<IndexedValue<TextRegion>>>(Channel.UNLIMITED)
     groups.forEach { jobs.trySend(it) }
     jobs.close()

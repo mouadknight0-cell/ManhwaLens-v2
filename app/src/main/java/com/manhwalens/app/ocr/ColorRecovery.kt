@@ -13,6 +13,13 @@ internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.Bu
     private class Track(val box:Rect,val votes:ArrayDeque<Vote> = ArrayDeque())
     private val tracks=ArrayDeque<Track>()
     private data class Page(val w:Int,val h:Int,val scene:Long,val boxes:List<TextRegion>,val signatures:List<Long>)
+    private data class InkKey(val w:Int,val h:Int,val lang:String,val sha:String)
+    private val inkCache=object:LinkedHashMap<InkKey,TextRegion>(16,.75f,true){override fun removeEldestEntry(eldest:MutableMap.MutableEntry<InkKey,TextRegion>?)=size>64}
+    private fun key(b:Bitmap,r:Rect,lang:String):InkKey {
+        val hash=java.security.MessageDigest.getInstance("SHA-256");val pixels=IntArray(r.width());val bytes=java.nio.ByteBuffer.allocate(r.width()*4);val ints=bytes.asIntBuffer()
+        for(y in r.top until r.bottom){b.getPixels(pixels,0,pixels.size,r.left,y,pixels.size,1);ints.position(0);ints.put(pixels);hash.update(bytes.array())}
+        return InkKey(r.width(),r.height(),lang,android.util.Base64.encodeToString(hash.digest(),android.util.Base64.NO_WRAP))
+    }
     private var lastPage:Page?=null
     /** Check scene context as well as every crop. A new caption elsewhere must trigger discovery. */
     suspend fun recognize(client:TextRecognitionClient,b:Bitmap,lang:String,keep:(TextRegion)->Boolean,log:(String)->Unit):List<TextRegion> {
@@ -21,7 +28,11 @@ internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.Bu
         lastPage?.takeIf { it.w==b.width && it.h==b.height && it.scene==scene && it.boxes.all(keep) && it.boxes.indices.all { i->hash(b,box(it.boxes[i]))==it.signatures[i] } }?.let {log("pass=unchanged_page regions=${it.boxes.size}");return it.boxes}
         val quick=if(fastFrame) flatCrops(client,b,lang,keep,log) else null
         val first=quick ?: kotlinx.coroutines.withTimeoutOrNull(12000){client.recognize(b,lang,log,keep)}?:error("OCR timed out")
-        val got=recover(client,b,lang,first,6500,keep,log)
+        val got=if(fastFrame && first.any(::acceptedFirst) && first.any { !acceptedFirst(it) }) {
+            // Don't hold strong siblings behind weak OCR. The block worker retries the weak
+            // line on its own crop if translation validation fails. Never cache this mixed page.
+            first.map {if(acceptedFirst(it))it else it.copy(ocrPass="deferred")}
+        } else recover(client,b,lang,first,6500,keep,log)
         lastPage=if(got.isNotEmpty() && got.size<=32 && got.all { it.left>=0 && it.top>=0 && it.right<=b.width && it.bottom<=b.height && it.width>0 && it.height>0 && acceptedFirst(it) }) Page(b.width,b.height,scene,got,got.map { hash(b,box(it)) }) else null
         return got
     }
@@ -33,12 +44,15 @@ internal class ColorRecovery(private val cropFirst:Boolean=com.manhwalens.app.Bu
         for(y in 0 until b.height step 5)for(x in 0 until b.width step 5){if(proposals.any { it.contains(x,y) })continue;outside++;if(b.getPixel(x,y)!=bg)return null};if(outside<50)return null
         val result=mutableListOf<TextRegion>()
         for(rect in proposals){val ink=GlyphCrop.find(b,rect)?:return null;val r=ink.box
-            val crop=Bitmap.createBitmap(b,r.left,r.top,r.width(),r.height());val factor=(20.0/ink.glyphHeight).coerceAtMost(1.0)
-            val input=if(factor<.95 && r.height()*factor>=32)Bitmap.createScaledBitmap(crop,(r.width()*factor).roundToInt(),(r.height()*factor).roundToInt(),true) else crop
-            val sx=r.width().toDouble()/input.width;val sy=r.height().toDouble()/input.height
-            val got=try{client.recognize(input,lang,pass="ink")}finally{if(input!==crop)input.recycle();if(crop!==b)crop.recycle()}
-            if(got.size!=1)return null;val line=got.single();if(!acceptedFirst(line) || com.manhwalens.app.phrasebook.PhraseLibrary.index?.lookup(line.text)?.stage!="exact")return null
-            val mapped=line.copy(left=r.left+(sx*line.left).toInt(),top=r.top+(sy*line.top).toInt(),right=r.left+kotlin.math.ceil(sx*line.right).toInt(),bottom=r.top+kotlin.math.ceil(sy*line.bottom).toInt(),ocrPass="ink");if(!keep(mapped))return null;result.add(mapped)
+            val k=key(b,r,lang);val cached=inkCache[k];val local=cached ?: run {
+                val crop=Bitmap.createBitmap(b,r.left,r.top,r.width(),r.height());val factor=(20.0/ink.glyphHeight).coerceAtMost(1.0)
+                val input=if(factor<.95 && r.height()*factor>=32)Bitmap.createScaledBitmap(crop,(r.width()*factor).roundToInt(),(r.height()*factor).roundToInt(),true) else crop
+                val sx=r.width().toDouble()/input.width;val sy=r.height().toDouble()/input.height
+                val got=try{client.recognize(input,lang,pass="ink")}finally{if(input!==crop)input.recycle();if(crop!==b)crop.recycle()}
+                if(got.size!=1)return null;val line=got.single();if(!acceptedFirst(line) || com.manhwalens.app.phrasebook.PhraseLibrary.index?.lookup(line.text)?.stage!="exact")return null
+                line.copy(left=(sx*line.left).toInt(),top=(sy*line.top).toInt(),right=kotlin.math.ceil(sx*line.right).toInt(),bottom=kotlin.math.ceil(sy*line.bottom).toInt(),ocrPass="ink").also {inkCache[k]=it}
+            }
+            val mapped=local.copy(left=r.left+local.left,top=r.top+local.top,right=r.left+local.right,bottom=r.top+local.bottom,ocrPass=if(cached==null)"ink" else "ink_cache");if(!keep(mapped))return null;result.add(mapped)
         };log("winner=ink reviewed=${result.size}");return result
     }
     private fun acceptedFirst(r:TextRegion):Boolean {
