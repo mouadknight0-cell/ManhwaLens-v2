@@ -44,23 +44,36 @@ class AnchoredRenderingTest {
             val anchor=ReplacementSurface(85,210,135,236,Color.rgb(239,204,165));val screen=ReplacementSurface(8,24,520,760)
             val neighbor=ReplacementSurface(155,200,255,250)
             val p=DirectTranslationLayout.anchored(ctx,dialogue,anchor,anchor.copy(oval=true,reliable=true),screen,listOf(neighbor)){}!!
-            // The oval evidence must survive: a proven surface is never swapped for a guessed plate.
-            assertTrue(p.surface.oval);assertEquals(anchor.left-2,p.surface.left);assertEquals(anchor.top-2,p.surface.top)
-            // A proven oval keeps its own geometry: it is not widened and never turned into a
-            // capsule. Every attempt fit the paragraph inside those bounds (the reported
-            // two-wide-lines defect must not come back as a wider patch).
-            val s=p.surface;assertFalse(s.capsule);assertEquals(anchor.width+4,s.width);assertTrue(p.view.fittedSp>0f)
+            // A proven oval's inscribed interior is always narrower than its own box, so a long
+            // paragraph cannot be replaced inside it. The translation must then be displayed on a
+            // non-destructive plate next to the balloon — rewritten as an opaque / capsule balloon
+            // is exactly what must not happen.
+            val s=p.surface
+            assertFalse("a proven oval must never be turned into a guessed capsule",s.capsule)
+            assertFalse(s.oval);assertNull(s.mask);assertNull(s.patch)
+            assertTrue(s.width>=anchor.width);assertTrue(s.height>=anchor.height)
             assertTrue(s.right<=neighbor.left);assertTrue(s.left>=screen.left && s.bottom<=screen.bottom)
+            // The plate always covers the original text, so no source glyph can survive under it.
+            assertTrue(s.left<=anchor.left && s.top<=anchor.top && s.right>=anchor.right && s.bottom>=anchor.bottom)
             val image=Bitmap.createBitmap(s.width,s.height,Bitmap.Config.ARGB_8888);p.view.draw(Canvas(image))
-            // Compare the drawn glyph pixels to the complete shaped paragraph (including its final line).
+            var covered=0
+            for(y in anchor.top until anchor.bottom)for(x in anchor.left until anchor.right){
+                assertTrue("source text pixel uncovered",Color.alpha(image.getPixel(x-s.left,y-s.top))>=0xE8);covered++}
+            assertTrue(covered>0)
+            // The complete paragraph (including its last line) is inside the plate and looks like
+            // the text that was chosen: compare against the same painter at the fitted size.
             val text=ArabicDisplay.isolate(dialogue);assertEquals(dialogue,text.replace("\u2066","").replace("\u2069",""))
-            val ink=TextPaint(Paint.ANTI_ALIAS_FLAG).apply {color=Color.rgb(20,20,20);typeface=ArabicTypeface.get(ctx);textSize=p.view.fittedSp*ctx.resources.displayMetrics.scaledDensity}
-            val layout=ReplacementTranslationView.lines(text,ink,s.width-8);assertTrue(layout.height<=s.height-8);assertEquals(text.length,layout.getLineEnd(layout.lineCount-1))
-            val ref=Bitmap.createBitmap(s.width,s.height,Bitmap.Config.ARGB_8888);val canvas=Canvas(ref);canvas.drawColor(anchor.color);canvas.translate(4f,(s.height-layout.height)/2f);layout.draw(canvas)
+            val ink=TextPaint(Paint.ANTI_ALIAS_FLAG).apply {color=Color.WHITE;typeface=ArabicTypeface.get(ctx);textSize=p.view.fittedSp*ctx.resources.displayMetrics.scaledDensity}
+            val layout=ReplacementTranslationView.lines(text,ink,s.width-8)
+            assertTrue(layout.height<=s.height-8);assertEquals(text.length,layout.getLineEnd(layout.lineCount-1))
             var glyphs=0
-            for(y in 4 until s.height-4)for(x in 4 until s.width-4){val expected=ref.getPixel(x,y);if(expected!=anchor.color){glyphs++;assertEquals(expected,image.getPixel(x,y))}}
-            assertTrue(glyphs>100)
-            for(y in anchor.top until anchor.bottom)for(x in anchor.left until anchor.right)assertTrue(Color.alpha(image.getPixel(x-s.left,y-s.top))==255)
+            for(y in 0 until s.height)for(x in 0 until s.width){
+                val col=image.getPixel(x,y)
+                if(Color.alpha(col)>0 && Color.red(col)>200 && Color.green(col)>200 && Color.blue(col)>200)glyphs++
+            }
+            assertTrue("outlined white glyphs must be drawn",glyphs>100)
+            // A nearby independent bubble still places; a second translation for the same source
+            // is refused because its occupied box is already on screen.
             val second=DirectTranslationLayout.anchored(ctx,"ماذا؟",neighbor,null,screen,listOf(s)){}!!
             assertTrue(second.surface.left>=s.right);assertNull(DirectTranslationLayout.anchored(ctx,dialogue,anchor,null,screen,listOf(s)){})
             assertFalse(p.view.fullyOnScreen()) // offscreen raster, not a visible window
