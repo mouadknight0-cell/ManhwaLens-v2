@@ -90,7 +90,9 @@ object TranslationOutput {
         var shielded=normalized
         val extraTokens=mutableListOf<String>()
         for(name in declared) {
-            val pattern=Regex("(?<![\\p{L}\\p{N}_])"+Regex.escape(name)+"['’][sS]?(?![\\p{L}\\p{N}_])",RegexOption.IGNORE_CASE)
+            // The possessive group is optional as a whole: the engine may keep "Lizzy",
+            // "Lizzy's" or neither.
+            val pattern=Regex("(?<![\\p{L}\\p{N}_])"+Regex.escape(name)+"(?:['’][sS])?(?![\\p{L}\\p{N}_])",RegexOption.IGNORE_CASE)
             if(!pattern.containsMatchIn(shielded) && !pattern.containsMatchIn(source))return null
             val token=(7000..7999).map { it.toString() }.firstOrNull { it !in present } ?: return null
             present.add(token)
@@ -99,7 +101,11 @@ object TranslationOutput {
             shielded=pattern.replace(shielded, " $token ")
         }
         if(shielded==raw)return null
-        val combined=NameShield.MaskResult(shielded, mask.names + declared, mask.tokens + extraTokens)
+        // Restore the spelling the source actually printed, not the uppercased comparison key.
+        val surfaces=declared.map { name ->
+            contextualNames.firstOrNull { bareName(it).equals(name,true) } ?: name
+        }
+        val combined=NameShield.MaskResult(shielded, mask.names + surfaces, mask.tokens + extraTokens)
         val finished=finish(source,shielded,combined,edits) ?: return null
         // Each name must appear exactly once in the restored text: never duplicated, dropped
         // or renamed by the recovery itself.
