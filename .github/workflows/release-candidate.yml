@@ -101,6 +101,10 @@ jobs:
         # by accident. The vault is the durable key backup and the password is an
         # independent Actions secret; plaintext exists only inside this runner and is
         # deleted at job end. The helper fails closed on any fingerprint mismatch.
+        env:
+          # Individually scoped, exactly like sign-release.yml: the vault passphrase is
+          # only visible to this step, never to the whole job.
+          SIGNING_BACKUP_PASSWORD: ${{ secrets.SIGNING_BACKUP_PASSWORD }}
         run: |
           python3 -m pip install cryptography
           python3 .github/scripts/decode_release_keystore.py
