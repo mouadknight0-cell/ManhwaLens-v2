@@ -29,8 +29,11 @@ class DiagnosticCodesTest {
     }
 
     @Test fun `a real OCR slip is reported as a repair`() {
-        val census = ReadingEnglish.census("MYSELE", TranslationInput.prepare("MYSELE", emptyList()))
-        assertEquals("MYSELF", TranslationInput.prepare("MYSELE", emptyList()))
+        // AHEAO -> AHEAD is an observed, reviewed repair; MYSELE is not in the repair table and
+        // was the wrong fixture to assume.
+        val prepared = TranslationInput.prepare("AHEAO", emptyList())
+        assertEquals("AHEAD", prepared)
+        val census = ReadingEnglish.census("AHEAO", prepared)
         assertEquals(1, census.repairedWords)
         assertEquals(0, census.inflectionProtected)
         assertTrue(census.codes().contains("ocr_word_repaired"))
