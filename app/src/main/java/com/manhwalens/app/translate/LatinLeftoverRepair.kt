@@ -35,7 +35,9 @@ object LatinLeftoverRepair {
             if (w in protectedLower || w.replace("'", "") in protectedLower) continue
             if (w in termKeys) continue
             if (ReadingEnglish.isCommonWord(w)) continue
-            found.add(Leftover(token, ReadingEnglish.closestWord(w, maxDistance = 1, maxRank = 3000)))
+            // Pass the token as seen so the suggestion mirrors its case in reports; the lookup
+            // itself is case-insensitive, and correctedSource() re-derives case from the source.
+            found.add(Leftover(token, ReadingEnglish.closestWord(token, maxDistance = 1, maxRank = 3000)))
         }
         return found
     }
