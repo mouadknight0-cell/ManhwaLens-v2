@@ -35,12 +35,14 @@ class DecodeError(RuntimeError):
     """Raised when the production keystore cannot be materialised safely."""
 
 
-def certificate_sha256(pkcs12: bytes, password: str) -> str:
+def certificate_sha256(keystore_bytes: bytes, password: str) -> str:
     """Return the lower-case SHA-256 fingerprint of the signing certificate."""
     from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.serialization import pkcs12
+    from cryptography.hazmat.primitives.serialization import pkcs12 as pkcs12_module
 
-    key, cert, _ = pkcs12.load_key_and_certificates(pkcs12, password.encode("utf-8"))
+    key, cert, _ = pkcs12_module.load_key_and_certificates(
+        keystore_bytes, password.encode("utf-8")
+    )
     if key is None or cert is None:
         raise DecodeError("the vault holds no usable signing key/certificate pair")
     return cert.fingerprint(hashes.SHA256()).hex()
