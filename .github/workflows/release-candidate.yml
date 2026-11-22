@@ -14,7 +14,8 @@ on:
     branches: [arena/f6ce5fe4-manhwalens-v2]
     paths:
       - '.github/workflows/release-candidate.yml'
-      - '.github/scripts/verify_release_apk.py'
+      - '.github/scripts/**'
+      - '.github/tests/**'
       - 'signing/**'
       - 'app/build.gradle.kts'
 
