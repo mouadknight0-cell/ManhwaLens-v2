@@ -10,6 +10,47 @@ object ReadingEnglish {
     private val context=mapOf("1 SEE" to "I SEE", "THE GARTH" to "THE EARTH", "STILL ALVE" to "STILL ALIVE", "GET YO," to "GET YOU,","A NALL" to "A WALL","THIG IG" to "THIS IS","THEY SAV" to "THEY SAY")
     private val swap=mapOf('8' to "b",'p' to "f",'f' to "p",'o' to "dq",'d' to "o",'g' to "es",'e' to "g",'v' to "y",'y' to "v",'3' to "e",'5' to "s",'s' to "g",'4' to "a",'1' to "il",'0' to "o",'q' to "o")
     fun validCount(text:String)=tokens.findAll(text.lowercase()).count { it.value in words || it.value.replace("'","") in words }
+    /** True when the whole token (or its apostrophe-stripped form) is a known English word. */
+    fun isCommonWord(word:String):Boolean { val w=word.lowercase();return w in words || w.replace("'","") in words }
+
+    /**
+     * Bounded single-edit correction used for post-translation OCR leftovers. Only words
+     * within [maxDistance] edits and at most [maxRank] are proposed.
+     *
+     * Ambiguity is never resolved by guessing: when two different words are equally close
+     * (e.g. OV/OF both one deletion away from "OF"), the answer is null. Frequency only
+     * breaks ties *between the same distance* for the *same* rank-ordered candidate — which
+     * is why the loop keeps the closest distance first and picks the best-ranked word at
+     * that distance explicitly instead of overwriting a previous equal-distance guess.
+     *
+     * Never guesses for tokens shorter than 4 letters.
+     */
+    fun closestWord(token:String,maxDistance:Int=1,maxRank:Int=3000):String? {
+        val t=token.lowercase();if(t.length<4)return null
+        var bestDistance=maxDistance+1;var bestRank=maxRank+1;val bestWords=LinkedHashSet<String>()
+        for((word,rank) in ranks) {
+            if(rank>maxRank || kotlin.math.abs(word.length-t.length)>maxDistance)continue
+            if(word==t)return match(word,token)
+            val d=boundedEditDistance(t,word,maxDistance)
+            if(d>maxDistance)continue
+            when {
+                d<bestDistance -> { bestDistance=d;bestRank=rank;bestWords.clear();bestWords.add(word) }
+                d==bestDistance && rank<bestRank -> { bestRank=rank;bestWords.clear();bestWords.add(word) }
+                d==bestDistance && rank==bestRank -> bestWords.add(word)
+            }
+        }
+        // Only an unambiguous single winner may be proposed.
+        return bestWords.singleOrNull()?.let { match(it,token) }
+    }
+    private fun match(word:String,token:String):String = if(token.first().isUpperCase()) word.uppercase() else word
+    private fun boundedEditDistance(a:String,b:String,max:Int):Int {
+        if(kotlin.math.abs(a.length-b.length)>max)return max+1
+        var previous=IntArray(b.length+1){it}
+        for(i in 1..a.length){ val current=IntArray(b.length+1);current[0]=i;var rowMin=i
+            for(j in 1..b.length){ val cost=if(a[i-1]==b[j-1])0 else 1;current[j]=minOf(current[j-1]+1,previous[j]+1,previous[j-1]+cost);if(current[j]<rowMin)rowMin=current[j] }
+            if(rowMin>max)return max+1;previous=current }
+        return previous[b.length]
+    }
     // Mean OCR confidence hides truncated words. Require several independent
     // clues before spending a crop retry; don't identify names from uppercase.
     fun fragmented(text:String,names:List<String>):Boolean {

@@ -16,6 +16,8 @@ data class TextRegion(
     val languageHint: String? = null,
     /** Ephemeral screen-space rendering evidence, never a translation-model input. */
     val surface: com.manhwalens.app.overlay.ReplacementSurface? = null,
+    /** How many raw OCR lines were merged into this region. Soft layout hint only. */
+    val sourceLineCount: Int = 1,
 ) {
     val width: Int get() = (right - left).coerceAtLeast(0)
     val height: Int get() = (bottom - top).coerceAtLeast(0)

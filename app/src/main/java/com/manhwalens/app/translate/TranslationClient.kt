@@ -92,7 +92,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     }
 
     /** Core translate path used for every complete utterance. */
-    suspend fun translateText(text: String, glossaryNames: List<String> = emptyList(),terms: Map<String,String> = readings(),retryCase:Boolean=false,evidence:MutableMap<String,String>?=null): String {
+    suspend fun translateText(text: String, glossaryNames: List<String> = emptyList(),terms: Map<String,String> = readings(),retryCase:Boolean=false,evidence:MutableMap<String,String>?=null,leftoverRetry:Boolean=false): String {
         val trimmed = text.trim()
         if (trimmed.isBlank() || trimmed.none { it.isLetter() }) return trimmed
 
@@ -132,7 +132,10 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         evidence?.apply {put("origin","native");put("raw_native",raw.take(512));put("restored_before_edits",NameShield.restore(raw,arabicMask).take(512))}
         val issue=TranslationOutput.issue(raw,maskResult)
         val finished=if(issue==null) TranslationOutput.finish(trimmed,raw,arabicMask,corrections) else {
-            val recovered=if(issue=="TR-UNTRANSLATED") TranslationOutput.recoverOrganization(trimmed,raw,arabicMask,corrections) else null
+            val organization=if(issue=="TR-UNTRANSLATED") TranslationOutput.recoverOrganization(trimmed,raw,arabicMask,corrections) else null
+            val recovered=organization ?: if(issue=="TR-UNTRANSLATED" && !leftoverRetry)
+                attemptLatinLeftover(trimmed,raw,maskResult,terms,glossaryNames,retryCase,corrections,evidence,issue)
+            else null
             Diagnostics.info("translate","native_validation","ready=${LanguageModels.state.value.ready} issue=$issue raw_chars=${raw.length} arabic_letters=${raw.count(ArabicOutput::isLetter)} latin_letters=${raw.count { it in 'A'..'Z' || it in 'a'..'z' }} tokens=${maskResult.tokens.size} recovered=${recovered!=null}")
             recovered ?: throw TranslationFailure(issue)
         } ?: throw TranslationFailure("TR-INVALID-OUTPUT")
@@ -140,6 +143,44 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val final=finished.text
         cache.put(cacheKey,final)
         return final
+    }
+
+    /**
+     * Bounded single-token OCR repair for the classic one-glyph slip (MYSELE → MYSELF).
+     * Only runs on the TR-UNTRANSLATED path, only once, only with exactly one confident
+     * correction, and the retranslation must pass the unchanged output validation. On any
+     * doubt the block keeps the original TR-UNTRANSLATED failure (source is retained).
+     */
+    private suspend fun attemptLatinLeftover(trimmed: String, raw: String, maskResult: com.manhwalens.app.names.NameShield.MaskResult,
+        terms: Map<String,String>, glossaryNames: List<String>, retryCase: Boolean,
+        corrections: Map<String,String>, evidence: MutableMap<String,String>?, issue: String): TranslationOutput.Finished? {
+        val protected=maskResult.names + terms.keys
+        val fix=LatinLeftoverRepair.correctedSource(trimmed,raw,protected,terms)
+        if(fix==null){
+            val leftovers=LatinLeftoverRepair.unexplained(raw,protected,terms)
+            Diagnostics.info("translate","latin_leftover_decision","issue=$issue tokens=${leftovers.joinToString(","){it.token}} suggestions=${leftovers.joinToString(","){it.suggestion?:"none"}} result=rejected reason=no_confident_correction")
+            evidence?.put("latin_leftover_result","rejected:no_confident_correction")
+            return null
+        }
+        val (corrected,how)=fix
+        Diagnostics.info("translate","latin_leftover_retry","cause=$issue correction=$how action=retranslate")
+        // The retranslation runs through the same validation. Its *string* is returned and the
+        // caller re-runs TranslationOutput.finish with the caller's corrections map; nesting
+        // Finished(text) here would silently drop those corrections.
+        val output=try {
+            translateText(corrected,glossaryNames,terms,retryCase,evidence,leftoverRetry=true)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+          catch (failure: TranslationFailure) {
+            evidence?.apply { put("latin_leftover_correction",how); put("latin_leftover_result","rejected:${failure.code}") }
+            Diagnostics.info("translate","latin_leftover_decision","correction=$how result=rejected code=${failure.code}")
+            return null
+        }
+        evidence?.apply { put("latin_leftover_correction",how); put("latin_leftover_result","accepted") }
+        Diagnostics.info("translate","latin_leftover_decision","correction=$how result=accepted")
+        // No second validation pass and no text editing here: the inner translateText() already
+        // returned a string that passed the unchanged output validation, and the caller runs the
+        // ordinary finish step afterwards. This never invents Arabic output.
+        return TranslationOutput.joined(output)
     }
 
     /** Back-compat helper: translate a list sequentially. Used by tests and simple flows. */

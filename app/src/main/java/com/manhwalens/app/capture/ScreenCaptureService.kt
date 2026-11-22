@@ -642,6 +642,16 @@ class ScreenCaptureService : Service() {
         val learnedNames = learnNames(prepared.filter { it.kind != RegionKind.SOUND_EFFECT }.map { it.region }, traceId)
 
         com.manhwalens.app.diagnostics.SessionScorecard.plan(journeyId,prepared.filterNot { it.kind==RegionKind.SOUND_EFFECT }.map { it.region })
+        // Every prepared region here already passed ReaderContentFilter and TextEligibility inside
+        // prepareRegions() (drops are logged there with their exact reason=...), so these stages
+        // are truthful: no region is reported eligible after being filtered out.
+        prepared.filter { it.kind!=RegionKind.SOUND_EFFECT }.forEach { item ->
+            val groupedId=com.manhwalens.app.pipeline.PageState.id(item.region)
+            com.manhwalens.app.diagnostics.SessionScorecard.stage(journeyId,groupedId,"OCR_DETECTED")
+            com.manhwalens.app.diagnostics.SessionScorecard.stage(journeyId,groupedId,"OCR_GROUPED")
+            com.manhwalens.app.diagnostics.SessionScorecard.stage(journeyId,groupedId,"CLASSIFIED")
+            com.manhwalens.app.diagnostics.SessionScorecard.stage(journeyId,groupedId,"TRANSLATION_ELIGIBLE")
+        }
         val plan = com.manhwalens.app.pipeline.FrameTranslationPlan.build(
             prepared.map { com.manhwalens.app.pipeline.FrameTranslationPlan.Input(it.region, it.kind) }, readerContentBottom)
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.TRANSLATING))
@@ -687,6 +697,7 @@ class ScreenCaptureService : Service() {
                 pageState.find(region,contextKey)?.let { stage(region,"started","page_cache");return@progressiveTranslation it }
                 val retryCase=!attempted.add(region)
                 stage(region,if(retryCase) "retried" else "started")
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(id,com.manhwalens.app.pipeline.PageState.id(region),"TRANSLATION_STARTED")
                 val previousSource = work.key.previous
                 val issue = work.key.issue
                 Diagnostics.info("funnel", "dispatch", "page=$journeyId bounds=${region.left},${region.top} action=${issue ?: if(work.key.preserveSoundEffect) "preserve_sfx" else "translate"}", traceId = traceId)
@@ -748,8 +759,12 @@ class ScreenCaptureService : Service() {
                 if (liveEnabled && frameRevision != sceneRevision) throw kotlinx.coroutines.CancellationException("screen changed")
                 completed.filter { pending.remove(it.region) }.forEach { b->
                     stage(b.region,"translation_outcome",b.errorCode ?: b.method)
-                    if(b.errorCode==null && b.translated.isNotBlank() && b.translated!=b.original)
-                        com.manhwalens.app.diagnostics.SessionScorecard.stage(id,com.manhwalens.app.pipeline.PageState.id(b.region),"translated")
+                    if(b.errorCode==null && b.translated.isNotBlank() && b.translated!=b.original){
+                        val validatedId=com.manhwalens.app.pipeline.PageState.id(b.region)
+                        com.manhwalens.app.diagnostics.SessionScorecard.stage(id,validatedId,"translated")
+                        com.manhwalens.app.diagnostics.SessionScorecard.stage(id,validatedId,"TRANSLATION_SUCCEEDED")
+                        com.manhwalens.app.diagnostics.SessionScorecard.stage(id,validatedId,"OUTPUT_VALIDATED")
+                    }
                 }
                 completed.forEach { b->b.errorCode?.let { error ->
                     val score=com.manhwalens.app.diagnostics.SessionScorecard
@@ -868,9 +883,15 @@ class ScreenCaptureService : Service() {
         Diagnostics.info("overlay", "surface_prepare", "bounded source-aligned surface detection",
             durationMs = (System.nanoTime() - began) / 1_000_000,
             context = mapOf("regions" to rendered.size.toString(), "ovals" to rendered.count { it.region.surface?.oval == true }.toString()))
+        // Eligibility = multi-signal assessment; a closed comic surface is NOT required.
+        // Surface evidence only selects the rendering strategy (bubble replacement vs
+        // free-text plate). Chrome/protected-interface exclusions already ran upstream.
         val comic=rendered.filter { item ->
-            (item.kind==RegionKind.SOUND_EFFECT || (item.region.surface?.patch!=null && item.region.text.length>=18 && item.region.text.none(Char::isLowerCase) && item.region.text.count(Char::isWhitespace)>=2 && item.region.text.last() in "!.?…") || com.manhwalens.app.pipeline.ComicSurface.enclosed(item.region,bitmap.width,bitmap.height,bitmap::getPixel)).also { keep ->
-                if(!keep) Diagnostics.info("funnel","drop","page=${CaptureManager.activeResultId} bounds=${item.region.left},${item.region.top} reason=no_comic_surface")
+            val enclosed=item.kind!=RegionKind.SOUND_EFFECT && com.manhwalens.app.pipeline.ComicSurface.enclosed(item.region,bitmap.width,bitmap.height,bitmap::getPixel)
+            val assessment=com.manhwalens.app.pipeline.TextEligibility.assess(item.region,item.kind,enclosed)
+            (item.kind==RegionKind.SOUND_EFFECT || assessment.eligible).also { keep ->
+                if(!keep) Diagnostics.info("funnel","drop","page=${CaptureManager.activeResultId} bounds=${item.region.left},${item.region.top} reason=${assessment.reason} signals=${assessment.signals.joinToString(",")}")
+                else if(item.kind!=RegionKind.SOUND_EFFECT) Diagnostics.info("funnel","stage","page=${CaptureManager.activeResultId} bounds=${item.region.left},${item.region.top} stage=TRANSLATION_ELIGIBLE strategy=${assessment.strategy} reason=${assessment.reason}")
             }
         }
         val matched=(application as ManhwaLensApp).settingsRepository.matchStyle.value

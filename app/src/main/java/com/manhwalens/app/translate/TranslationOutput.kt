@@ -53,6 +53,12 @@ object TranslationOutput {
     }
     internal data class Finished(val text:String,val correctionRejected:Boolean=false)
 
+    /**
+     * Wraps an already validated translation (an inner translateText() call that passed the
+     * unchanged validation and returned its final string). No re-validation, no text change.
+     */
+    internal fun joined(validated:String)=Finished(validated)
+
     /** Corrections are literal, non-cascading edits. Apply while identities are still
      * shielded so an Arabic correction cannot rewrite part of a confirmed name.
      * A malformed edit falls back to the checked original, never to an invalid cache hit. */

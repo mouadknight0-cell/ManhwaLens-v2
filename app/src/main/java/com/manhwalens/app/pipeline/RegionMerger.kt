@@ -36,6 +36,7 @@ object RegionMerger {
                 bottom = cluster.maxOf { it.bottom },
                 confidence = cluster.map { it.confidence }.average().toFloat(),
                 languageHint = cluster.firstNotNullOfOrNull { it.languageHint },
+                sourceLineCount = cluster.size,
             )
         }
     }

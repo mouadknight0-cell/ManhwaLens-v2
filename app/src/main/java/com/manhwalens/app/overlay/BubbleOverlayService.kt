@@ -405,6 +405,15 @@ class BubbleOverlayService : Service() {
         fun outcome(i:Int,reason:String){
             if(reason in setOf("replacement_prepared","expanded_prepared","balloon_attached","overlay_collision","out_of_bounds","text_capacity","mask_defect","clipped"))
                 com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(result.blocks[i].region),reason)
+            if(reason in setOf("replacement_prepared","expanded_prepared"))
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(result.blocks[i].region),"LAYOUT_SELECTED")
+            if(reason in setOf("overlay_collision","out_of_bounds","text_capacity","mask_defect","clipped"))
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(result.blocks[i].region),"LAYOUT_REJECTED_"+reason.uppercase())
+            if(reason=="balloon_attached"){
+                val id=com.manhwalens.app.pipeline.PageState.id(result.blocks[i].region)
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,id,"PLACEMENT_ACCEPTED")
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,id,"RENDERED")
+            }
             if(reason in setOf("RENDER_FAILED","TRANSLATION_FAILED","CANCELLED","STALE_RESULT","balloon_attached")) com.manhwalens.app.diagnostics.SessionScorecard.outcome(result.id,result.blocks[i].region,reason)
             com.manhwalens.app.diagnostics.Diagnostics.info("funnel","render","page=${result.id} bounds=${result.blocks[i].region.let { "${it.left},${it.top},${it.right},${it.bottom}" }} outcome=$reason",traceId=result.traceId)
         }
@@ -422,11 +431,17 @@ class BubbleOverlayService : Service() {
             }
             occupied.add(ReplacementSurface(xy[0],xy[1],xy[0]+button.width,xy[1]+button.height))
         }
+        // Two blocks describing (almost) the same source rectangle are one bubble detected
+        // twice, not two dialogues. Only the first may render; the duplicate is reported, and
+        // neither half of the pair keeps the other out of the way.
+        val duplicateOf=com.manhwalens.app.pipeline.OverlayPolicy.duplicates(result.blocks)
         var renderFailure = false
         result.blocks.forEachIndexed { i,block ->
             val id=com.manhwalens.app.pipeline.PageState.id(block.region);val hash=CaptureManager.pixelHashes[id]
             val key="${block.region.left}:${block.region.top}:${block.region.right}:${block.region.bottom}:$id:$hash:${block.translated}"
-            if(block.errorCode==null && block.translated.isNotBlank() && block.translated!=block.original)expected.add(key)
+            // Duplicates cannot be rendered, so they must not be counted as expected coverage
+            // either (that would keep the page permanently "incomplete").
+            if(com.manhwalens.app.pipeline.OverlayPolicy.renderable(block) && i !in duplicateOf)expected.add(key)
             attached.filterValues { it.id==id && it.key!=key }.keys.toList().forEach(::discard)
             if(key in displayedBlocks) return@forEachIndexed
             val reason=when {
@@ -436,17 +451,27 @@ class BubbleOverlayService : Service() {
                 else -> null
             }
             if(reason!=null) { outcome(i,"TRANSLATION_FAILED"); return@forEachIndexed }
+            if(i in duplicateOf){
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,id,"PLACEMENT_REJECTED_DUPLICATE_SOURCE_REGION")
+                outcome(i,"DUPLICATE_SOURCE_REGION"); return@forEachIndexed
+            }
+            if(attached.values.any { it.id==id && it.key==key }) return@forEachIndexed // already drawn for this page
             val source=SurfacePlacement.visible(block.region,screen)
             val r=block.region
             val anchor=ReplacementSurface(r.left,r.top,r.right,r.bottom,source?.color ?: -1)
-            // Raw OCR lines belonging to this reconstructed dialogue are not neighbors.
-            val others=boxes.filterNot { it.left>=r.left && it.top>=r.top && it.right<=r.right && it.bottom<=r.bottom }
-                .map { ReplacementSurface(it.left,it.top,it.right,it.bottom) } + result.blocks.filter { it.region!=r }.map { b ->
-                    b.region.let { ReplacementSurface(it.left,it.top,it.right,it.bottom) }
-                }
+            // Obstacles = blocks that will actually attempt to render (plus committed
+            // overlays/dock already in `occupied`). Rejected, failed, source-preserved and
+            // duplicate blocks reserve nothing, so a dead region can no longer block a valid
+            // neighbor. Raw OCR boxes are never obstacles: they are inside these blocks or stale.
+            val others=result.blocks.filterIndexed { index,b -> index!=i && index !in duplicateOf && b.region!==r && com.manhwalens.app.pipeline.OverlayPolicy.renderable(b) }.map { b ->
+                b.region.let { ReplacementSurface(it.left,it.top,it.right,it.bottom) }
+            }
             fun failed(){outcome(i,if(!current()) "STALE_RESULT" else "RENDER_FAILED");renderFailure=true}
-            val prepared=DirectTranslationLayout.anchored(this,block.translated,anchor,source,screen,occupied+others,detail){outcome(i,it)}
+            val prepared=DirectTranslationLayout.anchored(this,block.translated,anchor,source,screen,occupied+others,detail,{outcome(i,it)},r.sourceLineCount)
             if(prepared==null){failed();return@forEachIndexed}
+            when(prepared.view.maskValid) { true -> com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(block.region),"MASK_VALIDATED")
+                false -> com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(block.region),"MASK_REJECTED")
+                null -> com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(block.region),"MASK_NOT_APPLICABLE") }
             outcome(i,if(prepared.surface!==source && prepared.surface.capsule) "expanded_prepared" else "replacement_prepared")
             outcome(i,prepared.surface.let { "mode=${when { it.mask!=null->"mask";it.oval->"oval";it.patch!=null->"patch";it.capsule->"capsule";else->"fallback" }} mask_survived=${it.mask!=null && it.mask===source?.mask} delta_ltrb=${it.left-r.left},${it.top-r.top},${it.right-r.right},${it.bottom-r.bottom} final_surface=${it.left},${it.top},${it.right},${it.bottom} ${prepared.view.measurement}" })
             val surface=prepared.surface; val text=prepared.view

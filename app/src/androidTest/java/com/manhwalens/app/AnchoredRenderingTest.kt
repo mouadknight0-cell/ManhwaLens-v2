@@ -44,7 +44,12 @@ class AnchoredRenderingTest {
             val anchor=ReplacementSurface(85,210,135,236,Color.rgb(239,204,165));val screen=ReplacementSurface(8,24,520,760)
             val neighbor=ReplacementSurface(155,200,255,250)
             val p=DirectTranslationLayout.anchored(ctx,dialogue,anchor,anchor.copy(oval=true,reliable=true),screen,listOf(neighbor)){}!!
-            val s=p.surface;assertTrue(s.capsule);assertTrue(s.width>anchor.width);assertTrue(s.height>anchor.height);assertTrue(p.view.fittedSp==15f)
+            // The oval evidence must survive: a proven surface is never swapped for a guessed plate.
+            assertTrue(p.surface.oval);assertEquals(anchor.left-2,p.surface.left);assertEquals(anchor.top-2,p.surface.top)
+            // A proven oval keeps its own geometry: the narrow source oval is not widened or
+            // turned into a capsule, so a long paragraph must fail capacity rather than be painted
+            // over the artwork.
+            val s=p.surface;assertFalse(s.capsule);assertEquals(anchor.width+4,s.width);assertTrue(p.view.fittedSp>0f)
             assertTrue(s.right<=neighbor.left);assertTrue(s.left>=screen.left && s.bottom<=screen.bottom)
             val image=Bitmap.createBitmap(s.width,s.height,Bitmap.Config.ARGB_8888);p.view.draw(Canvas(image))
             // Compare the drawn glyph pixels to the complete shaped paragraph (including its final line).
@@ -55,7 +60,7 @@ class AnchoredRenderingTest {
             var glyphs=0
             for(y in 4 until s.height-4)for(x in 4 until s.width-4){val expected=ref.getPixel(x,y);if(expected!=anchor.color){glyphs++;assertEquals(expected,image.getPixel(x,y))}}
             assertTrue(glyphs>100)
-            for(y in anchor.top until anchor.bottom)for(x in anchor.left until anchor.right)assertEquals(255,Color.alpha(image.getPixel(x-s.left,y-s.top)))
+            for(y in anchor.top until anchor.bottom)for(x in anchor.left until anchor.right)assertTrue(Color.alpha(image.getPixel(x-s.left,y-s.top))==255)
             val second=DirectTranslationLayout.anchored(ctx,"ماذا؟",neighbor,null,screen,listOf(s)){}!!
             assertTrue(second.surface.left>=s.right);assertNull(DirectTranslationLayout.anchored(ctx,dialogue,anchor,null,screen,listOf(s)){})
             assertFalse(p.view.fullyOnScreen()) // offscreen raster, not a visible window
