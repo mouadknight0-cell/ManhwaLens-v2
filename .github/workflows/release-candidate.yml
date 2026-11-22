@@ -11,7 +11,11 @@ on:
         required: true
         default: 1.1.42-rc2
       installed_version_code:
-        description: versionCode currently installed on the test phone (must be strictly below the new one)
+        description: versionCode currently installed on the test phone; the candidate is computed strictly above it
+        required: true
+        default: '217442870'
+      min_installed_version_code:
+        description: Hard floor the candidate must clear (fail closed if lower); usually the newest official release
         required: true
         default: '217442870'
   push:
@@ -40,6 +44,9 @@ env:
   # The candidate must be installable *over* what is already on the phone, so the floor is
   # supplied explicitly instead of guessed from the repository's latest release.
   INSTALLED_VERSION_CODE: ${{ inputs.installed_version_code || '217442870' }}
+  # Explicit hard floor: the candidate must be installable over the newest official release
+  # even when nothing is installed on the test phone. Fail closed if it cannot be met.
+  MIN_INSTALLED_VERSION_CODE: ${{ inputs.min_installed_version_code || '217442870' }}
   # Makes the Gradle release task refuse an unsigned output path, even if someone sets
   # ALLOW_UNSIGNED_RELEASE in this job by mistake.
   CANDIDATE_RELEASE_BUILD: 'true'
@@ -49,6 +56,10 @@ jobs:
     name: Signed release APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # `env.VERSION_NAME` (the resolved candidate name, workflow-level) is the single source of
+    # truth for the artefact name, the prerelease tag and the download check. Reading
+    # `inputs.*` in these steps silently fell back to a stale default on push-triggered runs
+    # and published a tag for a file that did not exist.
     steps:
       - name: Checkout the exact commit under test
         uses: actions/checkout@v4
@@ -83,34 +94,28 @@ jobs:
           if [ "$type" = tag ]; then tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" -q .object.sha); fi
           last_epoch=$(gh api "repos/$GITHUB_REPOSITORY/commits/$tag_sha" -q '.commit.committer.date')
           last_code=$(python3 -c "import datetime,sys;print(int(datetime.datetime.fromisoformat('$last_epoch'.replace('Z','+00:00')).timestamp())-1577836800)")
-          installed="${INSTALLED_VERSION_CODE:-}"
-          case "$installed" in
-            ''|*[!0-9]*) echo "::error::installed_version_code must be a positive integer, got '$installed'"; exit 1;;
-          esac
-          if [ "$installed" -le 0 ]; then echo '::error::installed_version_code must be > 0'; exit 1; fi
-          echo "last_release=$last last_version_code=$last_code installed_version_code=$installed this_build_code=$code"
-          # Floor is above BOTH the newest published release and the build already installed on
-          # the test phone; the candidate cannot be installed over a build that is not lower.
-          floor=$last_code
-          if [ "$installed" -gt "$floor" ]; then floor=$installed; fi
-          candidate=$(( floor + 1 ))
-          if [ "$candidate" -le "$last_code" ] || [ "$candidate" -le "$installed" ]; then
-            echo "::error::cannot produce a monotonic candidate above last_release=$last_code and installed=$installed"; exit 1
-          fi
-          if [ "$candidate" -gt 2100000000 ]; then
-            echo "::error::candidate versionCode $candidate exceeds the Android maximum"; exit 1
-          fi
-          if [ "$code" -le "$last_code" ]; then
-            echo "::error::this commit's release code $code is not greater than $last ($last_code)"; exit 1
-          fi
+          # The floor arithmetic lives in a unit-tested helper (.github/tests) because an
+          # un-installable or non-monotonic candidate is not recoverable after publication.
+          # It fails closed on a missing/malformed floor rather than guessing one.
+          python3 .github/scripts/candidate_version_code.py \
+            --last-release-code "$last_code" \
+            --installed-version-code "${INSTALLED_VERSION_CODE:-}" \
+            --min-installed-version-code "${MIN_INSTALLED_VERSION_CODE:-}" \
+            --commit-epoch "$(git show -s --format=%ct HEAD)" > /tmp/candidate.env
+          cat /tmp/candidate.env
+          # shellcheck disable=SC1091
+          . /tmp/candidate.env
+          echo "last_release=$last last_version_code=$last_code installed_version_code=$installed min_installed_version_code=$min_installed candidate=$candidate floor=$floor"
+          echo "expected_version_code=$candidate" >> "$GITHUB_OUTPUT"
+          echo "installed_version_code=$installed" >> "$GITHUB_OUTPUT"
+          echo "min_installed_version_code=$min_installed" >> "$GITHUB_OUTPUT"
+          echo "last_version_code=$last_code" >> "$GITHUB_OUTPUT"
+          echo "last_release=$last" >> "$GITHUB_OUTPUT"
+          echo "floor=$floor" >> "$GITHUB_OUTPUT"
+          echo "::notice title=Candidate versionCode::$candidate (floor $floor + 1; last release $last_code, installed $installed, min installed $min_installed)"
           # Hold the candidate at the computed floor instead of the per-commit release code, so
           # a test build never burns the number the eventual tagged release needs.
           echo "CANDIDATE_VERSION_CODE_HOLD=$floor" >> "$GITHUB_ENV"
-          echo "expected_version_code=$candidate" >> "$GITHUB_OUTPUT"
-          echo "installed_version_code=$installed" >> "$GITHUB_OUTPUT"
-          echo "last_version_code=$last_code" >> "$GITHUB_OUTPUT"
-          echo "last_release=$last" >> "$GITHUB_OUTPUT"
-          echo "::notice title=Candidate versionCode::$candidate (floor $floor + 1; last release $last_code, installed $installed)"
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -210,7 +215,7 @@ jobs:
             --apksigner "$build_tools/apksigner" \
             --expected-version-name "$VERSION_NAME" \
             --expected-version-code "${{ steps.version.outputs.expected_version_code }}" \
-            --min-version-code "${{ steps.version.outputs.installed_version_code }}" \
+            --min-version-code "${{ steps.version.outputs.floor }}" \
             | tee artifacts/APK-IDENTITY.txt
           # The pinned fingerprint must be published next to the APK for the owner to compare
           # against the installed official application before claiming update compatibility.
@@ -250,7 +255,7 @@ jobs:
       - name: Upload the signed release APK
         uses: actions/upload-artifact@v4
         with:
-          name: ManhwaLens-${{ inputs.version_name || '1.1.42-rc1' }}-release-apk
+          name: ManhwaLens-${{ env.VERSION_NAME }}-release-apk
           path: artifacts/
           if-no-files-found: error
           retention-days: 30
@@ -263,10 +268,10 @@ jobs:
         id: direct
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: rc-${{ inputs.version_name || '1.1.42-rc1' }}
+          TAG: rc-${{ env.VERSION_NAME }}
         run: |
           set -euo pipefail
-          apk="artifacts/ManhwaLens-${{ inputs.version_name || '1.1.42-rc1' }}-release.apk"
+          apk="artifacts/ManhwaLens-${{ env.VERSION_NAME }}-release.apk"
           sha=$(awk '{print $1}' artifacts/SHA256SUMS.txt)
           notes="Official signed RELEASE build for physical-device testing. Not a published release.
 
@@ -292,8 +297,8 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: rc-${{ inputs.version_name || '1.1.42-rc1' }}
-          APK: artifacts/ManhwaLens-${{ inputs.version_name || '1.1.42-rc1' }}-release.apk
+          TAG: rc-${{ env.VERSION_NAME }}
+          APK: artifacts/ManhwaLens-${{ env.VERSION_NAME }}-release.apk
         run: |
           set -euo pipefail
           name=$(basename "$APK")
