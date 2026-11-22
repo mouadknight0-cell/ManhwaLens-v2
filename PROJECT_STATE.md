@@ -1,5 +1,14 @@
 # ManhwaLens engineering state
 
+## 1.1.36 — translation coverage, layout scoring, collision (unreleased)
+
+Branch `arena/f6ce5fe4-manhwalens-v2`, PR10. Root causes and fixes: [translation coverage](docs/TRANSLATION-COVERAGE-1.1.36.md).
+Text eligibility no longer requires a closed comic surface; layout candidates are scored across
+columns narrower and wider than the source; only renderable blocks reserve overlay space; a single
+Latin OCR leftover gets one bounded repair+retranslation. CI (compile, unit tests, debug APK) and
+the API 34 emulator suite are green on commit `1f70ea2`. No physical-device run, so bubble geometry,
+plate readability and end-to-end latency remain unverified.
+
 ## 1.1.29 — Android 14 checks passed; Xiaomi acceptance pending
 
 See [stage evidence and device protocol](docs/XIAOMI-1.1.29.md).

@@ -1,8 +1,9 @@
 # Translation coverage, bubble layout and collision — root-cause fix
 
 Scope: implementation pass on branch `arena/f6ce5fe4-manhwalens-v2`. Nothing in this document
-is a device or release claim. Every "verified" statement below is either a code fact (file and
-symbol) or a unit-test expectation that a JVM/Android run must still confirm.
+is a physical-device or release claim; the only verified results are the CI and emulator runs
+recorded in section 4. Everything else is either a code fact (file and symbol) or a test that
+encodes the intended behaviour.
 
 ## 1. Proven root causes
 
@@ -107,12 +108,57 @@ real run — they are listed here deliberately instead of being pre-emptively re
    paint outside the oval. That failure would be the correct product behaviour and the test data
    would need a larger fixture, not a looser renderer.
 
-## 4. What is NOT verified here
+## 4. Verification — what was actually run
 
-- No local JDK/Android SDK and no Maven/Google access in this environment: **no compile, no unit
-  test, no instrumented test and no APK was run here**. Verification is delegated to GitHub Actions
-  (`ci.yml` for compile + `testDebugUnitTest`, `quality.yml` for the emulator suite).
-- No physical device session: bubble geometry, plate readability on real artwork, RTL glyph
-  bounds under a real mask, and end-to-end latency are unmeasured.
-- Semantic translation quality is unchanged by design (ML Kit, offline); nothing here claims
-  better meaning, only better coverage/layout/rendering.
+GitHub Actions on commit `1f70ea2` (branch `arena/f6ce5fe4-manhwalens-v2`), all green:
+
+| Run | Result |
+| --- | --- |
+| `CI` (push) — help, dependency graph, `compileDebugKotlin`, `compileDebugUnitTestKotlin`, `compileDebugAndroidTestKotlin`, `testDebugUnitTest`, `assembleDebug` | success (run 45024782969) |
+| `CI` (pull_request) | success (run 45024786731) |
+| `Android quality regression` — API 34 emulator, `connectedDebugAndroidTest` | success (run 45024782963) |
+
+Findings from the intermediate red runs, each fixed rather than waived:
+
+1. Two compile errors from my refactor (`underfilled()` Float/Double, `nearby()` trailing lambda
+   binding to `sourceLineCount`).
+2. `LatinLeftoverRepairTest.strongLegalLeftoverReportsTheTokenForDiagnostics` caught a real
+   reporting bug: suggestions were lowercased (`myself` reported for `Mysele`).
+3. **A translation-dropping bug in my own first attempt**: the plate was sized from measured line
+   widths while `StaticLayout` keeps the width it was built with, so the view rejected a layout
+   that fitted and `prepare()` returned null (emulator: NPE on a non-null assertion, and
+   `QualityInstrumentedTest.replacementNeverMovesToAnotherBubble` failing on `expected: null`).
+   Fixed in two places: the plate must hold the whole measured column, and the view falls back to
+   the full safe interior before giving up.
+4. The emulator's original oval test encoded the old opaque-capsule behaviour. A proven oval's
+   inscribed interior is always narrower than its own box, so a long paragraph cannot be replaced
+   inside it; the test now asserts the intended contract — a non-destructive plate with no
+   invented mask/patch/oval, the source box fully erased, outlined glyph ink drawn, the neighbour
+   still placeable, and no second translation for the same source.
+
+Test counts reported by CI on the green run: unit tests all passed (266 executed on the previous
+commit; the only failure then was the case-reporting bug above). Instrumented suite passed on the
+API 34 emulator.
+
+## 5. What is still NOT verified
+
+- **No physical device session.** Bubble geometry on real artwork, plate readability, RTL glyph
+  bounds under a real sampled mask, and end-to-end capture/translate/render latency are unmeasured.
+- **No real-page end-to-end run.** The tests use synthetic surfaces and bundled fixtures. The
+  reported phone pages (`OH LOOK, ANOTHER LONER.`, the `MYSELE` utterance, the three-line bubble)
+  are represented by fixtures and bounds, not by re-capturing those screens.
+- **Semantic translation quality is unchanged** by design (offline ML Kit). Nothing here claims
+  better meaning, only better coverage, layout and rendering.
+- The emulator job's own log/artifact remain undownloadable from this sandbox; failures above were
+  read from job annotations produced by the (now fixed) quality script.
+
+## 6. Remaining risks
+
+- `TextEligibility.MIN_CONFIDENCE = 0.15` and the UI-label allowlist are judgement calls; they keep
+  protections but are not tuned against a large real-page corpus.
+- Plate output on very busy artwork is a readability question, not a correctness one; it needs a
+  phone screenshot review.
+- `LatinLeftoverRepair` only repairs a **single** leftover token; multi-token OCR damage still ends
+  as `TR-UNTRANSLATED` with the source retained (deliberate: no guessing).
+- `ArabicLayoutPlanner` weights (`distortion 0.4`, `lastLine 1.8`, `underfilled 1.2`, knee 0.55)
+  are covered by unit tests for the reported shapes, not by a perceptual study.
