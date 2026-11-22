@@ -38,7 +38,13 @@ object ContextualNameDetector {
         val reason: String,
     ) {
         /** The token exactly as the source spelled it, without a possessive suffix. */
-        val token: String get() = span.trimEnd().removeSuffix("'s").removeSuffix("’s")
+        val token: String get() = bareToken(span)
+
+        /**
+         * The preserved form for shielding: the source surface with its possessive suffix, so
+         * restoration puts back exactly what the panel printed ("Gus's", "GUS'S", "Lizzy").
+         */
+        val surface: String get() = span
     }
 
     data class Result(
@@ -46,8 +52,8 @@ object ContextualNameDetector {
         val ambiguous: List<NameCandidate>,
         val truncated: Boolean = false,
     ) {
-        /** Names to shield, in source order. Confirmed glossary entries are not repeated here. */
-        val names: List<String> get() = confident.map { it.token }.distinctBy { it.lowercase() }
+        /** Names to shield, in source order, with their exact source surface form. */
+        val names: List<String> get() = confident.map { it.surface }.distinctBy { it.lowercase() }
         fun rejectedCount() = ambiguous.size
     }
 
@@ -57,6 +63,8 @@ object ContextualNameDetector {
     /** Bounds: a phone screen of dialogue never needs more than this, and cost stays flat. */
     private const val MAX_WORDS = 120
     private const val MAX_CANDIDATES = 6
+    /** A reviewed name inventory token is a strong signal, but still bounded per request. */
+    private const val MAX_INVENTORY_NAMES = 8
 
     private val word = Regex("[A-Za-z][A-Za-z'’-]*")
     private val token = Regex("[A-Za-z][A-Za-z'’\\-]*(?:'s|’s)?")
@@ -186,9 +194,10 @@ object ContextualNameDetector {
                 else -> null
             }
 
+            val cap = if (reason == "known_name_token") MAX_CANDIDATES * MAX_INVENTORY_NAMES else MAX_CANDIDATES
             when {
                 reason != null -> {
-                    if (confident.size < MAX_CANDIDATES) {
+                    if (confident.size < cap) {
                         val end = range.last + 1
                         confident.add(NameCandidate(value, range.first, end, Verdict.CONFIDENT, reason))
                         consumedUntil = end

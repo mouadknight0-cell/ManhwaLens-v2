@@ -96,7 +96,10 @@ object TranslationInput {
     private fun cleanDetailed(text:String,glossaryNames:List<String>,withNames:Boolean):Prepared {
         // 1. Detect contextual names in the original text, before any normalization.
         val detected = if(withNames) com.manhwalens.app.names.ContextualNameDetector.detect(text) else null
+        // A name the glossary already confirms is shielded through that path; reporting it as a
+        // new contextual guess would double-count the same identity.
         val contextual = detected?.names?.take(MAX_CONTEXT_NAMES).orEmpty()
+            .filter { n -> glossaryNames.none { it.equals(n, true) } }
         val normalized = SentenceReconstructor.normalize(text)
         val city=if(glossaryNames.any { it.equals("hefei",true) } && glossaryNames.none { it.equals("hefel",true) }) normalized.replace(cityConfusion,"$1 HEFEI") else normalized
         val alias=if(glossaryNames.any { it.equals("Jeong-ah",true) }) city.replace(Regex("\\bjeong-4h\\b",RegexOption.IGNORE_CASE),"Jeong-ah") else city

@@ -57,12 +57,18 @@ class ContextualNameProtectionTest {
         assertEquals("Gus's sword was broken.", NameShield.restore(masked.maskedText, masked))
     }
 
-    @Test fun `a possessive name is restored once, with its exact source spelling`() {
+    @Test fun `a possessive name is restored once with the spelling the shield was given`() {
         val source = "Gus's sword was broken."
         val mask = NameShield.mask(source, listOf("Gus's"))
         val finished = TranslationOutput.finish(source, "سيف 7000 كان مكسورًا.", mask, emptyMap())
         assertNotNull(finished)
         assertEquals("سيف Gus's كان مكسورًا.", finished!!.text)
+
+        // A canonical name never comes back with an invented suffix, and never vanishes.
+        val canonical = NameShield.mask(source, listOf("Gus"))
+        val bare = TranslationOutput.finish(source, "سيف 7000 كان مكسورًا.", canonical, emptyMap())
+        assertNotNull(bare)
+        assertEquals("سيف Gus كان مكسورًا.", bare!!.text)
     }
 
     @Test fun `ordinary dialogue is not shielded`() {

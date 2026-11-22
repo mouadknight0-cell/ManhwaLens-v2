@@ -40,14 +40,12 @@ object NameShield {
                 while (next <= MAX && originalDigits.contains(next.toString())) next++
                 require(next <= MAX) { "No collision-free name sentinel available" }
                 val token = next.toString()
-                // Exact source surface: canonical spelling, source apostrophe style, and the
-                // suffix case that matches the spelling actually written.
-                val suffix = hit.groupValues[1]
-                val base = if (preserveSpelling && name == name.lowercase()) bareOf(hit.value) else name
-                val surface = base + normalizedSuffix(suffix, base)
+                // The remembered identity is always the canonical spelling we were given: the
+                // sentinel already swallowed the possessive suffix, and restoring a *name*
+                // must never invent a surface form the glossary does not contain.
                 result = result.replaceRange(hit.range, " $token ")
                 tokens.add(token)
-                used.add(surface)
+                used.add(base)
                 occurrences++
                 next += 1
                 if (next > MAX) break
@@ -62,17 +60,6 @@ object NameShield {
     private const val MAX_OCCURRENCES = 8
 
     private fun bareOf(surface: String): String = surface.replace(Regex("['’][sS]$"), "")
-
-    /**
-     * Keep the apostrophe the source used, but make the "s" agree with the spelling we are
-     * about to restore (a canonical "Gus" must not come back as "Gus'S").
-     */
-    private fun normalizedSuffix(suffix: String, base: String): String {
-        if (suffix.isEmpty()) return ""
-        val apostrophe = if (suffix.startsWith("’")) "’" else "'"
-        val upper = base.any(Char::isLetter) && base.none(Char::isLowerCase)
-        return apostrophe + if (upper) "S" else "s"
-    }
 
     /** "hello , world" -> "hello, world" — protects masked text and restored output alike. */
     private fun fixSpaceBeforePunctuation(text: String): String =

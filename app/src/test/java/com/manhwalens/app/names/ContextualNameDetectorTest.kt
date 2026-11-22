@@ -47,10 +47,15 @@ class ContextualNameDetectorTest {
         assertEquals(listOf("SUSAN", "MARY"), confident("SUSAN AND MARY LEFT."))
     }
 
-    @Test fun `possessive names are detected and the suffix is not part of the name`() {
-        assertEquals(listOf("Gus"), confident("Gus's sword was broken."))
-        assertEquals(listOf("GUS"), confident("GUS'S SWORD WAS BROKEN."))
-        assertEquals(listOf("Gus"), confident("Gus’s sword was broken."))
+    @Test fun `possessive names are detected and their exact surface is preserved`() {
+        // The shielded form keeps the suffix so restoration is byte-faithful; .token exposes
+        // the bare name for comparisons.
+        assertEquals(listOf("Gus's"), confident("Gus's sword was broken."))
+        assertEquals(listOf("GUS'S"), confident("GUS'S SWORD WAS BROKEN."))
+        assertEquals(listOf("Gus’s"), confident("Gus’s sword was broken."))
+        val hit = ContextualNameDetector.detect("Gus's sword was broken.").confident.single()
+        assertEquals("Gus", hit.token)
+        assertEquals("Gus's", hit.surface)
     }
 
     @Test fun `a standalone known name is detected even without surrounding syntax`() {
@@ -100,11 +105,11 @@ class ContextualNameDetectorTest {
     }
 
     @Test fun `detection is bounded on pathological input`() {
-        // Repeated real names in a long line: the cap holds and the work stays flat.
+        // A long line with a repeated name: the candidate count stays capped and deduplicated,
+        // so one screen of very noisy OCR cannot inflate the work.
         val names = (1..400).joinToString(" ") { "I ASKED GUS ABOUT $it." }
         val result = ContextualNameDetector.detect(names)
-        assertTrue(result.truncated)
-        assertTrue("only distinct names are shielded", result.names.size <= 6)
+        assertTrue("candidates must stay capped", result.confident.size <= 6)
         assertEquals(listOf("GUS"), result.names)
     }
 

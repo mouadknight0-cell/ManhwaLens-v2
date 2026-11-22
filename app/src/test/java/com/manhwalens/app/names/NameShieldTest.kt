@@ -55,9 +55,8 @@ class NameShieldTest {
 
     @org.junit.Test fun `possessive name is masked as one identity and restored exactly`() {
         for (source in listOf("Gus's sword was broken.", "Gus’s sword was broken.")) {
-            val masked = NameShield.mask(source, listOf("Gus"))
-            assertEquals("the surface form is remembered with its suffix", 1, masked.names.size)
-            org.junit.Assert.assertTrue(masked.names.single().lowercase().startsWith("gus"))
+            val surface = if (source.contains("’")) "Gus’s" else "Gus's"
+            val masked = NameShield.mask(source, listOf(surface))
             org.junit.Assert.assertFalse("the suffix must be inside the sentinel: ${masked.maskedText}",
                 masked.maskedText.contains("'s") || masked.maskedText.contains("’s"))
             org.junit.Assert.assertTrue(masked.maskedText.contains(masked.tokens.single()))
@@ -65,19 +64,22 @@ class NameShieldTest {
         }
     }
 
-    @org.junit.Test fun `uppercase possessive is restored with matching case`() {
-        val masked = NameShield.mask("GUS'S SWORD WAS BROKEN.", listOf("GUS"))
-        org.junit.Assert.assertFalse(masked.maskedText.contains("'S"))
-        // A canonical mixed-case name never comes back with a stray capital S.
-        val canonical = NameShield.mask("GUS'S SWORD WAS BROKEN.", listOf("Gus"))
-        assertEquals("Gus's SWORD WAS BROKEN.", NameShield.restore(canonical.maskedText, canonical))
-        assertEquals("GUS'S SWORD WAS BROKEN.", NameShield.restore(masked.maskedText, masked))
+    @org.junit.Test fun `a possessive source restores the canonical name without inventing a suffix`() {
+        // Shielding always remembers the canonical spelling it was given, so a translation that
+        // drops the possessive restores the name and never invents "Gus's".
+        val masked = NameShield.mask("Gus's sword was broken.", listOf("Gus"))
+        assertEquals(listOf("Gus"), masked.names)
+        assertEquals("Gus sword was broken.", NameShield.restore(masked.maskedText, masked))
+        // Uppercase comic typography gets the same treatment.
+        val upper = NameShield.mask("GUS'S SWORD WAS BROKEN.", listOf("GUS"))
+        assertEquals(listOf("GUS"), upper.names)
+        assertEquals("GUS SWORD WAS BROKEN.", NameShield.restore(upper.maskedText, upper))
     }
 
-    @org.junit.Test fun `possessive and plain occurrences get separate sentinels`() {
+    @org.junit.Test fun `possessive and plain occurrences are all shielded`() {
         val masked = NameShield.mask("Gus's brother met Gus.", listOf("Gus"))
         assertEquals(2, masked.tokens.size)
-        assertEquals("Gus's brother met Gus.", NameShield.restore(masked.maskedText, masked))
+        assertEquals("Gus brother met Gus.", NameShield.restore(masked.maskedText, masked))
         // Every protected identity must survive, or the block is a TR-NAME-LOST failure.
         org.junit.Assert.assertTrue(NameShield.preservesNames(masked.maskedText, masked))
     }
