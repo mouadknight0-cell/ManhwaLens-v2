@@ -1,6 +1,7 @@
 # Phase 4.4 — Translation input integrity and contextual proper-name protection
 
-Candidate **1.1.42-rc2** (versionCode **217442871**), branch `arena/f6ce5fe4-manhwalens-v2`.
+Candidate **1.1.42-rc3** (versionCode **217442872**), branch `arena/f6ce5fe4-manhwalens-v2`.
+(`1.1.42-rc2` shipped the name/OCR work; `rc3` adds the diagnostics codes below.)
 Every number below comes from a CI run on the commit named next to it. **No statement in this
 document claims phone verification, and none claims a semantic-quality improvement.**
 
@@ -8,14 +9,15 @@ document claims phone verification, and none claims a semantic-quality improveme
 
 | Item | Value |
 | --- | --- |
-| Head commit under test | `c300f08` (phase work starts at `925838c`) |
-| CI (`ci.yml`) | run [45047325237](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/45047325237) — **success** |
-| Release candidate (`release-candidate.yml`) | run [45047319657](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/45047319657) — **success** |
-| Instrumented / emulator (`quality.yml`) | run [45045606708](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/45045606708) — **success** |
+| Head commit under test | `62b7685` (phase work starts at `925838c`) |
+| CI (`ci.yml`) | run [45049231119](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/45049231119) — **success** (`62b7685`) |
+| Release candidate (`release-candidate.yml`) | run [45049495177](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/45049495177) — **success** (`62b7685`, dispatched explicitly) |
+| Instrumented / emulator (`quality.yml`) | run [45045606708](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/45045606708) — **success** (`89f1d0c`) |
+| Earlier candidate | run [45047319657](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/45047319657) — **success** (`c300f08`), `1.1.42-rc2` |
 
-Release unit tests on that run: **63 suites, 313 tests, 0 failures, 0 errors, 0 skipped**
-(previous candidate 1.1.42-rc1: 59 suites / 266 tests). Workflow-logic tests
-(`.github/tests`): **41 OK** (was 28).
+Release unit tests on the rc3 run: **64 suites, 320 tests, 0 failures, 0 errors, 0 skipped**
+(1.1.42-rc2: 63 / 313; 1.1.42-rc1: 59 / 266). Workflow-logic tests (`.github/tests`):
+**41 OK** (was 28).
 
 ## 2. Why this phase exists
 
@@ -39,6 +41,7 @@ All 17 files are listed in §11. Grouped by responsibility:
 
 | Area | File | Change |
 | --- | --- | --- |
+| Diagnostics | `pipeline/ReadingEnglish.kt` (`InputCensus`, `census()`), `pipeline/TranslationInput.kt` (`NameReport`), `translate/TranslationClient.kt` | One code per outcome, computed from the repair's own predicates; see §8. |
 | Name detection | `names/ContextualNameDetector.kt` (new, 258 lines) | Conservative detector over the **original OCR text**, run before cleanup. Requires source syntax + grammar; returns the exact printed surface (`Gus's`, `GUS'S`, `LIZzy`); bounded candidates (`MAX_CANDIDATES=6`, `MAX_INVENTORY_NAMES=8`); ambiguous candidates are counted and rejected, never silently protected. |
 | Masking | `names/NameShield.kt` | Possessive-first matching so `Gus's` is masked **including** its suffix instead of leaking `'s`; restore is now order-independent (was corrupting the next sentinel); remembers the exact printed spelling. |
 | Input preparation | `pipeline/TranslationInput.kt` | Detector runs on raw OCR; contextual names already confirmed in the glossary are dropped (no double counting); `NameReport(detected, ambiguousRejected, truncated, reasons)` exposes structured counts only. |
@@ -121,34 +124,64 @@ status is unknown. What `RinsiwingInvestigationTest` (4 tests) does establish:
 
 ## 8. Diagnostics
 
-Structured reason codes and counts only — no captured dialogue, no dialogue text in any summary.
-`NameReport.summary()` emits `names_detected=… ambiguous_rejected=… truncated=… reasons=…`.
-Raw model input/output still appears **only** on the existing explicit debug/sample path, with
-bounded size. The categories are kept distinct rather than collapsed into one Boolean: input
-unchanged vs normalised, OCR word repaired, valid word protected from segmentation, contextual
-name detected, contextual name rejected as ambiguous, protected name preserved, protected name
-lost, unexplained Latin word, Latin word safely recovered, final accepted or rejected.
+Structured reason codes and counts only — no captured dialogue, and no dialog text in any
+summary. Raw model input/output stays on the existing explicit debug path, bounded to 512
+characters per field.
+
+The categories are deliberately *not* one Boolean. Each of these is now emitted:
+
+| Code | Means |
+| --- | --- |
+| `input_unchanged` / `input_normalized` | preparation did / did not alter the block |
+| `ocr_word_repaired` | a word the vocabulary did **not** contain was corrected (AHEAO → AHEAD) |
+| `valid_word_protected` | a word outside the vocabulary survived untouched because it looks inflected (HORNED, RINSING) |
+| `concatenation_split` | one token became two on evidence (COULDTHAT → COULD THAT) |
+| `source_word_substituted` | a token the vocabulary *does* contain was overridden anyway (GARTH → EARTH) |
+| `introduced_by:<verb>`, `coordinated_with:<name>`, `known_name_token`, `person_position:not_ordinary`, `preposition_and_name_shape` | why a name was detected |
+| `shape_only` | name-shaped but ambiguous → counted, **not** shielded |
+| `protected_name_preserved` / `protected_name_lost` | whether a detected name actually reached the model as a sentinel |
+| `latin_word_recovered` | a leftover Latin word was recovered through the bounded path |
+| `unexplained_latin` | Latin remained and the block was rejected with the source retained |
+
+The counts come from `ReadingEnglish.census()`, which compares raw OCR with the text the engine
+will actually receive using the repair's *own* predicates. It describes what happened; it never
+asserts that the translation was correct.
+
+`NameReport.summary()` emits
+`names_detected=… ambiguous_rejected=… truncated=… shielded=… lost=… repaired=…
+protected_words=… segmented=… reasons=…`.
+
+Seven tests (`DiagnosticCodesTest`) pin the contract. Two deserve mention:
+
+* **HORNED is not a repair.** It is counted as `valid_word_protected` with `repaired=0`, which is
+  the distinction the phone report was missing.
+* **GARTH → EARTH is not a repair either.** `GARTH` is a real dictionary word (rank 14540), so
+  calling that an OCR fix would misreport a deliberate contextual override as a correction.
 
 ## 9. Release
 
 | Item | Value |
 | --- | --- |
-| versionName | `1.1.42-rc2` |
-| versionCode | `217442871` (floor 217442870 + 1) |
+| versionName | `1.1.42-rc3` |
+| versionCode | `217442872` (floor 217442871 + 1) |
 | Task | `:app:assembleRelease` — **release** build, not debug |
 | Signer certificate SHA-256 | `93794a2fb7635cbe20503fefc300f90bf1f7f1e11d6d0db86c6f7531ce8e0806` |
 | Pinned certificate SHA-256 | `93794a2fb7635cbe20503fefc300f90bf1f7f1e11d6d0db86c6f7531ce8e0806` (identical — existing pinned key, no new identity) |
 | APK bytes | 120,363,526 |
-| APK SHA-256 | `b10682ca19e42b4374b6d62d636d7082967583eefd4bd5e548a96958ea8bb86d` |
+| APK SHA-256 | `bab3d7e03d3be4624328144cb3d61c201c767aaf5f447db6cada161135cf70e5` |
 | R8 / minify | disabled (unchanged; `isMinifyEnabled=false`, `isShrinkResources=false`) |
 | applicationId | unchanged (`com.manhwalens.app`) |
 
 **Direct signed APK download** —
+<https://github.com/mouadknight0-cell/ManhwaLens-v2/releases/download/rc-1.1.42-rc3/ManhwaLens-1.1.42-rc3-release.apk>
+
+Previous candidate, still downloadable:
 <https://github.com/mouadknight0-cell/ManhwaLens-v2/releases/download/rc-1.1.42-rc2/ManhwaLens-1.1.42-rc2-release.apk>
+(`b10682ca…`, versionCode 217442871 — it lacks the diagnostics codes).
 
 That URL serves the `.apk` itself (HTTP 302 to the release asset, `Content-Type:
 application/vnd.android.package-archive`), not a workflow-artifact zip. It is attached to the
-**prerelease** `rc-1.1.42-rc2`, which is never "Latest" and is not a published release.
+**prerelease** `rc-1.1.42-rc3`, which is never "Latest" and is not a published release.
 
 New in this phase: `min_installed_version_code` is an explicit workflow input, and the candidate
 is computed strictly above all three of the newest published release, the installed build, and
@@ -173,7 +206,7 @@ Implementation: `names/ContextualNameDetector.kt` (new), `names/NameShield.kt`,
 `translate/TranslationOutput.kt`.
 Tests: `names/ContextualNameDetectorTest.kt`, `names/NameShieldTest.kt`,
 `pipeline/OcrInputIntegrityTest.kt`, `pipeline/RinsiwingInvestigationTest.kt`,
-`translate/ContextualNameProtectionTest.kt`.
+`pipeline/DiagnosticCodesTest.kt`, `translate/ContextualNameProtectionTest.kt`.
 Release: `.github/scripts/candidate_version_code.py` (new),
 `.github/tests/test_candidate_version_code.py` (new), `.github/scripts/verify_release_apk.py`,
 `.github/tests/test_verify_release_apk.py`, `.github/workflows/release-candidate.yml`.
@@ -182,21 +215,21 @@ Existing Phone134/135/136/137 quality fixtures still pass unchanged.
 ## 12. Build configuration block
 
 ```
-commit SHA           : c300f08 (PR #10 head, branch arena/f6ce5fe4-manhwalens-v2)
-CI run               : 45047325237 — success (ci.yml)
-release candidate    : 45047319657 — success (release-candidate.yml)
-emulator run         : 45045606708 — success (quality.yml)
-versionName          : 1.1.42-rc2
-versionCode          : 217442871
+commit SHA           : 62b7685 (PR #10 head, branch arena/f6ce5fe4-manhwalens-v2)
+CI run               : 45049231119 — success (ci.yml, 62b7685)
+release candidate    : 45049495177 — success (release-candidate.yml, 62b7685)
+emulator run         : 45045606708 — success (quality.yml, 89f1d0c)
+versionName          : 1.1.42-rc3
+versionCode          : 217442872
 certificate SHA-256  : 93794a2fb7635cbe20503fefc300f90bf1f7f1e11d6d0db86c6f7531ce8e0806
-APK SHA-256          : b10682ca19e42b4374b6d62d636d7082967583eefd4bd5e548a96958ea8bb86d
+APK SHA-256          : bab3d7e03d3be4624328144cb3d61c201c767aaf5f447db6cada161135cf70e5
 APK size             : 120,363,526 bytes
-APK (direct .apk)    : https://github.com/mouadknight0-cell/ManhwaLens-v2/releases/download/rc-1.1.42-rc2/ManhwaLens-1.1.42-rc2-release.apk
+APK (direct .apk)    : https://github.com/mouadknight0-cell/ManhwaLens-v2/releases/download/rc-1.1.42-rc3/ManhwaLens-1.1.42-rc3-release.apk
 R8 / minify          : disabled (unchanged)
-unit tests           : 63 suites / 313 tests / 0 failures / 0 errors / 0 skipped
+unit tests           : 64 suites / 320 tests / 0 failures / 0 errors / 0 skipped
 workflow tests       : 41 OK (.github/tests)
-compatibility risks  : candidate requires versionCode >= 217442871 to install over an
-                       existing build; this is a candidate, not a stable release; phone
+compatibility risks  : candidate requires versionCode >= 217442872 to install over an
+                       existing build (rc2 users included); this is a candidate, not a stable release; phone
                        verification of the two reported cases is still outstanding; wider
                        name masking can raise TR-NAME-LOST / TR-UNTRANSLATED on blocks where
                        the engine drops or duplicates a name (rejected by design, source
