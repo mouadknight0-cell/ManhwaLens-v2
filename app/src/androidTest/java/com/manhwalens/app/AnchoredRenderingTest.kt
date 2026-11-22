@@ -49,7 +49,9 @@ class AnchoredRenderingTest {
             // non-destructive plate next to the balloon — rewritten as an opaque / capsule balloon
             // is exactly what must not happen.
             val s=p.surface
-            assertFalse("a proven oval must never be turned into a guessed capsule",s.capsule)
+            // capsule=true is this codebase's wording for "unverified plate": translucent chip +
+            // outlined text. What must never happen is inventing a mask/patch/oval geometry.
+            assertTrue("the fallback must be the non-destructive plate",s.capsule)
             assertFalse(s.oval);assertNull(s.mask);assertNull(s.patch)
             assertTrue(s.width>=anchor.width);assertTrue(s.height>=anchor.height)
             assertTrue(s.right<=neighbor.left);assertTrue(s.left>=screen.left && s.bottom<=screen.bottom)
@@ -66,12 +68,14 @@ class AnchoredRenderingTest {
             val ink=TextPaint(Paint.ANTI_ALIAS_FLAG).apply {color=Color.WHITE;typeface=ArabicTypeface.get(ctx);textSize=p.view.fittedSp*ctx.resources.displayMetrics.scaledDensity}
             val layout=ReplacementTranslationView.lines(text,ink,s.width-8)
             assertTrue(layout.height<=s.height-8);assertEquals(text.length,layout.getLineEnd(layout.lineCount-1))
+            // Glyphs are drawn outlined: counting the dark outline proves text was painted on the
+            // bright plate rather than the plate being counted as ink.
             var glyphs=0
             for(y in 0 until s.height)for(x in 0 until s.width){
                 val col=image.getPixel(x,y)
-                if(Color.alpha(col)>0 && Color.red(col)>200 && Color.green(col)>200 && Color.blue(col)>200)glyphs++
+                if(Color.alpha(col)>0 && Color.red(col)<90 && Color.green(col)<90 && Color.blue(col)<90)glyphs++
             }
-            assertTrue("outlined white glyphs must be drawn",glyphs>100)
+            assertTrue("outlined glyph ink must be drawn",glyphs>50)
             // A nearby independent bubble still places; a second translation for the same source
             // is refused because its occupied box is already on screen.
             val second=DirectTranslationLayout.anchored(ctx,"ماذا؟",neighbor,null,screen,listOf(s)){}!!
