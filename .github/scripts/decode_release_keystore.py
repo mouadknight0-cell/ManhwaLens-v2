@@ -103,5 +103,12 @@ if __name__ == "__main__":  # pragma: no cover
     try:
         raise SystemExit(main())
     except DecodeError as exc:
+        # Fingerprint/pin problems: a deliberate refusal, never a fallback.
         print("::error::%s" % exc, file=sys.stderr)
+        raise SystemExit(1)
+    except Exception as exc:  # noqa: BLE001 - the message must reach the CI annotation
+        # E.g. the vault passphrase secret is absent or the vault cannot be decrypted.
+        # Report the class and message only -- no key material is ever in scope here.
+        print("::error::cannot decode the release keystore: %s: %s"
+              % (type(exc).__name__, exc), file=sys.stderr)
         raise SystemExit(1)
