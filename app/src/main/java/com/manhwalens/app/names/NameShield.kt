@@ -44,7 +44,10 @@ object NameShield {
                 // sentinel already swallowed the possessive suffix, and restoring a *name*
                 // must never invent a surface form the glossary does not contain. A lowercase
                 // dictionary key keeps the capitalisation the panel actually printed.
-                val identity = if (preserveSpelling && name == name.lowercase()) bareOf(hit.value) else name
+                // An explicitly supplied canonical spelling is restored exactly as given; a
+                // lowercase dictionary key keeps the whole surface the panel printed, suffix
+                // included ("SECT'S"), which is what the reader shows today.
+                val identity = if (preserveSpelling && name == name.lowercase()) hit.value else name
                 result = result.replaceRange(hit.range, " $token ")
                 tokens.add(token)
                 used.add(identity)

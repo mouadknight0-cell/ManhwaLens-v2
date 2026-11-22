@@ -34,7 +34,8 @@ class ContextualNameDetectorTest {
 
     @Test fun `name introduced by a speech verb is detected`() {
         assertEquals(listOf("GUS"), confident("I ASKED GUS ABOUT THE LETTER."))
-        assertEquals(listOf("GUS"), confident("I asked Gus about the letter."))
+        // Source spelling is preserved exactly: mixed case stays mixed case.
+        assertEquals(listOf("Gus"), confident("I asked Gus about the letter."))
     }
 
     @Test fun `name in an infinitival subject clause is detected`() {
