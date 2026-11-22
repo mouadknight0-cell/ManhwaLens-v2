@@ -25,11 +25,18 @@ class ContextualNameProtectionTest {
     @Test fun `the reported line now yields protected name sentinels in the model input`() {
         val prepared = TranslationInput.prepare(reportedSource, emptyList(), true)
         assertEquals(listOf("LIZzy", "DOROTHY"), prepared.names)
-        assertFalse("the raw names must be shielded: ${prepared.text}", prepared.text.contains("Lizzy"))
-        assertFalse("the raw names must be shielded: ${prepared.text}", prepared.text.contains("DOROTHY"))
-        assertTrue(prepared.text.contains("7000"))
-        assertTrue(prepared.text.contains("7001"))
         assertTrue(prepared.report.detected == 2)
+        // The source stays readable (raw OCR is retained); what must never contain the bare
+        // names is the input the engine receives.
+        val mask = ReadingGlossary.modelMask(prepared.text, prepared.names, emptyMap())
+        assertEquals(2, mask.tokens.size)
+        assertFalse("the model input must not carry the name: ${mask.maskedText}",
+            mask.maskedText.contains("Lizzy") || mask.maskedText.contains("DOROTHY"))
+        val modelInput = ReadingGlossary.nativeSentence(mask)
+        assertFalse(modelInput, modelInput.contains("Lizzy") || modelInput.contains("DOROTHY"))
+        // And restoring gives the exact source spelling back.
+        val restored = NameShield.restore(mask.maskedText, mask).replace(Regex("\\s{2,}"), " ")
+        assertEquals(reportedSource, restored)
     }
 
     @Test fun `the report records the decision and never the dialogue`() {
@@ -43,18 +50,24 @@ class ContextualNameProtectionTest {
     @Test fun `a name introduced by a speech verb is shielded too`() {
         val prepared = TranslationInput.prepare("I ASKED GUS ABOUT THE LETTER.", emptyList(), true)
         assertEquals(listOf("GUS"), prepared.names)
-        assertFalse(prepared.text.uppercase().contains("GUS"))
+        val mask = ReadingGlossary.modelMask(prepared.text, prepared.names, emptyMap())
+        assertFalse("the model input must not carry the name: ${mask.maskedText}",
+            mask.maskedText.uppercase().contains("GUS"))
+        val restored = NameShield.restore(mask.maskedText, mask).replace(Regex("\\s{2,}"), " ")
+        assertEquals("I ASKED GUS ABOUT THE LETTER.", restored)
     }
 
     @Test fun `possessive names stay masked as one identity`() {
-        val prepared = TranslationInput.prepare("Gus's sword was broken.", emptyList(), true)
+        val source = "Gus's sword was broken."
+        val prepared = TranslationInput.prepare(source, emptyList(), true)
         assertEquals(listOf("Gus's"), prepared.names)
-        assertFalse("possessive suffix must not leak to the model: ${prepared.text}",
-            prepared.text.contains("'s") || prepared.text.contains("’s"))
-        assertTrue(prepared.text.contains("7000"))
-        // Shielding must survive the OCR repair chain too (it is applied on the raw text).
-        val masked = NameShield.mask("Gus's sword was broken.", prepared.names)
-        assertEquals("Gus's sword was broken.", NameShield.restore(masked.maskedText, masked))
+        val mask = ReadingGlossary.modelMask(prepared.text, prepared.names, emptyMap())
+        // The engine must never see a dangling "'s" belonging to nobody.
+        assertFalse("possessive suffix leaked to the model: ${mask.maskedText}",
+            mask.maskedText.contains("'s") || mask.maskedText.contains("’s"))
+        assertTrue(mask.maskedText.contains("7000"))
+        val restored = NameShield.restore(mask.maskedText, mask).replace(Regex("\\s{2,}"), " ")
+        assertEquals(source, restored)
     }
 
     @Test fun `a possessive name is restored once with the spelling the shield was given`() {

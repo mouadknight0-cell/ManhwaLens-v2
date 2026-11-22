@@ -32,22 +32,26 @@ object NameShield {
             // The possessive suffix belongs to the name: "Gus's" is ONE identity. Leaving the
             // "'s" outside the sentinel sent a bare suffix to the translator, which dropped it,
             // so the restored line silently lost the possessive ("Gus sword").
-            val regex = Regex("(?<![\\p{L}\\p{N}_])" + Regex.escape(name) + "(['’][sS])?(?![\\p{L}\\p{N}_])",
+            val suffixed = Regex("(?<![\\p{L}\\p{N}_])" + Regex.escape(name) + "['’][sS](?![\\p{L}\\p{N}_])",
+                RegexOption.IGNORE_CASE)
+            val plain = Regex("(?<![\\p{L}\\p{N}_])" + Regex.escape(name) + "(?![\\p{L}\\p{N}_])",
                 RegexOption.IGNORE_CASE)
             var occurrences = 0
             while (occurrences < MAX_OCCURRENCES) {
-                val hit = regex.find(result) ?: break
+                // Prefer the possessive occurrence so its suffix is swallowed with the name.
+                val possessive = suffixed.find(result)
+                val hit = possessive ?: plain.find(result) ?: break
                 while (next <= MAX && originalDigits.contains(next.toString())) next++
                 require(next <= MAX) { "No collision-free name sentinel available" }
                 val token = next.toString()
-                // The remembered identity is always the canonical spelling we were given: the
-                // sentinel already swallowed the possessive suffix, and restoring a *name*
-                // must never invent a surface form the glossary does not contain. A lowercase
-                // dictionary key keeps the capitalisation the panel actually printed.
-                // An explicitly supplied canonical spelling is restored exactly as given; a
-                // lowercase dictionary key keeps the whole surface the panel printed, suffix
-                // included ("SECT'S"), which is what the reader shows today.
-                val identity = if (preserveSpelling && name == name.lowercase()) hit.value else name
+                // An explicitly supplied canonical spelling is restored exactly as given. A
+                // lowercase dictionary key keeps the whole surface the panel printed — suffix
+                // included for a possessive ("SECT'S") — which is what the reader shows today.
+                // Lowercase dictionary key: keep the whole printed surface ("SECT'S").
+                // Otherwise restore the spelling the caller supplied — never a suffix the
+                // caller did not provide, and never a name that was not declared.
+                val identity = if (possessive != null && preserveSpelling && name == name.lowercase())
+                    hit.value else name
                 result = result.replaceRange(hit.range, " $token ")
                 tokens.add(token)
                 used.add(identity)
