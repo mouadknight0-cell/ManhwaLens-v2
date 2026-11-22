@@ -55,7 +55,7 @@ object TranslationInput {
         val detected:Int=0,
         val ambiguousRejected:Int=0,
         val truncated:Boolean=false,
-        val reasons:List<String>=emptyList(),
+        val reasons: List<String> = emptyList(),
     ) {
         fun summary():String {
             val codes = reasons.distinct().joinToString("|").ifEmpty { "none" }
