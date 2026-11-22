@@ -57,8 +57,10 @@ object TranslationInput {
         val truncated:Boolean=false,
         val reasons:List<String>=emptyList(),
     ) {
-        fun summary():String = "names_detected=$detected ambiguous_rejected=$ambiguousRejected " +
-            "truncated=$truncated reasons=${reasons.distinct().joinToString("|").ifEmpty { "none" }}"
+        fun summary():String {
+            val codes = reasons.distinct().joinToString("|").ifEmpty { "none" }
+            return "names_detected=$detected ambiguous_rejected=$ambiguousRejected truncated=$truncated reasons=$codes"
+        }
     }
 
     /** Prepared model text plus the request-local names that were shielded inside it. */
