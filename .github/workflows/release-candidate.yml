@@ -186,6 +186,18 @@ jobs:
           pinned=$(tr -d ' \n' < signing/release-cert.sha256 | tr 'A-F' 'a-f')
           grep -q "signer_certificate_sha256=$pinned" artifacts/APK-IDENTITY.txt
 
+      - name: Publish the build identity in the run annotations
+        # Hashes only: the certificate fingerprint and the APK digest must be readable
+        # without downloading the 60 MB artefact (and without any secret in the log).
+        run: |
+          set -euo pipefail
+          while IFS= read -r line; do
+            [ -n "$line" ] && echo "::notice title=Release candidate identity::$line"
+          done < artifacts/APK-IDENTITY.txt
+          echo "::notice title=Release candidate identity::legacy_certificate_sha256=$(tr -d ' \n' < signing/legacy-release-cert.sha256)"
+          echo "::notice title=Release candidate identity::commit_under_test=$(git rev-parse HEAD)"
+          echo "::notice title=Release candidate identity::r8_minify=disabled (isMinifyEnabled=false, isShrinkResources=false)"
+
       - name: Upload the signed release APK
         uses: actions/upload-artifact@v4
         with:
