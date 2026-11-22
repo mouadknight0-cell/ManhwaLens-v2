@@ -56,10 +56,20 @@ object TranslationInput {
         val ambiguousRejected:Int=0,
         val truncated:Boolean=false,
         val reasons: List<String> = emptyList(),
+        /** Names that reached the model as sentinels in this request. */
+        val shielded:Int=0,
+        /** Detected names whose masking was not applied, so they stayed visible. */
+        val lost:Int=0,
+        val census:ReadingEnglish.InputCensus=ReadingEnglish.InputCensus(),
     ) {
         fun summary():String {
-            val codes = reasons.distinct().joinToString("|").ifEmpty { "none" }
-            return "names_detected=$detected ambiguous_rejected=$ambiguousRejected truncated=$truncated reasons=$codes"
+            val codes=(reasons + census.codes() + buildList {
+                if(shielded>0) add("protected_name_preserved")
+                if(lost>0) add("protected_name_lost")
+            }).distinct().joinToString("|").ifEmpty { "none" }
+            return "names_detected=$detected ambiguous_rejected=$ambiguousRejected truncated=$truncated " +
+                "shielded=$shielded lost=$lost repaired=${census.repairedWords} " +
+                "protected_words=${census.inflectionProtected} segmented=${census.segmentedWords} reasons=$codes"
         }
     }
 
@@ -104,7 +114,11 @@ object TranslationInput {
         val city=if(glossaryNames.any { it.equals("hefei",true) } && glossaryNames.none { it.equals("hefel",true) }) normalized.replace(cityConfusion,"$1 HEFEI") else normalized
         val alias=if(glossaryNames.any { it.equals("Jeong-ah",true) }) city.replace(Regex("\\bjeong-4h\\b",RegexOption.IGNORE_CASE),"Jeong-ah") else city
         val report = detected?.let { NameReport(it.confident.size,it.ambiguous.size,it.truncated,it.confident.map { c->c.reason }) } ?: NameReport()
-        if (contextual.isEmpty() && !OcrLexicon.needsCleanup(alias) && alias.none(Char::isUpperCase)) return Prepared(alias,emptyList(),report)
+        if (contextual.isEmpty() && !OcrLexicon.needsCleanup(alias) && alias.none(Char::isUpperCase))
+            // Nothing but normalization could have changed here: report that separately from
+            // the repair census so "input_normalized" is not confused with "OCR word repaired".
+            return Prepared(alias,emptyList(),report.copy(
+                census=ReadingEnglish.census(alias,alias).copy(unchanged=text==alias)))
         // 2. Shield confirmed glossary names and the detected names together, then repair.
         val allNames = (glossaryNames + contextual).distinctBy { it.lowercase() }
         val masked = NameShield.mask(alias, allNames,preserveSpelling=true)
@@ -116,7 +130,15 @@ object TranslationInput {
             alone.names.isNotEmpty() && alone.tokens.isNotEmpty()
         }
         val repaired = NameShield.restore(prepareRepair(masked.maskedText, shielded), masked)
-        return Prepared(repaired, shielded, report)
+        // Counts come from comparing raw OCR with the text the engine will actually receive,
+        // using the repair's own predicates. They describe what *happened*; they never claim
+        // the block was translated correctly.
+        return Prepared(repaired, shielded, report.copy(
+            shielded=shielded.size,
+            lost=(contextual.size - shielded.size).coerceAtLeast(0),
+            // The repair census compares the normalized source with the prepared text; whether
+            // the *raw* OCR differed is reported by the unchanged flag, not by the census.
+            census=ReadingEnglish.census(alias, repaired).copy(unchanged=text==repaired)))
     }
 
     /** The OCR repair chain, guarded so a masked sentinel can never be rewritten or dropped. */

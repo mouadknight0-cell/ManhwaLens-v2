@@ -161,12 +161,23 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             run {
                 val latin=raw.filter { it in 'A'..'Z' || it in 'a'..'z' }
                 val unexplained=latin.isNotEmpty()
+                // One code per outcome so a report can separate "the validator refused" from
+                // "a bounded recovery rescued it" without reading prose.
+                val recoveryCode = when {
+                    recovered == null -> "none"
+                    recovered === contextualName -> "latin_word_recovered"
+                    recovered === organization -> "organization_recovered"
+                    else -> "latin_leftover_recorrected"
+                }
                 Diagnostics.info("translate","output_decision",
                     "issue=$issue latin_leaves=${if(unexplained) "unexplained" else "none"} " +
                         "name_lost=${if(issue=="TR-NAME-LOST") "yes" else "no"} " +
-                        "recovery=${when { recovered==null -> "rejected"; recovered===contextualName -> "contextual_name"; else -> "other" }} " +
+                        "recovery=$recoveryCode " +
                         "final=${if(recovered!=null) "accepted" else "rejected"}")
             }
+            if(recovered!=null) Diagnostics.info("translate","latin_word_recovered",
+                "issue=$issue code=${when { recovered===contextualName -> "contextual_name"; recovered===organization -> "organization"; else -> "leftover_recorrection" }} final=accepted")
+            else Diagnostics.info("translate","unexplained_latin","issue=$issue final=rejected source_retained=true")
             recovered ?: throw TranslationFailure(issue)
         } ?: throw TranslationFailure("TR-INVALID-OUTPUT")
         if(finished.correctionRejected) Diagnostics.warn("translate","post_validation","Invalid correction ignored; kept validated translation")

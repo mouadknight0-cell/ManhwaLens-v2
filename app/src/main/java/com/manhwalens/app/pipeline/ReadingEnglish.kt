@@ -25,6 +25,64 @@ object ReadingEnglish {
     fun isOrdinaryWord(word:String):Boolean { val w=word.lowercase();return w in words && w !in NAMES }
 
     /**
+     * Census of what preparation did to one block, using the same predicates as the repair
+     * itself. Counts only — no token text — so the result is safe for normal diagnostics.
+     *
+     * The three counts answer three different questions, which is the whole point of Phase 4.4:
+     * a repaired word was wrong OCR, a protected word was *not* wrong, and a segmented word was
+     * decided by evidence.
+     */
+    data class InputCensus(
+        val repairedWords: Int = 0,
+        val inflectionProtected: Int = 0,
+        val segmentedWords: Int = 0,
+        val substitutedWords: Int = 0,
+        val unchanged: Boolean = true,
+    ) {
+        fun codes(): List<String> = buildList {
+            if (repairedWords > 0) add("ocr_word_repaired")
+            if (inflectionProtected > 0) add("valid_word_protected")
+            if (segmentedWords > 0) add("concatenation_split")
+            if (substitutedWords > 0) add("source_word_substituted")
+            if (unchanged) add("input_unchanged") else add("input_normalized")
+        }
+    }
+
+    /**
+     * Compare raw OCR with the prepared input, token by token.
+     *
+     * A word counts as *repaired* only when the prepared token is a different whole word and
+     * the raw one was not a valid inflection (i.e. it really was wrong). A word counts as
+     * *protected* when the raw token is not in the vocabulary yet survives untouched because
+     * it looks like a legitimate inflection (HORNED, RINSING). A *segmentation* is counted only
+     * when one raw token became two prepared tokens, which is what a genuine concatenation does.
+     *
+     * A token that the vocabulary *does* contain but that was changed anyway (GARTH -> EARTH) is
+     * a deliberate contextual substitution, reported under its own code. Calling it "repaired
+     * OCR" would hide the risk: the pipeline overrode a word that was spelled like a real one.
+     */
+    fun census(raw: String, prepared: String): InputCensus {
+        val before = tokens.findAll(raw).map { it.value }.toList()
+        val after = tokens.findAll(prepared).map { it.value }.toList()
+        if (before.size == after.size) {
+            var repaired = 0;var protected = 0;var substituted = 0
+            for ((i, old) in before.withIndex()) {
+                val new = after[i]
+                if (old.equals(new, true)) {
+                    // Survived verbatim. Worth reporting only when the vocabulary did not know
+                    // it: that is the case that used to be corrupted.
+                    val w = old.lowercase()
+                    if (w !in words && w.none { it in '0'..'9' } && looksInflected(w)) protected++
+                } else if (old.lowercase() in words) substituted++
+                else if (!looksInflected(old)) repaired++
+            }
+            return InputCensus(repaired, protected, 0, substituted, before == after)
+        }
+        // Token count changed: count only one-token-to-two-token splits as segmentation.
+        return InputCensus(segmentedWords = (after.size - before.size).coerceAtLeast(0), unchanged = before == after)
+    }
+
+    /**
      * Reviewed inventory of real human names that the ranked vocabulary happens to contain.
      * It answers one narrow question — "is this a known person's name?" — and is never used as
      * a general "capitalised words are names" rule, nor as evidence that a token *cannot* be a
