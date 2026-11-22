@@ -85,12 +85,22 @@ class ReplacementTranslationView(context: Context, val message: String,
             if (r>l && b>t) content.set(l,t,r,b)
         }
         if (!content.intersect(0f,0f,w.toFloat(),h.toFloat())) content.setEmpty()
-        val width = (selected?.layout?.width ?: content.width().toInt().coerceAtLeast(1)).coerceAtMost(content.width().toInt().coerceAtLeast(1))
+        // The optimizer may hand us a narrower *text column* than the painted box; if it does not
+        // fit, fall back to the full interior instead of refusing a paragraph the box can hold.
+        val interiorWidth = content.width().toInt().coerceAtLeast(1)
+        val width = (selected?.layout?.width ?: interiorWidth).coerceIn(1, interiorWidth)
         fitPasses=0
-        val plan=if(selected!=null) selected else if(message.length <= 20000 && content.width()>=1) sequenceOf(15,14).map { sp ->
-            fitPasses++;DialogueType.measure(context,displayMessage,width,sp,surface.mask)
-        }.firstOrNull { it.complete && it.layout.height<=content.height() } else null
-        layout=plan?.layout?.takeIf { plan.complete && it.width<=width && it.height<=content.height() && it.text==displayMessage }
+        val fits: (DialogueType)->Boolean = { it.complete && it.layout.height<=content.height() && it.layout.width<=width }
+        var plan: DialogueType? = selected?.takeIf(fits)
+        if(plan==null && message.length <= 20000 && content.width()>=1){
+            // Reuse the already-measured candidate when it fits; otherwise measure once from the
+            // same painter, at the optimizer's column and then at the full interior width.
+            plan = listOfNotNull(selected).plus(sequenceOf(15,14).map { sp ->
+                fitPasses++;DialogueType.measure(context,displayMessage,width,sp,surface.mask)
+            }).firstOrNull(fits)
+                ?: (if(selected!=null) { fitPasses++;DialogueType.measure(context,displayMessage,interiorWidth,selected.sp,surface.mask) } else null)?.takeIf(fits)
+        }
+        layout=plan?.layout?.takeIf { plan.complete && it.width<=content.width()+.5f && it.height<=content.height() && it.text==displayMessage }
         fittedSp=plan?.sp?.toFloat() ?: 0f
         measurement="${plan?.metrics(context) ?: "preferred=15 min=14 max=15 no_fit"} interior=${width}x${content.height().toInt()} fits=${layout!=null}"
         val safe=surface.mask?.covers(content.left.toInt(),content.top.toInt(),kotlin.math.ceil(content.right).toInt(),kotlin.math.ceil(content.bottom).toInt())

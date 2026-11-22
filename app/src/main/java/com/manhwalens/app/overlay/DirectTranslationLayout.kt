@@ -148,8 +148,12 @@ object DirectTranslationLayout {
                 if((1 until layout.lineCount).any { com.manhwalens.app.pipeline.WordBoundary.splitsWord(text,layout.getLineStart(it)) }) continue
                 val widths=lineWidths(type)
                 if(widths.any { it>t+.5f }) continue
-                // Narrowest plate that still covers the source ink, +1px slack for rounding.
-                val boxW=maxOf(anchor.width,(widths.max().toInt()+2*pad+1))
+                // The plate must hold the whole text *column* it was measured with: the
+                // StaticLayout keeps that width even when the lines end early, and a box
+                // narrower than the column makes the view reject a fitting layout (the
+                // translation would be dropped for no visual reason). It must also cover the
+                // source glyph box. +1px slack for rounding.
+                val boxW=maxOf(anchor.width,t+2*pad+1)
                 if(boxW>capWidth) continue
                 val h=maxOf(anchor.height,layout.height+2*pad)
                 if(h>capHeight || boxW.toLong()*h>8_000_000) continue

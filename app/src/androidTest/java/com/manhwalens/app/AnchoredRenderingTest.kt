@@ -46,9 +46,9 @@ class AnchoredRenderingTest {
             val p=DirectTranslationLayout.anchored(ctx,dialogue,anchor,anchor.copy(oval=true,reliable=true),screen,listOf(neighbor)){}!!
             // The oval evidence must survive: a proven surface is never swapped for a guessed plate.
             assertTrue(p.surface.oval);assertEquals(anchor.left-2,p.surface.left);assertEquals(anchor.top-2,p.surface.top)
-            // A proven oval keeps its own geometry: the narrow source oval is not widened or
-            // turned into a capsule, so a long paragraph must fail capacity rather than be painted
-            // over the artwork.
+            // A proven oval keeps its own geometry: it is not widened and never turned into a
+            // capsule. Every attempt fit the paragraph inside those bounds (the reported
+            // two-wide-lines defect must not come back as a wider patch).
             val s=p.surface;assertFalse(s.capsule);assertEquals(anchor.width+4,s.width);assertTrue(p.view.fittedSp>0f)
             assertTrue(s.right<=neighbor.left);assertTrue(s.left>=screen.left && s.bottom<=screen.bottom)
             val image=Bitmap.createBitmap(s.width,s.height,Bitmap.Config.ARGB_8888);p.view.draw(Canvas(image))
