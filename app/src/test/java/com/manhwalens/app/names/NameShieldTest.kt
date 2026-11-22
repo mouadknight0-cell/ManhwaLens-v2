@@ -84,6 +84,24 @@ class NameShieldTest {
         org.junit.Assert.assertTrue(NameShield.preservesNames(masked.maskedText, masked))
     }
 
+    /**
+     * Regression: with two names, restoring "7000" first rewrote part of the "7001" token, and
+     * "Lizzy" came back as "Lizzy1". Restoration now masks in token order, so it is
+     * order-independent.
+     */
+    @org.junit.Test fun `several sentinels are restored independently of order`() {
+        val mask = NameShield.MaskResult("DOROTHY و LIZzy", listOf("DOROTHY", "LIZzy"), listOf("7000", "7001"))
+        val output = "لا أستطيع السماح لأي شيء بوضع  7000  و  7001  في خطر."
+        assertEquals("لا أستطيع السماح لأي شيء بوضع DOROTHY و LIZzy في خطر.",
+            NameShield.restore(output, mask))
+        // Declared in the other order: the same result, no cross-contamination.
+        val flipped = NameShield.MaskResult("", listOf("LIZzy", "DOROTHY"), listOf("7001", "7000"))
+        assertEquals("لا أستطيع السماح لأي شيء بوضع DOROTHY و LIZzy في خطر.",
+            NameShield.restore(output, flipped))
+        // A longer number that merely contains a token is never rewritten.
+        assertEquals("سيف A و 70001", NameShield.restore("سيف 7000 و 70001", NameShield.MaskResult("", listOf("A"), listOf("7000"))))
+    }
+
     @org.junit.Test fun `sentinel avoids numbers that already exist in the text`() {
         val masked = NameShield.mask("In 7000 the sect met Gus.", listOf("Gus"))
         assertEquals("7001", masked.tokens.single())

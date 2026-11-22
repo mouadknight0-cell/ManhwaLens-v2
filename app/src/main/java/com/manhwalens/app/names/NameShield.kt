@@ -90,7 +90,10 @@ object NameShield {
     fun restore(translated: String, mask: MaskResult): String {
         if (mask.names.isEmpty()) return translated
         var result = normalizeDigits(translated)
-        mask.tokens.zip(mask.names).forEach { (token, name) ->
+        // Longest token first: with several names the shorter token is a substring of the
+        // longer one ("7000" inside "7001"), so restoring in declaration order let name #1
+        // swallow part of a later token and produce "Lizzy1". Masking is order-independent.
+        mask.tokens.zip(mask.names).sortedByDescending { it.first.length }.forEach { (token, name) ->
             result = tokenPattern(token).replace(result) { name }
         }
         return fixSpaceBeforePunctuation(result.replace(Regex("\\s{2,}"), " ").trim())
