@@ -309,7 +309,17 @@ jobs:
           local_size=$(stat -c %s "$APK")
           echo "asset=$name remote_size=$remote_size local_size=$local_size"
           test "$remote_size" = "$local_size" || { echo '::error::published asset size differs from the verified APK'; exit 1; }
-          echo "::notice title=Direct APK download verified::$name ($local_size bytes) at ${{ steps.direct.outputs.direct_apk_url }}"
+          # Size alone cannot prove the bytes are the ones that were signed. Download the
+          # published asset through the API (a redirect there would yield an empty file and a
+          # hash mismatch, which is the safe way to fail) and compare the digest.
+          local_sha=$(awk '{print $1}' artifacts/SHA256SUMS.txt)
+          asset_id=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" -q ".assets[] | select(.name==\"$name\") | .id")
+          remote_sha=$(curl -sSfL -H 'Accept: application/octet-stream' \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/assets/$asset_id" | sha256sum | awk '{print $1}')
+          echo "asset=$name local_sha256=$local_sha remote_sha256=$remote_sha"
+          test "$remote_sha" = "$local_sha" || { echo '::error::the published APK does not hash to the verified APK'; exit 1; }
+          echo "::notice title=Direct APK download verified::$name ($local_size bytes) sha256=$remote_sha at ${{ steps.direct.outputs.direct_apk_url }}"
 
       - name: Release test evidence
         if: always()
