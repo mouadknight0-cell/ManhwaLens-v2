@@ -20,7 +20,9 @@ on:
       - 'app/build.gradle.kts'
 
 permissions:
-  contents: read
+  # Read the repo, and create/update the PRERELEASE that carries the APK so the owner can
+  # download the .apk file directly instead of a workflow artefact zip.
+  contents: write
 
 concurrency:
   group: release-candidate-${{ github.ref }}
@@ -223,6 +225,57 @@ jobs:
           path: artifacts/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish the APK as a direct download (prerelease, never latest)
+        # A workflow artefact is only ever delivered as a zip. The owner needs the .apk
+        # itself, so the same verified file is attached to a PRERELEASE whose tag is
+        # derived from the candidate version. Prereleases are skipped by the published-
+        # release lookup above and can never become "Latest", so nothing is published.
+        id: direct
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: rc-${{ inputs.version_name || '1.1.42-rc1' }}
+        run: |
+          set -euo pipefail
+          apk="artifacts/ManhwaLens-${{ inputs.version_name || '1.1.42-rc1' }}-release.apk"
+          sha=$(awk '{print $1}' artifacts/SHA256SUMS.txt)
+          notes="Official signed RELEASE build for physical-device testing. Not a published release.
+
+          - commit: \`$(git rev-parse HEAD)\`
+          - APK SHA-256: \`$sha\`
+          - signer certificate SHA-256: \`$(tr -d ' \n' < signing/release-cert.sha256)\`
+          - versionName/versionCode: see APK-IDENTITY.txt
+
+          $(cat artifacts/APK-IDENTITY.txt)"
+          # Create on first run, refresh afterwards; assets are replaced (--clobber) so the
+          # download URL stays stable across reruns of the same candidate version.
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" \
+            --prerelease --title "Release candidate ${TAG#rc-}" --notes "$notes"
+          gh release edit "$TAG" --prerelease --notes "$notes" >/dev/null
+          gh release upload "$TAG" "$apk" artifacts/APK-IDENTITY.txt artifacts/SHA256SUMS.txt artifacts/release-cert.sha256 --clobber
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/$(basename "$apk")"
+          echo "direct_apk_url=$url" >> "$GITHUB_OUTPUT"
+          echo "::notice title=Direct APK download::${url}"
+
+      - name: Verify the direct download really serves the tested APK
+        # The whole point is a link that hands over the .apk, so check the published asset
+        # name, its size and its extension against the file this job verified.
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: rc-${{ inputs.version_name || '1.1.42-rc1' }}
+          APK: artifacts/ManhwaLens-${{ inputs.version_name || '1.1.42-rc1' }}-release.apk
+        run: |
+          set -euo pipefail
+          name=$(basename "$APK")
+          test "${name##*.}" = apk || { echo '::error::the published asset is not an .apk file'; exit 1; }
+          listed=$(gh release view "$TAG" --json assets -q '.assets[] | select(.name=="'"$name"'") | "\(.name)\t\(.size)"')
+          test -n "$listed" || { echo "::error::the release does not carry $name"; exit 1; }
+          remote_size=${listed##*$'\t'}
+          local_size=$(stat -c %s "$APK")
+          echo "asset=$name remote_size=$remote_size local_size=$local_size"
+          test "$remote_size" = "$local_size" || { echo '::error::published asset size differs from the verified APK'; exit 1; }
+          echo "::notice title=Direct APK download verified::$name ($local_size bytes) at ${{ steps.direct.outputs.direct_apk_url }}"
 
       - name: Release test evidence
         if: always()
