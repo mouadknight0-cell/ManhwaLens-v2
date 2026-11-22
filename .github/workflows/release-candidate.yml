@@ -95,19 +95,12 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Release Kotlin compilation
-        run: ./gradlew :app:compileReleaseKotlin --stacktrace --no-daemon
-
-      - name: Release unit tests
-        run: ./gradlew :app:testReleaseUnitTest --stacktrace --no-daemon
-
-      - name: Instrumented test source compilation
-        run: ./gradlew :app:compileDebugAndroidTestKotlin --stacktrace --no-daemon
-
       - name: Decode the pinned release keystore from the versioned vault
-        # The vault is the durable key backup; the password is an independent Actions
-        # secret. Plaintext exists only inside this runner and is deleted at job end.
-        # The helper fails closed if the decoded certificate is not the pinned one.
+        # Runs before any release task: every *release* Gradle task requires the pinned key
+        # (preReleaseBuild), so an unsigned or debug-signed release cannot be produced even
+        # by accident. The vault is the durable key backup and the password is an
+        # independent Actions secret; plaintext exists only inside this runner and is
+        # deleted at job end. The helper fails closed on any fingerprint mismatch.
         run: |
           python3 -m pip install cryptography
           python3 .github/scripts/decode_release_keystore.py
@@ -127,6 +120,15 @@ jobs:
             echo '::error::The decoded keystore does not match the pinned production certificate. Refusing to build.'
             exit 1
           fi
+
+      - name: Release Kotlin compilation
+        run: ./gradlew :app:compileReleaseKotlin --stacktrace --no-daemon
+
+      - name: Release unit tests
+        run: ./gradlew :app:testReleaseUnitTest --stacktrace --no-daemon
+
+      - name: Instrumented test source compilation
+        run: ./gradlew :app:compileDebugAndroidTestKotlin --stacktrace --no-daemon
 
       - name: Assemble signed RELEASE APK
         shell: bash
