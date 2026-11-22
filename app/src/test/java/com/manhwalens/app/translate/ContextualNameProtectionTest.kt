@@ -114,8 +114,12 @@ class ContextualNameProtectionTest {
             reportedSource, reportedSyntheticOutput, mask, emptyMap(), listOf("LIZzy", "DOROTHY"))
         assertNotNull("both declared names must be recoverable", finished)
         val text = finished!!.text
-        assertTrue(text, text.contains("Lizzy"))
-        assertTrue(text, text.contains("Dorothy"))
+        // The restored spelling is the one the source printed (LIZzy), not the report's title
+        // case: a fix must never rewrite the identity it was asked to protect.
+        assertTrue(text, text.contains("LIZzy"))
+        assertTrue(text, text.contains("DOROTHY"))
+        assertEquals("each name exactly once", 1, text.split("LIZzy").size - 1)
+        assertEquals("each name exactly once", 1, text.split("DOROTHY").size - 1)
         assertTrue("Arabic body must survive", text.contains("لا أستطيع"))
     }
 
@@ -128,10 +132,12 @@ class ContextualNameProtectionTest {
             mask, emptyMap(), listOf("LIZzy", "DOROTHY")))
     }
 
-    @Test fun `two unexplained Latin tokens are not recovered`() {
+    @Test fun `a mix of declared and undeclared tokens is not recovered`() {
         val mask = NameShield.mask(reportedSource, listOf("LIZzy", "DOROTHY"))
+        // No declared names at all: the raw names cannot excuse the block.
         assertNull(TranslationOutput.recoverContextualName(
             reportedSource, reportedSyntheticOutput, mask, emptyMap(), emptyList()))
+        // Two names declared but a third, undeclared Latin word present: still rejected.
         assertNull(TranslationOutput.recoverContextualName(
             reportedSource,
             "لا أستطيع السماح لأي شيء بوضع Lizzy و Dorothy و Danger في خطر.",

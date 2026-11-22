@@ -85,7 +85,11 @@ object TranslationOutput {
         val declared=tokens.map { copied ->
             contextualNames.firstOrNull { bareName(it).equals(copied,true) } ?: return null
         }
-        val present=Regex("\\b7\\d{3}\\b").findAll(normalized).map { it.value }.toMutableSet()
+        // Fresh sentinels must avoid both the digits already in the output AND the sentinels
+        // this request already assigned to other names — otherwise a new token would be mixed
+        // with an existing identity ("Lizzy" restored as the sentinel of another name).
+        val used=mask.tokens.toMutableSet()
+        used.addAll(Regex("\\b7\\d{3}\\b").findAll(normalized).map { it.value })
         // Each declared name is swapped for its own fresh, collision-free sentinel.
         var shielded=normalized
         val extraTokens=mutableListOf<String>()
@@ -94,8 +98,8 @@ object TranslationOutput {
             // "Lizzy's" or neither.
             val pattern=Regex("(?<![\\p{L}\\p{N}_])"+Regex.escape(name)+"(?:['’][sS])?(?![\\p{L}\\p{N}_])",RegexOption.IGNORE_CASE)
             if(!pattern.containsMatchIn(shielded) && !pattern.containsMatchIn(source))return null
-            val token=(7000..7999).map { it.toString() }.firstOrNull { it !in present } ?: return null
-            present.add(token)
+            val token=(7000..7999).map { it.toString() }.firstOrNull { it !in used } ?: return null
+            used.add(token)
             extraTokens.add(token)
             // Spaces keep the sentinel a standalone token even when OCR glued it to Arabic.
             shielded=pattern.replace(shielded, " $token ")
