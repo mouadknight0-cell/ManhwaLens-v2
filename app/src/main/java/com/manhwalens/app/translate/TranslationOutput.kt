@@ -85,32 +85,27 @@ object TranslationOutput {
         val declared=tokens.map { copied ->
             contextualNames.firstOrNull { bareName(it).equals(copied,true) } ?: return null
         }
-        // Fresh sentinels must avoid both the digits already in the output AND the sentinels
-        // this request already assigned to other names — otherwise a new token would be mixed
-        // with an existing identity ("Lizzy" restored as the sentinel of another name).
-        val used=mask.tokens.toMutableSet()
-        used.addAll(Regex("\\b7\\d{3}\\b").findAll(normalized).map { it.value })
-        // Each declared name is swapped for its own fresh, collision-free sentinel.
         var shielded=normalized
-        val extraTokens=mutableListOf<String>()
         for(name in declared) {
-            // The possessive group is optional as a whole: the engine may keep "Lizzy",
-            // "Lizzy's" or neither.
+            // Reuse the sentinel this request already assigned to that name. Allocating a new
+            // one would desynchronise the mask (its maskedText is the SOURCE), so token counts
+            // and the restored identities would no longer line up.
+            val assigned=mask.tokens.zip(mask.names)
+                .filter { (_, n) -> bareName(n).equals(bareName(name), true) }
+                .map { it.first }
+            if(assigned.isEmpty())return null
             val pattern=Regex("(?<![\\p{L}\\p{N}_])"+Regex.escape(name)+"(?:['’][sS])?(?![\\p{L}\\p{N}_])",RegexOption.IGNORE_CASE)
-            if(!pattern.containsMatchIn(shielded) && !pattern.containsMatchIn(source))return null
-            val token=(7000..7999).map { it.toString() }.firstOrNull { it !in used } ?: return null
-            used.add(token)
-            extraTokens.add(token)
-            // Spaces keep the sentinel a standalone token even when OCR glued it to Arabic.
-            shielded=pattern.replace(shielded, " $token ")
+            val found=pattern.findAll(shielded).toList()
+            // Dropped or duplicated by the engine: never "recover" a different identity.
+            if(found.size != assigned.size)return null
+            // Replace back-to-front so earlier ranges stay valid.
+            for(i in found.indices.reversed()) {
+                val hit=found[i]
+                shielded=shielded.replaceRange(hit.range, " ${assigned[i]} ")
+            }
         }
         if(shielded==raw)return null
-        // Restore the spelling the source actually printed, not the uppercased comparison key.
-        val surfaces=declared.map { name ->
-            contextualNames.firstOrNull { bareName(it).equals(name,true) } ?: name
-        }
-        val combined=NameShield.MaskResult(shielded, mask.names + surfaces, mask.tokens + extraTokens)
-        val finished=finish(source,shielded,combined,edits) ?: return null
+        val finished=finish(source,shielded,mask,edits) ?: return null
         // Each name must appear exactly once in the restored text: never duplicated, dropped
         // or renamed by the recovery itself.
         for(name in declared) {
