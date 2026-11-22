@@ -75,7 +75,8 @@ object ArabicLayoutPlanner {
         if (lineWidths.isEmpty() || textWidthPx <= 0) return 0.0
         if (lineWidths.size < 2) return 0.0
         val used = lineWidths.max() / textWidthPx.toFloat()
-        return ((1.0 - used.coerceIn(0.0, 1.0)) * 1.2).coerceIn(0.0, 0.6)
+        val spare = 1.0 - used.coerceIn(0f, 1f).toDouble()
+        return (spare * 1.2).coerceIn(0.0, 0.6)
     }
 
     /**

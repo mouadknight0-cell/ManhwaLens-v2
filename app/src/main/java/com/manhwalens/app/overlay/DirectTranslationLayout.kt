@@ -47,7 +47,7 @@ object DirectTranslationLayout {
     }
 
     fun nearby(context:Context,message:String,source:ReplacementSurface,screen:ReplacementSurface,occupied:List<ReplacementSurface>):Prepared? =
-        anchored(context,message,source,null,screen,occupied){}
+        anchored(context,message,source,null,screen,occupied,report={})
 
     /** Safe interior (mask inset / inscribed oval / flat surface) when the evidence proves one. */
     private data class Interior(val width:Int, val height:Int)
