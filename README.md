@@ -86,6 +86,9 @@ app/src/main/java/com/manhwalens/app/
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the capture flow, and [docs/RELEASING.md](docs/RELEASING.md) for the signing/release process.
 
+**Current test build:** [1.1.42-rc3](docs/RELEASE-CANDIDATE-1.1.42-rc3.md) — signed release APK,
+versionCode 217442872, direct `.apk` link and SHA-256 in that file.
+
 ## 📦 التوقيع وإدارة الإصدارات | Signing & releases
 
 - **Package id** `com.manhwalens.app` and the **release signing key are permanent** across releases — updates always install over the previous version.
