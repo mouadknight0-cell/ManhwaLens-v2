@@ -1,0 +1,203 @@
+name: Official release candidate
+
+# Builds a SIGNED RELEASE APK for physical-device testing.
+# Never runs assembleDebug, never publishes a GitHub release, never touches the next
+# release's version number, and never falls back to debug signing.
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: Candidate versionName (must end with -rc, e.g. 1.1.42-rc1)
+        required: true
+        default: 1.1.42-rc1
+  push:
+    branches: [arena/f6ce5fe4-manhwalens-v2]
+    paths:
+      - '.github/workflows/release-candidate.yml'
+      - '.github/scripts/verify_release_apk.py'
+      - 'signing/**'
+      - 'app/build.gradle.kts'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-candidate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERSION_NAME: ${{ inputs.version_name || '1.1.42-rc1' }}
+  # Makes the Gradle release task refuse an unsigned output path, even if someone sets
+  # ALLOW_UNSIGNED_RELEASE in this job by mistake.
+  CANDIDATE_RELEASE_BUILD: 'true'
+
+jobs:
+  release-candidate:
+    name: Signed release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout the exact commit under test
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Signing recovery regression tests
+        run: |
+          python3 -m pip install cryptography
+          python3 -m unittest discover -s .github/tests -t .github/tests -v
+
+      - name: Resolve version identity before building
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$VERSION_NAME" in
+            *-rc*) ;;
+            *) echo '::error::A candidate build needs an -rc versionName'; exit 1;;
+          esac
+          echo "Commit under test: $(git rev-parse HEAD)"
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          # Per-commit code, identical to release.yml.
+          code=$(( $(git show -s --format=%ct HEAD) - 1577836800 ))
+          echo "VERSION_CODE=$code" >> "$GITHUB_ENV"
+          echo "version_code=$code" >> "$GITHUB_OUTPUT"
+          # Monotonic floor: the newest published GitHub release must be strictly below us.
+          last=$(gh release list --exclude-drafts --limit 1 --json tagName -q '.[0].tagName' || true)
+          if [ -z "$last" ]; then echo '::error::no published release found; refusing to guess a version floor'; exit 1; fi
+          tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$last" -q .object.sha)
+          type=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$last" -q .object.type)
+          if [ "$type" = tag ]; then tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" -q .object.sha); fi
+          last_epoch=$(gh api "repos/$GITHUB_REPOSITORY/commits/$tag_sha" -q '.commit.committer.date')
+          last_code=$(python3 -c "import datetime,sys;print(int(datetime.datetime.fromisoformat('$last_epoch'.replace('Z','+00:00')).timestamp())-1577836800)")
+          echo "last_release=$last last_version_code=$last_code this_build_code=$code"
+          if [ "$code" -le "$last_code" ]; then
+            echo "::error::versionCode $code is not greater than $last ($last_code)"; exit 1
+          fi
+          # A candidate must not burn the eventual release's per-commit number: hold it to
+          # last_published + 1, which is installable over the installed official app and
+          # strictly monotonic, while the tagged release keeps its own larger code.
+          echo "CANDIDATE_VERSION_CODE_HOLD=$last_code" >> "$GITHUB_ENV"
+          echo "last_version_code=$last_code" >> "$GITHUB_OUTPUT"
+          echo "last_release=$last" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Release Kotlin compilation
+        run: ./gradlew :app:compileReleaseKotlin --stacktrace --no-daemon
+
+      - name: Release unit tests
+        run: ./gradlew :app:testReleaseUnitTest --stacktrace --no-daemon
+
+      - name: Instrumented test source compilation
+        run: ./gradlew :app:compileDebugAndroidTestKotlin --stacktrace --no-daemon
+
+      - name: Decode the pinned release keystore from the versioned vault
+        # The vault is the durable key backup; the password is an independent Actions
+        # secret. Plaintext exists only inside this runner and is deleted at job end.
+        # The helper fails closed if the decoded certificate is not the pinned one.
+        run: |
+          python3 -m pip install cryptography
+          python3 .github/scripts/decode_release_keystore.py
+
+      - name: Verify the release signer matches the pinned production certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -list -v -keystore "$MANHWALENS_KEYSTORE_FILE" -storetype PKCS12 \
+            -alias manhwalens -storepass:env MANHWALENS_KEYSTORE_PASSWORD \
+            | tee /tmp/keytool.txt
+          actual=$(grep -m1 'SHA256:' /tmp/keytool.txt | sed 's/.*SHA256: *//' | tr -d ':' | tr 'A-F' 'a-f')
+          pinned=$(tr -d ' \n' < signing/release-cert.sha256 | tr 'A-F' 'a-f')
+          echo "keystore_certificate_sha256=$actual"
+          echo "pinned_certificate_sha256=$pinned"
+          if [ "$actual" != "$pinned" ]; then
+            echo '::error::The decoded keystore does not match the pinned production certificate. Refusing to build.'
+            exit 1
+          fi
+
+      - name: Assemble signed RELEASE APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${MANHWALENS_KEYSTORE_FILE:-}" ]; then
+            echo '::error::No release keystore in this job; refusing an unsigned or debug-signed build.'
+            exit 1
+          fi
+          ./gradlew assembleRelease --stacktrace --no-daemon
+          ls -l app/build/outputs/apk/release/
+
+      - name: Verify signature, certificate, identity and versionCode
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=app/build/outputs/apk/release/app-release.apk
+          test -f "$apk" || { echo '::error::assembleRelease produced no app-release.apk (unsigned output is not a release)'; exit 1; }
+          build_tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          echo "build_tools=$build_tools"
+          mkdir -p artifacts
+          python3 .github/scripts/verify_release_apk.py \
+            --apk "$apk" \
+            --apk-id "$build_tools/aapt" \
+            --apksigner "$build_tools/apksigner" \
+            --expected-version-name "$VERSION_NAME" \
+            --min-version-code "${{ steps.version.outputs.last_version_code }}" \
+            | tee artifacts/APK-IDENTITY.txt
+          # The pinned fingerprint must be published next to the APK for the owner to compare
+          # against the installed official application before claiming update compatibility.
+          cp signing/release-cert.sha256 artifacts/release-cert.sha256
+          cp "$apk" artifacts/ManhwaLens-$VERSION_NAME-release.apk
+          (cd artifacts && sha256sum ManhwaLens-$VERSION_NAME-release.apk > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          {
+            echo "## Official release candidate $VERSION_NAME"
+            echo
+            echo "- commit: \`$(git rev-parse HEAD)\`"
+            echo "- artifact: \`ManhwaLens-$VERSION_NAME-release.apk\` (signed RELEASE build)"
+            echo "- pinned last release: ${{ steps.version.outputs.last_release }} (versionCode ${{ steps.version.outputs.last_version_code }})"
+            cat artifacts/APK-IDENTITY.txt
+          } > artifacts/BUILD-INFO.md
+          cat artifacts/BUILD-INFO.md
+
+      - name: Fail if the release APK was debug-signed
+        if: always() && steps.verify.outcome == 'success'
+        run: |
+          # Defence in depth: a debug certificate can never satisfy the pinned fingerprint,
+          # but make the intent explicit and loud in the log.
+          pinned=$(tr -d ' \n' < signing/release-cert.sha256 | tr 'A-F' 'a-f')
+          grep -q "signer_certificate_sha256=$pinned" artifacts/APK-IDENTITY.txt
+
+      - name: Upload the signed release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ManhwaLens-${{ inputs.version_name || '1.1.42-rc1' }}-release-apk
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Release test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-test-evidence
+          path: |
+            app/build/test-results/testReleaseUnitTest/
+            app/build/reports/tests/testReleaseUnitTest/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Remove the decoded keystore from the runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.p12" || true

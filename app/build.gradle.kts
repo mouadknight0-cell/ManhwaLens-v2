@@ -4,6 +4,18 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 val appVersionName: String = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "1.1.30-dev"
 val appVersionCode: Int = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
+// A candidate build (release-candidate APK for device testing) has a distinguishable
+// versionName suffix, e.g. "1.1.42-rc1". Nothing else about the release differs.
+val releaseCandidate: Boolean = appVersionName.endsWith("-rc1") || appVersionName.contains("-rc")
+// A release candidate must NOT burn the per-commit versionCode of the eventual release:
+// the tag workflow derives its own code from the tagged commit's timestamp. The candidate
+// therefore ships `last_published + 1` (installable over the installed official app, and
+// strictly monotonic), never the big per-commit number, and never the last release itself.
+val candidateVersionCodeHold: Int = System.getenv("CANDIDATE_VERSION_CODE_HOLD")?.toIntOrNull() ?: 0
+val effectiveVersionCode: Int = if (releaseCandidate && candidateVersionCodeHold > 0)
+    (candidateVersionCodeHold + 1).coerceAtMost(appVersionCode)
+else appVersionCode
+
 // Stable release signing: CI decodes the keystore from the MANHWALENS_KEYSTORE_FILE secret.
 // Release assembly fails closed without this key: never publish ephemeral debug signing as a release.
 val releaseKeystorePath: String? = System.getenv("MANHWALENS_KEYSTORE_FILE")
@@ -31,7 +43,7 @@ android {
         minSdk = 26
         targetSdk = 35
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = appVersionCode
+        versionCode = effectiveVersionCode
         versionName = appVersionName
         vectorDrawables.useSupportLibrary = true
     }
@@ -115,9 +127,16 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
 }
 
-// CI debug artifacts remain available for diagnostics; production releases require continuity.
+// Installable builds must be signed with the pinned production identity: a release with no
+// key is refused here, unless a workflow that only needs an *unsigned* intermediate sets
+// ALLOW_UNSIGNED_RELEASE (release.yml, which signs offline in sign-release.yml). Nothing
+// signed with the ephemeral debug key can ever be produced as a release.
 tasks.configureEach {
     if (name == "preReleaseBuild") doFirst {
         check(hasReleaseKeystore || System.getenv("ALLOW_UNSIGNED_RELEASE") == "true") { "Stable signing key missing. Refusing an incompatible release; restore the original signing key in GitHub secrets." }
+        // A release candidate is always signed in-job: the unsigned escape hatch must not leak in.
+        if (System.getenv("CANDIDATE_RELEASE_BUILD") == "true") {
+            check(hasReleaseKeystore) { "Release candidate without the production keystore: refusing to build an unsigned or debug-signed APK." }
+        }
     }
 }
