@@ -95,8 +95,9 @@ object DirectTranslationLayout {
         return null
     }
 
+    /** [report] stays last so existing call sites keep using a trailing lambda. */
     internal fun anchored(context:Context,message:String,anchor:ReplacementSurface,evidence:ReplacementSurface?,screen:ReplacementSurface,
-        occupied:List<ReplacementSurface>,detail:PageDetail?=null,report:(String)->Unit,sourceLineCount:Int=1):Prepared? {
+        occupied:List<ReplacementSurface>,detail:PageDetail?=null,sourceLineCount:Int=1,report:(String)->Unit):Prepared? {
         if(!screen.contains(anchor) || anchor.width<=0 || anchor.height<=0){ report("out_of_bounds");return null }
         // An occupied box overlapping the *anchor* is not fatal: positions are re-solved
         // against the obstacle set below, so the text can slide instead of being dropped.

@@ -467,7 +467,7 @@ class BubbleOverlayService : Service() {
                 b.region.let { ReplacementSurface(it.left,it.top,it.right,it.bottom) }
             }
             fun failed(){outcome(i,if(!current()) "STALE_RESULT" else "RENDER_FAILED");renderFailure=true}
-            val prepared=DirectTranslationLayout.anchored(this,block.translated,anchor,source,screen,occupied+others,detail,{outcome(i,it)},r.sourceLineCount)
+            val prepared=DirectTranslationLayout.anchored(this,block.translated,anchor,source,screen,occupied+others,detail,r.sourceLineCount){outcome(i,it)}
             if(prepared==null){failed();return@forEachIndexed}
             when(prepared.view.maskValid) { true -> com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(block.region),"MASK_VALIDATED")
                 false -> com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(block.region),"MASK_REJECTED")
