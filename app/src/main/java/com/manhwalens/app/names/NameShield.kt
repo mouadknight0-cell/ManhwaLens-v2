@@ -42,10 +42,12 @@ object NameShield {
                 val token = next.toString()
                 // The remembered identity is always the canonical spelling we were given: the
                 // sentinel already swallowed the possessive suffix, and restoring a *name*
-                // must never invent a surface form the glossary does not contain.
+                // must never invent a surface form the glossary does not contain. A lowercase
+                // dictionary key keeps the capitalisation the panel actually printed.
+                val identity = if (preserveSpelling && name == name.lowercase()) bareOf(hit.value) else name
                 result = result.replaceRange(hit.range, " $token ")
                 tokens.add(token)
-                used.add(base)
+                used.add(identity)
                 occurrences++
                 next += 1
                 if (next > MAX) break
