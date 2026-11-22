@@ -8,19 +8,25 @@ No debug APK was built, no key was generated, nothing was published.
 
 | Item | Value |
 | --- | --- |
-| Commit under test | `7ec2dcf033d887d46c6bcd0fe32c77c460cd5a2b` |
+| Commit under test | `72c356ca426ee3358f900d26f3155a21bd58b65b` |
 | Workflow | `.github/workflows/release-candidate.yml` — "Official release candidate" |
-| Run | [45032891506](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/45032891506) (success, every step green) |
-| Artifact | `ManhwaLens-1.1.42-rc1-release-apk` (61,215,679 bytes zipped) |
-| Artifact id | `14758209038` |
-| Test evidence artifact | `release-candidate-test-evidence` (id `14758577819`) |
+| Run | [45038975643](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/45038975643) (success, every step green) |
+| Test evidence artifact | `release-candidate-test-evidence` |
 
-Artifact download URL (needs an authenticated GitHub session; the Actions CDN blocks the
-agent sandbox, so the numbers below were read from the run's own annotations):
+### Direct APK download (the `.apk` file, not a zip)
 
 ```
-https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/45032891506/artifacts/14758209038
+https://github.com/mouadknight0-cell/ManhwaLens-v2/releases/download/rc-1.1.42-rc1/ManhwaLens-1.1.42-rc1-release.apk
 ```
+
+The workflow artefact (`ManhwaLens-1.1.42-rc1-release-apk`) is only ever delivered as a
+zip, so the same verified file is also attached to the **prerelease** `rc-1.1.42-rc1`:
+
+* tag `rc-1.1.42-rc1`, `prerelease=true`, `draft=false` — it is skipped by the
+  published-release lookup and can never become "Latest" (v1.1.41 stays Latest).
+* assets: the `.apk`, `APK-IDENTITY.txt`, `SHA256SUMS.txt`, `release-cert.sha256`.
+* a follow-up step asserts the published asset is an `.apk` whose byte size equals the
+  verified file, so the link cannot drift to an archive or a truncated upload.
 
 The job checks out the branch head, records `git rev-parse HEAD`, and only uploads what
 that checkout produced — the APK therefore comes from exactly the commit above.
@@ -34,7 +40,7 @@ that checkout produced — the APK therefore comes from exactly the commit above
 | versionCode | `217442870` (= last published `217442869` + 1) |
 | signer certificate SHA-256 | `93794a2fb7635cbe20503fefc300f90bf1f7f1e11d6d0db86c6f7531ce8e0806` |
 | pinned production certificate | `93794a2fb7635cbe20503fefc300f90bf1f7f1e11d6d0db86c6f7531ce8e0806` (match) |
-| APK SHA-256 | `e50ffe9f59e1a83312277be09ce5b97010509ef443c494946ae0472f5031cfec` |
+| APK SHA-256 | `b66b1b50a363ebd65bd06191ca13c2540acb70b44817e3814fe0ea4fa371df84` |
 | APK size | 120,347,142 bytes |
 | minSdk / targetSdk / compileSdk | 26 / 35 / 35 |
 
@@ -54,7 +60,7 @@ generated, no replacement identity was introduced.
 
 ## What actually executed
 
-Executed in run 45032891506 (all steps `success`):
+Executed in run 45038975643 (all steps `success`):
 
 1. `.github/tests` regression suite — 26 tests (signing vault, keystore decoder, APK
    verifier, translation audit).
@@ -70,7 +76,9 @@ Executed in run 45032891506 (all steps `success`):
    `.github/scripts/verify_release_apk.py`: signed, single signer, signer == pin,
    package unchanged, versionName/versionCode correct, `debuggable` absent.
 9. APK SHA-256 computed, identity report + `SHA256SUMS.txt` written, signed APK uploaded.
-10. Keystore deleted from the runner (`if: always()`).
+10. The verified APK published to the `rc-1.1.42-rc1` prerelease, then the published
+    asset re-read from the API (name ends in `.apk`, byte size == verified size).
+11. Keystore deleted from the runner (`if: always()`).
 
 Not executed in this phase: on-device installation and runtime testing (that is the
 physical-device step this APK exists for), and emulator instrumented tests (they run in
@@ -113,3 +121,10 @@ unminified, which is also why the APK is ~120 MB.
 * The APK is unminified with the full ML Kit set; installation size and cold start on
   low-RAM devices are not measured here.
 * Emulator quality runs cannot stand in for real-photo OCR accuracy.
+
+## Delivery rule for every phase from now on
+
+Every report ends with a direct `.apk` download URL (a release asset), never a workflow
+artefact zip. Artefacts stay as the archival copy; the prerelease asset is the link the
+owner installs from. Version-specific tags use `rc-<versionName>` so reruns of the same
+candidate overwrite the asset (`--clobber`) and the URL stays stable.
