@@ -71,6 +71,21 @@ jobs:
             echo "::error::${line//'%'/'%25'}"
           done
 
+      # The emulator workflow hides its Gradle log behind an artifact that can be
+      # unavailable; compiling the instrumented sources here makes those errors readable.
+      - name: Compile instrumented test sources
+        id: compile-android-tests
+        shell: bash
+        run: ./gradlew :app:compileDebugAndroidTestKotlin --stacktrace --no-daemon 2>&1 | tee /tmp/compile-android-tests.log
+
+      - name: Annotate instrumented compiler errors
+        if: failure() && steps.compile-android-tests.outcome == 'failure'
+        run: |
+          grep -E 'e: |error:' /tmp/compile-android-tests.log | head -30 | while IFS= read -r line; do
+            echo "::error::${line//'%'/'%25'}"
+          done
+          exit 1
+
       - name: Unit tests
         id: unit-tests
         shell: bash
