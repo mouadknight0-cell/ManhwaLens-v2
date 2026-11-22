@@ -132,6 +132,24 @@ jobs:
       - name: Release unit tests
         run: ./gradlew :app:testReleaseUnitTest --stacktrace --no-daemon
 
+      - name: Summarise the release unit test results
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          tests = failures = errors = skipped = 0
+          files = sorted(glob.glob('app/build/test-results/testReleaseUnitTest/TEST-*.xml'))
+          for path in files:
+              root = ET.parse(path).getroot()
+              tests += int(root.get('tests', 0))
+              failures += int(root.get('failures', 0))
+              errors += int(root.get('errors', 0))
+              skipped += int(root.get('skipped', 0))
+          print(f"::notice title=Release unit tests::suites={len(files)} tests={tests} failures={failures} errors={errors} skipped={skipped}")
+          if tests == 0 or failures or errors:
+              raise SystemExit('release unit tests did not pass cleanly')
+          PY
+
       - name: Instrumented test source compilation
         run: ./gradlew :app:compileDebugAndroidTestKotlin --stacktrace --no-daemon
 
