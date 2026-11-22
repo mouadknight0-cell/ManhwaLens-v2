@@ -60,14 +60,19 @@ def parse_badging(output):
     return name, int(code), version
 
 
-def check_identity(package, version_code, version_name, expected_name, min_code):
+def check_identity(package, version_code, version_name, expected_name, min_code, expected_code=None):
     if package != EXPECTED_PACKAGE:
         raise ReleaseVerificationError('applicationId changed: ' + package)
     if expected_name and version_name != expected_name:
         raise ReleaseVerificationError('versionName ' + version_name + ' != expected ' + expected_name)
+    if expected_code is not None and version_code != expected_code:
+        # The candidate must carry exactly the code the workflow computed above both floors;
+        # a build that silently clamped it could not be installed over the current one.
+        raise ReleaseVerificationError(
+            'versionCode ' + str(version_code) + ' != planned ' + str(expected_code))
     if min_code is not None and version_code <= min_code:
         raise ReleaseVerificationError(
-            'versionCode ' + str(version_code) + ' is not greater than last released ' + str(min_code))
+            'versionCode ' + str(version_code) + ' is not greater than installed/last released ' + str(min_code))
     return True
 
 
@@ -101,7 +106,9 @@ def main(argv):
     parser.add_argument('--apksigner', default=None, help='apksigner binary (default: beside aapt)')
     parser.add_argument('--expected-version-name', default=None)
     parser.add_argument('--min-version-code', type=int, default=None,
-                        help='last published versionCode; the new one must be greater')
+                        help='highest versionCode already out there (installed or published); the new one must be greater')
+    parser.add_argument('--expected-version-code', type=int, default=None,
+                        help='exact versionCode the workflow planned for this candidate')
     parser.add_argument('--out', default=None, help='write the identity report here')
     args = parser.parse_args(argv)
 
@@ -119,7 +126,8 @@ def main(argv):
 
     badging = run([args.apk_id, 'dump', 'badging', str(apk)])
     package, version_code, version_name = parse_badging(badging)
-    check_identity(package, version_code, version_name, args.expected_version_name, args.min_version_code)
+    check_identity(package, version_code, version_name, args.expected_version_name,
+                   args.min_version_code, args.expected_version_code)
     check_debuggable(badging)
     digest = sha256_of(apk)
 
@@ -127,6 +135,8 @@ def main(argv):
         'package=' + package,
         'versionName=' + version_name,
         'versionCode=' + str(version_code),
+        'planned_versionCode=' + str(args.expected_version_code if args.expected_version_code is not None else 'any'),
+        'version_floor=' + str(args.min_version_code if args.min_version_code is not None else 'none'),
         'signer_certificate_sha256=' + detail,
         'pinned_certificate_sha256=' + pin,
         'apk_sha256=' + digest,

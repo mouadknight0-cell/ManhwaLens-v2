@@ -35,6 +35,14 @@ object LatinLeftoverRepair {
             if (w in protectedLower || w.replace("'", "") in protectedLower) continue
             if (w in termKeys) continue
             if (ReadingEnglish.isCommonWord(w)) continue
+            // A plausible English inflection that merely is absent from the ranked list
+            // (HORNED, RINSING) is reported — so the failure stays visible — but no
+            // "closest word" is proposed: substituting RINGING/THORNED would corrupt correct
+            // dialogue, which is worse than an explicit untranslated block.
+            if (ReadingEnglish.looksInflected(w)) {
+                found.add(Leftover(token, null))
+                continue
+            }
             // Pass the token as seen so the suggestion mirrors its case in reports; the lookup
             // itself is case-insensitive, and correctedSource() re-derives case from the source.
             found.add(Leftover(token, ReadingEnglish.closestWord(token, maxDistance = 1, maxRank = 3000)))

@@ -46,25 +46,82 @@ object TranslationInput {
         } }
 
     private val cityConfusion=Regex("\\b((?i:in|to|from|of)) HEFEl\\b")
+
+    /** Bound the per-request candidate work: one region, at most this many names. */
+    private const val MAX_CONTEXT_NAMES=6
+
+    /** Structured evidence about one preparation; safe to log (counts and codes only). */
+    data class NameReport(
+        val detected:Int=0,
+        val ambiguousRejected:Int=0,
+        val truncated:Boolean=false,
+        val reasons:List<String>=emptyList(),
+    ) {
+        fun summary():String = "names_detected=$detected ambiguous_rejected=$ambiguousRejected " +
+            "truncated=$truncated reasons=${reasons.distinct().joinToString("|").ifEmpty { "none" }}"
+    }
+
+    /** Prepared model text plus the request-local names that were shielded inside it. */
+    data class Prepared(val text:String, val names:List<String> = emptyList(), val report:NameReport = NameReport())
+
     // Repeated pages, retries and lexical scoring often normalize the exact same source.
-    // RAM-only, bounded; names are part of identity, so edits invalidate old matches.
-    private data class Input(val raw:String,val names:List<String>)
-    private val memo=object:LinkedHashMap<Input,String>(128,.75f,true){
-        override fun removeEldestEntry(eldest:MutableMap.MutableEntry<Input,String>?)=size>128
+    // RAM-only, bounded; names and the detection flag are part of the identity.
+    private data class Input(val raw:String,val names:List<String>,val withNames:Boolean=false)
+    private val memo=object:LinkedHashMap<Input,Prepared>(128,.75f,true){
+        override fun removeEldestEntry(eldest:MutableMap.MutableEntry<Input,Prepared>?)=size>128
     }
-    fun prepare(text:String,glossaryNames:List<String>):String {
-        if(text.length>2048 || glossaryNames.size>128) return clean(text,glossaryNames)
-        val key=Input(text,glossaryNames.toList());synchronized(memo){memo[key]?.let { return it }}
-        val value=clean(text,key.names);synchronized(memo){memo[key]=value};return value
+
+    /** Legacy entry point: OCR cleanup only, no contextual name detection. */
+    fun prepare(text:String,glossaryNames:List<String>):String = prepare(text,glossaryNames,false).text
+
+    /**
+     * Preparation with contextual proper-name protection.
+     *
+     * Detection runs on the *original* OCR text, before [SentenceReconstructor.normalize] and
+     * before every repair step, so a name cannot be altered by cleanup first. The names are
+     * hypotheses that live only inside this request: they are not written to the glossary and
+     * not persisted. [Prepared.report] carries counts and reason codes only.
+     */
+    fun prepare(text:String,glossaryNames:List<String>, withNames:Boolean):Prepared {
+        if(text.length>2048 || glossaryNames.size>128) return cleanDetailed(text,glossaryNames,withNames)
+        val key=Input(text,glossaryNames.toList(),withNames)
+        synchronized(memo){memo[key]?.let { return it }}
+        val value=cleanDetailed(text,key.names,withNames)
+        synchronized(memo){memo[key]=value}
+        return value
     }
-    private fun clean(text: String, glossaryNames: List<String>): String {
+
+    private fun cleanDetailed(text:String,glossaryNames:List<String>,withNames:Boolean):Prepared {
+        // 1. Detect contextual names in the original text, before any normalization.
+        val detected = if(withNames) com.manhwalens.app.names.ContextualNameDetector.detect(text) else null
+        val contextual = detected?.names?.take(MAX_CONTEXT_NAMES).orEmpty()
         val normalized = SentenceReconstructor.normalize(text)
         val city=if(glossaryNames.any { it.equals("hefei",true) } && glossaryNames.none { it.equals("hefel",true) }) normalized.replace(cityConfusion,"$1 HEFEI") else normalized
         val alias=if(glossaryNames.any { it.equals("Jeong-ah",true) }) city.replace(Regex("\\bjeong-4h\\b",RegexOption.IGNORE_CASE),"Jeong-ah") else city
-        if (!OcrLexicon.needsCleanup(alias) && alias.none(Char::isUpperCase)) return alias
-        val masked = NameShield.mask(alias, glossaryNames,preserveSpelling=true)
-        return NameShield.restore(ReadingEnglish.repair(OcrLexicon.repair(EnglishOcrRepair.repair(masked.maskedText))), masked)
+        val report = detected?.let { NameReport(it.confident.size,it.ambiguous.size,it.truncated,it.confident.map { c->c.reason }) } ?: NameReport()
+        if (contextual.isEmpty() && !OcrLexicon.needsCleanup(alias) && alias.none(Char::isUpperCase)) return Prepared(alias,emptyList(),report)
+        // 2. Shield confirmed glossary names and the detected names together, then repair.
+        val allNames = (glossaryNames + contextual).distinctBy { it.lowercase() }
+        val masked = NameShield.mask(alias, allNames,preserveSpelling=true)
+        // Only names whose masking was actually applied may reach the model as sentinels; a
+        // name that failed to mask would be reported as protected while staying visible.
+        // (A name the normalizer reshaped simply stops being shielded — honest, not silent.)
+        val shielded = contextual.filter { n ->
+            val alone = NameShield.mask(alias, listOf(n))
+            alone.names.isNotEmpty() && alone.tokens.isNotEmpty()
+        }
+        val repaired = NameShield.restore(prepareRepair(masked.maskedText, shielded), masked)
+        return Prepared(repaired, shielded, report)
     }
+
+    /** The OCR repair chain, guarded so a masked sentinel can never be rewritten or dropped. */
+    private fun prepareRepair(masked:String, shielded:List<String>):String {
+        val repaired = ReadingEnglish.repair(OcrLexicon.repair(EnglishOcrRepair.repair(masked)))
+        if(shielded.isEmpty()) return repaired
+        val sentinels = Regex("\\b7\\d{3}\\b").findAll(masked).map { it.value }.toSet()
+        return if(sentinels.all { it in repaired }) repaired else masked
+    }
+
     fun unresolved(text: String, glossaryNames: List<String>): Boolean =
         OcrLexicon.unresolved(text) && OcrLexicon.unresolved(NameShield.mask(text, glossaryNames).maskedText)
 }

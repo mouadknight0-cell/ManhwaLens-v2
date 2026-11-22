@@ -12,6 +12,56 @@ object ReadingEnglish {
     fun validCount(text:String)=tokens.findAll(text.lowercase()).count { it.value in words || it.value.replace("'","") in words }
     /** True when the whole token (or its apostrophe-stripped form) is a known English word. */
     fun isCommonWord(word:String):Boolean { val w=word.lowercase();return w in words || w.replace("'","") in words }
+    /**
+     * Ordinary-language membership for *classification*, not the raw vocabulary.
+     *
+     * reading-en.txt is a broad ranked list used for OCR scoring; it also contains real
+     * personal names (gus 3547, dorothy 4529, lizzy 12107). Treating "in the list" as
+     * "ordinary English word, therefore not a name" is the design mistake that let
+     * "LIZZY AND DOROTHY" reach the output unshielded. Dictionary membership, ordinary
+     * wording, OCR-correction candidacy and contextual proper names are separate
+     * questions and each has its own entry point below.
+     */
+    fun isOrdinaryWord(word:String):Boolean { val w=word.lowercase();return w in words && w !in NAMES }
+
+    /**
+     * Reviewed inventory of real human names that the ranked vocabulary happens to contain.
+     * It answers one narrow question — "is this a known person's name?" — and is never used as
+     * a general "capitalised words are names" rule, nor as evidence that a token *cannot* be a
+     * name. Kept here so both the ordinary-word question and the request-local contextual
+     * detector share one list instead of three different guesses.
+     */
+    internal val NAMES=setOf(
+        "gus","dorothy","lizzy","lizzie","tom","jack","jane","john","mary","anna","susan",
+        "peter","paul","george","harry","sally","billy","bob","alice","emma","oliver",
+        "sophie","sophia","lucy","amy","kate","sam","mike","nick","daniel","david",
+        "martha","rose","daisy","hannah","chloe",
+    )
+
+    // Suffix rules used only to keep a plausible inflection from being cut in two; they are
+    // not a spell checker. A whole dictionary word is compared first, so a real word is never
+    // split, and a split needs a *base* that is absent from the dictionary (that is what makes
+    // it a concatenation rather than an inflection).
+    private val suffixDrop=mapOf("ies" to "y","es" to "","ed" to "","ing" to "","er" to "","est" to "","ly" to "","s" to "","d" to "")
+
+    /** True when the token looks like an unattested inflection of a known word (HORNED, RINSING). */
+    fun looksInflected(word:String):Boolean {
+        val w=word.lowercase()
+        if(w.length<4)return false
+        for((suffix,replacement) in suffixDrop.entries){
+            if(!w.endsWith(suffix))continue
+            val stem=w.dropLast(suffix.length)
+            if(stem.length<2)continue
+            val candidates=buildList {
+                add(stem+replacement)
+                add(stem)
+                if(suffix in setOf("ed","ing","er","est") && stem.length>2 && stem.last()==stem[stem.length-2]) add(stem.dropLast(1))
+                if(suffix in setOf("ed","ing","er","est")) add(stem+'e')
+            }
+            if(candidates.any { it.length>2 && it in words })return true
+        }
+        return false
+    }
 
     /**
      * Bounded single-edit correction used for post-translation OCR leftovers. Only words
@@ -64,13 +114,21 @@ object ReadingEnglish {
         val ts=tokens.findAll(s.lowercase()).map { it.value }.toList(); if(ts.isEmpty()) return 0.0
         return ts.count { it in words || it.replace("'","") in words || names.any { n->n.equals(it,true) } }.toDouble()/ts.size
     }
-    // Only replace a split if both halves are common words; never segment a valid token.
-    private fun segment(w:String):String? = (2..w.length-2).mapNotNull { cut ->
-        val a=w.take(cut);val b=w.drop(cut);val ra=ranks[a] ?: return@mapNotNull null
-        val right=if(b=="twat" && a in setOf("could","would")) "that" else b
-        val rb=ranks[right] ?: return@mapNotNull null
-        if(maxOf(ra,rb)>5000)null else (a+" "+right) to (ra+rb)
-    }.minByOrNull { it.second }?.first
+    // Only replace a split if both halves are dictionary entries AND the joined token is not
+    // plausibly one word; never segment a valid token. HORNED is cut as HORN + ED purely
+    // because both halves exist, which is why morphology now vetoes the split.
+    internal fun segment(w:String):String? {
+        if(w.length<5 || w in words || looksInflected(w)) return null
+        return (2..w.length-2).mapNotNull { cut ->
+            val a=w.take(cut);val b=w.drop(cut);val ra=ranks[a] ?: return@mapNotNull null
+            val right=if(b=="twat" && a in setOf("could","would")) "that" else b
+            val rb=ranks[right] ?: return@mapNotNull null
+            // A split may not leave a bare suffix fragment ("ed", "ing", "ly", "er"): those are
+            // exactly the pieces that make a legitimate inflection look like two words.
+            if(right in bareSuffix || a in bareSuffix) null else if(maxOf(ra,rb)>5000)null else (a+" "+right) to (ra+rb)
+        }.minByOrNull { it.second }?.first
+    }
+    private val bareSuffix=setOf("ed","ing","er","est","ly","es","s","d")
     private fun insertion(w:String):String? {
         if(w.length !in 4..10)return null
         var best:String?=null;var rank=800
@@ -82,12 +140,18 @@ object ReadingEnglish {
         return tokens.replace(contextual){ m -> val raw=m.value;val w=raw.lowercase()
             if((raw.any(Char::isLowerCase) && raw.count(Char::isUpperCase)<raw.length/2 && !raw.any(Char::isDigit)) || raw.all(Char::isDigit)) return@replace raw
             val corrected=observed[w] ?: if(w.length in 4..18 && w !in words) {
+                // A plausibly valid inflection (HORNED, RINSING) is not an OCR slip. The glyph
+                // cluster swap used to turn RINSING into RINGING, i.e. it corrupted correct
+                // English that simply is not in the ranked list. Keep the token as written and
+                // let the block report an uncertainty instead of inventing a different word.
+                if(looksInflected(w)) null else {
                 val hits=mutableSetOf<String>();val chars=w.toCharArray()
                 for(i in chars.indices) for(a in swap[w[i]].orEmpty()) { chars[i]=a
                     String(chars).takeIf(words::contains)?.let(hits::add)
                     for(j in i+1 until chars.size) for(b in swap[w[j]].orEmpty()) { chars[j]=b; String(chars).takeIf(words::contains)?.let(hits::add);chars[j]=w[j] }
                     chars[i]=w[i]
                 };hits.singleOrNull() ?: ComicSpelling.suggest(w) ?: segment(w) ?: insertion(w)
+                }
             } else null
             corrected?.uppercase() ?: raw
         }

@@ -7,9 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       version_name:
-        description: Candidate versionName (must end with -rc, e.g. 1.1.42-rc1)
+        description: Candidate versionName (must end with -rc, e.g. 1.1.42-rc2)
         required: true
-        default: 1.1.42-rc1
+        default: 1.1.42-rc2
+      installed_version_code:
+        description: versionCode currently installed on the test phone (must be strictly below the new one)
+        required: true
+        default: '217442870'
   push:
     branches: [arena/f6ce5fe4-manhwalens-v2]
     paths:
@@ -18,6 +22,9 @@ on:
       - '.github/tests/**'
       - 'signing/**'
       - 'app/build.gradle.kts'
+      # Application code changes must rebuild the candidate (the dispatch below is the
+      # authoritative trigger; this keeps an accidental push from being silently skipped).
+      - 'app/src/main/**'
 
 permissions:
   # Read the repo, and create/update the PRERELEASE that carries the APK so the owner can
@@ -29,7 +36,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VERSION_NAME: ${{ inputs.version_name || '1.1.42-rc1' }}
+  VERSION_NAME: ${{ inputs.version_name || '1.1.42-rc2' }}
+  # The candidate must be installable *over* what is already on the phone, so the floor is
+  # supplied explicitly instead of guessed from the repository's latest release.
+  INSTALLED_VERSION_CODE: ${{ inputs.installed_version_code || '217442870' }}
   # Makes the Gradle release task refuse an unsigned output path, even if someone sets
   # ALLOW_UNSIGNED_RELEASE in this job by mistake.
   CANDIDATE_RELEASE_BUILD: 'true'
@@ -73,16 +83,34 @@ jobs:
           if [ "$type" = tag ]; then tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" -q .object.sha); fi
           last_epoch=$(gh api "repos/$GITHUB_REPOSITORY/commits/$tag_sha" -q '.commit.committer.date')
           last_code=$(python3 -c "import datetime,sys;print(int(datetime.datetime.fromisoformat('$last_epoch'.replace('Z','+00:00')).timestamp())-1577836800)")
-          echo "last_release=$last last_version_code=$last_code this_build_code=$code"
-          if [ "$code" -le "$last_code" ]; then
-            echo "::error::versionCode $code is not greater than $last ($last_code)"; exit 1
+          installed="${INSTALLED_VERSION_CODE:-}"
+          case "$installed" in
+            ''|*[!0-9]*) echo "::error::installed_version_code must be a positive integer, got '$installed'"; exit 1;;
+          esac
+          if [ "$installed" -le 0 ]; then echo '::error::installed_version_code must be > 0'; exit 1; fi
+          echo "last_release=$last last_version_code=$last_code installed_version_code=$installed this_build_code=$code"
+          # Floor is above BOTH the newest published release and the build already installed on
+          # the test phone; the candidate cannot be installed over a build that is not lower.
+          floor=$last_code
+          if [ "$installed" -gt "$floor" ]; then floor=$installed; fi
+          candidate=$(( floor + 1 ))
+          if [ "$candidate" -le "$last_code" ] || [ "$candidate" -le "$installed" ]; then
+            echo "::error::cannot produce a monotonic candidate above last_release=$last_code and installed=$installed"; exit 1
           fi
-          # A candidate must not burn the eventual release's per-commit number: hold it to
-          # last_published + 1, which is installable over the installed official app and
-          # strictly monotonic, while the tagged release keeps its own larger code.
-          echo "CANDIDATE_VERSION_CODE_HOLD=$last_code" >> "$GITHUB_ENV"
+          if [ "$candidate" -gt 2100000000 ]; then
+            echo "::error::candidate versionCode $candidate exceeds the Android maximum"; exit 1
+          fi
+          if [ "$code" -le "$last_code" ]; then
+            echo "::error::this commit's release code $code is not greater than $last ($last_code)"; exit 1
+          fi
+          # Hold the candidate at the computed floor instead of the per-commit release code, so
+          # a test build never burns the number the eventual tagged release needs.
+          echo "CANDIDATE_VERSION_CODE_HOLD=$floor" >> "$GITHUB_ENV"
+          echo "expected_version_code=$candidate" >> "$GITHUB_OUTPUT"
+          echo "installed_version_code=$installed" >> "$GITHUB_OUTPUT"
           echo "last_version_code=$last_code" >> "$GITHUB_OUTPUT"
           echo "last_release=$last" >> "$GITHUB_OUTPUT"
+          echo "::notice title=Candidate versionCode::$candidate (floor $floor + 1; last release $last_code, installed $installed)"
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -181,7 +209,8 @@ jobs:
             --apk-id "$build_tools/aapt" \
             --apksigner "$build_tools/apksigner" \
             --expected-version-name "$VERSION_NAME" \
-            --min-version-code "${{ steps.version.outputs.last_version_code }}" \
+            --expected-version-code "${{ steps.version.outputs.expected_version_code }}" \
+            --min-version-code "${{ steps.version.outputs.installed_version_code }}" \
             | tee artifacts/APK-IDENTITY.txt
           # The pinned fingerprint must be published next to the APK for the owner to compare
           # against the installed official application before claiming update compatibility.

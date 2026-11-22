@@ -68,6 +68,23 @@ class IdentityTests(unittest.TestCase):
         with self.assertRaises(verify.ReleaseVerificationError):
             verify.check_identity(package, code, name, '1.1.42-rc1', 217442869)
 
+    def test_planned_version_code_must_match_exactly(self):
+        # The candidate must carry the code computed above both floors. A differing build
+        # (a clamp, a stale gradle cache) must fail instead of shipping.
+        with self.assertRaises(verify.ReleaseVerificationError) as caught:
+            verify.check_identity('com.manhwalens.app', 217442870, '1.1.42-rc2', '1.1.42-rc2',
+                                  217442870, expected_code=217442871)
+        self.assertIn('planned', str(caught.exception))
+        self.assertTrue(verify.check_identity('com.manhwalens.app', 217442871, '1.1.42-rc2',
+                                              '1.1.42-rc2', 217442870, expected_code=217442871))
+
+    def test_floor_is_the_highest_of_installed_and_published(self):
+        # installed 217442870 > last published 217442869 -> 217442870 is not enough.
+        with self.assertRaises(verify.ReleaseVerificationError):
+            verify.check_identity('com.manhwalens.app', 217442870, '1.1.42-rc2', '1.1.42-rc2', 217442870)
+        self.assertTrue(verify.check_identity('com.manhwalens.app', 217442871, '1.1.42-rc2',
+                                              '1.1.42-rc2', 217442870))
+
     def test_debuggable_release_is_rejected(self):
         with self.assertRaises(verify.ReleaseVerificationError):
             verify.check_debuggable("package: name='com.manhwalens.app' application-debuggable\n")

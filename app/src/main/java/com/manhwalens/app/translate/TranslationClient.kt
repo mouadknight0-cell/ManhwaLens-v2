@@ -46,11 +46,19 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     suspend fun translateBlock(region: TextRegion, glossaryNames: List<String> = emptyList(), previous: String? = null, lexicalRetry:Boolean=false, retryCase:Boolean=false): TranslatedBlock {
         val terms=ReadingGlossary.murim+readings()
         val protectedNames=(glossaryNames+terms.keys).distinct()
-        val normalized = try { com.manhwalens.app.pipeline.TranslationInput.prepare(region.text, protectedNames) }
+        // Contextual names are detected on the raw OCR text, before normalization or repair,
+        // and live only inside this request (their sentinels exist for this call).
+        val prepared = try { com.manhwalens.app.pipeline.TranslationInput.prepare(region.text, protectedNames, true) }
         catch (failure: IllegalArgumentException) {
             Diagnostics.error("translate", "input_name_shield", "TR-NAME-SHIELD", "name protection failed before OCR repair", throwable = failure)
             return TranslatedBlock(region, region.text, "", "TR-NAME-SHIELD")
         }
+        val normalized = prepared.text
+        val contextual = prepared.names.filter { n -> protectedNames.none { it.equals(n,true) } }
+        // Counts and reason codes only — never the dialogue itself.
+        Diagnostics.info("translate","contextual_names","${prepared.report.summary()} shielded=${contextual.size}")
+        // Privacy: counts and reason codes only. Captured dialogue and detected names never
+        // enter normal diagnostics; raw model input/output stays in the explicit debug path.
         if (normalized != region.text) Diagnostics.info("translate", "ocr_repair", "translation input normalized; raw OCR retained in region")
         val lookupStart=System.nanoTime()
         val match=DialogueLexicon.interjection(normalized)?.let { DialogueLexicon.Match(it,"Exact dialogue lexicon") }
@@ -77,7 +85,7 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         }
         val evidence=if(debug()) mutableMapOf<String,String>() else null
         val block = try {
-            val output=DialogueLexicon.render(normalized,match,terms){ translateText(it,glossaryNames,terms,retryCase,evidence) }
+            val output=DialogueLexicon.render(normalized,match,terms){ translateText(it,glossaryNames,terms,retryCase,evidence,contextual=contextual) }
             TranslatedBlock(region, normalized, output.text, method = output.method)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {
@@ -92,15 +100,22 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     }
 
     /** Core translate path used for every complete utterance. */
-    suspend fun translateText(text: String, glossaryNames: List<String> = emptyList(),terms: Map<String,String> = readings(),retryCase:Boolean=false,evidence:MutableMap<String,String>?=null,leftoverRetry:Boolean=false): String {
+    suspend fun translateText(text: String, glossaryNames: List<String> = emptyList(),terms: Map<String,String> = readings(),retryCase:Boolean=false,evidence:MutableMap<String,String>?=null,leftoverRetry:Boolean=false,contextual:List<String> = emptyList()): String {
         val trimmed = text.trim()
         if (trimmed.isBlank() || trimmed.none { it.isLetter() }) return trimmed
 
         val corrections=post()
-        val maskResult = try { ReadingGlossary.modelMask(trimmed, glossaryNames,terms) }
+        // `contextual` carries request-local names already found in the raw source text. A
+        // direct caller (or the leftover retry, which re-enters with corrected text) gets the
+        // bounded detector on the text it actually translated, so no name is unprotected.
+        val names = (glossaryNames + contextual).distinctBy { it.lowercase() } +
+            com.manhwalens.app.names.ContextualNameDetector.detect(trimmed).names
+                .filter { n -> (glossaryNames+contextual).none { it.equals(n,true) } }.take(4)
+        val maskResult = try { ReadingGlossary.modelMask(trimmed, names,terms) }
             catch (failure: IllegalArgumentException) { throw TranslationFailure("TR-NAME-SHIELD") }
         val modelInput = ReadingGlossary.nativeSentence(maskResult,retryCase)
         val arabicMask=maskResult.copy(names=maskResult.names.map { terms[it.lowercase()] ?: it })
+        val contextualNames = names.filter { n -> maskResult.names.any { it.equals(n,true) } }
 
         evidence?.apply {put("prepared",trimmed.take(512));put("masked",maskResult.maskedText.take(512));put("model_input",modelInput.take(512))}
         val cacheKey=nativeCacheKey(trimmed,modelInput,arabicMask,terms,corrections)
@@ -133,10 +148,25 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val issue=TranslationOutput.issue(raw,maskResult)
         val finished=if(issue==null) TranslationOutput.finish(trimmed,raw,arabicMask,corrections) else {
             val organization=if(issue=="TR-UNTRANSLATED") TranslationOutput.recoverOrganization(trimmed,raw,arabicMask,corrections) else null
-            val recovered=organization ?: if(issue=="TR-UNTRANSLATED" && !leftoverRetry)
+            // A contextual name the engine returned verbatim is recoverable *only* because the
+            // source named it in a person position; nothing else about the output is excused.
+            val contextualName=organization ?: if(issue=="TR-UNTRANSLATED")
+                TranslationOutput.recoverContextualName(trimmed,raw,arabicMask,corrections,contextualNames)
+            else null
+            val recovered=contextualName ?: if(issue=="TR-UNTRANSLATED" && !leftoverRetry)
                 attemptLatinLeftover(trimmed,raw,maskResult,terms,glossaryNames,retryCase,corrections,evidence,issue)
             else null
             Diagnostics.info("translate","native_validation","ready=${LanguageModels.state.value.ready} issue=$issue raw_chars=${raw.length} arabic_letters=${raw.count(ArabicOutput::isLetter)} latin_letters=${raw.count { it in 'A'..'Z' || it in 'a'..'z' }} tokens=${maskResult.tokens.size} recovered=${recovered!=null}")
+            // Structured decision record: which class of leftover was seen, and what happened to it.
+            run {
+                val latin=raw.filter { it in 'A'..'Z' || it in 'a'..'z' }
+                val unexplained=latin.isNotEmpty()
+                Diagnostics.info("translate","output_decision",
+                    "issue=$issue latin_leaves=${if(unexplained) "unexplained" else "none"} " +
+                        "name_lost=${if(issue=="TR-NAME-LOST") "yes" else "no"} " +
+                        "recovery=${when { recovered==null -> "rejected"; recovered===contextualName -> "contextual_name"; else -> "other" }} " +
+                        "final=${if(recovered!=null) "accepted" else "rejected"}")
+            }
             recovered ?: throw TranslationFailure(issue)
         } ?: throw TranslationFailure("TR-INVALID-OUTPUT")
         if(finished.correctionRejected) Diagnostics.warn("translate","post_validation","Invalid correction ignored; kept validated translation")

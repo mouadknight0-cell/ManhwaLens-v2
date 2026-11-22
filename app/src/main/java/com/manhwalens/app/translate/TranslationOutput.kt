@@ -38,6 +38,9 @@ object TranslationOutput {
     // sides. Do not whitelist arbitrary Latin, learn a name or change the model input.
     private val organization = Regex("(?i)\\bthe ([a-z]{4,32}) (?:society|sect)\\b")
     private val latin = Regex("[A-Za-z]+")
+    /** "Gus's" / "GUS'S" / "Gus’s" -> "Gus": comparisons never depend on the surface suffix. */
+    private fun bareName(value:String)=value.replace(Regex("['’][sS]$"),"")
+
     internal fun recoverOrganization(source:String, raw:String, mask:NameShield.MaskResult, edits:Map<String,String>):Finished? {
         val copied=latin.findAll(raw).singleOrNull()?.value ?: return null
         if(com.manhwalens.app.pipeline.ReadingEnglish.validCount(copied)!=0) return null
@@ -51,6 +54,48 @@ object TranslationOutput {
         val shielded=raw.replace(copied,token)
         return finish(source,shielded,combined,edits)
     }
+    private val latinWords = Regex("[A-Za-z][A-Za-z'’\\-]*")
+
+    /**
+     * Bounded recovery for ONE Latin token that the engine copied verbatim, when that exact
+     * token was already decided to be a proper name from the *source* context.
+     *
+     * This is not a general mixed-script allowance. Every one of these must hold, otherwise
+     * the ordinary TR-UNTRANSLATED failure stands and the source is retained:
+     *  - the output contains exactly one distinct Latin token, and the Arabic body is intact;
+     *  - that token is on the request's contextual-name list (decided from source syntax);
+     *  - the token occurs in the shielded source as an exact, standalone occurrence;
+     *  - after replacing it with a fresh, collision-free sentinel the *unchanged* validator
+     *    ([issue]) accepts the result.
+     *
+     * It never invents Arabic, never learns a name, never changes the model input and never
+     * retries the translation.
+     */
+    internal fun recoverContextualName(source:String, raw:String, mask:NameShield.MaskResult,
+        edits:Map<String,String>, contextualNames:List<String>):Finished? {
+        // A surface form may carry the possessive suffix ("Gus's"): see bareName() above —
+        // comparisons and the "appears exactly once" check use the bare name.
+        if(contextualNames.isEmpty())return null
+        val tokens=latinWords.findAll(NameShield.normalizeDigits(raw))
+            .map { it.value.trim('\'', '’', '-') }.filter { it.length>=2 }.distinctBy { it.lowercase() }.toList()
+        val copied=tokens.singleOrNull() ?: return null
+        val declared=contextualNames.firstOrNull { bareName(it).equals(copied,true) } ?: return null
+        // The exact source occurrence must exist and must be standalone.
+        val inSource=Regex("(?<![\\p{L}\\p{N}_])"+Regex.escape(declared)+"(?:['’]s)?(?![\\p{L}\\p{N}_])",RegexOption.IGNORE_CASE)
+        if(!inSource.containsMatchIn(mask.maskedText) && !inSource.containsMatchIn(source))return null
+        // Fresh sentinel: never reuse one already present in the translated text.
+        val present=Regex("\\b7\\d{3}\\b").findAll(NameShield.normalizeDigits(raw)).map { it.value }.toSet()
+        val token=(7000..7999).firstOrNull { it.toString() !in present }?.toString() ?: return null
+        // Spaces keep the sentinel a standalone token even when OCR glued it to Arabic.
+        val shielded=NameShield.normalizeDigits(raw).replace(inSource, " $token ")
+        if(shielded==raw)return null
+        val combined=NameShield.MaskResult(shielded, mask.names + declared, mask.tokens + token)
+        val finished=finish(source,shielded,combined,edits) ?: return null
+        // The restored text must contain the name exactly once, as the engine kept it.
+        if(finished.text.split(bareName(declared),ignoreCase=true).size-1 != 1)return null
+        return finished
+    }
+
     internal data class Finished(val text:String,val correctionRejected:Boolean=false)
 
     /**
@@ -66,7 +111,9 @@ object TranslationOutput {
         fun validated(masked:String):String? {
             if(issue(masked,mask)!=null)return null
             val final=NameShield.restore(masked,mask).replace(Regex("\\.{2,}"),"…")
-            if(mask.names.any { !final.contains(it,ignoreCase=true) })return null
+            // A remembered surface form may include the possessive suffix while the Arabic
+            // translation legitimately drops it; only the name itself must be present.
+            if(mask.names.any { !final.contains(bareName(it),ignoreCase=true) })return null
             // issue(masked,mask) already checked the untranslated body and name-only case.
             // Check the actual final string too. For the script ratio only, exclude Latin
             // names inserted by this restore; they must not make valid Arabic fail.
