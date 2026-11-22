@@ -76,25 +76,40 @@ object TranslationOutput {
         // A surface form may carry the possessive suffix ("Gus's"): see bareName() above —
         // comparisons and the "appears exactly once" check use the bare name.
         if(contextualNames.isEmpty())return null
-        val tokens=latinWords.findAll(NameShield.normalizeDigits(raw))
+        val normalized=NameShield.normalizeDigits(raw)
+        val tokens=latinWords.findAll(normalized)
             .map { it.value.trim('\'', '’', '-') }.filter { it.length>=2 }.distinctBy { it.lowercase() }.toList()
-        val copied=tokens.singleOrNull() ?: return null
-        val declared=contextualNames.firstOrNull { bareName(it).equals(copied,true) } ?: return null
-        // The exact source occurrence must exist and must be standalone.
-        val inSource=Regex("(?<![\\p{L}\\p{N}_])"+Regex.escape(declared)+"(?:['’]s)?(?![\\p{L}\\p{N}_])",RegexOption.IGNORE_CASE)
-        if(!inSource.containsMatchIn(mask.maskedText) && !inSource.containsMatchIn(source))return null
-        // Fresh sentinel: never reuse one already present in the translated text.
-        val present=Regex("\\b7\\d{3}\\b").findAll(NameShield.normalizeDigits(raw)).map { it.value }.toSet()
-        val token=(7000..7999).firstOrNull { it.toString() !in present }?.toString() ?: return null
-        // Spaces keep the sentinel a standalone token even when OCR glued it to Arabic.
-        val shielded=NameShield.normalizeDigits(raw).replace(inSource, " $token ")
+        if(tokens.isEmpty() || tokens.size>MAX_RECOVERED_NAMES)return null
+        // EVERY Latin token in the output must be a declared contextual name that really is in
+        // the source. One undeclared word ("Danger") is enough to keep the ordinary failure.
+        val declared=tokens.map { copied ->
+            contextualNames.firstOrNull { bareName(it).equals(copied,true) } ?: return null
+        }
+        val present=Regex("\\b7\\d{3}\\b").findAll(normalized).map { it.value }.toMutableSet()
+        // Each declared name is swapped for its own fresh, collision-free sentinel.
+        var shielded=normalized
+        val extraTokens=mutableListOf<String>()
+        for(name in declared) {
+            val pattern=Regex("(?<![\\p{L}\\p{N}_])"+Regex.escape(name)+"['’][sS]?(?![\\p{L}\\p{N}_])",RegexOption.IGNORE_CASE)
+            if(!pattern.containsMatchIn(shielded) && !pattern.containsMatchIn(source))return null
+            val token=(7000..7999).map { it.toString() }.firstOrNull { it !in present } ?: return null
+            present.add(token)
+            extraTokens.add(token)
+            // Spaces keep the sentinel a standalone token even when OCR glued it to Arabic.
+            shielded=pattern.replace(shielded, " $token ")
+        }
         if(shielded==raw)return null
-        val combined=NameShield.MaskResult(shielded, mask.names + declared, mask.tokens + token)
+        val combined=NameShield.MaskResult(shielded, mask.names + declared, mask.tokens + extraTokens)
         val finished=finish(source,shielded,combined,edits) ?: return null
-        // The restored text must contain the name exactly once, as the engine kept it.
-        if(finished.text.split(bareName(declared),ignoreCase=true).size-1 != 1)return null
+        // Each name must appear exactly once in the restored text: never duplicated, dropped
+        // or renamed by the recovery itself.
+        for(name in declared) {
+            if(finished.text.split(bareName(name),ignoreCase=true).size-1 != 1)return null
+        }
         return finished
     }
+    /** A sentence names at most a handful of people; more than this is not a name recovery. */
+    private const val MAX_RECOVERED_NAMES = 4
 
     internal data class Finished(val text:String,val correctionRejected:Boolean=false)
 

@@ -47,11 +47,10 @@ object NameShield {
                 // An explicitly supplied canonical spelling is restored exactly as given. A
                 // lowercase dictionary key keeps the whole surface the panel printed — suffix
                 // included for a possessive ("SECT'S") — which is what the reader shows today.
-                // Lowercase dictionary key: keep the whole printed surface ("SECT'S").
-                // Otherwise restore the spelling the caller supplied — never a suffix the
-                // caller did not provide, and never a name that was not declared.
-                val identity = if (possessive != null && preserveSpelling && name == name.lowercase())
-                    hit.value else name
+                // A lowercase dictionary key keeps the whole printed surface the panel showed
+                // ("HEFEI", "SECT'S"); an explicitly supplied spelling is restored verbatim.
+                // Either way the suffix never escapes as a bare "'s" into the model input.
+                val identity = if (preserveSpelling && name == name.lowercase()) hit.value else name
                 result = result.replaceRange(hit.range, " $token ")
                 tokens.add(token)
                 used.add(identity)

@@ -94,18 +94,25 @@ class ContextualNameProtectionTest {
     }
 
     @Test fun `confirmed glossary names are not reported as contextual guesses`() {
-        val prepared = TranslationInput.prepare("I ASKED GUS ABOUT IT.", listOf("GUS"), true)
+        // A glossary-confirmed name is shielded by the glossary path, so it must not be
+        // double-counted as a new contextual hypothesis.
+        val source = "I ASKED GUS ABOUT IT."
+        val prepared = TranslationInput.prepare(source, listOf("GUS"), true)
         assertTrue("a confirmed name must not be re-detected", prepared.names.isEmpty())
-        assertFalse(prepared.text.contains("GUS"))
+        assertEquals(source, prepared.text)
+        // And it is still shielded end to end, through the glossary path.
+        val mask = ReadingGlossary.modelMask(prepared.text, listOf("GUS"), emptyMap())
+        assertEquals(1, mask.tokens.size)
+        assertFalse(mask.maskedText, mask.maskedText.contains("GUS"))
     }
 
     // ── output validation stays strict ────────────────────────────────────────────────
 
-    @Test fun `a retained protected name is recovered with the unchanged validator`() {
+    @Test fun `two retained protected names are recovered with the unchanged validator`() {
         val mask = NameShield.mask(reportedSource, listOf("LIZzy", "DOROTHY"))
         val finished = TranslationOutput.recoverContextualName(
             reportedSource, reportedSyntheticOutput, mask, emptyMap(), listOf("LIZzy", "DOROTHY"))
-        assertNotNull(finished)
+        assertNotNull("both declared names must be recoverable", finished)
         val text = finished!!.text
         assertTrue(text, text.contains("Lizzy"))
         assertTrue(text, text.contains("Dorothy"))
