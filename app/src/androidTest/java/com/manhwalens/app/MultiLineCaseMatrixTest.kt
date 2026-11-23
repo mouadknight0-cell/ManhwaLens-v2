@@ -350,6 +350,46 @@ class MultiLineCaseMatrixTest {
         stage("MATRIX-SUMMARY", summary.toString().trimEnd())
     }
 
+    /**
+     * Phase 5: measure the real reading cost of a multi-line page, and of the recovery path that
+     * confident pages used to skip entirely.
+     *
+     * The user's target is 5 s per screen. This is an emulator figure, so it is reported as such:
+     * it cannot stand in for a phone measurement, and the report must say so. What it can do is show
+     * whether widening recovery to confident pages added an unbounded cost, which is the risk the
+     * change carried.
+     */
+    @Test
+    fun readingCostIsMeasuredNotAssumed() {
+        val lines = arrayOf(
+            "The gate closes at midnight and the",
+            "guard never opens it twice for the",
+            "same face, so decide now whether you",
+            "are coming back with me or staying.",
+        )
+        val bmp = bubble(*lines)
+        try {
+            val client = TextRecognitionClient()
+            // Warm up so class loading and recogniser setup are not attributed to the sample.
+            kotlinx.coroutines.runBlocking { client.recognize(bmp, "en") }
+            val samples = (1..5).map {
+                val started = android.os.SystemClock.elapsedRealtime()
+                kotlinx.coroutines.runBlocking { client.recognize(bmp, "en") }
+                android.os.SystemClock.elapsedRealtime() - started
+            }.sorted()
+            val median = samples[samples.size / 2]
+            stage(
+                "TIMING",
+                "case=fourLinePage emulator=true samplesMs=$samples medianMs=$median " +
+                    "budgetMs=5000 withinBudget=${median <= 5000} " +
+                    "note=emulator_only_not_phone_not_end_to_end",
+            )
+            // The budget is asserted only as a sanity ceiling on the emulator, not as evidence that
+            // a phone meets it.
+            assertTrue("median read of a 4-line page took ${median}ms", median < 5000)
+        } finally { bmp.recycle() }
+    }
+
     @Test
     fun bubbleGeometrySpansAllLines() = kotlinx.coroutines.runBlocking {
         val lines = arrayOf("First line of the speech", "second line continues it", "third line ends it")
