@@ -185,14 +185,20 @@ jobs:
         if: failure()
         run: |
           set -uo pipefail
-          f=app/build/reports/../tmp/kotlin/compileReleaseKotlin 2>/dev/null || true
-          found=0
-          while IFS= read -r line; do
-            found=1
-            msg=$(printf '%s' "$line" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')
-            echo "::error title=kotlinc::$msg"
-          done < <(grep -rhE '^e: ' app/build 2>/dev/null | head -40)
-          if [ "$found" = 0 ]; then echo "::warning title=kotlinc::no 'e: ' diagnostics found under app/build"; fi
+          ./gradlew :app:compileReleaseKotlin --no-daemon > /tmp/kotlinc.log 2>&1 || true
+          emit() {
+            printf '%s' "$1" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g'
+          }
+          n=$(grep -cE '^e: ' /tmp/kotlinc.log || true)
+          echo "::warning title=kotlinc::found ${n:-0} 'e: ' lines"
+          grep -E '^e: ' /tmp/kotlinc.log | head -30 | while IFS= read -r line; do
+            echo "::error title=kotlinc::$(emit "$line")"
+          done
+          if [ "${n:-0}" = "0" ]; then
+            grep -A8 -m3 'What went wrong' /tmp/kotlinc.log | head -24 | while IFS= read -r line; do
+              echo "::error title=gradle::$(emit "$line")"
+            done
+          fi
 
       - name: Release unit tests
         run: ./gradlew :app:testReleaseUnitTest --stacktrace --no-daemon
