@@ -1,0 +1,259 @@
+package com.manhwalens.app
+
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Typeface
+import android.view.View
+import androidx.test.platform.app.InstrumentationRegistry
+import com.manhwalens.app.ocr.TextRecognitionClient
+import com.manhwalens.app.overlay.DialogueType
+import com.manhwalens.app.overlay.ReplacementSurface
+import com.manhwalens.app.pipeline.DialogueAssembler
+import com.manhwalens.app.pipeline.SentenceReconstructor
+import com.manhwalens.app.pipeline.TextRegion
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * Phase 6 case matrix for multi-line reading and multi-line display.
+ *
+ * Every case reports the full funnel so a failure can be attributed to a stage instead of guessed
+ * at: OCR lines found -> lines surviving assembly -> lines entering translation -> translated
+ * length -> lines actually drawn -> whether anything was clipped. The tests assert the invariants
+ * that matter (no source word lost, no distinct bubbles joined, a long translation drawn in full)
+ * and log the numbers so they can be read back from CI rather than inferred from a green tick.
+ */
+class MultiLineCaseMatrixTest {
+    private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
+
+    private fun stage(name: String, value: String) {
+        android.util.Log.i("ManhwaLensFunnel", "$name $value")
+    }
+
+    /** Renders [lines] of Latin text in a light bubble so the real OCR client reads them. */
+    private fun bubble(vararg lines: String, widthPx: Int = 520, ink: Int = Color.BLACK): Bitmap {
+        val lineH = 46
+        val bmp = Bitmap.createBitmap(widthPx, 70 + lines.size * lineH, Bitmap.Config.ARGB_8888)
+        val c = Canvas(bmp)
+        c.drawColor(Color.rgb(28, 28, 30))
+        val bubblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+        c.drawRoundRect(18f, 18f, (widthPx - 18).toFloat(), (bmp.height - 18).toFloat(), 40f, 40f, bubblePaint)
+        val pen = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ink
+            textSize = 30f
+            typeface = Typeface.DEFAULT
+        }
+        lines.forEachIndexed { i, line ->
+            c.drawText(line, 42f, (86 + i * lineH).toFloat(), pen)
+        }
+        return bmp
+    }
+
+    private fun readAll(bmp: Bitmap): List<TextRegion> = kotlinx.coroutines.runBlocking {
+        val recognized = TextRecognitionClient().recognize(bmp, "en")
+        DialogueAssembler.assemble(recognized) { _, _ -> true }.sortedBy { it.top }
+    }
+
+    private fun assertKeepsEveryWord(source: List<String>, read: List<TextRegion>, label: String) {
+        val got = read.joinToString(" ") { it.text }
+            .lowercase()
+            .split(Regex("[^\\p{L}\\p{N}']+"))
+            .filter { it.isNotBlank() }
+            .toSet()
+        val missing = source.joinToString(" ").lowercase()
+            .split(Regex("[^\\p{L}\\p{N}']+"))
+            .filter { it.isNotBlank() }
+            .distinct()
+            .filter { it !in got }
+        assertTrue("$label: OCR lost source words $missing (read: ${read.map { it.text }})", missing.isEmpty())
+        assertEquals("$label: every line must survive as one region", 1, read.size)
+        assertEquals("$label: sourceLineCount must record all lines", source.size, read.first().sourceLineCount)
+    }
+
+    // ---- reading: 1, 3, 4 and 5 source lines, all words retained ----------------------------------
+
+    @Test
+    fun oneLineIsReadCompletely() = kotlinx.coroutines.runBlocking {
+        val lines = arrayOf("I never wanted this fight.")
+        val bmp = bubble(*lines)
+        try {
+            val read = readAll(bmp)
+            assertKeepsEveryWord(lines.toList(), read, "1-line")
+            stage("case=oneLine", "ocrLines=${read.size} sourceLineCount=${read.first().sourceLineCount} text=${read.first().text}")
+        } finally { bmp.recycle() }
+    }
+
+    @Test
+    fun threeLineBubbleReadsAllLines() = kotlinx.coroutines.runBlocking {
+        val lines = arrayOf(
+            "I told you before the sun went down",
+            "that this road only leads to ruin and",
+            "you still chose to walk it beside me.",
+        )
+        val bmp = bubble(*lines)
+        try {
+            val read = readAll(bmp)
+            assertKeepsEveryWord(lines.toList(), read, "3-line")
+            stage("case=threeLine", "ocrLines=${read.size} sourceLineCount=${read.first().sourceLineCount}")
+        } finally { bmp.recycle() }
+    }
+
+    @Test
+    fun fourLineBubbleReadsAllLines() = kotlinx.coroutines.runBlocking {
+        val lines = arrayOf(
+            "The gate closes at midnight and the",
+            "guard never opens it twice for the",
+            "same face, so decide now whether you",
+            "are coming back with me or staying here.",
+        )
+        val bmp = bubble(*lines)
+        try {
+            val read = readAll(bmp)
+            assertKeepsEveryWord(lines.toList(), read, "4-line")
+            stage("case=fourLine", "ocrLines=${read.size} sourceLineCount=${read.first().sourceLineCount}")
+        } finally { bmp.recycle() }
+    }
+
+    @Test
+    fun fiveLineBubbleReadsAllLines() = kotlinx.coroutines.runBlocking {
+        val lines = arrayOf(
+            "There was a time when I could",
+            "look at that face and believe",
+            "every single word that came out",
+            "of it, but the man standing in",
+            "front of me now is a stranger.",
+        )
+        val bmp = bubble(*lines)
+        try {
+            val read = readAll(bmp)
+            assertKeepsEveryWord(lines.toList(), read, "5-line")
+            stage("case=fiveLine", "ocrLines=${read.size} sourceLineCount=${read.first().sourceLineCount}")
+        } finally { bmp.recycle() }
+    }
+
+    // ---- grouping must not join distinct bubbles --------------------------------------------------
+
+    @Test
+    fun twoSeparateBubblesStaySeparate() = kotlinx.coroutines.runBlocking {
+        val bmp = Bitmap.createBitmap(520, 460, Bitmap.Config.ARGB_8888)
+        try {
+            val c = Canvas(bmp)
+            c.drawColor(Color.rgb(28, 28, 30))
+            val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+            c.drawRoundRect(18f, 18f, 502f, 200f, 40f, 40f, fill)
+            c.drawRoundRect(18f, 250f, 502f, 442f, 40f, 40f, fill)
+            val pen = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = 30f }
+            c.drawText("You came all this way", 42f, 80f, pen)
+            c.drawText("just to ask me that?", 42f, 126f, pen)
+            c.drawText("Then let me give you", 42f, 312f, pen)
+            c.drawText("an answer worth the trip.", 42f, 358f, pen)
+            val read = readAll(bmp)
+            stage("case=twoBubbles", "regions=${read.size} texts=${read.map { it.text }}")
+            assertEquals("two visually separate bubbles must not become one utterance", 2, read.size)
+            assertTrue("each bubble keeps its own line count", read.all { it.sourceLineCount == 2 })
+        } finally { bmp.recycle() }
+    }
+
+    // ---- display: a translation must be drawn over 3, 4 and 5 lines without clipping --------------
+
+    /** Draws [message] into a box and returns the line count actually rasterised. */
+    private fun drawnLines(message: String, w: Int, h: Int, sp: Int): Pair<Int, Boolean> {
+        val type = DialogueType.measure(context, message, w, sp, surface = null)
+        return type.layout.lineCount to type.complete
+    }
+
+    @Test
+    fun longTranslationIsDrawnAcrossThreeToFiveLines() {
+        val message = "لم أكن أتوقع أن تعود إلى هذا المكان بعد كل ما قلته ذلك اليوم، لكن ها أنت واقف " +
+            "أمامي تطلب مني أن أصدق كل كلمة تقولها وكأن شيئا لم يحدث بيننا أبدا."
+        // Narrow columns force more lines; each one must stay complete (no ellipsis, no clip).
+        val results = intArrayOf(320, 260, 220).map { w ->
+            val (lines, complete) = drawnLines(message, w, 400, 15)
+            stage("case=displayWrap", "width=$w lines=$lines complete=$complete")
+            assertTrue("a $w px column must draw the translation complete", complete)
+            assertTrue("a $w px column must use at least three lines, got $lines", lines >= 3)
+            lines
+        }
+        assertTrue("narrowing the column must not reduce the line count: $results",
+            results.zipWithNext().all { (a, b) -> b >= a })
+    }
+
+    @Test
+    fun everyReadableSizeDrawsTheWholeTranslation() {
+        // The ladder must never silently drop text at a smaller size.
+        for (sp in 15 downTo 11) {
+            val (lines, complete) = drawnLines(
+                "هذه ليست الطريقة التي اتفقنا عليها عندما بدأنا هذا كله معا في تلك الليلة البعيدة.",
+                300, 500, sp,
+            )
+            stage("case=sizeSweep", "sp=$sp lines=$lines complete=$complete")
+            assertTrue("sp=$sp must render complete text", complete)
+            assertTrue("sp=$sp must not collapse to a single line", lines >= 2)
+        }
+    }
+
+    @Test
+    fun translationLongerThanSourceIsNotTruncated() {
+        // Arabic is typically longer than the English it replaces; the view must still show all of it.
+        val message = "أنا لا أفهم كيف وصلنا إلى هنا، ولا أفهم لماذا ما زلت تحاول إقناعي بأن كل هذا كان من أجل مصلحتي."
+        val runOnMain = InstrumentationRegistry.getInstrumentation()
+        runOnMain.runOnMainSync {
+            val surface = ReplacementSurface(0, 0, 300, 520)
+            val view = com.manhwalens.app.overlay.ReplacementTranslationView(context, message, surface)
+            view.measure(
+                View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(520, View.MeasureSpec.EXACTLY),
+            )
+            view.layout(0, 0, 300, 520)
+            stage("case=longerTranslation", "ready=${view.replacementReady} sp=${view.fittedSp} m=${view.measurement}")
+            assertTrue("a tall box must accept the translation at some readable size", view.replacementReady)
+            assertTrue("the chosen size must stay at or above the legible floor", view.fittedSp >= 11f)
+            assertTrue("the chosen size must not exceed the preferred size", view.fittedSp <= 15f)
+        }
+    }
+
+    @Test
+    fun realThreeLineFixtureKeepsItsLines() = kotlinx.coroutines.runBlocking {
+        val inst = InstrumentationRegistry.getInstrumentation()
+        val bmp = inst.context.assets.open("xiaomi-three-lines.png").use { BitmapFactory.decodeStream(it) }
+        try {
+            val read = readAll(bmp)
+            stage("case=fixtureThreeLines", "regions=${read.size} texts=${read.map { it.text }}")
+            assertTrue("the shipped 3-line fixture must be readable", read.isNotEmpty())
+            assertTrue(
+                "the fixture's lines must be assembled, not split into fragments: ${read.map { it.text }}",
+                read.any { it.sourceLineCount >= 2 } || read.size == 1,
+            )
+        } finally { bmp.recycle() }
+    }
+
+    @Test
+    fun sentenceJoinNeverDropsAWord() {
+        // The joining stage is where a wrapped line could silently vanish.
+        val parts = listOf("I told you the truth", "about the night we left", "and you still doubt me")
+        val joined = SentenceReconstructor.joinLines(parts)
+        val norm = { s: String -> s.lowercase().split(Regex("[^\\p{L}\\p{N}']+")).filter { it.isNotBlank() } }
+        assertEquals("joining must preserve every word in order", norm(parts.joinToString(" ")), norm(joined))
+        stage("case=sentenceJoin", "joined=${joined.length} words=${norm(joined).size}")
+    }
+
+    @Test
+    fun bubbleGeometrySpansAllLines() = kotlinx.coroutines.runBlocking {
+        val lines = arrayOf("First line of the speech", "second line continues it", "third line ends it")
+        val bmp = bubble(*lines)
+        try {
+            val read = readAll(bmp)
+            val region = read.first()
+            assertNotNull(region)
+            // The region must cover the vertical span of every line, not just the first.
+            val span = region.bottom - region.top
+            assertTrue("region must span all three lines, got $span px", span > 60)
+            stage("case=geometry", "top=${region.top} bottom=${region.bottom} span=$span")
+        } finally { bmp.recycle() }
+    }
+}
