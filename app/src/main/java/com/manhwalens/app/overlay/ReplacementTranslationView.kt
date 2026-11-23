@@ -19,6 +19,28 @@ class ReplacementTranslationView(context: Context, val message: String,
     private val surface: ReplacementSurface, private val failed: Boolean = false,
     private val anchor:ReplacementSurface?=null, private val selected:DialogueType?=null) : View(context) {
     companion object {
+        /** Preferred body size for a bubble translation. */
+        const val PREFERRED_SP = 15
+
+        /**
+         * Smallest size still comfortable to read on a phone at arm's length.
+         *
+         * This is a floor, not a target: the ladder below it never goes lower, because unreadably
+         * small Arabic is not an improvement over showing nothing. It exists so the ladder has one
+         * documented end instead of an accidental one at 13.
+         */
+        const val MIN_READABLE_SP = 11
+
+        /**
+         * Font sizes to try, largest first.
+         *
+         * RC4 tried a hardcoded 15/14/13, and a long translation that needed 12 sp was rejected
+         * outright — the view then drew no bitmap at all, so a 4–5 line bubble appeared to lose its
+         * text. Extending the ladder means more layouts fit, fewer translations are dropped, and the
+         * text still never leaves the bubble.
+         */
+        fun fontLadder(): IntArray = (PREFERRED_SP downTo MIN_READABLE_SP).toList().toIntArray()
+
         internal fun lines(text:String,ink:TextPaint,width:Int,spacing:Float=.90f):StaticLayout {
             return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
                 .setAlignment(Layout.Alignment.ALIGN_CENTER)
@@ -95,14 +117,19 @@ class ReplacementTranslationView(context: Context, val message: String,
         if(plan==null && message.length <= 20000 && content.width()>=1){
             // Reuse the already-measured candidate when it fits; otherwise measure once from the
             // same painter, at the optimizer's column and then at the full interior width.
-            plan = listOfNotNull(selected).plus(sequenceOf(15,14).map { sp ->
+            // Try every readable size at the optimizer's column, then at the full interior width:
+            // a narrower column that failed may still fit when the box is used fully. RC4 tried only
+            // 15/14 here, so any longer translation fell through to "no layout" and drew nothing.
+            plan = listOfNotNull(selected).plus(fontLadder().asSequence().map { sp ->
                 fitPasses++;DialogueType.measure(context,displayMessage,width,sp,surface.mask)
             }).firstOrNull(fits)
-                ?: (if(selected!=null) { fitPasses++;DialogueType.measure(context,displayMessage,interiorWidth,selected.sp,surface.mask) } else null)?.takeIf(fits)
+                ?: fontLadder().asSequence().map { sp ->
+                    fitPasses++;DialogueType.measure(context,displayMessage,interiorWidth,sp,surface.mask)
+                }.firstOrNull(fits)
         }
         layout=plan?.layout?.takeIf { plan.complete && it.width<=content.width()+.5f && it.height<=content.height() && it.text==displayMessage }
         fittedSp=plan?.sp?.toFloat() ?: 0f
-        measurement="${plan?.metrics(context) ?: "preferred=15 min=14 max=15 no_fit"} interior=${width}x${content.height().toInt()} fits=${layout!=null}"
+        measurement="${plan?.metrics(context) ?: "preferred=$PREFERRED_SP min=$MIN_READABLE_SP max=$PREFERRED_SP exhausted_no_readable_size"} interior=${width}x${content.height().toInt()} fits=${layout!=null} fitPasses=$fitPasses"
         val safe=surface.mask?.covers(content.left.toInt(),content.top.toInt(),kotlin.math.ceil(content.right).toInt(),kotlin.math.ceil(content.bottom).toInt())
         measurement="safe_span_interior=${safe ?: "not_a_mask"} $measurement"
         maskValid=safe

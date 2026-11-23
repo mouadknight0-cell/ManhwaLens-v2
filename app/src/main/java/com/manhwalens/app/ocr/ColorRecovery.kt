@@ -25,6 +25,36 @@ internal class ColorRecovery {
     }
     private fun overlap(a:Rect,b:Rect):Double {val i=max(0,min(a.right,b.right)-max(a.left,b.left))*max(0,min(a.bottom,b.bottom)-max(a.top,b.top));return i.toDouble()/max(1,a.width()*a.height()+b.width()*b.height()-i)}
     private fun box(r:TextRegion)=Rect(r.left,r.top,r.right,r.bottom)
+    /**
+     * Upscale factor for a recovery crop, estimated from the glyphs the crop actually contains.
+     *
+     * RC4 used the crop's own size:
+     *   `when { r.height()<32 -> 3; r.height()<=100 -> 2; else -> 1 }`
+     * A large balloon full of small characters is a *tall* crop, so it returned 1 — exactly the case
+     * that needed enlarging most. That is why 4-5 line bubbles with small text were never recovered.
+     *
+     * Contrasted-ink row runs give the real line height; the factor then targets roughly a 32 px
+     * glyph height and is bounded so a big crop cannot upscale into an out-of-memory bitmap.
+     */
+    private fun glyphScale(r:Rect,ys:IntArray):Int {
+        val w=r.width();val h=r.height();if(w<2||h<2||ys.size<w*h)return 1
+        val median=ys.sorted()[ys.size/2]
+        val threshold=max(18,w/40)
+        val runs=mutableListOf<Int>();var run=0;var ink=0
+        for(y in 0 until h){val base=y*w;var n=0
+            for(x in 0 until w)if(abs(ys[base+x]-median)>40)n++
+            ink+=n
+            if(n>threshold)run++ else {if(run>0)runs.add(run);run=0}}
+        if(run>0)runs.add(run)
+        // Almost no contrasted ink: a background patch, never worth enlarging.
+        if(ink<h*w/40)return 1
+        val lineHeight=runs.sorted().let { if(it.isEmpty())h else it[it.size/2] }
+        if(lineHeight<=0)return 1
+        var scale=((32+lineHeight-1)/lineHeight).coerceIn(1,4)
+        // Memory bound: keep the scaled crop under ~4 MP so a 4x upscale cannot OOM the device.
+        while(scale>1 && w.toLong()*h*scale*scale>4_000_000L)scale--
+        return scale
+    }
     private fun gray(c:Int)=(Color.red(c)*54+Color.green(c)*183+Color.blue(c)*19) shr 8
     private val digitNoise=Regex("[A-Za-z]\\d|\\d[A-Za-z]")
     private fun score(r:TextRegion):Double {
@@ -58,8 +88,19 @@ internal class ColorRecovery {
         if(gray(b.getPixel(r.left+(r.width()-1)*x/8,yy))>gray(b.getPixel(r.left+(r.width()-1)*(x+1)/8,yy))+4)sig=sig or (1L shl (y*8+x))};return sig}
     suspend fun recover(client:TextRecognitionClient,b:Bitmap,lang:String,initial:List<TextRegion>,budgetMs:Long=60_000,keep:(TextRegion)->Boolean,log:(String)->Unit):List<TextRegion>{
         val deadline=android.os.SystemClock.elapsedRealtime()+budgetMs
-        val weak=initial.filter { score(it)<.77 || it.confidence<.52f };if(initial.isNotEmpty() && weak.isEmpty())return initial
-        val candidates=(weak.sortedBy { score(it) }.map(::box)+if(initial.size==weak.size)propose(b) else emptyList()).fold(mutableListOf<Rect>()){a,x->if(a.none { overlap(it,x)>.5 })a.add(x);a}.take(4)
+        val weak=initial.filter { score(it)<.77 || it.confidence<.52f }
+        // Defect A: this used to be `if(initial.isNotEmpty() && weak.isEmpty()) return initial`. A
+        // confident first pass therefore skipped recovery AND page discovery, so text elsewhere on
+        // the page - and any line the first pass missed inside a bubble - was never looked for.
+        // Return early only when the detector finds nothing that the confident regions do not
+        // already cover, which is the actual condition for "the page is done".
+        val proposals=propose(b)
+        if(initial.isNotEmpty() && weak.isEmpty() && proposals.all { p -> initial.any { overlap(box(it),p)>.5 } })return initial
+        // Defect B: page proposals were generated only when EVERY initial region was weak
+        // (`if(initial.size==weak.size)`), so one confident block hid a missed caption. Proposals
+        // are always considered and discarded only where they retrace a region already read.
+        val proposed=proposals.filter { p -> initial.none { overlap(box(it),p)>.5 } }
+        val candidates=(weak.sortedBy { score(it) }.map(::box)+proposed).fold(mutableListOf<Rect>()){a,x->if(a.none { overlap(it,x)>.5 })a.add(x);a}.take(4)
         val output=initial.toMutableList()
         for(raw in candidates){if(android.os.SystemClock.elapsedRealtime()>=deadline)break;val r=Rect(max(0,raw.left-10),max(0,raw.top-10),min(b.width,raw.right+10),min(b.height,raw.bottom+10));if(r.width()<4||r.height()<4||r.width()*r.height()>350000)continue
             val fingerprint=hash(b,r);val visual=perceptual(b,r);val tr=tracks.firstOrNull { overlap(it.box,r)>.5 }?:Track(Rect(r)).also { tracks.addLast(it);if(tracks.size>32)tracks.removeFirst() }
@@ -70,7 +111,7 @@ internal class ColorRecovery {
                 val variants=listOf("original","invert","stretch","otsu","lab");for(pass in variants){val remaining=deadline-android.os.SystemClock.elapsedRealtime();if(remaining<=0){log("recovery_budget box=$r retained_score=$value");break};if(pass=="invert" && mean>155)continue
                     val pixels=variant(pass,colors,ys,hist)
                     if(pass!="original" && duplicateInput(originalRecognized,colors,pixels)){log("pass=$pass skipped=identical_pixels");continue}
-                    val crop=Bitmap.createBitmap(pixels,r.width(),r.height(),Bitmap.Config.ARGB_8888);val scale=when {r.height()<32->3;r.height()<=100->2;else->1};val input=if(scale==1)crop else Bitmap.createScaledBitmap(crop,r.width()*scale,r.height()*scale,true)
+                    val crop=Bitmap.createBitmap(pixels,r.width(),r.height(),Bitmap.Config.ARGB_8888);val scale=glyphScale(r,ys);val input=if(scale==1)crop else Bitmap.createScaledBitmap(crop,r.width()*scale,r.height()*scale,true)
                     val got=try { kotlinx.coroutines.withTimeoutOrNull(remaining){client.recognize(input,lang)}.orEmpty().map { it.copy(left=r.left+it.left/scale,right=r.left+it.right/scale,top=r.top+it.top/scale,bottom=r.top+it.bottom/scale) }.filter(keep) }catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){log("pass=$pass failure=${e.javaClass.simpleName}");emptyList()}finally{if(input!==crop)input.recycle();crop.recycle()}
                     if(pass=="original") originalRecognized=got.isNotEmpty()
                     val s=got.map(::score).average().takeIf(Double::isFinite)?:0.0;log("pass=$pass score=$s regions=${got.size} box=$r");if(s>value){value=s;winner=pass;best=got}
@@ -79,7 +120,25 @@ internal class ColorRecovery {
                 val aligned=tr.votes.filter { v->(v.hash==fingerprint || (visual!=0L && java.lang.Long.bitCount(v.visual xor visual)<=3)) && best.isNotEmpty() && best.size==v.regions.size && best.zip(v.regions).all { (a,b)->overlap(box(a),box(b))>.5 } }
                 val voted=aligned.groupBy { it.regions.map { r->r.text.lowercase() } }.values.maxByOrNull { v->v.size+v.maxOf { it.score } }?.maxByOrNull { it.score }
                 if(voted!=null && voted.score>=.60){best=best.zip(voted.regions).map { (now,old)->now.copy(text=old.text,confidence=old.confidence) };value=voted.score}
-            };if(best.isNotEmpty() && value>=.60){for(hit in best){val same=output.filter { overlap(box(it),box(hit))>.45 };if(same.none { score(it)>score(hit) }){output.removeAll(same);output.add(hit)}}}
+            }
+            // Defect C: this used to be
+            //   if(same.none { score(it) > score(hit) }) { output.removeAll(same); output.add(hit) }
+            // `removeAll(same)` deleted EVERY overlapping original, so a short, clean re-read of a
+            // crop destroyed a complete 4-5 line transcription. A short crop routinely outscores a
+            // long noisy one, so no confidence threshold can detect it: it is a completeness
+            // failure. Keep the original whenever the candidate would lose words.
+            if(best.isNotEmpty() && value>=.60){
+                for(hit in best){
+                    val same=output.filter { overlap(box(it),box(hit))>.45 }
+                    // Replace only the originals this candidate fully covers. An original with a word
+                    // the candidate lacks is kept, so a genuine 4-5 line transcription survives a
+                    // shorter re-read; a neighbour that merely overlaps is not in `same` at all unless
+                    // it also overlaps this box, and is never touched unless fully covered.
+                    val replaceable=same.filter { !CandidateRecovery.losesText(it,hit) }
+                    if(replaceable.isEmpty())continue
+                    output.removeAll(replaceable);output.add(hit)
+                }
+            }
         };return output.sortedWith(compareBy({it.top},{it.left}))
     }
     internal fun duplicateInput(success:Boolean,original:IntArray,other:IntArray)=success && original.contentEquals(other)

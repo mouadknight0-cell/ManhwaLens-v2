@@ -78,7 +78,11 @@ object DirectTranslationLayout {
         if(maxText<=2 || interior.height<=2*pad) return null
         val minText=minOf(maxText,maxOf((44*density).toInt(),(maxText*0.45f).toInt())).coerceAtLeast(1)
         val step=maxOf((3*density).toInt(),(maxText-minText)/7).coerceAtLeast(1)
-        for(sp in intArrayOf(15,14,13)){
+        // A 4–5 line bubble in a small box cannot always fit at 13 sp. Stopping the ladder at 13
+        // meant the whole translation was rejected and nothing was drawn — the reported "only two
+        // lines showed" state, where in fact none did. Continue down to the readable floor defined in
+        // one place (MIN_READABLE_SP) rather than an implicit 13.
+        for(sp in ReplacementTranslationView.fontLadder()){
             val pool=ArrayList<Pair<DialogueType,ArabicLayoutPlanner.Candidate>>()
             for(t in textWidths(minText,maxText,maxText,step)){
                 val type=DialogueType.measure(context,text,t,sp);val layout=type.layout
@@ -161,7 +165,13 @@ object DirectTranslationLayout {
             }
             return out
         }
-        val pool=collect(15).ifEmpty { collect(14) }.ifEmpty { collect(13) }
+        // Same ladder as the proven-geometry path: try the preferred size first, then every
+        // readable size below it, instead of three fixed attempts.
+        var pool=ArrayList<Pair<DialogueType,ArabicLayoutPlanner.Candidate>>()
+        for(sp in ReplacementTranslationView.fontLadder()){
+            pool=collect(sp)
+            if(pool.isNotEmpty()) break
+        }
         if(pool.isEmpty()){ report("text_capacity"); return null }
 
         // Evaluate every surviving layout at every free position; pick the best total.
