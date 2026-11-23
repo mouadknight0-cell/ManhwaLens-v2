@@ -69,23 +69,6 @@ class SettingsRepository(context: Context) {
     val debug = _debug.asStateFlow()
     fun setDebug(enabled:Boolean) { prefs.edit().putBoolean("debug_geometry",enabled).apply(); _debug.value=enabled }
 
-    /**
-     * Which translation engine the user selected.
-     *
-     * Persisted as the engine's stable code, never as an enum ordinal, so reordering the enum cannot
-     * silently change someone's setting. Unknown or missing values fall back to ML Kit, which is the
-     * engine that always works.
-     */
-    private val _engine = MutableStateFlow(
-        com.manhwalens.app.engine.EngineId.fromCode(prefs.getString(KEY_ENGINE, null)),
-    )
-    val engine: StateFlow<com.manhwalens.app.engine.EngineId> = _engine.asStateFlow()
-
-    fun setEngine(engine: com.manhwalens.app.engine.EngineId) {
-        prefs.edit().putString(KEY_ENGINE, engine.code).apply()
-        _engine.value = engine
-    }
-
     fun markOnboardingSeen() {
         prefs.edit().putBoolean(KEY_ONBOARDING, true).apply()
         _onboardingSeen.value = true
@@ -96,7 +79,6 @@ class SettingsRepository(context: Context) {
         private const val KEY_TARGET = "target_language"
         private const val KEY_BUBBLE = "bubble_enabled"
         private const val KEY_ONBOARDING = "onboarding_seen"
-        private const val KEY_ENGINE = "translation_engine"
 
         // Legacy key: the app is Korean-first; Arabic is the default target for its audience.
         // v1.1.0 locks the pipeline to English → Arabic (see migration below).

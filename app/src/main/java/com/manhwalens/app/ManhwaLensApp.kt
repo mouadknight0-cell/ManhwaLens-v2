@@ -16,17 +16,6 @@ class ManhwaLensApp : Application() {
     lateinit var historyStore: HistoryStore
         private set
 
-    /**
-     * Where the contextual model lives. App-private persistent storage, deliberately not cache: the
-     * OS may evict cache at any moment, and re-downloading 378 MiB is not acceptable behaviour.
-     */
-    lateinit var modelStore: com.manhwalens.app.engine.FileModelStore
-        private set
-
-    /** Single owner of engine selection and model state, so the UI and the pipeline cannot disagree. */
-    lateinit var engines: com.manhwalens.app.engine.TranslationEngineManager
-        private set
-
     override fun onCreate() {
         // T0 anchor: as close to process start as an Application can get.
         BenchmarkTracker.markProcessStart()
@@ -40,28 +29,6 @@ class ManhwaLensApp : Application() {
             Diagnostics.fatal("app", "on_create", com.manhwalens.app.diagnostics.ErrorCodes.APP_ONCREATE_FAILED,
                 "application initialisation failed", throwable = it)
             throw it
-        }
-        runCatching {
-            modelStore = com.manhwalens.app.engine.FileModelStore(java.io.File(filesDir, "models"))
-            val translationClient = com.manhwalens.app.translate.TranslationClient(
-                post = { settingsRepository.corrections.value },
-                debug = { settingsRepository.debug.value },
-                readings = { settingsRepository.readings.value },
-            )
-            engines = com.manhwalens.app.engine.TranslationEngineManager(
-                mlKit = com.manhwalens.app.engine.MlKitEngine(translationClient),
-                // No native llama.cpp runtime is compiled into this build. UnavailableRuntime fails
-                // closed: the engine reports UNSUPPORTED and the pipeline falls back to ML Kit with a
-                // recorded reason, rather than pretending to translate.
-                qwen = com.manhwalens.app.engine.QwenEngine(
-                    runtime = com.manhwalens.app.engine.UnavailableRuntime(),
-                    store = modelStore,
-                ),
-                modelStore = modelStore,
-                initial = settingsRepository.engine.value,
-            )
-        }.onFailure {
-            Diagnostics.warn("app", "engines_init", "engine manager unavailable", throwable = it)
         }
         com.manhwalens.app.history.TranslationSamples.init(this)
         com.manhwalens.app.diagnostics.SessionScorecard.init(this)

@@ -16,7 +16,6 @@ import com.manhwalens.app.capture.CaptureConsentActivity
 import com.manhwalens.app.capture.ScreenCaptureService
 import com.manhwalens.app.translate.LanguageModels
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 internal fun SettingsGroup(title: String, subtitle: String, initiallyOpen: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
@@ -66,7 +65,6 @@ fun SettingsScreen(
             }
             Text("نسبة التنزيل وحجم الملف غير متاحين من ML Kit. لا يُعلن الاستعداد قبل التحقق من التثبيت والترجمة.", style = MaterialTheme.typography.bodySmall)
         }
-        TranslationEngineSection()
         XiaomiSetup()
         SettingsGroup("الفقاعة وجلسة الالتقاط", "الحالة: $phase · التحكم متاح من الفقاعة") {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -133,120 +131,4 @@ fun SettingsScreen(
             confirmButton = { TextButton(onClick = { confirmation = null; action() }) { Text("حذف", color = MaterialTheme.colorScheme.error) } },
             dismissButton = { TextButton(onClick = { confirmation = null }) { Text("إلغاء") } })
     }
-}
-
-
-/**
- * Engine selection plus the contextual model's install state.
- *
- * Deliberately one compact group: the rest of the settings screen is untouched. Everything shown here
- * comes from [com.manhwalens.app.engine.TranslationEngineManager.state], so what the user reads and what
- * the pipeline will actually do cannot drift apart.
- *
- * When the contextual engine is selected but cannot run, the reason is displayed rather than hidden —
- * a silent downgrade to ML Kit would leave the user believing they were getting contextual output.
- */
-@Composable
-private fun TranslationEngineSection() {
-    val context = LocalContext.current
-    val app = context.applicationContext as? com.manhwalens.app.ManhwaLensApp
-    val settings = app?.settingsRepository
-    val manager = app?.engines
-    val scope = rememberCoroutineScope()
-
-    val selected by (settings?.engine ?: MutableStateFlow(com.manhwalens.app.engine.EngineId.ML_KIT)).collectAsState()
-    val state by (manager?.state ?: MutableStateFlow(com.manhwalens.app.engine.TranslationEngineManager.State()))
-        .collectAsState()
-
-    SettingsGroup("محرك الترجمة · Translation engine", "ML Kit سريع · Qwen محلي بالسياق") {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(
-                selected = selected == com.manhwalens.app.engine.EngineId.ML_KIT,
-                onClick = { settings?.setEngine(com.manhwalens.app.engine.EngineId.ML_KIT); manager?.select(com.manhwalens.app.engine.EngineId.ML_KIT) },
-            )
-            Column(Modifier.weight(1f)) {
-                Text("ML Kit — ترجمة سريعة")
-                Text("جملة بجملة، دون سياق بين الفقاعات.", style = MaterialTheme.typography.bodySmall)
-            }
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(
-                selected = selected == com.manhwalens.app.engine.EngineId.QWEN_LOCAL,
-                onClick = { settings?.setEngine(com.manhwalens.app.engine.EngineId.QWEN_LOCAL); manager?.select(com.manhwalens.app.engine.EngineId.QWEN_LOCAL) },
-            )
-            Column(Modifier.weight(1f)) {
-                Text("Qwen Local — ترجمة بالسياق")
-                Text("يفهم الحوار كاملًا في الشاشة الواحدة.", style = MaterialTheme.typography.bodySmall)
-            }
-        }
-
-        Text(modelStatusLine(state.model), style = MaterialTheme.typography.bodyMedium)
-        (state.model as? com.manhwalens.app.engine.ModelState.Downloading)?.let { progress ->
-            LinearProgressIndicator(progress = { progress.fraction }, modifier = Modifier.fillMaxWidth())
-            Text("${progress.percent}% · ${com.manhwalens.app.engine.QwenModelSpec.humanSize(progress.bytes)}" +
-                " / ${com.manhwalens.app.engine.QwenModelSpec.humanSize(progress.total)}",
-                style = MaterialTheme.typography.bodySmall)
-        }
-        if (state.storedBytes > 0) {
-            Text("المساحة المستخدمة: ${com.manhwalens.app.engine.QwenModelSpec.humanSize(state.storedBytes)}",
-                style = MaterialTheme.typography.bodySmall)
-        }
-
-        if (state.model.canDownload) {
-            Button(
-                enabled = true,
-                onClick = {
-                    val app = context.applicationContext as? com.manhwalens.app.ManhwaLensApp ?: return@Button
-                    scope.launch {
-                        val downloader = com.manhwalens.app.engine.ModelDownloader(
-                            context,
-                            app.modelStore,
-                        ) { next -> app.engines.publishModel(next) }
-                        app.engines.refresh()
-                        downloader.install()
-                        app.engines.refresh()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-            ) { Text("تنزيل النموذج (${com.manhwalens.app.engine.QwenModelSpec.humanSize()})") }
-        }
-        if (state.storedBytes > 0) {
-            OutlinedButton(
-                onClick = {
-                    val app = context.applicationContext as? com.manhwalens.app.ManhwaLensApp ?: return@OutlinedButton
-                    app.modelStore.remove()
-                    scope.launch { app.engines.refresh() }
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("حذف النموذج المحمّل") }
-        }
-
-        when (val model = state.model) {
-            is com.manhwalens.app.engine.ModelState.Failed ->
-                Text("تعذّر التثبيت: ${model.reason}", color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall)
-            is com.manhwalens.app.engine.ModelState.Unverified ->
-                Text("لم يُتحقق من سلامة الملف بعد؛ لا يُستخدم في الترجمة.", style = MaterialTheme.typography.bodySmall)
-            else -> Unit
-        }
-
-        // The contextual engine is unavailable in this build: no native llama.cpp runtime is compiled
-        // in. Say so plainly rather than offering a switch that silently does nothing.
-        if (selected == com.manhwalens.app.engine.EngineId.QWEN_LOCAL && !state.canUseQwen) {
-            Text(
-                "المحرك المحلي غير متاح في هذه النسخة. ستُستخدم الترجمة السريعة (ML Kit) مع تسجيل السبب: " +
-                    (state.qwenBlockedBy ?: "غير معروف"),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-    }
-}
-
-private fun modelStatusLine(model: com.manhwalens.app.engine.ModelState): String = when (model) {
-    is com.manhwalens.app.engine.ModelState.Absent -> "النموذج غير مثبّت."
-    is com.manhwalens.app.engine.ModelState.Downloading -> "جارٍ التنزيل…"
-    is com.manhwalens.app.engine.ModelState.Unverified -> "تم التنزيل، بانتظار التحقق."
-    is com.manhwalens.app.engine.ModelState.Ready -> "جاهز · ${com.manhwalens.app.engine.QwenModelSpec.humanSize(model.bytes)}"
-    is com.manhwalens.app.engine.ModelState.Failed -> "فشل التثبيت: ${model.reason}"
 }
