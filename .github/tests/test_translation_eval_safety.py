@@ -319,6 +319,9 @@ class StashUntouchedTest(unittest.TestCase):
             "evaluation/",
             "docs/TRANSLATION-EVALUATION",
             # Phase B1 additions.
+            # The duplicate androidTest corpus asset is deliberately removed: the
+            # instrumentation test reads the application asset instead, so the
+            # corpus has one editable copy rather than two that can drift.
             "app/src/androidTest/assets/translation-eval-corpus.json",
             "app/src/androidTest/java/com/manhwalens/app/TranslationEvalExportTest.kt",
             "docs/TRANSLATION-EVALUATION-PHASE-B1",

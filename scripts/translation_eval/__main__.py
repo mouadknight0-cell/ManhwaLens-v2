@@ -42,7 +42,11 @@ EXIT_CORPUS_INVALID = 3
 
 DEFAULT_TSV = Path("docs/benchmark-phase3/dataset.tsv")
 DEFAULT_CORPUS = Path("evaluation/corpus/rc4-corpus.json")
-DEVICE_ASSET = Path("app/src/androidTest/assets/translation-eval-corpus.json")
+# The instrumentation test now reads the *application* asset, so the corpus has one
+# editable copy instead of two that can drift. The app asset has its own generator
+# (scripts/translation_eval/app_assets.py) because it carries a different shape;
+# this command produces the legacy flat asset shape for ad-hoc use only.
+DEVICE_ASSET = Path("build/translation-eval-corpus.json")
 
 
 def _write(path: Path, text: str) -> None:
@@ -222,6 +226,27 @@ def cmd_export_device_asset(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_build_app_assets(args: argparse.Namespace) -> int:
+    """Regenerate the app's two corpus payloads from the canonical corpus.
+
+    Deliberately reads `evaluation/corpus/rc4-corpus.json` through
+    `device.load_canonical_dataset` rather than re-importing the TSV, so the app
+    and the reports can never describe different corpora.
+    """
+    dataset = device.load_canonical_dataset(Path(args.corpus))
+    if args.expected_fingerprint and dataset.fingerprint != args.expected_fingerprint:
+        print(
+            f"corpus fingerprint {dataset.fingerprint} does not match the expected "
+            f"{args.expected_fingerprint}; refusing to rewrite the app assets",
+            file=sys.stderr,
+        )
+        return EXIT_INPUT_ERROR
+    written = device.write_app_assets(dataset, Path(args.out))
+    for path in written:
+        print(f"app asset -> {path} ({len(dataset.cases)} cases)")
+    return EXIT_OK
+
+
 def cmd_import_device(args: argparse.Namespace) -> int:
     dataset = load_corpus(Path(args.corpus))
     export = device.load_device_export(Path(args.export), dataset)
@@ -279,6 +304,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_asset.add_argument("--corpus", default=str(DEFAULT_CORPUS))
     p_asset.add_argument("--out", default=str(DEVICE_ASSET))
     p_asset.set_defaults(func=cmd_export_device_asset)
+
+    p_app = sub.add_parser("build-app-assets",
+                           help="Regenerate the app's engine-input and human-review assets")
+    p_app.add_argument("--corpus", default=str(DEFAULT_CORPUS))
+    p_app.add_argument("--out", default="app/src/main/assets")
+    p_app.add_argument("--expected-fingerprint", default="",
+                       help="Fail closed instead of rewriting assets from a changed corpus")
+    p_app.set_defaults(func=cmd_build_app_assets)
 
     p_import_dev = sub.add_parser("import-device",
                                   help="Validate a device export into a harness output document")

@@ -113,6 +113,47 @@ class PayloadConsistencyTest(unittest.TestCase):
                 self.assertEqual(case["source_text"], canonical[case["case_id"]], case["case_id"])
 
 
+class AssetGeneratorCommandTest(unittest.TestCase):
+    """The generator must be the thing that produced the committed assets."""
+
+    def test_build_app_assets_reproduces_the_committed_files(self):
+        import tempfile
+
+        from scripts.translation_eval.__main__ import main
+
+        with tempfile.TemporaryDirectory() as directory:
+            code = main([
+                "build-app-assets",
+                "--corpus", str(CANONICAL),
+                "--out", directory,
+            ])
+            self.assertEqual(0, code)
+            for name in ("evaluation-engine-input.json", "evaluation-human-review.json"):
+                produced = (Path(directory) / name).read_text(encoding="utf-8")
+                committed = (ASSET_DIR / name).read_text(encoding="utf-8")
+                self.assertEqual(
+                    committed, produced,
+                    f"{name} is stale; regenerate with build-app-assets",
+                )
+
+    def test_generator_refuses_a_changed_corpus_fingerprint(self):
+        import tempfile
+
+        from scripts.translation_eval.__main__ import main
+
+        with tempfile.TemporaryDirectory() as directory:
+            code = main([
+                "build-app-assets",
+                "--corpus", str(CANONICAL),
+                "--out", directory,
+                "--expected-fingerprint", "0" * 64,
+            ])
+            # Fail closed: rewriting the assets from an unexpected corpus would
+            # silently invalidate every earlier run.
+            self.assertNotEqual(0, code)
+            self.assertFalse((Path(directory) / "evaluation-engine-input.json").exists())
+
+
 class EnginePayloadSeparationTest(unittest.TestCase):
     """Nothing reviewer-only may appear in the payload the engine reads."""
 
