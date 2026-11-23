@@ -253,3 +253,98 @@ the only difference.
 
 `Android quality regression` passed on the same application code at `f5b33ab`,
 including the Android 14 emulator OCR and circular-view tests.
+
+## RC5 — the tag did not name its own APK
+
+rc4 built green, passed every identity check, and was still wrong in a way none of
+those checks could see: **its tag did not point at the commit the APK was built
+from.**
+
+| | |
+|---|---|
+| `rc-1.1.42-rc4` tag resolves to | `360a2b1638eb36da07aad3d1bb4f1bcbdc5ccdf1` |
+| that release's APK records | `756c3ee08b7f3c39b6841ecf694dce90f0c69e3f` |
+
+`360a2b16` is a merge commit on `main` from Nov 19; `756c3ee` is the branch commit
+the APK was assembled from. The tag was never about the build.
+
+**It was not only rc4.** Every candidate published before this fix carries the same
+tag:
+
+```
+rc-1.1.42-rc1 .. rc-1.1.42-rc6   ->  360a2b16  (all six)
+rc-1.1.42-rc7                    ->  5160ef6d  (this build)
+```
+
+Three separate causes, each individually sufficient:
+
+1. `gh release create` was called **without `--target`**, so GitHub created the tag
+   on the repository's *default branch*. This is the direct cause.
+2. The step began `gh release view "$TAG" || gh release create "$TAG"` — it reused
+   any existing tag and then uploaded with `--clobber`, which can attach a new APK
+   to an old tag.
+3. Nothing ever read the tag back and compared it to the build commit. The release
+   title and notes contain the commit SHA, which looks like proof and proves
+   nothing: they are free text, not a ref.
+
+### What the workflow does now
+
+* **A taken tag is a hard stop.** Before publishing, the tag is looked up; if it
+  exists the run fails and the operator picks the next name. A published ref is
+  never moved and an APK is never re-uploaded onto one.
+* **`--target "$GITHUB_SHA"` is explicit**, so the tag names the commit under test
+  rather than whatever `main` happens to be.
+* **The tag is resolved back through the Git API and compared to `$GITHUB_SHA`
+  before a single asset is attached.** Upload no longer uses `--clobber`.
+* The APK's own `git_revision` is checked against `$GITHUB_SHA` first, so a
+  mismatch fails instead of publishing.
+
+`.github/scripts/verify_release_tag.py` does the resolution. A lightweight tag's
+ref points directly at a commit; an annotated tag's ref points at a tag object
+that must be dereferenced, possibly through further tag objects. It handles both,
+and treats anything it cannot prove (missing tag, chain too deep, target that is
+not a commit, abbreviated expected SHA) as an error. Verified against live tags:
+it dereferences the annotated `v1.1.0` correctly, and refuses rc4 against the rc4
+build commit with both SHAs named.
+
+### Floors
+
+The dispatch defaults had been raised to `217442876` while the push-event
+fallbacks still said `217442875`. A push-triggered run therefore built against an
+older floor than the identical run dispatched by hand — the same class of defect
+as the original stale floor. Both now read `217442876`, and
+`test_push_fallbacks_equal_the_dispatch_defaults` asserts each fallback equals its
+default so the two cannot drift apart again.
+
+`rc5` and `rc6` were already published (both pointing at `360a2b16`), so the new
+candidate is **`1.1.42-rc7`**, the next unused name.
+
+### Published candidate — verified
+
+Run `45234054144`, commit `5160ef6dc73a3f71bae5f779ac8bd423d81fcb0c`:
+
+```
+tag              rc-1.1.42-rc7  ->  5160ef6dc73a3f71bae5f779ac8bd423d81fcb0c
+                 (lightweight, resolved through the Git API, == build commit)
+GIT_REVISION     5160ef6dc73a3f71bae5f779ac8bd423d81fcb0c   (in APK-IDENTITY.txt)
+versionName      1.1.42-rc7
+versionCode      217442877            (>= 217442877, floor 217442876 + 1)
+package          com.manhwalens.app
+signer cert      93794a2fb7635cbe20503fefc300f90bf1f7f1e11d6d0db86c6f7531ce8e0806
+pinned cert      93794a2fb7635cbe20503fefc300f90bf1f7f1e11d6d0db86c6f7531ce8e0806  (equal)
+apk_sha256       3c776e7ea4cd0477957e53e7bc77218698457e3c6570ad8b177c9b4061972171
+apk_bytes        120499664
+signed_release   true
+unit tests       67 suites / 350 tests / 0 failures
+```
+
+The published download was re-fetched and hashed by the workflow and matches
+`3c776e7e…`. The identity report inside the release body carries
+`git_revision=5160ef6d…`, identical to the tag target — which is the check that
+would have caught rc4.
+
+Earlier releases are untouched: rc2–rc6 keep their original `updated_at` and
+their four assets each.
+
+**No application code changed in RC5.** The diff is the workflow, one new script,
+one new test module, and the safety allowlist entry for those two files.
