@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -uo pipefail
 chmod +x gradlew
+# The default 256 KB logcat ring drops the instrumented funnel lines before the run ends, so only
+# the last few were reaching the job summary and the 4/5-line rows were invisible in the report.
+adb logcat -G 16M >/dev/null 2>&1 || true
 status=0
 ./gradlew connectedDebugAndroidTest --stacktrace 2>&1 | tee /tmp/quality-gradle.log || status=$?
 adb logcat -d -b crash > /tmp/quality-crash.log || true
