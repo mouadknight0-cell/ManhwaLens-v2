@@ -206,6 +206,50 @@ storage and resume confinement, attempt counting, assessment binding, the rating
 vocabulary, export completeness and ordering, run browsing, and corpus
 validation.
 
-The Kotlin has **not** been compiled here: this environment has no JDK, no Android
-SDK and no emulator. CI is the first compiler. Reading the source and balancing
-braces is not the same as a compile, and this document does not claim otherwise.
+The Kotlin is **not** compiled here: this environment has no JDK, no Android SDK
+and no emulator, so CI was the first compiler. Reading the source and balancing
+braces is not the same as a compile, and it did not catch what the compiler
+caught: three source errors in this phase's own code survived a careful local
+review and only surfaced in CI.
+
+| Error | Cause |
+|---|---|
+| `No value passed for parameter 'text'` | a `Text()` left behind with its content removed during the sample-detail rewrite |
+| `Argument type mismatch: Int, String!` | `JSONObject.names()` returns a `JSONArray`, not name strings |
+| `exposes its private-in-class parameter type 'Config'` | `invocationFor` became `internal` while `Config` stayed private |
+| `unresolved reference` (earlier) | a heredoc-escaped `${'$'}{...}` artifact in a `Corrupt` message |
+
+That is worth stating plainly rather than hiding: the local checks were useful
+(brace balance caught a prematurely closed data class) but insufficient.
+
+## Published candidate
+
+`rc-1.1.42-rc4`, built from `756c3ee`, all checks green:
+
+```
+versionName 1.1.42-rc4     versionCode 217442876     package com.manhwalens.app
+apk_bytes 120499664        signed_release true
+apk_sha256 98eabc3049f97e2b18a475f1764277dbfcfa3ff28f3ab5811c0dc6043203146c
+signer cert 93794a2fb7635cbe20503fefc300f90bf1f7f1e11d6d0db86c6f7531ce8e0806  (full value, matched)
+unit tests 67 suites / 350 tests / 0 failures
+```
+
+Every gate passed for that build: compilation, 350 release unit tests,
+instrumented test compilation, signature and certificate, the identity check
+(APK `git_revision` equal to the commit under test), the debug-signing check, and
+the download check that re-fetches the published file.
+
+`rc-1.1.42-rc3` also built green from `f5b33ab` and keeps its own four assets;
+rc4 exists because removing the temporary diagnostic step necessarily touched a
+workflow path and rebuilt, and republishing that under the rc3 tag would have
+replaced verified assets with a build of a different commit. `rc-1.1.42-rc2` is
+untouched. `app/` is byte-identical between the rc3 and rc4 builds; only the
+workflow and one test differ.
+
+Why there were two green candidates: the diagnostic step was added to read the
+compiler's errors (job logs are not retrievable in the environment this phase was
+written in), and it had to be removed once it had done its job. That removal is
+the only difference.
+
+`Android quality regression` passed on the same application code at `f5b33ab`,
+including the Android 14 emulator OCR and circular-view tests.
