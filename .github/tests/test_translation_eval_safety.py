@@ -333,6 +333,11 @@ class StashUntouchedTest(unittest.TestCase):
             "app/src/main/java/com/manhwalens/app/MainActivity.kt",
             "app/build.gradle.kts",
             "docs/TRANSLATION-EVALUATION-PHASE-B2",
+            # The candidate workflow's floors were stale and produced an APK the
+            # phone rejects as a downgrade; correcting them is Phase B2's job
+            # because B2 is the phase that must ship an installable APK.
+            ".github/workflows/release-candidate.yml",
+            ".github/tests/test_candidate_version_code.py",
         )
         unexpected = [l for l in lines if not any(m in l for m in allowed)]
         self.assertEqual([], unexpected, f"unrelated files present in worktree: {unexpected}")
