@@ -69,9 +69,14 @@ class MultiLineCaseMatrixTest {
         val audit = mutableListOf<String>()
         val recognized = TextRecognitionClient().recognize(bmp, "en", audit = { audit.add(it) })
         val assembled = DialogueAssembler.assemble(recognized) { _, _ -> true }.sortedBy { it.top }
-        stage("ocr-before-assembly", "count=${recognized.size} texts=${recognized.map { it.text }}")
-        stage("ocr-after-assembly", "count=${assembled.size} texts=${assembled.map { it.text }}")
-        audit.forEach { stage("ocr-audit", it) }
+        // Only report a stage that actually changed the text. Emitting these unconditionally put
+        // ten annotations per run into a channel GitHub caps at ten, which pushed the MATRIX summary
+        // out of the retained set and hid the very measurements the report needs.
+        if (recognized.map { it.text } != assembled.map { it.text }) {
+            stage("ocr-before-assembly", "count=${recognized.size} texts=${recognized.map { it.text }}")
+            stage("ocr-after-assembly", "count=${assembled.size} texts=${assembled.map { it.text }}")
+            audit.forEach { stage("ocr-audit", it) }
+        }
         assembled
     }
 
