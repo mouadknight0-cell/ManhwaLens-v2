@@ -206,14 +206,14 @@ class WorkflowFallbackTest(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertGreaterEqual(int(self._fallback(key)), 217442876)
 
-    def test_candidate_name_is_a_new_unused_rc8(self):
-        self.assertEqual('1.1.42-rc8', self._default('version_name'))
-        self.assertEqual('1.1.42-rc8', self._fallback('VERSION_NAME'))
-        # rc2-rc7 are published; their tags must not be reused. Only the *resolved*
+    def test_candidate_name_is_a_new_unused_rc9(self):
+        self.assertEqual('1.1.42-rc9', self._default('version_name'))
+        self.assertEqual('1.1.42-rc9', self._fallback('VERSION_NAME'))
+        # rc2-rc8 are published; their tags must not be reused. Only the *resolved*
         # name is checked -- history is allowed to mention earlier candidates.
-        for taken in ('rc2', 'rc3', 'rc4', 'rc5', 'rc6', 'rc7'):
+        for taken in ('rc2', 'rc3', 'rc4', 'rc5', 'rc6', 'rc7', 'rc8'):
             self.assertNotIn(f"|| '1.1.42-{taken}'", self.text)
-        self.assertNotIn("default: 1.1.42-rc7", self.text)
+        self.assertNotIn("default: 1.1.42-rc8", self.text)
 
     def test_floors_clear_the_published_rc7(self):
         # rc7 shipped 217442877, so a candidate must be strictly above it to install.

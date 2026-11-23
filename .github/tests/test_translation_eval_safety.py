@@ -120,7 +120,13 @@ class EngineUntouchedTest(unittest.TestCase):
     #: evaluation phase's baseline) to the RC7 build commit once that phase was
     #: closed: a guard pinned to an older phase's start cannot distinguish "this
     #: phase touched the engine" from "a later phase legitimately did".
-    BASE = "5160ef6dc73a3f71bae5f779ac8bd423d81fcb0c"
+    #:
+    #: RC9 moved this from the Phase 1 baseline to the RC8 release tip. RC9's
+    #: mandate is to change the capture-reconstruction path, the OCR repair stage
+    #: and the translation review, so a guard pinned before RC8 would report the
+    #: whole release as a violation. The baseline is per-release and reviewable in
+    #: the diff, exactly like the exemption list below.
+    BASE = "f9278d6"
 
     #: The only protected files the current phase is mandated to change.
     #:
@@ -132,9 +138,33 @@ class EngineUntouchedTest(unittest.TestCase):
     #: byte-identical, and so does every *other* file in `pipeline/`. A later phase
     #: that needs different files must edit this tuple, which is the point: the
     #: exemption is reviewable in the diff instead of implied by a directory.
+    #:
+    #: RC9's own mandated edits, each named individually and each demanded by the
+    #: release's acceptance cases:
+    #:
+    #:   * `pipeline/OverlayPolicy.kt`      -- A/B/C: elect the complete reading
+    #:   * `pipeline/BubbleReconstructor.kt`-- EVEN/THOUGH: rejoin split utterances
+    #:   * `pipeline/ContinuationGrammar.kt`-- the evidence that a seam is a seam
+    #:   * `pipeline/ContractionRepair.kt`  -- ILL -> I'LL on contextual proof
+    #:   * `pipeline/RepairLedger.kt`       -- record every correction decision
+    #:   * `pipeline/TranslationInput.kt`   -- wire the repair after the corrector
+    #:   * `capture/ScreenCaptureService.kt`-- the insertion point, after scaling
+    #:   * `translate/MeaningValidator.kt`  -- MAGE: review what the Arabic says
+    #:
+    #: Everything else in the protected paths stays byte-identical: `ocr/`,
+    #: `names/`, `overlay/`, `diagnostics/`, `signing/`, `app/build.gradle.kts`,
+    #: and every other file in `pipeline/` and `translate/`.
     PHASE_ALLOWED_EDITS = frozenset({
         "app/src/main/java/com/manhwalens/app/pipeline/ReadingEnglish.kt",
         "app/src/main/java/com/manhwalens/app/pipeline/ComicSpelling.kt",
+        "app/src/main/java/com/manhwalens/app/pipeline/OverlayPolicy.kt",
+        "app/src/main/java/com/manhwalens/app/pipeline/BubbleReconstructor.kt",
+        "app/src/main/java/com/manhwalens/app/pipeline/ContinuationGrammar.kt",
+        "app/src/main/java/com/manhwalens/app/pipeline/ContractionRepair.kt",
+        "app/src/main/java/com/manhwalens/app/pipeline/RepairLedger.kt",
+        "app/src/main/java/com/manhwalens/app/pipeline/TranslationInput.kt",
+        "app/src/main/java/com/manhwalens/app/capture/ScreenCaptureService.kt",
+        "app/src/main/java/com/manhwalens/app/translate/MeaningValidator.kt",
     })
 
     def test_protected_paths_are_unmodified_by_this_phase(self):
