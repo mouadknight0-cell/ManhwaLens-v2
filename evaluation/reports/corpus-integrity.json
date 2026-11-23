@@ -1,0 +1,1221 @@
+{
+  "report": "corpus_integrity",
+  "schema_version": "1.0.0",
+  "dataset_version": "1.0.0",
+  "dataset_fingerprint": "5fb61a318d51c91d9e017bf4b09a09b89a90c3dc34f3ca5f66239fc0148014d1",
+  "total_cases": 40,
+  "unique_case_ids": 40,
+  "duplicate_ids": [],
+  "review_status_counts": {
+    "pending_human_review": 40
+  },
+  "references_valid_for_scoring": 0,
+  "references_pending": 40,
+  "ocr_quality_distribution": {
+    "clean_ocr": 38,
+    "unknown": 2
+  },
+  "text_length_distribution": {
+    "unclassified": 40
+  },
+  "semantic_category_distribution": {
+    "complex_grammar": 1,
+    "dialogue_dependent": 1,
+    "emotional": 9,
+    "idiom": 5,
+    "implicit_meaning": 3,
+    "incomplete_sentence": 1,
+    "pronoun_unclear_referent": 5,
+    "sarcasm": 2,
+    "unclassified": 13
+  },
+  "source_type_distribution": {
+    "clean_typed": 38,
+    "ocr_transcribed": 2
+  },
+  "context_groups": {
+    "g31-thought": [
+      1,
+      2
+    ]
+  },
+  "missing_fields": [
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-01",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-01",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-02",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-02",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-03",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-03",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-04",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-05",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-06",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-07",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-08",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-09",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-09",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-10",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-10",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-11",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-12",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-13",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-14",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-15",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-16",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-17",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-18",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-19",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-20",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-20",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-21",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-22",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-23",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-24",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-25",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-26",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-26",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-27",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-27",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-28",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-29",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-29",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-30",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-30",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-31",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-32",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-33",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-34",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-35",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-36",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-37",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-37",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-38",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-39",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-39",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-40",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-40",
+      "severity": "warning"
+    }
+  ],
+  "invalid_values": [],
+  "warnings": [
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-01",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-01",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-02",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-02",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-03",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-03",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-04",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-05",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-06",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-07",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-08",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-09",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-09",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-10",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-10",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-11",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-12",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-13",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-14",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-15",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-16",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-17",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-18",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-19",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-20",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-20",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-21",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-22",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-23",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-24",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-25",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-26",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-26",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-27",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-27",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-28",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-29",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-29",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-30",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-30",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-31",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-32",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-33",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-34",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-35",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-36",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-37",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-37",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-38",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-39",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-39",
+      "severity": "warning"
+    },
+    {
+      "code": "ocr_transcribed_unknown_quality",
+      "message": "transcribed cases should record an OCR stratum",
+      "case_id": "rc4-39",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_length",
+      "message": "text_length not yet determined",
+      "case_id": "rc4-40",
+      "severity": "warning"
+    },
+    {
+      "code": "unclassified_semantic",
+      "message": "semantic_category not yet determined",
+      "case_id": "rc4-40",
+      "severity": "warning"
+    },
+    {
+      "code": "ocr_transcribed_unknown_quality",
+      "message": "transcribed cases should record an OCR stratum",
+      "case_id": "rc4-40",
+      "severity": "warning"
+    }
+  ],
+  "error_count": 0,
+  "warning_count": 55,
+  "matrix_coverage": {
+    "rows": [
+      {
+        "dimension": "text_length",
+        "value": "short_phrase",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "text_length",
+        "value": "single_sentence",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "text_length",
+        "value": "medium_sentence",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "text_length",
+        "value": "long_sentence",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "text_length",
+        "value": "multi_line",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "text_length",
+        "value": "exceeds_effective_coverage",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "plain",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "idiom",
+        "present": true,
+        "count": 5
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "slang",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "figurative",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "sarcasm",
+        "present": true,
+        "count": 2
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "emotional",
+        "present": true,
+        "count": 9
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "implicit_meaning",
+        "present": true,
+        "count": 3
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "ambiguous",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "elliptical",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "incomplete_sentence",
+        "present": true,
+        "count": 1
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "complex_grammar",
+        "present": true,
+        "count": 1
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "unusual_word_order",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "name_or_title",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "pronoun_unclear_referent",
+        "present": true,
+        "count": 5
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "negation",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "emphasis",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "dialogue_dependent",
+        "present": true,
+        "count": 1
+      },
+      {
+        "dimension": "context_dependency",
+        "value": "isolated_bubble",
+        "present": true,
+        "count": 38
+      },
+      {
+        "dimension": "context_dependency",
+        "value": "depends_on_previous",
+        "present": true,
+        "count": 2
+      },
+      {
+        "dimension": "context_dependency",
+        "value": "depends_on_multiple_previous",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "context_dependency",
+        "value": "depends_on_following",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "context_dependency",
+        "value": "multi_bubble_sequence",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "context_dependency",
+        "value": "changes_with_context",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "clean_ocr",
+        "present": true,
+        "count": 38
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "minor_corruption",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "moderate_corruption",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "severe_corruption",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "truncated_text",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "missing_lines",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "merged_lines",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "fragmented_text",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "unknown",
+        "present": true,
+        "count": 2
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "lost_words",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "duplicate_words",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "substitution",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "omission",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "fragment",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "incorrect_line_splitting",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "incorrect_line_joining",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "partial_capture",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "missing_line",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "merged_line",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "unknown",
+        "present": false,
+        "count": 0
+      }
+    ],
+    "gaps": [
+      {
+        "dimension": "text_length",
+        "value": "short_phrase",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "text_length",
+        "value": "single_sentence",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "text_length",
+        "value": "medium_sentence",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "text_length",
+        "value": "long_sentence",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "text_length",
+        "value": "multi_line",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "text_length",
+        "value": "exceeds_effective_coverage",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "plain",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "slang",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "figurative",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "ambiguous",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "elliptical",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "unusual_word_order",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "name_or_title",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "negation",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "semantic_category",
+        "value": "emphasis",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "context_dependency",
+        "value": "depends_on_multiple_previous",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "context_dependency",
+        "value": "depends_on_following",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "context_dependency",
+        "value": "multi_bubble_sequence",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "context_dependency",
+        "value": "changes_with_context",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "minor_corruption",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "moderate_corruption",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "severe_corruption",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "truncated_text",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "missing_lines",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "merged_lines",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "ocr_quality",
+        "value": "fragmented_text",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "lost_words",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "duplicate_words",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "substitution",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "omission",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "fragment",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "incorrect_line_splitting",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "incorrect_line_joining",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "partial_capture",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "missing_line",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "merged_line",
+        "present": false,
+        "count": 0
+      },
+      {
+        "dimension": "corruption_type",
+        "value": "unknown",
+        "present": false,
+        "count": 0
+      }
+    ],
+    "gap_count": 37
+  },
+  "provenance_complete": true
+}
