@@ -622,7 +622,11 @@ class ScreenCaptureService : Service() {
         // visual bridge inside TextRecognitionClient only joins when the pixels between two boxes
         // look continuous, which fails inside a decorated panel; this stage uses the text instead.
         // The raw fragments are preserved in the join record, so nothing is lost silently.
-        val (scaledRegions, bubbleJoins) = com.manhwalens.app.pipeline.BubbleReconstructor.reconstruct(scaledRegionsRaw)
+        // Order matters: several readings of one region are collapsed first, so a partial read
+        // cannot be joined onto a full one and produce a duplicate phrase. Then distinct
+        // fragments of one utterance are joined.
+        val collapsedRegions = com.manhwalens.app.pipeline.BubbleReconstructor.collapseDuplicates(scaledRegionsRaw)
+        val (scaledRegions, bubbleJoins) = com.manhwalens.app.pipeline.BubbleReconstructor.reconstruct(collapsedRegions)
         if (bubbleJoins.isNotEmpty()) {
             Diagnostics.info("ocr", "reconstruct", "rejoined split utterances",
                 context = mapOf("joins" to bubbleJoins.size.toString(),

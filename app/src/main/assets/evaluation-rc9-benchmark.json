@@ -1,0 +1,140 @@
+{
+  "schema": "1.0.0",
+  "kind": "rc9_benchmark",
+  "dataset_version": "1.0.0",
+  "notes": [
+    "Synthetic cases only. No phone screenshots, usernames or user-uploaded pages: the public",
+    "repository must not carry private reading material. The RC8 phone report is referenced by",
+    "case_id, not reproduced.",
+    "OCR and translation are measured separately on purpose. A case can pass the OCR metric and",
+    "still be a bad translation, and conflating the two is how a structural pass gets reported as",
+    "a semantic one.",
+    "reference_arabic is reviewer context for a human, not a verified translation, and no test",
+    "asserts equality against it."
+  ],
+  "cases": [
+    {
+      "case_id": "rc9-01",
+      "issue": "dependent partials translated instead of the full line",
+      "fragments": [
+        { "text": "IL MAKE HIM REGRET", "left": 60, "top": 640, "right": 380, "bottom": 686 },
+        { "text": "ILL MAKE HIM REGRET THROWING ME AWAY!", "left": 60, "top": 640, "right": 620, "bottom": 690 },
+        { "text": "THROWING ME AWAY!", "left": 300, "top": 640, "right": 620, "bottom": 690 }
+      ],
+      "expected_ocr_text": "ILL MAKE HIM REGRET THROWING ME AWAY!",
+      "ocr_expectation": "one_region",
+      "translation_checks": { "idiom": "throwing me away" },
+      "reference_arabic": null
+    },
+    {
+      "case_id": "rc9-02",
+      "issue": "one utterance split across two detections in a decorated panel",
+      "fragments": [
+        { "text": "EVEN", "left": 100, "top": 700, "right": 232, "bottom": 736 },
+        { "text": "THOUGH AE KNEw HOW HARD I WAS TRNINGo", "left": 240, "top": 698, "right": 600, "bottom": 740 }
+      ],
+      "expected_ocr_text": "EVEN THOUGH AE KNEw HOW HARD I WAS TRNINGo",
+      "ocr_expectation": "one_region",
+      "translation_checks": {},
+      "reference_arabic": null
+    },
+    {
+      "case_id": "rc9-03",
+      "issue": "apostrophe dropped, so the contraction never reached the translator",
+      "fragments": [
+        { "text": "Ill make him regret throwing me away.", "left": 60, "top": 900, "right": 620, "bottom": 950 }
+      ],
+      "expected_ocr_text": "Ill make him regret throwing me away.",
+      "ocr_expectation": "single_region",
+      "expected_repaired_text": "I'll make him regret throwing me away.",
+      "translation_checks": { "idiom": "throwing me away" },
+      "reference_arabic": null
+    },
+    {
+      "case_id": "rc9-04",
+      "issue": "negative: attributive ill before a noun must stay ill",
+      "fragments": [
+        { "text": "THE ILL KNIGHT ARRIVED.", "left": 60, "top": 300, "right": 520, "bottom": 348 }
+      ],
+      "expected_ocr_text": "THE ILL KNIGHT ARRIVED.",
+      "ocr_expectation": "single_region",
+      "expected_repaired_text": "THE ILL KNIGHT ARRIVED.",
+      "translation_checks": {},
+      "reference_arabic": null
+    },
+    {
+      "case_id": "rc9-05",
+      "issue": "negative: predicate ill must stay ill",
+      "fragments": [
+        { "text": "I AM ILL.", "left": 60, "top": 300, "right": 300, "bottom": 348 }
+      ],
+      "expected_ocr_text": "I AM ILL.",
+      "ocr_expectation": "single_region",
+      "expected_repaired_text": "I AM ILL.",
+      "translation_checks": {},
+      "reference_arabic": null
+    },
+    {
+      "case_id": "rc9-06",
+      "issue": "negative: hyphenated compound must never be split or contracted",
+      "fragments": [
+        { "text": "ILL-FATED MAN.", "left": 60, "top": 300, "right": 340, "bottom": 348 }
+      ],
+      "expected_ocr_text": "ILL-FATED MAN.",
+      "ocr_expectation": "single_region",
+      "expected_repaired_text": "ILL-FATED MAN.",
+      "translation_checks": {},
+      "reference_arabic": null
+    },
+    {
+      "case_id": "rc9-07",
+      "issue": "gender decided without reliable context; term transliterated instead of translated",
+      "fragments": [
+        { "text": "THAT DAY, I BECAME A MAGE.", "left": 60, "top": 400, "right": 600, "bottom": 450 }
+      ],
+      "expected_ocr_text": "THAT DAY, I BECAME A MAGE.",
+      "ocr_expectation": "single_region",
+      "translation_candidate": "في ذلك اليوم، أصبحت ماجاة.",
+      "expected_review_codes": ["MV-GENDER-PENDING"],
+      "glossary": { "mage": "ساحر" },
+      "reference_arabic": null
+    },
+    {
+      "case_id": "rc9-08",
+      "issue": "a dropped figure changes what the sentence says",
+      "fragments": [
+        { "text": "THE SECT HAS 3000 MEMBERS.", "left": 60, "top": 400, "right": 600, "bottom": 450 }
+      ],
+      "expected_ocr_text": "THE SECT HAS 3000 MEMBERS.",
+      "ocr_expectation": "single_region",
+      "translation_candidate": "الطائفة لديها أعضاء.",
+      "expected_review_codes": ["MV-NUMBER"],
+      "reference_arabic": null
+    },
+    {
+      "case_id": "rc9-09",
+      "issue": "lost negation inverts the meaning",
+      "fragments": [
+        { "text": "I WILL NOT FORGIVE YOU.", "left": 60, "top": 400, "right": 560, "bottom": 450 }
+      ],
+      "expected_ocr_text": "I WILL NOT FORGIVE YOU.",
+      "ocr_expectation": "single_region",
+      "translation_candidate": "سأغفر لك.",
+      "expected_review_codes": ["MV-NEGATION"],
+      "reference_arabic": null
+    },
+    {
+      "case_id": "rc9-10",
+      "issue": "a protected name must survive restoration",
+      "fragments": [
+        { "text": "JIN, DEFEATED THE GUARD.", "left": 60, "top": 400, "right": 560, "bottom": 450 }
+      ],
+      "expected_ocr_text": "JIN, DEFEATED THE GUARD.",
+      "ocr_expectation": "single_region",
+      "translation_candidate": "هزم الحارس.",
+      "expected_review_codes": ["MV-NAME"],
+      "protected_names": ["JIN"],
+      "reference_arabic": null
+    }
+  ]
+}

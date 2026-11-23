@@ -53,6 +53,91 @@ object BubbleReconstructor {
      * first appearance, plus the record of every join made. Regions that were not joined are
      * returned unchanged.
      */
+    /**
+     * How much of an utterance a region captured (0..1), used to elect one reading of a region.
+     *
+     * Deliberately the same shape as
+     * [com.manhwalens.app.pipeline.OverlayPolicy.completenessScore] but a *separate* function:
+     * that one scores `TranslatedBlock`s for rendering, this one scores raw regions before
+     * translation. Sharing it would force the overlay and the translator to change together.
+     */
+    fun completeness(region: TextRegion): Double {
+        val text = region.text.trim()
+        if (text.isEmpty()) return 0.0
+        val words = text.split(WHITESPACE).filter { it.isNotBlank() }
+        val alphabetic = words.count { w -> w.any(Char::isLetter) }
+        val completion = when {
+            text.last() in SENTENCE_END -> 1.0
+            text.last() in CONTINUATION_MARKS -> 0.25
+            else -> 0.5
+        }
+        return (text.length / 1000.0) +
+            (minOf(text.length, 240) / 240.0) +
+            (minOf(alphabetic, 40) / 40.0) +
+            completion * 0.05
+    }
+
+    /**
+     * Collapse several readings of *the same* region to the one that captured the most of it.
+     *
+     * Not a second join mechanism: joining concatenates *distinct* fragments, this removes *copies
+     * of one* region, and it only ever groups regions that already share most of their area, so two
+     * different bubbles cannot compete.
+     *
+     * It exists because Phase A made the overlay elect the complete reading for display while the
+     * translator still received every reading: the reported A/B/C case produced three translated
+     * blocks for one line, two of them partial. A duplicate that stops being drawn is still a
+     * duplicate in the translation.
+     *
+     * Election uses [completeness] with a total tie-break, so it does not depend on the order the
+     * recogniser returned regions.
+     */
+    fun collapseDuplicates(regions: List<TextRegion>, threshold: Double = 0.7): List<TextRegion> {
+        if (regions.size < 2) return regions
+        val parent = IntArray(regions.size) { it }
+        fun root(x: Int): Int {
+            var r = x
+            while (parent[r] != r) r = parent[r]
+            return r
+        }
+        for (a in regions.indices) for (b in a + 1 until regions.size) {
+            if (overlapRatio(regions[a], regions[b]) < threshold) continue
+            val ra = root(a)
+            val rb = root(b)
+            if (ra != rb) parent[maxOf(ra, rb)] = minOf(ra, rb)
+        }
+        return regions.indices.groupBy(::root).values.map { group ->
+            val winner = group.minWithOrNull(
+                compareBy<Int>(
+                    { -completeness(regions[it]) },
+                    { -regions[it].sourceLineCount },
+                    { -(if (regions[it].confidence.isNaN()) 0.0 else regions[it].confidence.toDouble()) },
+                    { -regions[it].text.trim().length },
+                    { regions[it].top },
+                    { regions[it].left },
+                    { -regions[it].bottom },
+                    { -regions[it].right },
+                    { regions[it].text },
+                ),
+            ) ?: group.first()
+            regions[winner]
+        }.sortedWith(compareBy({ it.top }, { it.left }, { it.text }))
+    }
+
+    /** Intersection over the *smaller* box: a fragment inside a full line scores 1.0. */
+    private fun overlapRatio(first: TextRegion, second: TextRegion): Double {
+        val width = minOf(first.right, second.right) - maxOf(first.left, second.left)
+        val height = minOf(first.bottom, second.bottom) - maxOf(first.top, second.top)
+        if (width <= 0 || height <= 0) return 0.0
+        val intersection = width.toDouble() * height
+        val smaller = minOf(first.width * first.height, second.width * second.height)
+        return if (smaller <= 0) 0.0 else intersection / smaller
+    }
+
+    private val WHITESPACE = Regex("\\s+")
+    private val SENTENCE_END = charArrayOf('.', '!', '?', '\u2026', '\u061F')
+    private val CONTINUATION_MARKS = charArrayOf(',', ';', ':', '-', '\u2014')
+
     fun reconstruct(regions: List<TextRegion>): Pair<List<TextRegion>, List<Join>> {
         if (regions.size < 2) return regions to emptyList()
         val n = regions.size
@@ -101,9 +186,17 @@ object BubbleReconstructor {
         return out to joins
     }
 
-    /** Concatenate the fragments in reading order, preserving each one's own text verbatim. */
+    /**
+     * Concatenate the fragments in reading order, preserving each one's own text verbatim.
+     *
+     * Reading order is *row-aware*: OCR jitter routinely places a same-row fragment a pixel or two
+     * higher than the word it follows, and plain `top` ordering then emits `THOUGH ... EVEN` for
+     * what was written `"EVEN THOUGH ..."`. Fragments sharing a row are ordered left-to-right;
+     * fragments on different rows keep the vertical order. Same root cause as the `joinable()` bug
+     * that hid the join in the first place, in a different place.
+     */
     private fun merge(parts: List<TextRegion>): TextRegion {
-        val ordered = parts.sortedWith(compareBy({ it.top }, { it.left }))
+        val ordered = readingOrder(parts)
         val text = SentenceReconstructor.joinLines(ordered.map { it.text })
         val confidences = ordered.map { it.confidence }.filter { it.isFinite() }
         return TextRegion(
@@ -157,6 +250,30 @@ object BubbleReconstructor {
         }
     }
 
+    /**
+     * Order fragments the way they are read: rows top-to-bottom, and within a row left-to-right.
+     *
+     * A row is a maximal run whose boxes overlap vertically by at least 60% of the shorter box,
+     * which is the same tolerance [joinable] uses. Sorting by `top` alone is not a total order for
+     * same-row text, because OCR jitter moves one fragment up or down by a few pixels.
+     */
+    private fun readingOrder(parts: List<TextRegion>): List<TextRegion> {
+        if (parts.size < 2) return parts
+        val byTop = parts.sortedWith(compareBy({ it.top }, { it.left }))
+        val out = mutableListOf<TextRegion>()
+        var row = mutableListOf<TextRegion>()
+        fun flush() {
+            if (row.isNotEmpty()) { out += row.sortedBy { it.left }; row = mutableListOf() }
+        }
+        for (region in byTop) {
+            if (row.isEmpty()) { row += region; continue }
+            val sharesRow = row.any { rowOverlap(it, region) >= minOf(it.height, region.height) * 0.6f }
+            if (sharesRow) row += region else { flush(); row += region }
+        }
+        flush()
+        return out
+    }
+
     private fun verticalGap(first: TextRegion, second: TextRegion): Int = second.top - first.bottom
 
     /** One above the other, sharing a column, with a gap no larger than a generous line step. */
@@ -195,7 +312,7 @@ object BubbleReconstructor {
         // A fragment ending mid-word cannot open a new utterance unless the seam is grammatical.
         val openEnd = !endsSentence(left) && !left.last().isLetterOrDigit()
         val closedStart = !right.first().isLetterOrDigit() || right.first().isUpperCase()
-        return openEnd || closedStart || ContinationSeam.isGrammaticalSeam(left, right)
+        return openEnd || closedStart || ContinuationSeam.isGrammaticalSeam(left, right)
     }
 
     private fun endsSentence(text: String): Boolean {
@@ -205,7 +322,7 @@ object BubbleReconstructor {
     }
 
     /** Small, explicit seam test kept separate so the pure grammar table stays auditable. */
-    private object ContinationSeam {
+    private object ContinuationSeam {
         fun isGrammaticalSeam(left: String, right: String): Boolean =
             ContinuationGrammar.continues(left, right)
     }

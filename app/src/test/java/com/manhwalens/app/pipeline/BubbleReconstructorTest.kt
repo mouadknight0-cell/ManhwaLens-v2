@@ -189,4 +189,63 @@ class BubbleReconstructorTest {
         assertNotNull(joins.singleOrNull()?.evidence)
         assertEquals(2, joins.single().parts.size)
     }
+
+    // ------------------------------------------------------------------ duplicate collapse
+    //
+    // Phase A made the overlay elect the complete reading for *display*. The translator still
+    // receives every reading, so the same A/B/C case produced three translated blocks for one
+    // line, two of them partial. Collapsing before joining closes that gap.
+
+    @Test fun partialReadsOfOneRegionCollapseToTheCompleteReading() {
+        val a = r("IL MAKE HIM REGRET", l = 60, t = 640, rr = 380, b = 686)
+        val b = r("ILL MAKE HIM REGRET THROWING ME AWAY!", l = 60, t = 640, rr = 620, b = 690)
+        val c = r("THROWING ME AWAY!", l = 300, t = 640, rr = 620, b = 690)
+        val out = BubbleReconstructor.collapseDuplicates(listOf(a, b, c))
+        assertEquals(1, out.size)
+        assertEquals("ILL MAKE HIM REGRET THROWING ME AWAY!", out.single().text)
+    }
+
+    @Test fun duplicateCollapseIsOrderIndependent() {
+        val a = r("IL MAKE HIM REGRET", l = 60, t = 640, rr = 380, b = 686)
+        val b = r("ILL MAKE HIM REGRET THROWING ME AWAY!", l = 60, t = 640, rr = 620, b = 690)
+        val c = r("THROWING ME AWAY!", l = 300, t = 640, rr = 620, b = 690)
+        val expected = BubbleReconstructor.collapseDuplicates(listOf(a, b, c)).map { it.text }
+        listOf(
+            listOf(a, c, b), listOf(b, a, c), listOf(b, c, a),
+            listOf(c, a, b), listOf(c, b, a),
+        ).forEach { perm ->
+            assertEquals("permutation $perm", expected, BubbleReconstructor.collapseDuplicates(perm).map { it.text })
+        }
+    }
+
+    @Test fun separateBubblesAreNeverCollapsed() {
+        val first = r("STAY BACK!", l = 60, t = 100, rr = 300, b = 150)
+        val second = r("I WILL HANDLE THIS.", l = 60, t = 600, rr = 400, b = 650)
+        assertEquals(2, BubbleReconstructor.collapseDuplicates(listOf(first, second)).size)
+    }
+
+    @Test fun collapsingNeverInventsOrDropsText() {
+        val a = r("WARSHIP", l = 60, t = 640, rr = 200, b = 690)
+        val b = r("WARSHIP APPROACHING", l = 60, t = 640, rr = 420, b = 690)
+        val out = BubbleReconstructor.collapseDuplicates(listOf(a, b))
+        assertEquals(1, out.size)
+        // The winner must be one of the inputs verbatim, never a merge of the two.
+        assertTrue(out.single().text == a.text || out.single().text == b.text)
+        assertEquals("WARSHIP APPROACHING", out.single().text)
+    }
+
+    @Test fun singleRegionAndEmptyInputsAreSafe() {
+        val one = r("HELLO.", l = 10, t = 10, rr = 100, b = 40)
+        assertEquals(listOf(one), BubbleReconstructor.collapseDuplicates(listOf(one)))
+        assertEquals(emptyList<TextRegion>(), BubbleReconstructor.collapseDuplicates(emptyList()))
+    }
+
+    @Test fun completenessPrefersCapturedTextOverConfidence() {
+        val fragment = TextRegion("IL MAKE HIM REGRET", 60, 640, 380, 686, 0.99f, "en")
+        val complete = TextRegion("ILL MAKE HIM REGRET THROWING ME AWAY!", 60, 640, 620, 690, 0.40f, "en")
+        assertTrue(
+            "a confident fragment must not outrank a complete line",
+            BubbleReconstructor.completeness(complete) > BubbleReconstructor.completeness(fragment),
+        )
+    }
 }
