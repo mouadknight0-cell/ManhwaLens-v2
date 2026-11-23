@@ -219,3 +219,46 @@ The Android runner cannot execute here — there is no emulator, no JDK and no M
 model in this environment. The Kotlin has not been compiled locally; CI is the
 first compiler, and the instrumentation tests require a device. That limitation is
 real and is not worked around by asserting on source text as if it were behaviour.
+
+## Two defects this phase found and fixed
+
+Building the phone-only loop exposed two problems that had nothing to do with
+translation, and both had been invisible for a while.
+
+**The APK was not installable.** The first candidate built for this phase carried
+`versionCode 217442871` while the phone already had `217442875`. Android rejects
+that as a downgrade, so the owner would have had to uninstall — which the task
+forbids, and which would destroy the 14 history records, 48 samples and 42
+benchmark records in the process. The floor arithmetic in
+`candidate_version_code.py` was correct; the workflow's pinned floor
+(`217442870`) predated releases 1.1.39–1.1.41 and the installed build. Both floor
+inputs now start at `217442875`, producing `217442876`, and
+`WorkflowFloorDefaultsTest` fails if any floor ever drops below the installed
+build again.
+
+**The instrumentation test never ran.** From the B1 commit onward,
+`TranslationEvalExportTest.exportRealEngineOutputForEveryCorpusCase` was declared
+`= runBlocking { ... }` and ended in `Log.i(...)`, which returns `Int`. JUnit4 only
+runs `void` methods and rejects the whole class with
+`initializationError: Failed to instantiate test runner class
+AndroidJUnit4ClassRunner`. So that suite ran zero tests while `ci.yml` stayed green
+— CI only *compiles* the androidTest source set and never executes it. It is now a
+block body, and `JUnitVoidTestMethodsTest` inspects every `= runBlocking` test body
+at brace depth zero so the shape cannot return.
+
+Related, for the record: the quality workflow's failure that appeared to be caused
+by these changes was one of these two, plus a separate pre-existing
+timing-sensitive test. `PrecisionBubbleTest` asserts a bubble mask exists, and
+`overlay/BubbleMask` rejects with `budget_14ms_component` when a wall-clock budget
+is exceeded. On a loaded emulator that reject is intermittent; the same test
+passed on the rerun of an unchanged commit. Nothing in `overlay/` or
+`PrecisionBubbleTest` was touched by this phase, and the two commits that fixed
+the real defects did not alter that code path.
+
+A note on the release-candidate workflow that is *not* fixed here: its
+"newest published release" lookup runs `gh release list --exclude-drafts` without
+`--exclude-pre-releases`, so a later candidate run reads its own earlier
+prerelease tag as the newest release. It does not affect the versionCode floor
+(the floor takes the max of three inputs), but it makes the reported
+`last_release` misleading. It belongs in a release-tooling change, not in an
+evaluation phase, so it is recorded rather than changed.
