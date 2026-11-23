@@ -21,10 +21,14 @@ from pathlib import Path
 from typing import Any
 
 from .harness import EngineOutput, HarnessError, OutputSet, parse_outputs
-from .schema import Dataset, OutputStatus
+from .schema import Dataset, EvalCase, OutputStatus
 
 #: Schema the device exporter writes and this importer accepts.
 DEVICE_EXPORT_SCHEMA = "1.0.0"
+
+#: Path of the generated *application* asset consumed by the in-app runner.
+#: Generated from the canonical corpus only; never hand-edited.
+APP_ASSET_DIR = "app/src/main/assets"
 
 #: Directory (inside the app's external files dir) the instrumentation test
 #: writes to. CI already pulls this directory with `adb pull`.
@@ -207,3 +211,103 @@ def load_device_export(path: Path, dataset: Dataset) -> DeviceExport:
     except json.JSONDecodeError as exc:
         raise HarnessError(f"device export is not valid JSON: {exc}") from exc
     return import_device_export(raw, dataset)
+
+
+# ---------------------------------------------------------------------------
+# Application assets (Phase B2: in-app runner and in-app human review)
+# ---------------------------------------------------------------------------
+
+
+def build_engine_input_asset(dataset: Dataset) -> dict[str, Any]:
+    """Payload the in-app runner sends to the translation engine.
+
+    Contains **only** what is allowed to reach the engine: a case id and the
+    English source. No Arabic reference, no reviewer-only context, no
+    classification. A test asserts those never appear.
+    """
+    return {
+        "schema": DEVICE_EXPORT_SCHEMA,
+        "kind": "engine_input",
+        "dataset_version": dataset.dataset_version,
+        "dataset_fingerprint": dataset.fingerprint or dataset.compute_fingerprint(),
+        "native_model_context": False,
+        "cases": [
+            {"case_id": c.case_id, "source_text": c.source_text}
+            for c in sorted(dataset.cases, key=lambda c: c.case_id)
+        ],
+    }
+
+
+def build_review_asset(dataset: Dataset) -> dict[str, Any]:
+    """Payload the in-app human-review screen reads.
+
+    This one *does* carry the references and reviewer-only context, because a
+    reviewer needs them. It is a separate file precisely so the engine payload
+    cannot accidentally include them.
+    """
+    return {
+        "schema": DEVICE_EXPORT_SCHEMA,
+        "kind": "human_review",
+        "dataset_version": dataset.dataset_version,
+        "dataset_fingerprint": dataset.fingerprint or dataset.compute_fingerprint(),
+        "cases": [
+            {
+                "case_id": c.case_id,
+                "source_text": c.source_text,
+                "reference_translation": c.reference_translation,
+                "reference_status": c.reference_status.value,
+                "context_for_reviewer_only": c.context_for_reviewer_only,
+                "context_group_id": c.context_group_id,
+                "context_order": c.context_order,
+                "context_dependency": c.context_dependency.value,
+                "context_available_to_engine": c.context_available_to_engine,
+                "semantic_category": c.semantic_category.value,
+                "ocr_quality": c.ocr_quality.value,
+                "text_length": c.text_length.value if c.text_length else None,
+                "upstream_id": c.upstream_id,
+                "source_provenance": c.source_provenance,
+            }
+            for c in sorted(dataset.cases, key=lambda c: c.case_id)
+        ],
+    }
+
+
+CANONICAL_CORPUS = Path("evaluation/corpus/rc4-corpus.json")
+
+
+def load_canonical_dataset(path: Path | str = CANONICAL_CORPUS, root: Path | None = None) -> Dataset:
+    """Load the corpus from the canonical JSON the app assets are generated from.
+
+    `evaluation/corpus/rc4-corpus.json` is the single source of truth; the TSV
+    under `docs/` is an input that was imported once. Reading the JSON here means a
+    regenerated asset cannot silently drift from the corpus the reports describe.
+    """
+    corpus_path = Path(path)
+    if not corpus_path.is_absolute():
+        corpus_path = (root or Path(".")) / corpus_path
+    payload = json.loads(corpus_path.read_text(encoding="utf-8"))
+    # `EvalCase.from_dict` is the same constructor the importer uses, so the JSON
+    # path cannot diverge from the TSV path in how fields are interpreted.
+    cases = [EvalCase.from_dict(entry) for entry in payload["cases"]]
+    return Dataset(
+        schema_version=payload.get("schema_version", ""),
+        dataset_version=payload["dataset_version"],
+        cases=cases,
+        fingerprint=payload.get("fingerprint") or "",
+    )
+
+
+def write_app_assets(dataset: Dataset, directory: Path) -> list[Path]:
+    """Write both application assets and return the paths written."""
+    directory.mkdir(parents=True, exist_ok=True)
+    engine_path = directory / "evaluation-engine-input.json"
+    review_path = directory / "evaluation-human-review.json"
+    engine_path.write_text(
+        json.dumps(build_engine_input_asset(dataset), indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    review_path.write_text(
+        json.dumps(build_review_asset(dataset), indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return [engine_path, review_path]

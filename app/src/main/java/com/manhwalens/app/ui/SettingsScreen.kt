@@ -45,6 +45,7 @@ fun SettingsScreen(
     benchmarksRecorded: Int,
     onExportDiagnostics: () -> Unit,
     onClearBenchmarks: () -> Unit,
+    onOpenEvaluation: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -117,6 +118,11 @@ fun SettingsScreen(
             }
         }) { Text("إعادة تعيين التقرير") }
         key(reportGeneration) { DiagnosticTools() }
+        // Evaluation lives beside the diagnostics tools but owns its own private
+        // store: nothing here reads or rewrites the report, samples or history.
+        OutlinedButton(onClick = onOpenEvaluation, modifier = Modifier.fillMaxWidth()) {
+            Text("Translation Evaluation · تقييم الترجمة")
+        }
         SettingsGroup("متقدم · Advanced", "الأداء، سجل القراءة، معلومات التطبيق") {
             Text("المعالجة محلية. OCR أصلي واحد كحد أقصى، ومهمتا ترجمة أصليتان. الكاش تلقائي ولا توجد إعدادات جودة وهمية.")
             OutlinedButton(onClick = onExportDiagnostics, modifier = Modifier.fillMaxWidth()) { Text("مشاركة حزمة التشخيص الكاملة") }

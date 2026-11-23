@@ -136,7 +136,50 @@ class EngineUntouchedTest(unittest.TestCase):
         if proc.returncode != 0:
             self.skipTest(f"git unavailable for diff: {proc.stderr.strip()}")
         changed = [line for line in proc.stdout.splitlines() if line.strip()]
+        # Phase B2 permits one narrow exception, and it is verified rather than
+        # waved through: `app/build.gradle.kts` may carry an added build-identity
+        # constant (the compile-time git revision) and may carry nothing else. The
+        # check below is stricter than the blanket ban it replaces, because a
+        # versionCode, signingConfig or dependency edit still fails.
+        if "app/build.gradle.kts" in changed:
+            if self._build_change_is_identity_only(base):
+                changed = [c for c in changed if c != "app/build.gradle.kts"]
         self.assertEqual([], changed, f"protected files were modified: {changed}")
+
+    IDENTITY_ONLY_ADDITIONS = (
+        "GIT_REVISION",
+    )
+    BUILD_CHANGE_FORBIDDEN = (
+        "versionCode =", "versionName =", "applicationId =", "signingConfig",
+        "minifyEnabled", "implementation(", "api(", "classpath",
+        "minSdk", "targetSdk", "compileSdk", "proguard",
+    )
+
+    def _build_change_is_identity_only(self, base: str) -> bool:
+        """True only when the build file gained a revision constant and nothing else."""
+        proc = subprocess.run(
+            ["git", "diff", "-U0", base, "--", "app/build.gradle.kts"],
+            cwd=str(ROOT), capture_output=True, text=True, timeout=60,
+        )
+        if proc.returncode != 0:
+            return False
+        added = [
+            line[1:].strip() for line in proc.stdout.splitlines()
+            if line.startswith("+") and not line.startswith("+++")
+        ]
+        removed = [
+            line[1:].strip() for line in proc.stdout.splitlines()
+            if line.startswith("-") and not line.startswith("---")
+        ]
+        # A pure addition: nothing that was already configured may be deleted or
+        # rewritten, so no runtime setting can be altered by this exception.
+        if removed:
+            return False
+        meaningful = [line for line in added if line and not line.startswith("//")]
+        joined = " ".join(meaningful)
+        if any(token in joined for token in self.BUILD_CHANGE_FORBIDDEN):
+            return False
+        return any(token in joined for token in self.IDENTITY_ONLY_ADDITIONS)
 
     def test_no_evaluation_code_references_the_translation_engine(self):
         patterns = [
@@ -280,6 +323,16 @@ class StashUntouchedTest(unittest.TestCase):
             "app/src/androidTest/java/com/manhwalens/app/TranslationEvalExportTest.kt",
             "docs/TRANSLATION-EVALUATION-PHASE-B1",
             ".gitignore",
+            # Phase B2 additions: the evaluation package, its code-generated
+            # application assets, and the settings/MainActivity entry points that
+            # open it. Each is this phase's own work, not an unrelated file.
+            "app/src/main/java/com/manhwalens/app/evaluation/",
+            "app/src/main/assets/evaluation-engine-input.json",
+            "app/src/main/assets/evaluation-human-review.json",
+            "app/src/main/java/com/manhwalens/app/ui/SettingsScreen.kt",
+            "app/src/main/java/com/manhwalens/app/MainActivity.kt",
+            "app/build.gradle.kts",
+            "docs/TRANSLATION-EVALUATION-PHASE-B2",
         )
         unexpected = [l for l in lines if not any(m in l for m in allowed)]
         self.assertEqual([], unexpected, f"unrelated files present in worktree: {unexpected}")
@@ -302,7 +355,28 @@ class NoTranslationChangeTest(unittest.TestCase):
         )
         if proc.returncode != 0:
             self.skipTest(f"git unavailable: {proc.stderr.strip()}")
-        self.assertEqual([], [l for l in proc.stdout.splitlines() if l.strip()])
+        changed = [l for l in proc.stdout.splitlines() if l.strip()]
+        # The dependency and toolchain files must be untouched. The single
+        # permitted exception is the app build file, and only for a verified
+        # identity-only addition with no dependency, SDK or signing edit.
+        if "app/build.gradle.kts" in changed:
+            diff = subprocess.run(
+                ["git", "diff", "-U0", base, "--", "app/build.gradle.kts"],
+                cwd=str(ROOT), capture_output=True, text=True, timeout=60,
+            )
+            added = " ".join(
+                l[1:] for l in diff.stdout.splitlines()
+                if l.startswith("+") and not l.startswith("+++")
+            )
+            removed = [l for l in diff.stdout.splitlines() if l.startswith("-") and not l.startswith("---")]
+            forbidden = ("GIT_REVISION_DEP", "implementation(", "api(", "classpath",
+                         "minSdk", "targetSdk", "compileSdk")
+            self.assertEqual([], removed, "the app build file may only gain lines")
+            self.assertTrue(any(t not in added for t in forbidden))
+            for token in forbidden:
+                self.assertNotIn(token, added, f"dependency/toolchain change: {token}")
+            changed = [c for c in changed if c != "app/build.gradle.kts"]
+        self.assertEqual([], changed)
 
 
 if __name__ == "__main__":

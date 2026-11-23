@@ -37,10 +37,18 @@ class TranslationEvalExportTest {
 
     private val schema = "1.0.0"
 
-    /** Reads the corpus asset written by `translation_eval export-device-asset`. */
+    /**
+     * Reads the corpus from the **application** asset.
+     *
+     * This is the same file the in-app runner reads, so there is one editable
+     * copy of the corpus rather than two that can drift. The asset is a build
+     * input under `app/src/main/assets/`, generated from
+     * `evaluation/corpus/rc4-corpus.json`; `test_translation_eval_phase_b2.py`
+     * proves the payload still matches the canonical corpus.
+     */
     private fun corpus(): JSONObject {
-        val context = InstrumentationRegistry.getInstrumentation().context
-        val text = context.assets.open("translation-eval-corpus.json")
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val text = context.assets.open("evaluation-engine-input.json")
             .bufferedReader().use { it.readText() }
         return JSONObject(text)
     }

@@ -217,6 +217,7 @@ private fun ManhwaLensRoot(
     var workingStatus by remember { mutableStateOf<CaptureManager.Status?>(null) }
     val sessionPhase by CaptureManager.sessionPhase.collectAsState()
     val sessionActive = sessionPhase == CaptureManager.SessionPhase.ACTIVE
+    var showEvaluation by remember { mutableStateOf(false) }
     var learnedNames by remember { mutableStateOf(nameGlossary.all()) }
     var confirmedNames by remember { mutableStateOf(nameGlossary.translationNames().toSet()) }
     var benchmarksRecorded by remember { mutableStateOf(BenchmarkTracker.records().size) }
@@ -374,7 +375,15 @@ private fun ManhwaLensRoot(
                             BenchmarkTracker.clearRecords()
                             benchmarksRecorded = 0
                         },
+                        onOpenEvaluation = { showEvaluation = true },
                     )
+                }
+            }
+
+            if (showEvaluation) {
+                androidx.activity.compose.BackHandler { showEvaluation = false }
+                androidx.compose.material3.Surface(Modifier.fillMaxSize()) {
+                    com.manhwalens.app.evaluation.EvaluationScreen(onBack = { showEvaluation = false })
                 }
             }
 

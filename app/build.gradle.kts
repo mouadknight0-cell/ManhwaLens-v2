@@ -45,6 +45,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = effectiveVersionCode
         versionName = appVersionName
+        // Build identity only. CI supplies the commit so an evaluation run can be
+        // tied to the code that produced it; "unknown" is stored verbatim when it
+        // is absent rather than inventing a SHA. This value is never read by any
+        // translation, OCR or rendering code.
+        buildConfigField(
+            "String",
+            "GIT_REVISION",
+            "\"${System.getenv("GIT_REVISION")?.takeIf { it.isNotBlank() } ?: "unknown"}\"",
+        )
         vectorDrawables.useSupportLibrary = true
     }
 
