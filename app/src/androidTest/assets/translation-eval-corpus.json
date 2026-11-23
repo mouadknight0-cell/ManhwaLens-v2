@@ -1,0 +1,166 @@
+{
+  "schema": "1.0.0",
+  "dataset_fingerprint": "5fb61a318d51c91d9e017bf4b09a09b89a90c3dc34f3ca5f66239fc0148014d1",
+  "cases": [
+    {
+      "case_id": "rc4-01",
+      "source_text": "Never mind."
+    },
+    {
+      "case_id": "rc4-02",
+      "source_text": "What are you doing?"
+    },
+    {
+      "case_id": "rc4-03",
+      "source_text": "Seriously?"
+    },
+    {
+      "case_id": "rc4-04",
+      "source_text": "Don't look at me like that."
+    },
+    {
+      "case_id": "rc4-05",
+      "source_text": "What a genius."
+    },
+    {
+      "case_id": "rc4-06",
+      "source_text": "Hang on!"
+    },
+    {
+      "case_id": "rc4-07",
+      "source_text": "Please, please don't let go!"
+    },
+    {
+      "case_id": "rc4-08",
+      "source_text": "That was close."
+    },
+    {
+      "case_id": "rc4-09",
+      "source_text": "We can't leave them behind."
+    },
+    {
+      "case_id": "rc4-10",
+      "source_text": "Retreat!"
+    },
+    {
+      "case_id": "rc4-11",
+      "source_text": "Hang on!"
+    },
+    {
+      "case_id": "rc4-12",
+      "source_text": "You were right."
+    },
+    {
+      "case_id": "rc4-13",
+      "source_text": "You were right."
+    },
+    {
+      "case_id": "rc4-14",
+      "source_text": "You were right."
+    },
+    {
+      "case_id": "rc4-15",
+      "source_text": "That doesn't sit right with me."
+    },
+    {
+      "case_id": "rc4-16",
+      "source_text": "That was close."
+    },
+    {
+      "case_id": "rc4-17",
+      "source_text": "I knew it!"
+    },
+    {
+      "case_id": "rc4-18",
+      "source_text": "Don't get ahead of yourself."
+    },
+    {
+      "case_id": "rc4-19",
+      "source_text": "Yeah, that went well."
+    },
+    {
+      "case_id": "rc4-20",
+      "source_text": "His rank went up, not his skill."
+    },
+    {
+      "case_id": "rc4-21",
+      "source_text": "I'm done with you."
+    },
+    {
+      "case_id": "rc4-22",
+      "source_text": "My sister is waiting."
+    },
+    {
+      "case_id": "rc4-23",
+      "source_text": "I told her."
+    },
+    {
+      "case_id": "rc4-24",
+      "source_text": "She knows."
+    },
+    {
+      "case_id": "rc4-25",
+      "source_text": "I'm done with you."
+    },
+    {
+      "case_id": "rc4-26",
+      "source_text": "Keep the formation tight."
+    },
+    {
+      "case_id": "rc4-27",
+      "source_text": "His master called him."
+    },
+    {
+      "case_id": "rc4-28",
+      "source_text": "If the sect sends another disciple, tell him the pass is closed because the bridge fell."
+    },
+    {
+      "case_id": "rc4-29",
+      "source_text": "The formation feeds the barrier."
+    },
+    {
+      "case_id": "rc4-30",
+      "source_text": "Since her awakening, she can sense mana inside the dungeon."
+    },
+    {
+      "case_id": "rc4-31",
+      "source_text": "If I spend my last drop of mana now,"
+    },
+    {
+      "case_id": "rc4-32",
+      "source_text": "who will hold the barrier when the others return?"
+    },
+    {
+      "case_id": "rc4-33",
+      "source_text": "I have a bad feeling about this."
+    },
+    {
+      "case_id": "rc4-34",
+      "source_text": "I thought you were—"
+    },
+    {
+      "case_id": "rc4-35",
+      "source_text": "Great. Just what we needed."
+    },
+    {
+      "case_id": "rc4-36",
+      "source_text": "Give me a break."
+    },
+    {
+      "case_id": "rc4-37",
+      "source_text": "Is everyone safe?"
+    },
+    {
+      "case_id": "rc4-38",
+      "source_text": "You have got to be kidding me."
+    },
+    {
+      "case_id": "rc4-39",
+      "source_text": "WHO ARE YOU?"
+    },
+    {
+      "case_id": "rc4-40",
+      "source_text": "I HAVE BEEN WATCHING YOU SINCE THEY PULLED OUT YOUR TONGUE."
+    }
+  ]
+}

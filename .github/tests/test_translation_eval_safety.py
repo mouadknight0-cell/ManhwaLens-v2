@@ -23,7 +23,7 @@ TESTS = Path(__file__).resolve().parent
 #: Python standard-library modules the harness may import. Anything that could
 #: perform inference, HTTP, or reach a translation service is absent.
 ALLOWED_STDLIB = {
-    "__future__", "argparse", "ast", "collections", "csv", "dataclasses",
+    "__future__", "argparse", "ast", "collections", "csv", "dataclasses", "datetime", "html",
     "difflib", "enum", "hashlib", "json", "pathlib", "sys", "unicodedata",
     "typing",
 }
@@ -275,6 +275,11 @@ class StashUntouchedTest(unittest.TestCase):
             ".github/tests/test_translation_eval_",
             "evaluation/",
             "docs/TRANSLATION-EVALUATION",
+            # Phase B1 additions.
+            "app/src/androidTest/assets/translation-eval-corpus.json",
+            "app/src/androidTest/java/com/manhwalens/app/TranslationEvalExportTest.kt",
+            "docs/TRANSLATION-EVALUATION-PHASE-B1",
+            ".gitignore",
         )
         unexpected = [l for l in lines if not any(m in l for m in allowed)]
         self.assertEqual([], unexpected, f"unrelated files present in worktree: {unexpected}")

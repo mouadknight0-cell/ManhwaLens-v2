@@ -24,15 +24,16 @@ The harness never requires Android, a JDK, an emulator, ML Kit, or a network.
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import sys
 from pathlib import Path
 
 if __package__ in (None, ""):  # allow direct execution
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-    from translation_eval import harness, importers, reports, schema  # type: ignore
+    from translation_eval import device, harness, importers, reports, review, schema  # type: ignore
 else:
-    from . import harness, importers, reports, schema  # type: ignore
+    from . import device, harness, importers, reports, review, schema  # type: ignore
 
 EXIT_OK = 0
 EXIT_INCOMPLETE = 1
@@ -41,6 +42,7 @@ EXIT_CORPUS_INVALID = 3
 
 DEFAULT_TSV = Path("docs/benchmark-phase3/dataset.tsv")
 DEFAULT_CORPUS = Path("evaluation/corpus/rc4-corpus.json")
+DEVICE_ASSET = Path("app/src/androidTest/assets/translation-eval-corpus.json")
 
 
 def _write(path: Path, text: str) -> None:
@@ -161,6 +163,81 @@ def cmd_import_rc4(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_review_sheet(args: argparse.Namespace) -> int:
+    dataset = load_corpus(Path(args.corpus))
+    out = review.write_review_html(dataset, Path(args.out))
+    print(
+        f"review sheet -> {out}  ({len(dataset.cases)} cases, "
+        f"{sum(1 for c in dataset.cases if c.reference_status is schema.ReferenceStatus.PENDING_HUMAN_REVIEW)} pending, "
+        f"{sum(1 for c in dataset.cases if schema.validates_reference(c))} reviewed)"
+    )
+    return EXIT_OK
+
+
+def cmd_apply_review(args: argparse.Namespace) -> int:
+    dataset = load_corpus(Path(args.corpus))
+    path = Path(args.decisions)
+    if not path.is_file():
+        raise harness.HarnessError(f"decisions file not found: {path}")
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise harness.HarnessError(f"decisions file is not valid JSON: {exc}") from exc
+
+    reviewer, decisions = review.parse_decisions(raw)
+    if args.timestamp:
+        timestamp = args.timestamp
+    else:
+        # Recorded at the moment the human saved, never generated at import time.
+        timestamp = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
+    dataset, skipped = review.apply_decisions(
+        dataset, decisions, reviewer=reviewer, timestamp=timestamp,
+        allow_override=args.allow_override,
+    )
+
+    integrity = reports.corpus_integrity(dataset)
+    if integrity["error_count"]:
+        out = Path(args.out_dir or "evaluation/reports")
+        _write(out / "corpus-integrity.json", _dump(integrity))
+        _write(out / "corpus-integrity.md", reports.render_corpus_integrity(integrity))
+        print(
+            f"refusing to write corpus: {integrity['error_count']} integrity errors after applying decisions",
+            file=sys.stderr,
+        )
+        return EXIT_CORPUS_INVALID
+
+    _write(Path(args.out), _dump(dataset.as_dict()))
+    print(
+        f"applied {len(decisions) - len(skipped)} decisions by {reviewer}; "
+        f"{len(skipped)} already-reviewed cases skipped "
+        f"(use --allow-override to replace them)"
+    )
+    return EXIT_OK
+
+
+def cmd_export_device_asset(args: argparse.Namespace) -> int:
+    dataset = load_corpus(Path(args.corpus))
+    out = device.write_device_corpus_asset(dataset, Path(args.out))
+    print(f"device corpus asset -> {out} ({len(dataset.cases)} cases, references excluded)")
+    return EXIT_OK
+
+
+def cmd_import_device(args: argparse.Namespace) -> int:
+    dataset = load_corpus(Path(args.corpus))
+    export = device.load_device_export(Path(args.export), dataset)
+    out = Path(args.out)
+    _write(out, _dump(export.as_output_document()))
+    for problem in export.problems:
+        print(f"warning: {problem}", file=sys.stderr)
+    print(
+        f"imported {len(export.outputs)} of {len(dataset.cases)} device outputs "
+        f"from {export.engine_id} @ {export.engine_revision} -> {out}"
+    )
+    if export.problems:
+        return EXIT_INCOMPLETE
+    return EXIT_OK
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="translation_eval",
@@ -179,6 +256,36 @@ def build_parser() -> argparse.ArgumentParser:
     p_eval.add_argument("--candidate", required=True, help="candidate outputs JSON")
     p_eval.add_argument("--out", default="evaluation/reports")
     p_eval.set_defaults(func=cmd_evaluate)
+
+    p_sheet = sub.add_parser("review-sheet", help="Write the offline reference review sheet")
+    p_sheet.add_argument("--corpus", default=str(DEFAULT_CORPUS))
+    p_sheet.add_argument("--out", default="evaluation/review/review-sheet.html")
+    p_sheet.set_defaults(func=cmd_review_sheet)
+
+    p_apply = sub.add_parser("apply-review", help="Apply review decisions to the corpus")
+    p_apply.add_argument("--corpus", default=str(DEFAULT_CORPUS))
+    p_apply.add_argument("--decisions", required=True)
+    p_apply.add_argument("--out", default=str(DEFAULT_CORPUS))
+    p_apply.add_argument("--out-dir", default="evaluation/reports",
+                         help="where to write integrity reports if the result is invalid")
+    p_apply.add_argument("--timestamp", default=None,
+                         help="ISO-8601 time to record; defaults to now in UTC")
+    p_apply.add_argument("--allow-override", action="store_true",
+                         help="replace decisions on cases already reviewed")
+    p_apply.set_defaults(func=cmd_apply_review)
+
+    p_asset = sub.add_parser("export-device-asset",
+                             help="Write the JSON asset the on-device test reads")
+    p_asset.add_argument("--corpus", default=str(DEFAULT_CORPUS))
+    p_asset.add_argument("--out", default=str(DEVICE_ASSET))
+    p_asset.set_defaults(func=cmd_export_device_asset)
+
+    p_import_dev = sub.add_parser("import-device",
+                                  help="Validate a device export into a harness output document")
+    p_import_dev.add_argument("--corpus", default=str(DEFAULT_CORPUS))
+    p_import_dev.add_argument("--export", required=True, help="device export JSON")
+    p_import_dev.add_argument("--out", default="evaluation/device/baseline-outputs.json")
+    p_import_dev.set_defaults(func=cmd_import_device)
 
     p_import = sub.add_parser("import-rc4", help="Regenerate the corpus from the RC4 TSV")
     p_import.add_argument("--tsv", default=str(DEFAULT_TSV))
