@@ -31,6 +31,7 @@ import org.junit.Test
 class MultiLineCaseMatrixTest {
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
+
     private fun stage(name: String, value: String) {
         android.util.Log.i("ManhwaLensFunnel", "$name $value")
     }
@@ -104,8 +105,6 @@ class MultiLineCaseMatrixTest {
             val needed = (source.size - 1) * lineH
             assertTrue("$label: region must span every line, span=$span needs>=$needed", span >= needed)
         }
-        stage("$label-funnel", "lines=${source.size} regions=${read.size} sourceLineCount=${read.first().sourceLineCount} " +
-            "span=${read.first().bottom - read.first().top} translatedLength=${read.first().text.length}")
     }
 
     // ---- reading: 1, 3, 4 and 5 source lines, all words retained ----------------------------------
@@ -117,7 +116,6 @@ class MultiLineCaseMatrixTest {
         try {
             val read = readAll(bmp)
             assertKeepsEveryWord(lines.toList(), read, "1-line")
-            stage("case=oneLine", "ocrLines=${read.size} sourceLineCount=${read.first().sourceLineCount} text=${read.first().text}")
         } finally { bmp.recycle() }
     }
 
@@ -132,7 +130,6 @@ class MultiLineCaseMatrixTest {
         try {
             val read = readAll(bmp)
             assertKeepsEveryWord(lines.toList(), read, "3-line")
-            stage("case=threeLine", "ocrLines=${read.size} sourceLineCount=${read.first().sourceLineCount}")
         } finally { bmp.recycle() }
     }
 
@@ -148,7 +145,6 @@ class MultiLineCaseMatrixTest {
         try {
             val read = readAll(bmp)
             assertKeepsEveryWord(lines.toList(), read, "4-line")
-            stage("case=fourLine", "ocrLines=${read.size} sourceLineCount=${read.first().sourceLineCount}")
         } finally { bmp.recycle() }
     }
 
@@ -165,7 +161,6 @@ class MultiLineCaseMatrixTest {
         try {
             val read = readAll(bmp)
             assertKeepsEveryWord(lines.toList(), read, "5-line")
-            stage("case=fiveLine", "ocrLines=${read.size} sourceLineCount=${read.first().sourceLineCount}")
         } finally { bmp.recycle() }
     }
 
@@ -190,7 +185,7 @@ class MultiLineCaseMatrixTest {
             c.drawText(bottom[0], 42f, 312f, pen)
             c.drawText(bottom[1], 42f, 358f, pen)
             val read = readAll(bmp)
-            stage("case=twoBubbles", "regions=${read.size} texts=${read.map { it.text }}")
+
             assertEquals("two visually separate bubbles must not become one utterance", 2, read.size)
             // Neither bubble may lose a word, and neither may absorb the other's text.
             val first = read.first().text.lowercase()
@@ -216,7 +211,7 @@ class MultiLineCaseMatrixTest {
         // Narrow columns force more lines; each one must stay complete (no ellipsis, no clip).
         val results = intArrayOf(320, 260, 220).map { w ->
             val (lines, complete) = drawnLines(message, w, 400, 15)
-            stage("case=displayWrap", "width=$w lines=$lines complete=$complete")
+
             assertTrue("a $w px column must draw the translation complete", complete)
             assertTrue("a $w px column must use at least three lines, got $lines", lines >= 3)
             lines
@@ -233,7 +228,7 @@ class MultiLineCaseMatrixTest {
                 "هذه ليست الطريقة التي اتفقنا عليها عندما بدأنا هذا كله معا في تلك الليلة البعيدة.",
                 300, 500, sp,
             )
-            stage("case=sizeSweep", "sp=$sp lines=$lines complete=$complete")
+
             assertTrue("sp=$sp must render complete text", complete)
             assertTrue("sp=$sp must not collapse to a single line", lines >= 2)
         }
@@ -252,7 +247,7 @@ class MultiLineCaseMatrixTest {
                 View.MeasureSpec.makeMeasureSpec(520, View.MeasureSpec.EXACTLY),
             )
             view.layout(0, 0, 300, 520)
-            stage("case=longerTranslation", "ready=${view.replacementReady} sp=${view.fittedSp} m=${view.measurement}")
+
             assertTrue("a tall box must accept the translation at some readable size", view.replacementReady)
             assertTrue("the chosen size must stay at or above the legible floor", view.fittedSp >= 11f)
             assertTrue("the chosen size must not exceed the preferred size", view.fittedSp <= 15f)
@@ -265,12 +260,10 @@ class MultiLineCaseMatrixTest {
         val bmp = inst.context.assets.open("xiaomi-three-lines.png").use { BitmapFactory.decodeStream(it) }
         try {
             val read = readAll(bmp)
-            stage("case=fixtureThreeLines", "regions=${read.size} texts=${read.map { it.text }}")
+
             assertTrue("the shipped 3-line fixture must be readable", read.isNotEmpty())
             val joined = read.joinToString(" ") { it.text }
             assertTrue("the fixture must be read as words, not glyph fragments: $joined", words(joined).size >= 5)
-            stage("case=fixtureThreeLines-funnel", "regions=${read.size} words=${words(joined).size} " +
-                "sourceLineCounts=${read.map { it.sourceLineCount }} span=${read.maxOf { it.bottom } - read.minOf { it.top }}")
         } finally { bmp.recycle() }
     }
 
@@ -281,7 +274,7 @@ class MultiLineCaseMatrixTest {
         val joined = SentenceReconstructor.joinLines(parts)
         val norm = { s: String -> s.lowercase().split(Regex("[^\\p{L}\\p{N}']+")).filter { it.isNotBlank() } }
         assertEquals("joining must preserve every word in order", norm(parts.joinToString(" ")), norm(joined))
-        stage("case=sentenceJoin", "joined=${joined.length} words=${norm(joined).size}")
+
     }
 
     /**
@@ -344,9 +337,46 @@ class MultiLineCaseMatrixTest {
                 assertTrue("$label: a 300px column must need two lines or more", linesDrawn >= 2)
             } finally { bmp.recycle() }
         }
-        // One line, not three: GitHub keeps at most ten annotations per step, and a per-case stage()
-        // call pushed the earlier rows out of the retained set, which is how the 4-line and 5-line
-        // evidence disappeared from the first report attempt.
+        // One line for all cases, deliberately. GitHub retains at most ten annotations per step, and
+        // every extra per-case stage() call pushed a measurement out of that set: the 4-line and
+        // 5-line rows vanished from the first two report attempts, and TIMING from a third. The
+        // individual tests now assert silently and this is the only per-case report.
+        // Display side, measured here rather than collected from other tests: JUnit does not
+        // guarantee execution order, so an accumulator filled by sibling tests can be emitted empty.
+        val display = StringBuilder()
+        val longArabic = "لم أكن أتوقع أن تعود إلى هذا المكان بعد كل ما قلته ذلك اليوم، لكن ها أنت واقف " +
+            "أمامي تطلب مني أن أصدق كل كلمة تقولها وكأن شيئا لم يحدث بيننا أبدا."
+        for (w in intArrayOf(320, 260, 220)) {
+            val t = DialogueType.measure(context, longArabic, w, 15, mask = null)
+            display.append("wrap@${w}px lines=${t.layout.lineCount} complete=${t.complete} | ")
+        }
+        for (sp in 15 downTo 11) {
+            val t = DialogueType.measure(context, longArabic, 300, sp, mask = null)
+            display.append("size${sp}sp lines=${t.layout.lineCount} complete=${t.complete} | ")
+        }
+        var ready = false
+        var sp = 0f
+        var passes = 0
+        var fits = false
+        val done = java.util.concurrent.CountDownLatch(1)
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val view = com.manhwalens.app.overlay.ReplacementTranslationView(
+                context, longArabic, ReplacementSurface(0, 0, 300, 520),
+            )
+            view.measure(
+                View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(520, View.MeasureSpec.EXACTLY),
+            )
+            view.layout(0, 0, 300, 520)
+            ready = view.replacementReady
+            sp = view.fittedSp
+            passes = view.fitPasses
+            fits = view.measurement.contains("fits=true")
+            done.countDown()
+        }
+        done.await()
+        display.append("noViewSource ready=$ready fittedSp=$sp fitPasses=$passes fits=$fits")
+        stage("DISPLAY-SUMMARY", display.toString())
         stage("MATRIX-SUMMARY", summary.toString().trimEnd())
     }
 
@@ -401,7 +431,7 @@ class MultiLineCaseMatrixTest {
             // The region must cover the vertical span of every line, not just the first.
             val span = region.bottom - region.top
             assertTrue("region must span all three lines, got $span px", span > 60)
-            stage("case=geometry", "top=${region.top} bottom=${region.bottom} span=$span")
+
         } finally { bmp.recycle() }
     }
 }
