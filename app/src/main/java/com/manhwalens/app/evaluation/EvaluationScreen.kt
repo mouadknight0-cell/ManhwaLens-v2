@@ -298,9 +298,6 @@ private fun SampleCard(
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
-                Text(
-                    style = MaterialTheme.typography.bodySmall,
-                )
             }
             TextButton(onClick = { expanded = !expanded }) {
                 Text(if (expanded) "إخفاء التفاصيل" else "إظهار الأدلة")

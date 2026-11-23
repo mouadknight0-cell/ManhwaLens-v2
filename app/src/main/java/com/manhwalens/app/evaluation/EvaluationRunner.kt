@@ -56,7 +56,7 @@ class EvaluationRunner(private val context: Context) {
     )
 
     /** Resolved engine configuration, captured once per run. */
-    private data class Config(
+    internal data class Config(
         val app: ManhwaLensApp,
         val corrections: Map<String, String>,
         val readings: Map<String, String>,
