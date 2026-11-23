@@ -50,6 +50,30 @@ def strip_comments(source: str) -> str:
     return re.sub(r"//[^\n]*", "", source)
 
 
+def _top_level_tail(body: str) -> str:
+    """Return the trailing statement that decides a lambda's type, or "" for a block.
+
+    A `try { ... } finally { ... }` tail closes a block at depth 1, so the lambda's
+    value is Unit however many asserts sit inside it. Only text that follows the
+    last returned-to-depth-0 closing brace is the actual final expression.
+    """
+    depth = 0
+    last_close = -1
+    in_string = False
+    for index, char in enumerate(body):
+        if char == '"' and (index == 0 or body[index - 1] != "\\"):
+            in_string = not in_string
+        if in_string:
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                last_close = index
+    return body[last_close + 1:].strip()
+
+
 def load_asset(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -304,6 +328,71 @@ class RunnerSourceContractTest(unittest.TestCase):
     def test_config_is_hashed_not_stored(self):
         self.assertIn("configurationFingerprint", self.source)
         self.assertIn("SHA-256", self.source)
+
+
+class JUnitVoidTestMethodsTest(unittest.TestCase):
+    """JUnit4 only runs test methods that return void.
+
+    `fun foo() = runBlocking { ... Log.i(...) }` returns Int, and JUnit4 rejects
+    the entire class with `initializationError` -- so a whole instrumentation suite
+    stops running while `compileDebugAndroidTestKotlin` still passes. This phase's
+    test had exactly that shape. The check below reads the expression body of
+    every `= runBlocking` test and refuses one whose last call returns a value.
+    """
+
+    #: Calls whose return type is not Unit. A test whose expression body ends in
+    #: one of these becomes a value-returning method.
+    #:
+    #: org.junit.Assert's assert* methods return void, so they are deliberately
+    #: absent: a test ending in assertTrue is a valid Unit expression body.
+    VALUE_RETURNING = (
+        "Log.",
+        "JSONObject(",
+        "JSONArray(",
+        "put(",
+        "getJSONObject(",
+        "writeText(",
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        cls.directory = ROOT / "app/src/androidTest/java/com/manhwalens/app"
+        cls.files = sorted(cls.directory.rglob("*.kt"))
+
+    def test_instrumentation_tests_exist(self):
+        self.assertTrue(self.files, "no androidTest sources found")
+
+    def test_no_test_uses_a_value_returning_expression_body(self):
+        offenders = []
+        for path in self.files:
+            source = strip_comments(path.read_text(encoding="utf-8"))
+            if "= runBlocking" not in source:
+                continue
+            # Find `= runBlocking {` and walk to its matching brace, then inspect
+            # the final non-empty statement before the closing brace.
+            for match in re.finditer(r"fun\s+(\w+)\s*\([^)]*\)\s*=\s*runBlocking\s*\{", source):
+                depth, index = 0, match.end() - 1
+                while index < len(source):
+                    if source[index] == "{":
+                        depth += 1
+                    elif source[index] == "}":
+                        depth -= 1
+                        if depth == 0:
+                            break
+                    index += 1
+                body = source[match.end():index]
+                tail = _top_level_tail(body)
+                if tail and any(token in tail for token in self.VALUE_RETURNING):
+                    offenders.append(f"{path.name}::{match.group(1)}")
+        self.assertEqual([], offenders, "JUnit4 would reject these classes at init")
+
+    def test_known_good_block_body_still_present(self):
+        # The fix itself must not be silently reverted to the failing form.
+        source = strip_comments(
+            (self.directory / "TranslationEvalExportTest.kt").read_text(encoding="utf-8")
+        )
+        self.assertIn("fun exportRealEngineOutputForEveryCorpusCase() {", source)
+        self.assertNotIn("fun exportRealEngineOutputForEveryCorpusCase() =", source)
 
 
 class StoreSourceContractTest(unittest.TestCase):
