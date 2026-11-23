@@ -614,9 +614,22 @@ class ScreenCaptureService : Service() {
             BenchmarkTracker.finish("skipped", frameWidth = frame.width, frameHeight = frame.height, regionCount = regions.size)
             return
         }
-        val scaledRegions = regions.map { it.copy(
+        val scaledRegionsRaw = regions.map { it.copy(
             left = (it.left * scaleX).toInt(), top = (it.top * scaleY).toInt(),
             right = (it.right * scaleX).toInt(), bottom = (it.bottom * scaleY).toInt()) }
+        // Rejoin one utterance that OCR split across detections, here — after recognition is
+        // finished and before regions are turned into frame coordinates and translated. The
+        // visual bridge inside TextRecognitionClient only joins when the pixels between two boxes
+        // look continuous, which fails inside a decorated panel; this stage uses the text instead.
+        // The raw fragments are preserved in the join record, so nothing is lost silently.
+        val (scaledRegions, bubbleJoins) = com.manhwalens.app.pipeline.BubbleReconstructor.reconstruct(scaledRegionsRaw)
+        if (bubbleJoins.isNotEmpty()) {
+            Diagnostics.info("ocr", "reconstruct", "rejoined split utterances",
+                context = mapOf("joins" to bubbleJoins.size.toString(),
+                    "parts" to bubbleJoins.sumOf { it.parts.size }.toString(),
+                    "evidence" to bubbleJoins.map { it.evidence.name }.distinct().joinToString("+")),
+                traceId = traceId)
+        }
         val debug=(application as ManhwaLensApp).settingsRepository.debug.value
         val boxes=journeyId to scaledRegions.map { android.graphics.Rect(it.left,it.top,it.right,it.bottom) }
         val (prepared,readerContentBottom)=prepareRegions(scaledRegions,frame)
