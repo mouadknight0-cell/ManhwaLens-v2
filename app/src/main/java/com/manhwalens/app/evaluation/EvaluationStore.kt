@@ -456,7 +456,7 @@ class EvaluationStore(private val context: Context) {
         val json = runCatching { JSONObject(text) }
             .getOrElse { return LoadState.Corrupt("malformed json") }
         val run = runCatching { Run.fromJson(json) }
-            .getOrElse { return LoadState.Corrupt("unreadable fields: ${'$'}{it.javaClass.simpleName}") }
+            .getOrElse { return LoadState.Corrupt("unreadable fields: " + it.javaClass.simpleName) }
         return LoadState.Loaded(run)
     }
 

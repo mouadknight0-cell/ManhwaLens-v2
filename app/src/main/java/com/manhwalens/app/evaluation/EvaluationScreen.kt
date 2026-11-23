@@ -1115,6 +1115,17 @@ private fun readSamples(knownJourneyIds: List<String>): List<Sample> {
         val entry = json.optJSONObject(index) ?: return@mapNotNull null
         val id = entry.optString("id")
         if (id.isBlank()) return@mapNotNull null
+        // `TranslationSamples` writes the bounds inside `surface_hint`; older rows
+        // may carry them at the top level. Reading only one of the two would report
+        // a saved rectangle as "—", which is the very confusion this display exists
+        // to avoid: missing evidence and absent evidence are different claims.
+        val hint = entry.optJSONObject("surface_hint")
+        fun bound(key: String): Int? {
+            if (entry.has(key) && !entry.isNull(key)) return entry.optInt(key)
+            if (hint != null && hint.has(key) && !hint.isNull(key)) return hint.optInt(key)
+            return null
+        }
+
         Sample(
             id = id,
             // Longest known id wins, so "12:5" cannot win over "12:5:9" when both exist.
@@ -1132,11 +1143,11 @@ private fun readSamples(knownJourneyIds: List<String>): List<Sample> {
             evidence = entry.optJSONObject("pipeline")?.let { pipeline ->
                 pipeline.keys().asSequence().associateWith { pipeline.optString(it) }
             } ?: emptyMap(),
-            surface = entry.optJSONObject("surface_hint"),
-            left = if (entry.has("left")) entry.optInt("left") else null,
-            top = if (entry.has("top")) entry.optInt("top") else null,
-            right = if (entry.has("right")) entry.optInt("right") else null,
-            bottom = if (entry.has("bottom")) entry.optInt("bottom") else null,
+            surface = hint,
+            left = bound("left"),
+            top = bound("top"),
+            right = bound("right"),
+            bottom = bound("bottom"),
             raw = entry,
         )
     }.sortedByDescending { it.raw.optLong("timestamp") }
