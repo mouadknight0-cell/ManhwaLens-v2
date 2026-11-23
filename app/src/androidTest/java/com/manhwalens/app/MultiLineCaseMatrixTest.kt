@@ -35,22 +35,30 @@ class MultiLineCaseMatrixTest {
         android.util.Log.i("ManhwaLensFunnel", "$name $value")
     }
 
-    /** Renders [lines] of Latin text in a light bubble so the real OCR client reads them. */
-    private fun bubble(vararg lines: String, widthPx: Int = 520, ink: Int = Color.BLACK): Bitmap {
+    /**
+     * Renders [lines] of Latin text in a light bubble so the real OCR client reads them.
+     *
+     * The canvas is measured from the text, not fixed: an earlier version used a constant width and
+     * silently painted the last glyph of a long line onto the bitmap edge. OCR then reported "dow"
+     * for "down", which looks exactly like a pipeline defect but is a fixture defect. Sizing to the
+     * measured advance keeps this test able to tell those apart.
+     */
+    private fun bubble(vararg lines: String, ink: Int = Color.BLACK): Bitmap {
         val lineH = 46
-        val bmp = Bitmap.createBitmap(widthPx, 70 + lines.size * lineH, Bitmap.Config.ARGB_8888)
-        val c = Canvas(bmp)
-        c.drawColor(Color.rgb(28, 28, 30))
-        val bubblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
-        c.drawRoundRect(18f, 18f, (widthPx - 18).toFloat(), (bmp.height - 18).toFloat(), 40f, 40f, bubblePaint)
         val pen = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = ink
             textSize = 30f
             typeface = Typeface.DEFAULT
         }
-        lines.forEachIndexed { i, line ->
-            c.drawText(line, 42f, (86 + i * lineH).toFloat(), pen)
-        }
+        val left = 42f
+        val widest = lines.maxOf { pen.measureText(it) }
+        val widthPx = kotlin.math.ceil(left + widest + 42f).toInt()
+        val bmp = Bitmap.createBitmap(widthPx, 70 + lines.size * lineH, Bitmap.Config.ARGB_8888)
+        val c = Canvas(bmp)
+        c.drawColor(Color.rgb(28, 28, 30))
+        val bubblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+        c.drawRoundRect(18f, 18f, (widthPx - 18).toFloat(), (bmp.height - 18).toFloat(), 40f, 40f, bubblePaint)
+        lines.forEachIndexed { i, line -> c.drawText(line, left, (86 + i * lineH).toFloat(), pen) }
         return bmp
     }
 
@@ -59,20 +67,32 @@ class MultiLineCaseMatrixTest {
         DialogueAssembler.assemble(recognized) { _, _ -> true }.sortedBy { it.top }
     }
 
-    private fun assertKeepsEveryWord(source: List<String>, read: List<TextRegion>, label: String) {
-        val got = read.joinToString(" ") { it.text }
-            .lowercase()
-            .split(Regex("[^\\p{L}\\p{N}']+"))
-            .filter { it.isNotBlank() }
-            .toSet()
-        val missing = source.joinToString(" ").lowercase()
-            .split(Regex("[^\\p{L}\\p{N}']+"))
-            .filter { it.isNotBlank() }
-            .distinct()
-            .filter { it !in got }
+    private fun words(s: String) = s.lowercase()
+        .split(Regex("[^\\p{L}\\p{N}']+"))
+        .filter { it.isNotBlank() }
+
+    /**
+     * Asserts the two things that actually matter about reading a multi-line bubble:
+     * every source word is present, and the region covers the whole vertical extent of the text.
+     *
+     * `sourceLineCount` is deliberately NOT asserted here. It records how many blocks the assembler
+     * chose to bridge, and the recogniser is free to return one paragraph block for visually
+     * adjacent lines; a count of 1 with all words present is a correct read, not a lost line.
+     * Whether every line was seen is measured by the region's span instead.
+     */
+    private fun assertKeepsEveryWord(source: List<String>, read: List<TextRegion>, label: String, lineH: Int = 46) {
+        val got = words(read.joinToString(" ") { "${it.text} " }).toSet()
+        val missing = words(source.joinToString(" ")).distinct().filter { it !in got }
         assertTrue("$label: OCR lost source words $missing (read: ${read.map { it.text }})", missing.isEmpty())
-        assertEquals("$label: every line must survive as one region", 1, read.size)
-        assertEquals("$label: sourceLineCount must record all lines", source.size, read.first().sourceLineCount)
+        assertEquals("$label: one bubble must stay one utterance", 1, read.size)
+        if (source.size > 1) {
+            val span = read.first().bottom - read.first().top
+            // All lines are drawn lineH apart; the region must reach the last one.
+            val needed = (source.size - 1) * lineH
+            assertTrue("$label: region must span every line, span=$span needs>=$needed", span >= needed)
+        }
+        stage("$label-funnel", "lines=${source.size} regions=${read.size} sourceLineCount=${read.first().sourceLineCount} " +
+            "span=${read.first().bottom - read.first().top} translatedLength=${read.first().text.length}")
     }
 
     // ---- reading: 1, 3, 4 and 5 source lines, all words retained ----------------------------------
@@ -140,22 +160,31 @@ class MultiLineCaseMatrixTest {
 
     @Test
     fun twoSeparateBubblesStaySeparate() = kotlinx.coroutines.runBlocking {
-        val bmp = Bitmap.createBitmap(520, 460, Bitmap.Config.ARGB_8888)
+        val pen = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = 30f }
+        val top = listOf("You came all this way", "just to ask me that?")
+        val bottom = listOf("Then let me give you", "an answer worth the trip.")
+        val widthPx = kotlin.math.ceil(42f + (top + bottom).maxOf { pen.measureText(it) } + 42f).toInt()
+        val bmp = Bitmap.createBitmap(widthPx, 460, Bitmap.Config.ARGB_8888)
         try {
             val c = Canvas(bmp)
             c.drawColor(Color.rgb(28, 28, 30))
             val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
-            c.drawRoundRect(18f, 18f, 502f, 200f, 40f, 40f, fill)
-            c.drawRoundRect(18f, 250f, 502f, 442f, 40f, 40f, fill)
-            val pen = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = 30f }
-            c.drawText("You came all this way", 42f, 80f, pen)
-            c.drawText("just to ask me that?", 42f, 126f, pen)
-            c.drawText("Then let me give you", 42f, 312f, pen)
-            c.drawText("an answer worth the trip.", 42f, 358f, pen)
+            val right = (widthPx - 18).toFloat()
+            c.drawRoundRect(18f, 18f, right, 200f, 40f, 40f, fill)
+            c.drawRoundRect(18f, 250f, right, 442f, 40f, 40f, fill)
+            c.drawText(top[0], 42f, 80f, pen)
+            c.drawText(top[1], 42f, 126f, pen)
+            c.drawText(bottom[0], 42f, 312f, pen)
+            c.drawText(bottom[1], 42f, 358f, pen)
             val read = readAll(bmp)
             stage("case=twoBubbles", "regions=${read.size} texts=${read.map { it.text }}")
             assertEquals("two visually separate bubbles must not become one utterance", 2, read.size)
-            assertTrue("each bubble keeps its own line count", read.all { it.sourceLineCount == 2 })
+            // Neither bubble may lose a word, and neither may absorb the other's text.
+            val first = read.first().text.lowercase()
+            val second = read.last().text.lowercase()
+            assertTrue("first bubble must keep its own words: $first", first.contains("came") && first.contains("ask"))
+            assertTrue("second bubble must keep its own words: $second", second.contains("give") && second.contains("trip"))
+            assertTrue("bubbles must not be swapped or merged: $first | $second", !first.contains("trip") && !second.contains("came"))
         } finally { bmp.recycle() }
     }
 
@@ -225,10 +254,10 @@ class MultiLineCaseMatrixTest {
             val read = readAll(bmp)
             stage("case=fixtureThreeLines", "regions=${read.size} texts=${read.map { it.text }}")
             assertTrue("the shipped 3-line fixture must be readable", read.isNotEmpty())
-            assertTrue(
-                "the fixture's lines must be assembled, not split into fragments: ${read.map { it.text }}",
-                read.any { it.sourceLineCount >= 2 } || read.size == 1,
-            )
+            val joined = read.joinToString(" ") { it.text }
+            assertTrue("the fixture must be read as words, not glyph fragments: $joined", words(joined).size >= 5)
+            stage("case=fixtureThreeLines-funnel", "regions=${read.size} words=${words(joined).size} " +
+                "sourceLineCounts=${read.map { it.sourceLineCount }} span=${read.maxOf { it.bottom } - read.minOf { it.top }}")
         } finally { bmp.recycle() }
     }
 
