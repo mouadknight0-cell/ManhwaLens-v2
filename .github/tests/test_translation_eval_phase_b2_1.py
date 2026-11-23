@@ -446,8 +446,10 @@ class ReleaseSafetyTest(unittest.TestCase):
         self.assertNotIn("coerceAtMost(appVersionCode)", code)
         self.assertIn("throw GradleException(", code)
 
-    def test_candidate_name_is_rc3(self):
-        self.assertIn("1.1.42-rc3", self.workflow)
+    def test_candidate_name_is_unique_per_publish(self):
+        # rc3 already shipped; a later candidate must not republish under its tag.
+        self.assertIn("1.1.42-rc4", self.workflow)
+        self.assertNotIn("rc-1.1.42-rc2", self.workflow)
         self.assertNotIn("'1.1.42-rc2'", self.workflow)
 
     def test_application_id_and_signing_are_untouched(self):

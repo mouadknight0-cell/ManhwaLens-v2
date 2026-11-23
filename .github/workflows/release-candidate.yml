@@ -7,17 +7,17 @@ on:
   workflow_dispatch:
     inputs:
       version_name:
-        description: Candidate versionName (must end with -rc, e.g. 1.1.42-rc3)
+        description: Candidate versionName (must end with -rc, e.g. 1.1.42-rc4)
         required: true
-        default: 1.1.42-rc3
+        default: 1.1.42-rc4
       installed_version_code:
         description: versionCode currently installed on the test phone; the candidate is computed strictly above it
         required: true
-        default: '217442875'
+        default: '217442876'
       min_installed_version_code:
         description: Hard floor the candidate must clear (fail closed if lower); usually the newest official release
         required: true
-        default: '217442875'
+        default: '217442876'
   push:
     branches: [arena/f6ce5fe4-manhwalens-v2]
     paths:
@@ -40,7 +40,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VERSION_NAME: ${{ inputs.version_name || '1.1.42-rc3' }}
+  VERSION_NAME: ${{ inputs.version_name || '1.1.42-rc4' }}
   # The candidate must be installable *over* what is already on the phone, so the floor is
   # supplied explicitly instead of guessed from the repository's latest release.
   INSTALLED_VERSION_CODE: ${{ inputs.installed_version_code || '217442875' }}
@@ -177,28 +177,6 @@ jobs:
 
       - name: Release Kotlin compilation
         run: ./gradlew :app:compileReleaseKotlin --stacktrace --no-daemon
-
-      # TEMPORARY (Phase B2.1): kotlinc diagnostics are the only way to see what
-      # failed to compile when job logs are unavailable. Remove once the candidate
-      # is green.
-      - name: Surface Kotlin compiler diagnostics as annotations
-        if: failure()
-        run: |
-          set -uo pipefail
-          ./gradlew :app:compileReleaseKotlin --no-daemon > /tmp/kotlinc.log 2>&1 || true
-          emit() {
-            printf '%s' "$1" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g'
-          }
-          n=$(grep -cE '^e: ' /tmp/kotlinc.log || true)
-          echo "::warning title=kotlinc::found ${n:-0} 'e: ' lines"
-          grep -E '^e: ' /tmp/kotlinc.log | head -30 | while IFS= read -r line; do
-            echo "::error title=kotlinc::$(emit "$line")"
-          done
-          if [ "${n:-0}" = "0" ]; then
-            grep -A8 -m3 'What went wrong' /tmp/kotlinc.log | head -24 | while IFS= read -r line; do
-              echo "::error title=gradle::$(emit "$line")"
-            done
-          fi
 
       - name: Release unit tests
         run: ./gradlew :app:testReleaseUnitTest --stacktrace --no-daemon
