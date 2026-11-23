@@ -73,7 +73,22 @@ private val SUSPECTED_CAUSES = listOf(
     "POST_PROCESSING_ERROR", "BUBBLE_ASSIGNMENT_ERROR", "DISPLAY_ERROR", "UNKNOWN",
 )
 
-private val RATING_LABELS = listOf("not reviewed", "0 incorrect", "1 major", "2 minor", "3 accurate")
+/**
+ * The rating vocabulary, in display order.
+ *
+ * "not applicable" sits next to "not reviewed" because they are different human
+ * judgements: one says the criterion does not apply to this case, the other says
+ * nobody has judged it yet. Representing both as `null` (or as 0) makes the export
+ * lie about at least one of them.
+ */
+private val RATING_OPTIONS = listOf(
+    EvaluationStore.RATING_NOT_REVIEWED to "not reviewed / لم يُراجع",
+    EvaluationStore.RATING_NOT_APPLICABLE to "not applicable / لا ينطبق",
+    "0" to "0 / خطأ تام",
+    "1" to "1 / عيب جسيم",
+    "2" to "2 / عيب طفيف",
+    "3" to "3 / صحيح",
+)
 private val REVIEW_STATUSES = listOf("reviewed", "disputed", "rejected")
 
 @Composable
@@ -121,6 +136,8 @@ private data class Sample(
     val surface: JSONObject?,
     val left: Int?,
     val top: Int?,
+    val right: Int?,
+    val bottom: Int?,
     val raw: JSONObject,
 )
 
@@ -219,7 +236,13 @@ private fun SampleCard(
     onAnnotate: (String, String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var notes by remember { mutableStateOf(annotation?.notes ?: "") }
+    // Restored from the saved annotation and re-keyed on it, so reopening the card
+    // (or a Compose recomposition) shows the recorded note instead of a blank
+    // field. A note typed before choosing a cause is kept: the cause chips call
+    // `onAnnotate(cause, notes)` and no longer wipe what was written.
+    var notes by remember(sample.id, annotation?.decidedAt, annotation?.suspectedCause) {
+        mutableStateOf(annotation?.notes.orEmpty())
+    }
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(10.dp)) {
             Text(sample.id, style = MaterialTheme.typography.titleSmall, fontFamily = FontFamily.Monospace)
@@ -257,8 +280,25 @@ private fun SampleCard(
                     }
                 }
                 Text(
-                    "confidence ${sample.confidence?.let { "%.2f".format(it) } ?: "unknown"} · " +
-                        "surface box ${sample.left ?: "—"},${sample.top ?: "—"} (screen space, not thumbnail space)",
+                    "confidence ${sample.confidence?.let { "%.2f".format(it) } ?: "unknown"}",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    "الحدود كما حُفظت (screen space، وليست إحداثيات الصورة المصغّرة): " +
+                        "left=${sample.left ?: "—"} top=${sample.top ?: "—"} " +
+                        "right=${sample.right ?: "—"} bottom=${sample.bottom ?: "—"}",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                sample.surface?.let { hint ->
+                    Text(
+                        "surface hint: " + (0 until hint.length()).joinToString(" ") { key ->
+                            val name = hint.names()?.optString(key).orEmpty()
+                            "$name=${hint.opt(key)}"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Text(
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -266,7 +306,10 @@ private fun SampleCard(
                 Text(if (expanded) "إخفاء التفاصيل" else "إظهار الأدلة")
             }
 
-            Text("سبب مرشّح (ليس سببًا مؤكدًا)", style = MaterialTheme.typography.bodySmall)
+            Text(
+                "سبب مرشّح (ليس سببًا مؤكدًا): التصنيف فرضية يختارها المراجع، وليس تشخيصًا.",
+                style = MaterialTheme.typography.bodySmall,
+            )
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(SUSPECTED_CAUSES) { cause ->
                     FilterChip(
@@ -280,8 +323,12 @@ private fun SampleCard(
                 value = notes, onValueChange = { notes = it },
                 label = { Text("ملاحظة المراجع") }, modifier = Modifier.fillMaxWidth(),
             )
-            if (annotation != null) {
-                Text("مسجّل: ${annotation.suspectedCause} · مراجَع", style = MaterialTheme.typography.bodySmall)
+            annotation?.let { saved ->
+                Text(
+                    "مسجّل: ${saved.suspectedCause} · ${saved.reviewer ?: "?"} · مراجَع" +
+                        (saved.notes?.let { " · ملاحظة محفوظة" } ?: ""),
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
         }
     }
@@ -399,6 +446,13 @@ private fun CorpusBenchmarkSection() {
         scope.launch {
             try {
                 r.run(caseIds, resumeRunId = resumeId, allowModelDownload = false) { p -> progress = p }
+            } catch (rejected: EvaluationRunner.ResumeRejected) {
+                // Refusing to mix configurations is a correct outcome, so it is
+                // reported as an explanation with the old run left intact.
+                message = "لا يمكن الاستئناف: ${rejected.problem}. التشغيل السابق محفوظ كما هو."
+            } catch (unknown: EvaluationRunner.ResumeScopeUnknown) {
+                message = "هذا التشغيل أقدم من تسجيل النطاق، لذا نطاقه غير معروف. " +
+                    "اختر نطاقًا جديدًا بدل توسيعه ضمنيًا."
             } catch (failure: Exception) {
                 message = "توقف التشغيل: ${failure.javaClass.simpleName}"
             } finally {
@@ -478,15 +532,35 @@ private fun CorpusBenchmarkSection() {
                     Column(Modifier.padding(10.dp)) {
                         Text("آخر تشغيل: ${run.runId}", style = MaterialTheme.typography.titleSmall)
                         Text(
-                            "الحالة ${run.runStatus} · ${run.cases.size}/${engineCases.size} مسجّلة · " +
-                                "التزم ${run.engineRevision} · ${run.appVersion} (${run.versionCode})",
+                            "الحالة ${run.runStatus} · commit ${run.engineRevision} · " +
+                                "${run.appVersion} (${run.versionCode})",
                             style = MaterialTheme.typography.bodySmall,
                         )
-                        Text("متبقٍ ${pendingIds.size} · ناقص/غير منفّذ", style = MaterialTheme.typography.bodySmall)
+                        // Scope, attempts and corpus coverage are three different
+                        // numbers. A one-case run is complete at 1/1 and still
+                        // covers 1 of 40; presenting only "x/40" made a finished
+                        // narrow run look like a broken full one.
+                        Text(
+                            "نطاق التشغيل: ${run.requestedCaseIds?.size ?: "غير معروف"} · " +
+                                "لها محاولة: ${run.attemptedCount} · متبقٍ: ${run.requestedCaseIds?.let { run.pendingCount } ?: "—"} · " +
+                                "تغطية corpus: ${run.cases.count { EvaluationStore.isAttempt(it.processingStatus) }}/${engineCases.size}",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        if (run.requestedCaseIds == null) {
+                            Text(
+                                "هذا السجل أقدم من تسجيل النطاق: نطاقه غير معروف ولن يتم توسيعه تلقائيًا. " +
+                                    "أنشئ تشغيلًا جديدًا لاختيار النطاق.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            // A scope-unknown run cannot be resumed without silently
+                            // choosing a scope for it, so the control is disabled and the
+                            // explanation above says why.
                             OutlinedButton(
-                                onClick = { start(pendingIds.ifEmpty { engineCases.map { it.caseId } }, resumeId = run.runId) },
-                                enabled = !running && pendingIds.isNotEmpty() && modelReady,
+                                onClick = { start(pendingIds, resumeId = run.runId) },
+                                enabled = !running && modelReady && run.requestedCaseIds != null && pendingIds.isNotEmpty(),
                             ) { Text("استئناف") }
                             OutlinedButton(
                                 onClick = {
@@ -513,6 +587,51 @@ private fun CorpusBenchmarkSection() {
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                         )
+                    }
+                }
+            }
+
+            item {
+                Text("سجل التشغيلات السابقة", style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "كل تشغيل محفوظ كما هو. اختر تشغيلًا لعرض حالاته وتصديره.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            items(runs, key = { r -> "run-${r.runId}" }) { summary ->
+                val isActive = summary.runId == activeRun?.runId
+                Card(
+                    Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isActive) MaterialTheme.colorScheme.secondaryContainer
+                        else MaterialTheme.colorScheme.surface
+                    ),
+                ) {
+                    Column(Modifier.padding(8.dp)) {
+                        Text(summary.runId, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "${summary.runStatus} · ${summary.completedCount}/${summary.requestedCount ?: "?"} · " +
+                                "commit ${summary.engineRevision.take(12)} · ${summary.appVersion}",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            TextButton(
+                                enabled = !running,
+                                onClick = {
+                                    scope.launch {
+                                        activeRun = withContext(Dispatchers.IO) { runner?.loadRun(summary.runId) }
+                                    }
+                                },
+                            ) { Text(if (isActive) "معروض" else "عرض") }
+                            TextButton(onClick = {
+                                pendingExport = summary.runId
+                                createJson.launch("manhwalens-eval-${summary.runId}.json")
+                            }) { Text("JSON") }
+                            TextButton(onClick = {
+                                pendingExport = summary.runId
+                                createTxt.launch("manhwalens-eval-${summary.runId}.txt")
+                            }) { Text("TXT") }
+                        }
                     }
                 }
             }
@@ -615,9 +734,16 @@ private fun HumanReviewSection() {
     val store = remember { EvaluationStore(context) }
     var cases by remember { mutableStateOf<List<EvaluationCorpus.ReviewCase>>(emptyList()) }
     var identity by remember { mutableStateOf<EvaluationCorpus.CorpusIdentity?>(null) }
+    var runs by remember { mutableStateOf<List<EvaluationStore.RunSummary>>(emptyList()) }
+    // The run under review is *chosen*, not assumed. Assessing whatever happened
+    // to run last silently attaches judgements to the wrong translation.
+    var selectedRunId by remember { mutableStateOf<String?>(null) }
     var run by remember { mutableStateOf<EvaluationStore.Run?>(null) }
     var reviews by remember { mutableStateOf<Map<String, EvaluationStore.ReferenceReview>>(emptyMap()) }
+    // Keyed by run: switching runs must reload that run's assessments, not reuse
+    // the previous run's map.
     var assessments by remember { mutableStateOf<Map<String, EvaluationStore.CandidateAssessment>>(emptyMap()) }
+    var unboundCount by remember { mutableStateOf(0) }
     var reviewer by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -627,9 +753,23 @@ private fun HumanReviewSection() {
         }
         identity = parsed.first
         cases = parsed.second
-        run = withContext(Dispatchers.IO) { EvaluationRunner(context).latestRun() }
+        runs = withContext(Dispatchers.IO) {
+            val runner = EvaluationRunner(context)
+            runner.reconcile()
+            runner.listRuns()
+        }
         reviews = withContext(Dispatchers.IO) { store.loadReferenceReviews().associateBy { it.caseId } }
-        assessments = withContext(Dispatchers.IO) { store.loadCandidateAssessments().associateBy { it.caseId } }
+        unboundCount = withContext(Dispatchers.IO) { store.loadUnboundAssessments().size }
+        // Default to the newest run, but only as a visible, changeable selection.
+        selectedRunId = runs.firstOrNull()?.runId
+    }
+
+    LaunchedEffect(selectedRunId) {
+        val id = selectedRunId
+        run = withContext(Dispatchers.IO) { id?.let { store.loadRun(it) } }
+        assessments = withContext(Dispatchers.IO) {
+            id?.let { store.loadAssessmentsForRun(it).associateBy { a -> a.caseId } } ?: emptyMap()
+        }
     }
 
     LazyColumn(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -640,54 +780,164 @@ private fun HumanReviewSection() {
                     "لا تتم الموافقة تلقائيًا، والحالة التي لا تلمسها تبقى pending.",
                 style = MaterialTheme.typography.bodySmall,
             )
+            Text("اختر التشغيل الذي تريد تقييم ترجماته", style = MaterialTheme.typography.bodySmall)
+            if (runs.isEmpty()) {
+                Text(
+                    "لا توجد تشغيلات محفوظة. نفّذ اختبار الحالات أولًا، ثم عُد للتقييم.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            } else {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(runs, key = { it.runId }) { summary ->
+                        FilterChip(
+                            selected = summary.runId == selectedRunId,
+                            onClick = { selectedRunId = summary.runId },
+                            label = {
+                                Column {
+                                    Text(summary.runId, style = MaterialTheme.typography.bodySmall)
+                                    Text(
+                                        "${summary.completedCount}/${summary.requestedCount ?: "?"} · " +
+                                            (summary.engineRevision.take(7)),
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+            run?.let { r ->
+                Text(
+                    "التشغيل: ${r.runId} · commit ${r.engineRevision} · ${r.appVersion} (${r.versionCode}) · " +
+                        "model ${r.modelIdentity ?: "?"}",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    "نطاق التشغيل: ${r.requestedCaseIds?.size ?: "غير معروف"} حالة · " +
+                        "لها محاولة ${r.attemptedCount} · متبقٍ ${r.requestedCaseIds?.let { r.pendingCount } ?: "—"}",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            if (unboundCount > 0) {
+                Text(
+                    "$unboundCount تقييمًا قديمًا غير مرتبط بتشغيل (legacy) محفوظ ولم يُنسب لأي تشغيل.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
             OutlinedTextField(
                 value = reviewer, onValueChange = { reviewer = it },
                 label = { Text("اسم المراجع (مطلوب)") }, modifier = Modifier.fillMaxWidth(),
             )
         }
-        items(cases, key = { it.caseId }) { case ->
-            ReviewCard(
-                case = case,
-                engineResult = run?.cases?.firstOrNull { it.caseId == case.caseId },
-                runId = run?.runId,
-                review = reviews[case.caseId],
-                assessment = assessments[case.caseId],
-                reviewer = reviewer,
-                onSaveReview = { status, text, notes ->
-                    scope.launch(Dispatchers.IO) {
-                        store.saveReferenceReview(
-                            EvaluationStore.ReferenceReview(
-                                caseId = case.caseId,
-                                status = status,
-                                reference = text,
-                                originalReference = case.referenceTranslation,
-                                reviewer = reviewer.ifBlank { null },
-                                decidedAt = System.currentTimeMillis(),
-                                notes = notes.ifBlank { null },
-                            )
-                        )
-                        reviews = store.loadReferenceReviews().associateBy { it.caseId }
-                    }
-                },
-                onSaveAssessment = { meaning, fluency, grammar, ctx, terms, complete, reason ->
-                    scope.launch(Dispatchers.IO) {
-                        store.saveCandidateAssessment(
-                            EvaluationStore.CandidateAssessment(
-                                caseId = case.caseId,
-                                runId = run?.runId,
-                                meaning = meaning, fluency = fluency, grammar = grammar,
-                                context = ctx, terminology = terms, completeness = complete,
-                                status = EvaluationStore.CandidateAssessment.STATUS_REVIEWED,
-                                reviewer = reviewer.ifBlank { null },
-                                decidedAt = System.currentTimeMillis(),
-                                reason = reason.ifBlank { null },
-                            )
-                        )
-                        assessments = store.loadCandidateAssessments().associateBy { it.caseId }
-                    }
-                },
-            )
+        if (run == null) {
+            item {
+                Text(
+                    "لا يمكن تقييم ترجمة بدون تشغيل محدد: التقييم يخص ترجمة واحدة بعينها.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        } else {
+            items(cases, key = { c -> c.caseId }) { case ->
+                val result = run?.cases?.firstOrNull { it.caseId == case.caseId }
+                ReviewCard(
+                    case = case,
+                    engineResult = result,
+                    runId = run?.runId,
+                    review = reviews[case.caseId],
+                    assessment = assessments[case.caseId],
+                    reviewer = reviewer,
+                    onSaveReview = { status, text, notes ->
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                store.saveReferenceReview(
+                                    EvaluationStore.ReferenceReview(
+                                        caseId = case.caseId,
+                                        status = status,
+                                        reference = text,
+                                        originalReference = case.referenceTranslation,
+                                        reviewer = reviewer.ifBlank { null },
+                                        decidedAt = System.currentTimeMillis(),
+                                        notes = notes.ifBlank { null },
+                                    )
+                                )
+                            }
+                            reviews = withContext(Dispatchers.IO) {
+                                store.loadReferenceReviews().associateBy { it.caseId }
+                            }
+                        }
+                    },
+                    onSaveAssessment = {
+                        // Saving is refused unless there is a real translation in
+                        // the selected run to assess.
+                        val target = run?.runId
+                        if (target != null && canAssess(result)) {
+                            scope.launch {
+                                withContext(Dispatchers.IO) {
+                                    store.saveCandidateAssessment(
+                                        EvaluationStore.CandidateAssessment(
+                                            caseId = case.caseId,
+                                            runId = target,
+                                            reviewer = reviewer.ifBlank { null },
+                                            decidedAt = System.currentTimeMillis(),
+                                            reason = it.reason.ifBlank { null },
+                                            meaning = it.meaning,
+                                            fluency = it.fluency,
+                                            grammar = it.grammar,
+                                            context = it.context,
+                                            terminology = it.terminology,
+                                            completeness = it.completeness,
+                                            status = EvaluationStore.CandidateAssessment.STATUS_REVIEWED,
+                                        )
+                                    )
+                                }
+                                assessments = withContext(Dispatchers.IO) {
+                                    store.loadAssessmentsForRun(target).associateBy { a -> a.caseId }
+                                }
+                            }
+                        }
+                    },
+                )
+            }
         }
+    }
+}
+
+/**
+ * Whether a case result carries a translation a human can actually judge.
+ *
+ * `missing` and `not_run` produced nothing, `failed` produced no translation, and
+ * an `empty` result is a blank string. Rating any of them would mean scoring a
+ * translation that does not exist.
+ */
+private fun canAssess(result: EvaluationStore.CaseResult?): Boolean =
+    result != null &&
+        result.processingStatus == EvaluationStore.STATE_OK &&
+        !result.finalTranslation.isNullOrBlank()
+
+/** Draft ratings for one case, in the vocabulary the store persists. */
+private data class AssessmentDraft(
+    val meaning: String,
+    val fluency: String,
+    val grammar: String,
+    val context: String,
+    val terminology: String,
+    val completeness: String,
+    val reason: String,
+) {
+    fun asMap(): Map<String, String> = mapOf(
+        "meaning" to meaning, "fluency" to fluency, "grammar" to grammar,
+        "context" to context, "terminology" to terminology, "completeness" to completeness,
+    )
+
+    /** Change one criterion without disturbing the others. */
+    fun with(key: String, value: String): AssessmentDraft = when (key) {
+        "meaning" -> copy(meaning = value)
+        "fluency" -> copy(fluency = value)
+        "grammar" -> copy(grammar = value)
+        "context" -> copy(context = value)
+        "terminology" -> copy(terminology = value)
+        "completeness" -> copy(completeness = value)
+        else -> this
     }
 }
 
@@ -700,14 +950,30 @@ private fun ReviewCard(
     assessment: EvaluationStore.CandidateAssessment?,
     reviewer: String,
     onSaveReview: (String, String, String) -> Unit,
-    onSaveAssessment: (Int?, Int?, Int?, Int?, Int?, Int?, String) -> Unit,
+    onSaveAssessment: (AssessmentDraft) -> Unit,
 ) {
+    // Restored from the saved decision so reopening the card shows what was
+    // recorded rather than a blank form.
     var arabic by remember(case.caseId, review?.decidedAt) {
         mutableStateOf(review?.reference ?: case.referenceTranslation.orEmpty())
     }
     var notes by remember(case.caseId, review?.decidedAt) { mutableStateOf(review?.notes.orEmpty()) }
-    var ratings by remember(case.caseId) { mutableStateOf(mutableMapOf<String, Int?>()) }
-    var reason by remember(case.caseId) { mutableStateOf(assessment?.reason.orEmpty()) }
+    // Keyed on the *saved assessment* identity as well as the case: switching to
+    // another run must reload that run's ratings instead of leaving this run's
+    // values on screen.
+    var draft by remember(case.caseId, runId, assessment?.decidedAt, assessment?.status) {
+        mutableStateOf(
+            AssessmentDraft(
+                meaning = assessment?.meaning ?: EvaluationStore.RATING_NOT_REVIEWED,
+                fluency = assessment?.fluency ?: EvaluationStore.RATING_NOT_REVIEWED,
+                grammar = assessment?.grammar ?: EvaluationStore.RATING_NOT_REVIEWED,
+                context = assessment?.context ?: EvaluationStore.RATING_NOT_REVIEWED,
+                terminology = assessment?.terminology ?: EvaluationStore.RATING_NOT_REVIEWED,
+                completeness = assessment?.completeness ?: EvaluationStore.RATING_NOT_REVIEWED,
+                reason = assessment?.reason.orEmpty(),
+            )
+        )
+    }
     var expanded by remember { mutableStateOf(false) }
 
     Card(Modifier.fillMaxWidth()) {
@@ -761,50 +1027,82 @@ private fun ReviewCard(
             review?.let { Text("قرار: ${it.status} · ${it.reviewer ?: "?"}", style = MaterialTheme.typography.bodySmall) }
 
             Spacer(Modifier.height(6.dp))
-            TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "إخفاء تقييم الترجمة" else "تقييم الترجمة (0–3)") }
+            TextButton(onClick = { expanded = !expanded }) {
+                Text(if (expanded) "إخفاء تقييم الترجمة" else "تقييم الترجمة (0–3 / لا ينطبق)")
+            }
             if (expanded) {
-                listOf("meaning" to "المعنى", "fluency" to "الطلاقة", "grammar" to "النحو",
-                    "context" to "السياق", "terminology" to "الأسماء", "completeness" to "الاكتمال")
-                    .forEach { (key, label) ->
+                if (!canAssess(engineResult)) {
+                    // Nothing to rate. Saying so is the honest answer; showing
+                    // chips would invite a judgement on a translation that does
+                    // not exist.
+                    Text(
+                        "لا توجد ترجمة قابلة للتقييم لهذه الحالة في هذا التشغيل " +
+                            "(${engineResult?.processingStatus ?: "missing"}).",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                } else {
+                    listOf(
+                        "meaning" to "المعنى", "fluency" to "الطلاقة", "grammar" to "النحو",
+                        "context" to "السياق", "terminology" to "الأسماء", "completeness" to "الاكتمال",
+                    ).forEach { (key, label) ->
                         Text(label, style = MaterialTheme.typography.bodySmall)
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            items(RATING_LABELS.size) { index ->
+                            items(RATING_OPTIONS) { (value, text) ->
                                 FilterChip(
-                                    selected = ratings[key] == (if (index == 0) null else index - 1),
-                                    onClick = { ratings = ratings.toMutableMap().apply { put(key, if (index == 0) null else index - 1) } },
-                                    label = { Text(RATING_LABELS[index], style = MaterialTheme.typography.bodySmall) },
+                                    selected = draft.asMap()[key] == value,
+                                    onClick = { draft = draft.with(key, value) },
+                                    label = { Text(text, style = MaterialTheme.typography.bodySmall) },
                                 )
                             }
                         }
                     }
-                OutlinedTextField(
-                    value = reason, onValueChange = { reason = it },
-                    label = { Text("سبب العيوب الجسيمة (مطلوب عند 0 أو 1)") }, modifier = Modifier.fillMaxWidth(),
-                )
-                Button(onClick = {
-                    if (reviewer.isBlank()) return@Button
-                    val serious = ratings.values.any { it != null && it <= 1 }
-                    if (serious && reason.isBlank()) return@Button
-                    onSaveAssessment(
-                        ratings["meaning"], ratings["fluency"], ratings["grammar"],
-                        ratings["context"], ratings["terminology"], ratings["completeness"],
-                        reason,
+                    OutlinedTextField(
+                        value = draft.reason, onValueChange = { draft = draft.copy(reason = it) },
+                        label = { Text("سبب العيوب الجسيمة (مطلوب عند 0 أو 1)") },
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                }) { Text("حفظ التقييم") }
-                if (assessment != null) {
+                    val blocking = assessmentProblem(draft, reviewer)
+                    blocking?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                    }
+                    Button(
+                        enabled = blocking == null,
+                        onClick = { onSaveAssessment(draft) },
+                    ) { Text("حفظ التقييم") }
+                    assessment?.let { saved ->
+                        Text(
+                            "محفوظ لهذا التشغيل: " + saved.ratings().joinToString(" ") { "${it.first}=${it.second}" },
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                     Text(
-                        "محفوظ: meaning=${assessment.meaning ?: "-"} fluency=${assessment.fluency ?: "-"} " +
-                            "grammar=${assessment.grammar ?: "-"}",
+                        "لا تُنتج الأداة درجة جودة تلقائية؛ كل رقم حكم بشري مستقل.",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
-                Text(
-                    "لا تُنتج الأداة درجة جودة تلقائية؛ كل رقم حكم بشري مستقل.",
-                    style = MaterialTheme.typography.bodySmall,
-                )
             }
         }
     }
+}
+
+/**
+ * Why an assessment cannot be saved yet, or null when it can.
+ *
+ * These are refusals, not warnings: a rating set that is entirely "not reviewed"
+ * is not a review, and a serious defect without a stated reason cannot be
+ * interpreted later.
+ */
+private fun assessmentProblem(draft: AssessmentDraft, reviewer: String): String? {
+    if (reviewer.isBlank()) return "أدخل اسم المراجع أولاً."
+    if (draft.asMap().values.all { it == EvaluationStore.RATING_NOT_REVIEWED }) {
+        return "لا يمكن الحفظ بوصفه reviewed بينما كل المعايير not_reviewed."
+    }
+    val serious = draft.asMap().values.any { it == "0" || it == "1" }
+    if (serious && draft.reason.isBlank()) {
+        return "سبب العيوب الجسيمة مطلوب عند إعطاء 0 أو 1."
+    }
+    return null
 }
 
 // ---------------------------------------------------------------------------
@@ -837,6 +1135,8 @@ private fun readSamples(knownJourneyIds: List<String>): List<Sample> {
             surface = entry.optJSONObject("surface_hint"),
             left = if (entry.has("left")) entry.optInt("left") else null,
             top = if (entry.has("top")) entry.optInt("top") else null,
+            right = if (entry.has("right")) entry.optInt("right") else null,
+            bottom = if (entry.has("bottom")) entry.optInt("bottom") else null,
             raw = entry,
         )
     }.sortedByDescending { it.raw.optLong("timestamp") }

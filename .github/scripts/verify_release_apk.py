@@ -110,6 +110,11 @@ def main(argv):
     parser.add_argument('--expected-version-code', type=int, default=None,
                         help='exact versionCode the workflow planned for this candidate')
     parser.add_argument('--out', default=None, help='write the identity report here')
+    parser.add_argument('--git-revision', default=None,
+                        help='full 40-hex commit the APK was built from; recorded so an '
+                             'on-device evaluation run can be traced back to it')
+    parser.add_argument('--require-git-revision', action='store_true',
+                        help='fail when no valid revision was supplied (official candidates)')
     args = parser.parse_args(argv)
 
     apk = Path(args.apk)
@@ -131,6 +136,15 @@ def main(argv):
     check_debuggable(badging)
     digest = sha256_of(apk)
 
+    # Build identity. A malformed value is an error rather than a warning: an APK
+    # that cannot be tied to a commit cannot produce a reproducible evaluation run.
+    revision = (args.git_revision or '').strip().lower()
+    if revision and not re.fullmatch(r'[0-9a-f]{40}', revision):
+        raise ReleaseVerificationError(
+            'git revision must be a full 40-hex commit SHA, got ' + repr(args.git_revision))
+    if not revision and args.require_git_revision:
+        raise ReleaseVerificationError('no git revision supplied for an official candidate')
+
     report = [
         'package=' + package,
         'versionName=' + version_name,
@@ -142,6 +156,7 @@ def main(argv):
         'apk_sha256=' + digest,
         'apk_bytes=' + str(apk.stat().st_size),
         'signed_release=true',
+        'git_revision=' + (revision or 'unknown'),
     ]
     text = '\n'.join(report) + '\n'
     print(text, end='')

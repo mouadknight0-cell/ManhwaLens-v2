@@ -18,6 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Record build identity
+        # Full commit SHA, so any APK assembled here can be traced back to source.
+        # The Gradle build rejects a malformed value and records "unknown" when absent.
+        run: echo "GIT_REVISION=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
       - name: Signing recovery regression tests
         run: |
           python3 -m pip install cryptography

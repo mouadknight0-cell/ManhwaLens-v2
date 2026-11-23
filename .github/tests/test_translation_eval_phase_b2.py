@@ -427,7 +427,10 @@ class StoreSourceContractTest(unittest.TestCase):
         self.assertIn("reconcileInterruptedRuns", self.source)
 
     def test_export_includes_absent_cases(self):
-        self.assertIn("datasetCaseIds", self.source)
+        # Phase B2.1: export takes the full corpus so a missing case still carries
+        # its real English source text instead of an empty string.
+        self.assertIn("corpusCases", self.source)
+        self.assertIn("CorpusCase", self.source)
 
     def test_no_automatic_approval(self):
         # Nothing in the store may set a review status without a human decision.

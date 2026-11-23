@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version_name:
-        description: Candidate versionName (must end with -rc, e.g. 1.1.42-rc2)
+        description: Candidate versionName (must end with -rc, e.g. 1.1.42-rc3)
         required: true
-        default: 1.1.42-rc2
+        default: 1.1.42-rc3
       installed_version_code:
         description: versionCode currently installed on the test phone; the candidate is computed strictly above it
         required: true
@@ -40,7 +40,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VERSION_NAME: ${{ inputs.version_name || '1.1.42-rc2' }}
+  VERSION_NAME: ${{ inputs.version_name || '1.1.42-rc3' }}
   # The candidate must be installable *over* what is already on the phone, so the floor is
   # supplied explicitly instead of guessed from the repository's latest release.
   INSTALLED_VERSION_CODE: ${{ inputs.installed_version_code || '217442875' }}
@@ -85,9 +85,23 @@ jobs:
           # Per-commit code, identical to release.yml.
           code=$(( $(git show -s --format=%ct HEAD) - 1577836800 ))
           echo "VERSION_CODE=$code" >> "$GITHUB_ENV"
+          # Build identity for on-device evaluation runs. Full SHA, never abbreviated,
+          # and never optional: an evaluation run recorded as `unknown` cannot be tied
+          # to the code that produced its translations, which is the whole point of
+          # recording a revision.
+          revision=$(git rev-parse HEAD)
+          if ! printf '%s' "$revision" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::could not read a full 40-hex commit SHA (got '$revision')"
+            exit 1
+          fi
+          echo "GIT_REVISION=$revision" >> "$GITHUB_ENV"
+          echo "git_revision=$revision" >> "$GITHUB_OUTPUT"
           echo "version_code=$code" >> "$GITHUB_OUTPUT"
           # Monotonic floor: the newest published GitHub release must be strictly below us.
-          last=$(gh release list --exclude-drafts --limit 1 --json tagName -q '.[0].tagName' || true)
+          # --exclude-pre-releases matters: without it a later candidate run reads its
+          # own earlier prerelease tag as "the newest official release", so the floor
+          # is computed against the wrong base and the reported last_release is false.
+          last=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName -q '.[0].tagName' || true)
           if [ -z "$last" ]; then echo '::error::no published release found; refusing to guess a version floor'; exit 1; fi
           tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$last" -q .object.sha)
           type=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$last" -q .object.type)
@@ -216,6 +230,8 @@ jobs:
             --expected-version-name "$VERSION_NAME" \
             --expected-version-code "${{ steps.version.outputs.expected_version_code }}" \
             --min-version-code "${{ steps.version.outputs.floor }}" \
+            --git-revision "${{ steps.version.outputs.git_revision }}" \
+            --require-git-revision \
             | tee artifacts/APK-IDENTITY.txt
           # The pinned fingerprint must be published next to the APK for the owner to compare
           # against the installed official application before claiming update compatibility.
@@ -231,6 +247,25 @@ jobs:
             cat artifacts/APK-IDENTITY.txt
           } > artifacts/BUILD-INFO.md
           cat artifacts/BUILD-INFO.md
+
+      - name: Fail if the APK does not carry this commit as its build identity
+        # The app records GIT_REVISION into every evaluation run. If the field did
+        # not receive this commit, every run from this APK would claim an identity it
+        # does not have -- so the mismatch is a build failure, not a warning.
+        run: |
+          set -euo pipefail
+          expected=$(git rev-parse HEAD)
+          actual=$(grep -E '^git_revision=' artifacts/APK-IDENTITY.txt | cut -d= -f2 || true)
+          recorded=$(grep -E '^git_revision=' artifacts/BUILD-INFO.md | cut -d= -f2 || true)
+          echo "expected=$expected identity=$actual"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::APK build identity '$actual' does not match the commit under test '$expected'"
+            exit 1
+          fi
+          printf '%s' "$actual" | grep -Eq '^[0-9a-f]{40}$' || {
+            echo "::error::build identity is not a full 40-hex SHA: '$actual'"
+            exit 1
+          }
 
       - name: Fail if the release APK was debug-signed
         if: always() && steps.verify.outcome == 'success'

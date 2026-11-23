@@ -24,6 +24,18 @@ class EvaluationCorpus(context: Context) {
     companion object {
         const val ENGINE_INPUT = "evaluation-engine-input.json"
         const val HUMAN_REVIEW = "evaluation-human-review.json"
+
+        /**
+         * Fingerprint of the reviewed corpus these assets were generated from.
+         *
+         * Pinned as a constant rather than derived, because the point of the check
+         * is to compare the assets against a value that was agreed in review; a
+         * fingerprint computed from the files being validated would agree with any
+         * edit, including a corrupt one. Regenerating a corpus means changing this
+         * constant in the same commit.
+         */
+        const val EXPECTED_FINGERPRINT =
+            "5fb61a318d51c91d9e017bf4b09a09b89a90c3dc34f3ca5f66239fc0148014d1"
     }
 
     private val assets = context.applicationContext.assets
@@ -98,4 +110,66 @@ class EvaluationCorpus(context: Context) {
 
     private fun read(name: String): JSONObject =
         assets.open(name).bufferedReader().use { JSONObject(it.readText()) }
+
+    /**
+     * Check the asset pair is internally consistent before it is used.
+     *
+     * Returns a list of problems; empty means the pair is usable. This exists
+     * because the assets are build inputs: a stale engine asset paired with a newer
+     * review asset would silently mislabel every case, and neither file alone can
+     * reveal that.
+     */
+    fun validate(): List<String> {
+        val problems = mutableListOf<String>()
+        val engine = runCatching { read(ENGINE_INPUT) }.getOrElse {
+            return listOf("engine asset unreadable: ${it.javaClass.simpleName}")
+        }
+        val review = runCatching { read(HUMAN_REVIEW) }.getOrElse {
+            return listOf("review asset unreadable: ${it.javaClass.simpleName}")
+        }
+
+        val engineCases = engine.getJSONArray("cases")
+        val reviewCases = review.getJSONArray("cases")
+        if (engineCases.length() != reviewCases.length()) {
+            problems += "case count differs: engine ${engineCases.length()} vs review ${reviewCases.length()}"
+        }
+
+        val engineIds = (0 until engineCases.length()).map { engineCases.getJSONObject(it).getString("case_id") }
+        val reviewIds = (0 until reviewCases.length()).map { reviewCases.getJSONObject(it).getString("case_id") }
+        if (engineIds != reviewIds) problems += "case ids or their order differ between the two assets"
+        if (engineIds.size != engineIds.toSet().size) problems += "duplicate case ids in the corpus"
+        if (engineIds.isEmpty()) problems += "the corpus is empty"
+
+        // The engine payload must never carry reviewer-only material.
+        for (i in 0 until engineCases.length()) {
+            val entry = engineCases.getJSONObject(i)
+            val keys = entry.keys().asSequence().toSet()
+            if (keys != setOf("case_id", "source_text")) {
+                problems += "engine case ${entry.optString("case_id")} carries unexpected fields: $keys"
+            }
+            if (entry.optString("source_text").isBlank()) {
+                problems += "engine case ${entry.optString("case_id")} has empty source text"
+            }
+        }
+
+        val engineFingerprint = engine.optString("dataset_fingerprint")
+        val reviewFingerprint = review.optString("dataset_fingerprint")
+        if (engineFingerprint != reviewFingerprint) {
+            problems += "dataset fingerprints differ between the two assets"
+        }
+        if (engineFingerprint.isBlank()) {
+            problems += "dataset fingerprint is missing"
+        } else if (engineFingerprint != EXPECTED_FINGERPRINT) {
+            // A fingerprint that does not match the reviewed corpus means the cases
+            // changed under the benchmark, so its results describe something else.
+            problems += "dataset fingerprint $engineFingerprint is not the expected $EXPECTED_FINGERPRINT"
+        }
+
+        if (engine.optString("kind") != "engine_input") problems += "engine asset is not an engine_input payload"
+        if (review.optString("kind") != "human_review") problems += "review asset is not a human_review payload"
+        if (engine.optBoolean("native_model_context", false)) {
+            problems += "engine asset claims native model context"
+        }
+        return problems
+    }
 }

@@ -149,14 +149,25 @@ class EngineUntouchedTest(unittest.TestCase):
     IDENTITY_ONLY_ADDITIONS = (
         "GIT_REVISION",
     )
+    #: Configuration the build may never gain or lose, whatever the phase.
     BUILD_CHANGE_FORBIDDEN = (
-        "versionCode =", "versionName =", "applicationId =", "signingConfig",
-        "minifyEnabled", "implementation(", "api(", "classpath",
-        "minSdk", "targetSdk", "compileSdk", "proguard",
+        "applicationId", "signingConfig", "minifyEnabled", "implementation(",
+        "api(", "classpath", "minSdk", "targetSdk", "compileSdk", "proguard",
+    )
+    #: The only lines a phase may *remove*, and only in this exact shape.
+    #:
+    #: Phase B2.1 replaces `coerceAtMost(appVersionCode)` with a fail-closed check,
+    #: because the clamp could ship a versionCode below the installed build. The
+    #: removal is therefore permitted, but only when the replacement adds the guard
+    #: that makes the removed behaviour impossible to reintroduce.
+    BUILD_CHANGE_ALLOWED_REMOVALS = (
+        "coerceAtMost(appVersionCode)",
+        "val effectiveVersionCode: Int = if (releaseCandidate && candidateVersionCodeHold > 0)",
+        "else appVersionCode",
     )
 
     def _build_change_is_identity_only(self, base: str) -> bool:
-        """True only when the build file gained a revision constant and nothing else."""
+        """True when the build edit is confined to build identity and the versionCode guard."""
         proc = subprocess.run(
             ["git", "diff", "-U0", base, "--", "app/build.gradle.kts"],
             cwd=str(ROOT), capture_output=True, text=True, timeout=60,
@@ -171,13 +182,21 @@ class EngineUntouchedTest(unittest.TestCase):
             line[1:].strip() for line in proc.stdout.splitlines()
             if line.startswith("-") and not line.startswith("---")
         ]
-        # A pure addition: nothing that was already configured may be deleted or
-        # rewritten, so no runtime setting can be altered by this exception.
-        if removed:
-            return False
+        # Nothing may be deleted except the specific clamp being replaced. Any other
+        # removal means a setting was rewritten, which this exception does not cover.
+        for line in removed:
+            if not line:
+                continue
+            if not any(allowed in line for allowed in self.BUILD_CHANGE_ALLOWED_REMOVALS):
+                return False
         meaningful = [line for line in added if line and not line.startswith("//")]
         joined = " ".join(meaningful)
         if any(token in joined for token in self.BUILD_CHANGE_FORBIDDEN):
+            return False
+        # The replacement must actually be fail-closed, not a renamed clamp.
+        if "coerceAtMost(appVersionCode)" in joined:
+            return False
+        if removed and "throw GradleException(" not in joined:
             return False
         return any(token in joined for token in self.IDENTITY_ONLY_ADDITIONS)
 
@@ -341,6 +360,15 @@ class StashUntouchedTest(unittest.TestCase):
             # because B2 is the phase that must ship an installable APK.
             ".github/workflows/release-candidate.yml",
             ".github/tests/test_candidate_version_code.py",
+            # Phase B2.1: evaluation reliability and release integrity.
+            ".github/scripts/verify_release_apk.py",
+            ".github/tests/test_verify_release_apk.py",
+            ".github/workflows/ci.yml",
+            ".github/workflows/quality.yml",
+            "app/src/main/assets/",
+            "app/src/main/java/com/manhwalens/app/ui/SettingsScreen.kt",
+            "app/src/main/java/com/manhwalens/app/MainActivity.kt",
+            "docs/TRANSLATION-EVALUATION-PHASE-B2.1",
         )
         unexpected = [l for l in lines if not any(m in l for m in allowed)]
         self.assertEqual([], unexpected, f"unrelated files present in worktree: {unexpected}")
@@ -377,12 +405,19 @@ class NoTranslationChangeTest(unittest.TestCase):
                 if l.startswith("+") and not l.startswith("+++")
             )
             removed = [l for l in diff.stdout.splitlines() if l.startswith("-") and not l.startswith("---")]
-            forbidden = ("GIT_REVISION_DEP", "implementation(", "api(", "classpath",
-                         "minSdk", "targetSdk", "compileSdk")
-            self.assertEqual([], removed, "the app build file may only gain lines")
-            self.assertTrue(any(t not in added for t in forbidden))
-            for token in forbidden:
+            # No dependency, plugin, or SDK-level change may ever ride along.
+            for token in ("implementation(", "api(", "classpath", "minSdk", "targetSdk", "compileSdk"):
                 self.assertNotIn(token, added, f"dependency/toolchain change: {token}")
+            # The only permitted removals are the versionCode clamp being replaced
+            # (Phase B2.1). Anything else means an unrelated setting was rewritten.
+            for line in removed:
+                if not line.strip():
+                    continue
+                self.assertTrue(
+                    any(allowed in line
+                        for allowed in EngineUntouchedTest.BUILD_CHANGE_ALLOWED_REMOVALS),
+                    f"unexpected removal from the app build file: {line.strip()}",
+                )
             changed = [c for c in changed if c != "app/build.gradle.kts"]
         self.assertEqual([], changed)
 

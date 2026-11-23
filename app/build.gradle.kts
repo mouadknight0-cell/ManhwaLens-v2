@@ -12,9 +12,39 @@ val releaseCandidate: Boolean = appVersionName.endsWith("-rc1") || appVersionNam
 // therefore ships `last_published + 1` (installable over the installed official app, and
 // strictly monotonic), never the big per-commit number, and never the last release itself.
 val candidateVersionCodeHold: Int = System.getenv("CANDIDATE_VERSION_CODE_HOLD")?.toIntOrNull() ?: 0
-val effectiveVersionCode: Int = if (releaseCandidate && candidateVersionCodeHold > 0)
-    (candidateVersionCodeHold + 1).coerceAtMost(appVersionCode)
-else appVersionCode
+
+// A candidate's versionCode is `hold + 1`, where the hold is the highest of every floor
+// (newest official release, installed build, explicit minimum). It must never be silently
+// reduced: `coerceAtMost(appVersionCode)` used to clamp it down to the commit's per-commit
+// code, which can be *lower* than the installed build. Android then rejects the APK as a
+// downgrade, and the only way forward is an uninstall -- which would destroy the user's
+// history, samples and benchmark records. Fail closed and say why instead.
+val effectiveVersionCode: Int = if (releaseCandidate && candidateVersionCodeHold > 0) {
+    val candidate = candidateVersionCodeHold + 1
+    if (candidate > appVersionCode) {
+        throw GradleException(
+            "Candidate versionCode $candidate is above this commit's per-commit code " +
+                "$appVersionCode. A candidate must stay below it so it does not consume the " +
+                "number the tagged release will use. Refusing to clamp down to $appVersionCode: " +
+                "that would ship an APK the installed build can reject as a downgrade.",
+        )
+    }
+    candidate
+} else appVersionCode
+
+// Build identity: the full commit SHA of the source being built.
+//
+// A value that is present but malformed is a hard failure, not a best-effort
+// string. Recording "main" or a 7-char abbreviation as an engine revision would
+// let a run look reproducible when it cannot be resolved back to a commit.
+// Absent means "unknown", and the app then reports the run as non-reproducible.
+val gitRevision: String = System.getenv("GIT_REVISION")?.trim()?.takeIf { it.isNotEmpty() }?.let { raw ->
+    require(Regex("^[0-9a-f]{40}$").matches(raw)) {
+        "GIT_REVISION must be a full 40-character lowercase hex commit SHA, got '$raw'. " +
+            "Use `git rev-parse HEAD`, not a short SHA or a branch name."
+    }
+    raw
+} ?: "unknown"
 
 // Stable release signing: CI decodes the keystore from the MANHWALENS_KEYSTORE_FILE secret.
 // Release assembly fails closed without this key: never publish ephemeral debug signing as a release.
@@ -45,14 +75,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = effectiveVersionCode
         versionName = appVersionName
-        // Build identity only. CI supplies the commit so an evaluation run can be
-        // tied to the code that produced it; "unknown" is stored verbatim when it
-        // is absent rather than inventing a SHA. This value is never read by any
+        // Build identity only. CI supplies the full 40-hex commit so an evaluation run
+        // can be tied to the code that produced it. This value is never read by any
         // translation, OCR or rendering code.
         buildConfigField(
             "String",
             "GIT_REVISION",
-            "\"${System.getenv("GIT_REVISION")?.takeIf { it.isNotBlank() } ?: "unknown"}\"",
+            "\"${gitRevision}\"",
         )
         vectorDrawables.useSupportLibrary = true
     }

@@ -16,6 +16,9 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - name: Record build identity
+        # Full commit SHA, so the androidTest APK carries the revision it was built from.
+        run: echo "GIT_REVISION=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

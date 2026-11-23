@@ -32,8 +32,13 @@ import java.io.File
 class EvaluationStore(private val context: Context) {
 
     companion object {
-        /** Bumped only when the on-disk shape changes incompatibly. */
-        const val SCHEMA_VERSION = 1
+        /**
+         * Bumped only when the on-disk shape changes incompatibly.
+         *
+         * 2 adds the run's requested scope and the explicit rating vocabulary.
+         * Older records are still read unchanged (see [Run.fromJson]).
+         */
+        const val SCHEMA_VERSION = 2
 
         private const val DIR = "evaluation"
         private const val RUNS = "runs"
@@ -54,6 +59,21 @@ class EvaluationStore(private val context: Context) {
         const val RUN_COMPLETE = "complete"
         const val RUN_PARTIAL = "partial"
         const val RUN_MODEL_UNAVAILABLE = "model_unavailable"
+
+        // Rating vocabulary. The point of this enum is that "not reviewed" and
+        // "not applicable" are *not* both represented by a missing value or by 0:
+        // they are different human judgements, and a report that cannot tell them
+        // apart cannot be trusted about the ones it does record.
+        const val RATING_NOT_REVIEWED = "not_reviewed"
+        const val RATING_NOT_APPLICABLE = "not_applicable"
+
+        /** Whether a processing status represents an attempt the engine actually made. */
+        fun isAttempt(status: String): Boolean =
+            status == STATE_OK || status == STATE_EMPTY || status == STATE_FAILED
+
+        /** Whether a case still needs work within its run's scope. */
+        fun isPending(status: String): Boolean =
+            status == STATE_NOT_RUN || status == STATE_MISSING
     }
 
     private val dir: File get() = File(context.filesDir, DIR).apply { mkdirs() }
@@ -74,6 +94,9 @@ class EvaluationStore(private val context: Context) {
         val appVersion: String,
         val caseCount: Int,
         val completedCount: Int,
+        /** Requested scope size, or null when the record predates scope tracking. */
+        val requestedCount: Int? = null,
+        val pendingCount: Int? = null,
     )
 
     /** A single case result. All fields are optional-suppressed at write time. */
@@ -160,8 +183,37 @@ class EvaluationStore(private val context: Context) {
         val executionMode: String,
         val runStatus: String,
         val nativeModelContext: Boolean = false,
+        /**
+         * The cases this run was asked to execute, in request order.
+         *
+         * This is the run's *scope*, and it is the only correct basis for progress
+         * and resume. A run of one case is complete at 1/1 even though it covers
+         * 1/40 of the corpus; without a stored scope the UI computed "pending" from
+         * all 40 ids and a resume silently widened a one-case run into a full one.
+         *
+         * Null means the scope is unknown: records written before schema 2 did not
+         * store it. Unknown is not the same as "all 40", and it is never invented.
+         */
+        val requestedCaseIds: List<String>? = null,
         val cases: List<CaseResult> = emptyList(),
     ) {
+        /** Cases actually attempted (ok/empty/failed), never not_run or missing. */
+        val attemptedCount: Int get() = cases.count { isAttempt(it.processingStatus) }
+
+        /** Requested cases that have no attempt recorded yet. */
+        val pendingCount: Int get() = requestedCaseIds?.count { id ->
+            cases.firstOrNull { it.caseId == id }?.let { isPending(it.processingStatus) } ?: true
+        } ?: 0
+
+        /** Whether the run is finished *within its own scope*. */
+        val scopeComplete: Boolean get() = requestedCaseIds != null && pendingCount == 0
+
+        /** Cases in the scope still needing work. Empty when the scope is unknown. */
+        fun pendingIds(): List<String> =
+            requestedCaseIds.orEmpty().filter { id ->
+                cases.firstOrNull { it.caseId == id }?.let { isPending(it.processingStatus) } ?: true
+            }
+
         fun toJson(): JSONObject = JSONObject().apply {
             put("schema_version", SCHEMA_VERSION)
             put("run_id", runId)
@@ -184,6 +236,15 @@ class EvaluationStore(private val context: Context) {
             // The production engine receives one bubble and no neighbouring text.
             // Recorded explicitly so no report can imply contextual MT happened.
             put("native_model_context", nativeModelContext)
+            requestedCaseIds?.let { ids ->
+                put("requested_case_ids", JSONArray(ids))
+                put("requested_case_count", ids.size)
+            } ?: run {
+                // Written explicitly so a reader can tell "not recorded" from an
+                // empty scope without inferring it from a missing key.
+                put("requested_case_ids", JSONObject.NULL)
+                put("requested_case_count", JSONObject.NULL)
+            }
             put("cases", JSONArray(cases.map { it.toJson() }))
         }
 
@@ -206,6 +267,10 @@ class EvaluationStore(private val context: Context) {
                 executionMode = json.optString("execution_mode"),
                 runStatus = json.optString("run_status"),
                 nativeModelContext = json.optBoolean("native_model_context", false),
+                // Absent in schema 1: stays null (unknown), never reconstructed.
+                requestedCaseIds = json.optJSONArray("requested_case_ids")?.let { array ->
+                    (0 until array.length()).mapNotNull { array.optString(it).takeIf { id -> id.isNotBlank() } }
+                },
                 cases = json.optJSONArray("cases")?.let { array ->
                     (0 until array.length()).mapNotNull { i ->
                         array.optJSONObject(i)?.let { CaseResult.fromJson(it) }
@@ -219,6 +284,10 @@ class EvaluationStore(private val context: Context) {
 
     @Synchronized
     fun createRun(run: Run) {
+        // Two runs started in the same millisecond would otherwise share a file and
+        // silently overwrite one another. The caller supplies an id from
+        // [newRunId]; this is the last-line guard.
+        require(run.runId.isNotBlank()) { "run id must not be blank" }
         writeRun(run)
         val entries = readIndex().toMutableList()
         entries.add(0, runSummary(run))
@@ -251,6 +320,26 @@ class EvaluationStore(private val context: Context) {
         return next
     }
 
+    /**
+     * A run id that cannot collide with an existing run.
+     *
+     * `System.currentTimeMillis()` alone is not unique: two runs started within the
+     * same millisecond (a re-run of failed cases right after a finished run) would
+     * map to the same file and the second would overwrite the first. The timestamp
+     * is kept for readability and ordering, and a random suffix provides the
+     * guarantee.
+     */
+    @Synchronized
+    fun newRunId(now: Long = System.currentTimeMillis()): String {
+        while (true) {
+            val suffix = java.util.UUID.randomUUID().toString().take(8)
+            val candidate = "run-$now-$suffix"
+            val exists = AtomicFile(runFile(candidate)).baseFile.exists() ||
+                readIndex().any { it.runId == candidate }
+            if (!exists) return candidate
+        }
+    }
+
     private fun writeRun(run: Run) {
         AtomicFile(runFile(run.runId)).let { file ->
             val out = file.startWrite()
@@ -271,8 +360,12 @@ class EvaluationStore(private val context: Context) {
         runStatus = run.runStatus,
         engineRevision = run.engineRevision,
         appVersion = run.appVersion,
-        caseCount = run.cases.size,
-        completedCount = run.cases.count { it.processingStatus == STATE_OK || it.processingStatus == STATE_EMPTY || it.processingStatus == STATE_FAILED },
+        // `caseCount` is the run's scope when it is known, so a one-case run does
+        // not advertise itself as a 40-case run in the browser.
+        caseCount = run.requestedCaseIds?.size ?: run.cases.size,
+        completedCount = run.attemptedCount,
+        requestedCount = run.requestedCaseIds?.size,
+        pendingCount = if (run.requestedCaseIds == null) null else run.pendingCount,
     )
 
     private fun refreshIndexSummary(run: Run) {
@@ -291,6 +384,8 @@ class EvaluationStore(private val context: Context) {
                 put("run_status", it.runStatus); put("engine_revision", it.engineRevision)
                 put("app_version", it.appVersion); put("case_count", it.caseCount)
                 put("completed_count", it.completedCount)
+                it.requestedCount?.let { v -> put("requested_count", v) } ?: put("requested_count", JSONObject.NULL)
+                it.pendingCount?.let { v -> put("pending_count", v) } ?: put("pending_count", JSONObject.NULL)
             }
         })
         val out = indexFile.startWrite()
@@ -312,6 +407,8 @@ class EvaluationStore(private val context: Context) {
                     appVersion = it.optString("app_version"),
                     caseCount = it.optInt("case_count"),
                     completedCount = it.optInt("completed_count"),
+                    requestedCount = if (it.isNull("requested_count")) null else it.optInt("requested_count"),
+                    pendingCount = if (it.isNull("pending_count")) null else it.optInt("pending_count"),
                 )
             }
         }
@@ -322,11 +419,45 @@ class EvaluationStore(private val context: Context) {
     @Synchronized
     fun listRuns(): List<RunSummary> = readIndex().sortedByDescending { it.createdAt }
 
+    /**
+     * Read one run.
+     *
+     * Goes through [AtomicFile.openRead] rather than reading the path directly:
+     * `AtomicFile` keeps the previous version as `.bak` and restores it when the
+     * base file is missing or empty because a write was interrupted. Reading the
+     * raw file bypassed that recovery entirely, so a process killed mid-write
+     * looked like a run that had never existed — losing recorded results that were
+     * still recoverable.
+     *
+     * A run that cannot be read is reported as [LoadState.Corrupt], which is
+     * distinct from [LoadState.Absent]: "I cannot read this run" must not be
+     * presented as "this run does not exist".
+     */
     @Synchronized
-    fun loadRun(runId: String): Run? {
-        val text = runCatching { runFile(runId).readText() }.getOrNull() ?: return null
-        val json = runCatching { JSONObject(text) }.getOrNull() ?: return null
-        return Run.fromJson(json)
+    fun loadRun(runId: String): Run? = (readRun(runId) as? LoadState.Loaded)?.run
+
+    /** Outcome of reading a run file, with the failure reason preserved. */
+    sealed class LoadState {
+        data class Loaded(val run: Run) : LoadState()
+        object Absent : LoadState()
+        data class Corrupt(val reason: String) : LoadState()
+    }
+
+    /** Read a run and report precisely why it could not be read, if it could not. */
+    @Synchronized
+    fun readRun(runId: String): LoadState {
+        val file = AtomicFile(runFile(runId))
+        if (!file.baseFile.exists() && !File(file.baseFile.path + ".bak").exists()) {
+            return LoadState.Absent
+        }
+        val text = runCatching { file.openRead().bufferedReader().use { it.readText() } }
+            .getOrElse { return LoadState.Corrupt(it.javaClass.simpleName) }
+        if (text.isBlank()) return LoadState.Corrupt("empty")
+        val json = runCatching { JSONObject(text) }
+            .getOrElse { return LoadState.Corrupt("malformed json") }
+        val run = runCatching { Run.fromJson(json) }
+            .getOrElse { return LoadState.Corrupt("unreadable fields: ${'$'}{it.javaClass.simpleName}") }
+        return LoadState.Loaded(run)
     }
 
     /**
@@ -397,26 +528,39 @@ class EvaluationStore(private val context: Context) {
      */
     data class CandidateAssessment(
         val caseId: String,
+        /**
+         * The run whose translation was assessed. An assessment answers a question
+         * about *one* specific translation, so this is part of its identity: keyed
+         * by case id alone, an old assessment would attach itself to a newer run's
+         * translation that it never saw.
+         *
+         * Null marks a legacy record written before run binding existed. Those are
+         * preserved as unbound rather than being attributed to any run.
+         */
         val runId: String?,
-        val meaning: Int? = null,
-        val fluency: Int? = null,
-        val grammar: Int? = null,
-        val context: Int? = null,
-        val terminology: Int? = null,
-        val completeness: Int? = null,
+        val meaning: String = RATING_NOT_REVIEWED,
+        val fluency: String = RATING_NOT_REVIEWED,
+        val grammar: String = RATING_NOT_REVIEWED,
+        val context: String = RATING_NOT_REVIEWED,
+        val terminology: String = RATING_NOT_REVIEWED,
+        val completeness: String = RATING_NOT_REVIEWED,
         val status: String = STATUS_NOT_REVIEWED,
         val reviewer: String? = null,
         val decidedAt: Long? = null,
         val reason: String? = null,
     ) {
+        /** All six ratings, in display order. */
+        fun ratings(): List<Pair<String, String>> = listOf(
+            "meaning" to meaning, "fluency" to fluency, "grammar" to grammar,
+            "context" to context, "terminology" to terminology, "completeness" to completeness,
+        )
+
+        /** True when at least one criterion carries an actual judgement. */
+        fun hasAnyJudgement(): Boolean = ratings().any { it.second != RATING_NOT_REVIEWED }
+
         fun toJson() = JSONObject().apply {
             put("case_id", caseId); putOpt("run_id", runId)
-            meaning?.let { put("meaning", it) } ?: put("meaning", STATUS_NOT_REVIEWED)
-            fluency?.let { put("fluency", it) } ?: put("fluency", STATUS_NOT_REVIEWED)
-            grammar?.let { put("grammar", it) } ?: put("grammar", STATUS_NOT_REVIEWED)
-            context?.let { put("context", it) } ?: put("context", STATUS_NOT_REVIEWED)
-            terminology?.let { put("terminology", it) } ?: put("terminology", STATUS_NOT_REVIEWED)
-            completeness?.let { put("completeness", it) } ?: put("completeness", STATUS_NOT_REVIEWED)
+            ratings().forEach { (key, value) -> put(key, value) }
             put("status", status); putOpt("reviewer", reviewer)
             decidedAt?.let { put("decided_at", it) } ?: put("decided_at", JSONObject.NULL)
             putOpt("reason", reason)
@@ -427,10 +571,28 @@ class EvaluationStore(private val context: Context) {
             const val STATUS_REVIEWED = "reviewed"
 
             fun fromJson(j: JSONObject): CandidateAssessment {
-                fun rating(key: String): Int? {
-                    if (!j.has(key) || j.isNull(key)) return null
-                    val raw = j.opt(key)
-                    return if (raw is Int) raw else null
+                /**
+                 * Read one rating, accepting both the current string vocabulary and
+                 * the schema-1 integer form (0..3 or null).
+                 *
+                 * Legacy `null` mapped to "not reviewed" because that is all it could
+                 * have meant: schema 1 had no way to express "not applicable", so
+                 * reading it as such would invent a judgement nobody made.
+                 */
+                fun rating(key: String): String {
+                    if (!j.has(key) || j.isNull(key)) return RATING_NOT_REVIEWED
+                    return when (val raw = j.opt(key)) {
+                        is Int -> {
+                            if (raw in 0..3) raw.toString() else RATING_NOT_REVIEWED
+                        }
+                        is String -> when (raw) {
+                            RATING_NOT_APPLICABLE -> RATING_NOT_APPLICABLE
+                            RATING_NOT_REVIEWED -> RATING_NOT_REVIEWED
+                            "0", "1", "2", "3" -> raw
+                            else -> RATING_NOT_REVIEWED
+                        }
+                        else -> RATING_NOT_REVIEWED
+                    }
                 }
                 return CandidateAssessment(
                     caseId = j.getString("case_id"),
@@ -485,12 +647,38 @@ class EvaluationStore(private val context: Context) {
     fun loadReferenceReviews(): List<ReferenceReview> =
         readObjectArray(reviewFile).mapNotNull { runCatching { ReferenceReview.fromJson(it) }.getOrNull() }
 
+    /**
+     * Save a candidate assessment.
+     *
+     * Identity is `(caseId, runId)`. Saving for a different run must never replace
+     * an assessment made about another run's translation, and a legacy record with
+     * no run id is a different record again — it is matched only by another
+     * unbound save, never merged into a bound one.
+     */
     @Synchronized
     fun saveCandidateAssessment(assessment: CandidateAssessment) {
+        require(assessment.reviewer?.isNotBlank() == true) {
+            "a reviewer name is required for a candidate assessment"
+        }
         val list = loadCandidateAssessments()
             .filterNot { it.caseId == assessment.caseId && it.runId == assessment.runId } + assessment
         writeObjectArray(annotationFileFor("assessments"), list.map { it.toJson() })
     }
+
+    /** Assessments belonging to exactly one run. Unbound legacy records are excluded. */
+    @Synchronized
+    fun loadAssessmentsForRun(runId: String): List<CandidateAssessment> =
+        loadCandidateAssessments().filter { it.runId == runId }
+
+    /** The assessment for one case in one run, if a reviewer has made one. */
+    @Synchronized
+    fun assessmentFor(caseId: String, runId: String): CandidateAssessment? =
+        loadCandidateAssessments().firstOrNull { it.caseId == caseId && it.runId == runId }
+
+    /** Legacy assessments with no run binding. Preserved, never auto-attributed. */
+    @Synchronized
+    fun loadUnboundAssessments(): List<CandidateAssessment> =
+        loadCandidateAssessments().filter { it.runId == null }
 
     @Synchronized
     fun loadCandidateAssessments(): List<CandidateAssessment> =
@@ -524,27 +712,38 @@ class EvaluationStore(private val context: Context) {
     // ------------------------------------------------------------- export
 
     /**
-     * Build the export payload.
+     * Build the export payload for one run.
      *
-     * Includes every case the run knows about plus any dataset case it does not,
-     * so a missing case is exported as `missing` rather than being absent — an
-     * export that silently omits the failures would overstate the run.
+     * Takes the full corpus ([corpusCases]) rather than bare ids, so a case with no
+     * recorded result still exports with its real English source text. The previous
+     * version received ids and wrote `sourceText = ""`, which preserved the case's
+     * existence while destroying the only thing that made it identifiable.
+     *
+     * Every corpus case appears, in stable id order, whether or not it ran — an
+     * export that silently omits the cases that never ran would overstate the run.
      */
     @Synchronized
-    fun exportRun(runId: String, datasetCaseIds: List<String>): JSONObject? {
+    fun exportRun(runId: String, corpusCases: List<CorpusCase>): JSONObject? {
         val run = loadRun(runId) ?: return null
         val byId = run.cases.associateBy { it.caseId }
         val reviews = loadReferenceReviews().associateBy { it.caseId }
-        val assessments = loadCandidateAssessments().associateBy { it.caseId }
+        // Assessments are bound to (caseId, runId): only those made about *this*
+        // run's translation are attached. Assessments for other runs, and legacy
+        // records with no binding, are deliberately left out.
+        val assessments = loadAssessmentsForRun(runId).associateBy { it.caseId }
 
-        val cases = datasetCaseIds.sorted().map { caseId ->
+        val cases = corpusCases.sortedBy { it.caseId }.map { corpusCase ->
+            val caseId = corpusCase.caseId
+            // A case with no result is exported as `missing`, carrying the corpus
+            // source text. No translation is invented for it.
             val result = byId[caseId] ?: CaseResult(
                 caseId = caseId,
-                sourceText = "",
+                sourceText = corpusCase.sourceText,
                 processingStatus = STATE_MISSING,
             )
             JSONObject().apply {
                 put("case_id", caseId)
+                put("source_text", corpusCase.sourceText)
                 put("result", result.toJson())
                 reviews[caseId]?.let { put("reference_review", it.toJson()) }
                     ?: put("reference_review", JSONObject.NULL)
@@ -553,21 +752,53 @@ class EvaluationStore(private val context: Context) {
             }
         }
 
-        val present = run.cases.map { it.processingStatus }.groupingBy { it }.eachCount()
+        val attempted = run.cases.count { isAttempt(it.processingStatus) }
+        val inScope = run.requestedCaseIds
+        val scopeSet = inScope?.toSet()
+        val statusCounts = JSONObject().apply {
+            for (state in listOf(STATE_OK, STATE_EMPTY, STATE_FAILED, STATE_NOT_RUN, STATE_MISSING)) {
+                put(state, corpusCases.count { c ->
+                    val recorded = byId[c.caseId]
+                    (recorded?.processingStatus ?: STATE_MISSING) == state
+                })
+            }
+        }
+
         return JSONObject().apply {
             put("schema_version", SCHEMA_VERSION)
             put("export_kind", "corpus_benchmark_run")
+            put("exported_at", System.currentTimeMillis())
             put("run", run.toJson().apply { remove("cases") })
-            put("dataset_case_count", datasetCaseIds.size)
-            put("status_counts", JSONObject(present as Map<*, *>))
-            put("missing_case_count", datasetCaseIds.count { it !in byId })
+            put("corpus_case_count", corpusCases.size)
+            // Scope and coverage are reported separately on purpose: a run of one
+            // case can be complete (1/1) while covering 1 of 40. Collapsing these
+            // into one number is how a partial run looks like a full one.
+            put("requested_case_count", inScope?.size ?: JSONObject.NULL)
+            put("scope_known", inScope != null)
+            put("attempted_count", attempted)
+            put("pending_case_count", if (inScope == null) JSONObject.NULL else run.pendingCount)
+            put("missing_case_count", corpusCases.count { it.caseId !in byId })
+            put("out_of_scope_case_count",
+                if (scopeSet == null) JSONObject.NULL
+                else corpusCases.count { it.caseId !in scopeSet })
+            put("status_counts", statusCounts)
             put("cases", JSONArray(cases))
-            // Live-sample annotations are deliberately not part of a run export:
-            // they are a different kind of evidence and are exported with the
-            // samples that produced them.
+            // Provenance: what these numbers are, and what they are not.
+            put("native_model_context", false)
+            put("translation_quality_claimed", false)
             put("live_sample_annotations_included", false)
+            put("assessment_binding", "case_id+run_id")
+            put("unbound_legacy_assessments_included", false)
         }
     }
+
+    /**
+     * Minimal corpus case shape for export.
+     *
+     * Declared here rather than importing the corpus asset reader so the store
+     * stays free of asset parsing; the runner supplies the values it already has.
+     */
+    data class CorpusCase(val caseId: String, val sourceText: String)
 
     /** Extra files live next to the run files; exposed for tests. */
     fun directory(): File = dir
