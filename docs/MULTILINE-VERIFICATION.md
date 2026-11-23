@@ -17,7 +17,8 @@ engine is used unchanged.
 | --- | --- |
 | Starting commit (RC4) | `760707d3dda4fd528be68620c591f9af9be31497` |
 | Baseline lock (tree byte-identical to RC4) | `5285de96e030666375e4dbd69b9b4a4602b527b2` |
-| Branch head reported here | `d304548` on `arena/f6ce5fe4-manhwalens-v2` |
+| Verified code commit | `d304548` on `arena/f6ce5fe4-manhwalens-v2` |
+| Commit carrying this report | `6119a67` — documentation only, no code |
 | Files inspected | the 30 files in `pipeline/`, the 16 in `overlay/`, `ocr/ColorRecovery.kt`, `ocr/TextRecognitionClient.kt`, `capture/ScreenCaptureService.kt`, `util/BitmapUtils.kt` |
 | Files modified | **4 of those** (see below), plus tests and CI evidence collection |
 
@@ -99,7 +100,11 @@ than crop height, so a tall bubble of small glyphs is no longer read at 1×.
 
 ## 4. Measured results
 
-All figures below are from CI runs on the reported head. Unit job and device job both **success**.
+All figures below are from the CI runs on `d304548`, where the **unit job and the device job were
+both success**. The commit that adds this report changes no path the device workflow watches
+(`.github/workflows/quality.yml` triggers on `.github/**`, `app/src/**` and `app/build.gradle.kts`),
+so the device evidence for the code is the `d304548` run and this report does not claim a separate
+device run for a documentation change.
 
 ### 4a. Device matrix (real on-device OCR client, emulator API 34 x86_64)
 
