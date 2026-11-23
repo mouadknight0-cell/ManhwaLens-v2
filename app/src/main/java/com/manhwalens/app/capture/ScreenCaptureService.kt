@@ -777,6 +777,17 @@ class ScreenCaptureService : Service() {
                         com.manhwalens.app.diagnostics.SessionScorecard.stage(id,validatedId,"translated")
                         com.manhwalens.app.diagnostics.SessionScorecard.stage(id,validatedId,"TRANSLATION_SUCCEEDED")
                         com.manhwalens.app.diagnostics.SessionScorecard.stage(id,validatedId,"OUTPUT_VALIDATED")
+                        // Separate, advisory review of what the Arabic says versus what the English
+                        // said. `OUTPUT_VALIDATED` keeps its existing structural meaning and is not
+                        // redefined by this: a review failure is recorded as its own stage so a
+                        // confirmed translation and an unreviewed one stay distinguishable.
+                        runCatching {
+                            val verdict = com.manhwalens.app.translate.MeaningValidator.review(
+                                b.original, b.translated)
+                            if (!verdict.passed) verdict.reasons.forEach { reason ->
+                                com.manhwalens.app.diagnostics.SessionScorecard.stage(id, validatedId, reason)
+                            }
+                        }
                     }
                 }
                 completed.forEach { b->b.errorCode?.let { error ->
