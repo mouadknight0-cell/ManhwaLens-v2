@@ -95,12 +95,22 @@ internal class ColorRecovery {
         // Return early only when the detector finds nothing that the confident regions do not
         // already cover, which is the actual condition for "the page is done".
         val proposals=propose(b)
+        // A page with nothing recognized must still be recovered: the empty first pass is exactly the
+        // case recovery exists for. `proposals.all{}` is vacuously true on an empty detector result and
+        // must not be allowed to short-circuit.
         if(initial.isNotEmpty() && weak.isEmpty() && proposals.all { p -> initial.any { overlap(box(it),p)>.5 } })return initial
         // Defect B: page proposals were generated only when EVERY initial region was weak
         // (`if(initial.size==weak.size)`), so one confident block hid a missed caption. Proposals
         // are always considered and discarded only where they retrace a region already read.
         val proposed=proposals.filter { p -> initial.none { overlap(box(it),p)>.5 } }
-        val candidates=(weak.sortedBy { score(it) }.map(::box)+proposed).fold(mutableListOf<Rect>()){a,x->if(a.none { overlap(it,x)>.5 })a.add(x);a}.take(4)
+        // Weak regions first (a partial transcription is the highest-value target), then page
+        // proposals, de-duplicated by overlap and capped for time. The cap is applied per source so
+        // one weak box cannot consume every slot and hide a caption that discovery just found.
+        val weakBoxes=weak.sortedBy { score(it) }.map(::box)
+            .fold(mutableListOf<Rect>()){a,x->if(a.none { overlap(it,x)>.5 })a.add(x);a}.take(WEAK_CANDIDATES)
+        val discoveryBoxes=proposed
+            .fold(mutableListOf<Rect>()){a,x->if(a.none { overlap(it,x)>.5 })a.add(x);a}.take(DISCOVERY_CANDIDATES)
+        val candidates=(weakBoxes+discoveryBoxes).fold(mutableListOf<Rect>()){a,x->if(a.none { overlap(it,x)>.5 })a.add(x);a}
         val output=initial.toMutableList()
         for(raw in candidates){if(android.os.SystemClock.elapsedRealtime()>=deadline)break;val r=Rect(max(0,raw.left-10),max(0,raw.top-10),min(b.width,raw.right+10),min(b.height,raw.bottom+10));if(r.width()<4||r.height()<4||r.width()*r.height()>350000)continue
             val fingerprint=hash(b,r);val visual=perceptual(b,r);val tr=tracks.firstOrNull { overlap(it.box,r)>.5 }?:Track(Rect(r)).also { tracks.addLast(it);if(tracks.size>32)tracks.removeFirst() }
@@ -141,6 +151,10 @@ internal class ColorRecovery {
             }
         };return output.sortedWith(compareBy({it.top},{it.left}))
     }
+    /** Recovery crops for regions the first pass read only partially. */
+    private val WEAK_CANDIDATES=3
+    /** Recovery crops for text the detector sees but OCR did not read as weak. */
+    private val DISCOVERY_CANDIDATES=2
     internal fun duplicateInput(success:Boolean,original:IntArray,other:IntArray)=success && original.contentEquals(other)
     private fun variant(pass:String,c:IntArray,y:IntArray,h:IntArray):IntArray {
         if(pass=="original")return c

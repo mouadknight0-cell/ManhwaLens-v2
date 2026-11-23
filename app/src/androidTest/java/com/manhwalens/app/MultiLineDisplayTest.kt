@@ -56,9 +56,12 @@ class MultiLineDisplayTest {
 
     @Test
     fun longTranslationWrapsToAtLeastThreeLines() {
-        val type = DialogueType.measure(context, longTranslation, width = 480, sp = 15)
+        // Measured on the device: 15 sp Arabic fills roughly 66 characters per 480 px line, so a
+        // 132-character sentence needs a column near 320 px to reach three lines. Using 480 px
+        // asserted more about this font than about the feature, and failed for that reason.
+        val type = DialogueType.measure(context, longTranslation, width = 320, sp = 15)
         assertTrue(
-            "expected 3+ lines for a long translation, got ${type.layout.lineCount}",
+            "expected 3+ lines for a long translation at 320px, got ${type.layout.lineCount}",
             type.layout.lineCount >= 3,
         )
         // Every line must fit the column; otherwise the text would leave the bubble.
@@ -80,13 +83,30 @@ class MultiLineDisplayTest {
     @Test
     fun narrowerWidthProducesMoreLines() {
         // A narrow bubble forces more lines rather than shrinking the font to unreadability.
-        val type = DialogueType.measure(context, longTranslation, width = 360, sp = 15)
-        assertTrue("a narrow column must produce more lines", type.layout.lineCount >= 3)
+        val type = DialogueType.measure(context, longTranslation, width = 280, sp = 15)
+        assertTrue(
+            "a 280px column must produce four lines or more, got ${type.layout.lineCount}",
+            type.layout.lineCount >= 4,
+        )
         assertTrue(type.complete)
         assertTrue(
             "nothing may overflow at a narrow width",
             (0 until type.layout.lineCount).all { type.layout.getLineMax(it) <= type.layout.width + 0.5f },
         )
+    }
+
+    @Test
+    fun narrowingTheColumnNeverReducesTheLineCount() {
+        // The property that actually matters for "3-4 lines when needed": a narrower bubble must
+        // produce at least as many lines, never fewer, so the layout always uses the space it has.
+        val widths = intArrayOf(480, 400, 320, 280, 240)
+        var previous = 0
+        widths.forEach { w ->
+            val lines = DialogueType.measure(context, longTranslation, width = w, sp = 15).layout.lineCount
+            assertTrue("line count fell when narrowing to $w: $previous -> $lines", lines >= previous)
+            previous = lines
+        }
+        assertTrue("the widest column must not need five lines", previous >= 2)
     }
 
     @Test

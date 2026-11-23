@@ -2,6 +2,7 @@ package com.manhwalens.app.overlay
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -46,13 +47,16 @@ class MultiLineLayoutTest {
     // ── the hard requirement: four lines must be achievable ──────────────────────────
 
     @Test
-    fun `a four line layout is a legal outcome and is not penalised into losing`() {
-        // Four balanced lines, all near the column width: this is the shape a long translation
-        // should be allowed to take inside a tall bubble.
+    fun `a four line layout is a legal outcome and is not rejected by any cap`() {
+        // Four balanced lines near the column width: the shape a long translation takes in a tall
+        // bubble. The planner must score it, never veto it for having four lines.
         val four = candidate(listOf(480f, 495f, 470f, 460f), sp = 15, boxH = 260)
-        val score = ArabicLayoutPlanner.score(four, anchorWidth = 500, anchorHeight = 200)
-        assertTrue("four balanced lines must score finitely", score.isFinite())
-        assertTrue("four balanced lines must not be rejected by a cap", four.lineCount == 4)
+        val two = candidate(listOf(490f, 480f), boxH = 140)
+        assertTrue("four balanced lines must score finitely", ArabicLayoutPlanner.score(four, 500, 200).isFinite())
+        assertEquals(4, four.lineCount)
+        // Choosing between them is the caller's job, ordered by the measured score.
+        val chosen = ArabicLayoutPlanner.best(listOf(two, four), 500, 200)
+        assertNotNull("a four line candidate must remain selectable", chosen)
     }
 
     @Test

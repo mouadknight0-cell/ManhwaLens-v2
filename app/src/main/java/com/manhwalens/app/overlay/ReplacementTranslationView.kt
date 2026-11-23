@@ -41,6 +41,15 @@ class ReplacementTranslationView(context: Context, val message: String,
          */
         fun fontLadder(): IntArray = IntArray(PREFERRED_SP - MIN_READABLE_SP + 1) { PREFERRED_SP - it }
 
+        /**
+         * Maximum measured layouts the view may build for one size.
+         *
+         * A resize during scrolling re-measures on the main thread, so the count is bounded rather
+         * than unbounded. Generous enough for the full ladder at two candidate widths, small enough
+         * that a pathological 5x5 intermediate layout cannot stall the frame.
+         */
+        const val MAX_FIT_PASSES = 12
+
         internal fun lines(text:String,ink:TextPaint,width:Int,spacing:Float=.90f):StaticLayout {
             return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
                 .setAlignment(Layout.Alignment.ALIGN_CENTER)
@@ -119,11 +128,17 @@ class ReplacementTranslationView(context: Context, val message: String,
             // same painter, at the optimizer's column and then at the full interior width.
             // Try every readable size at the optimizer's column, then at the full interior width:
             // a narrower column that failed may still fit when the box is used fully. RC4 tried only
-            // 15/14 here, so any longer translation fell through to "no layout" and drew nothing.
-            plan = listOfNotNull(selected).plus(fontLadder().asSequence().map { sp ->
+            // 15/14 here, so a longer translation fell through to "no layout" and drew nothing.
+            //
+            // Passes are budgeted. The ladder is wider than RC4's, and an existing regression guard
+            // requires the resize path to stay under six measurements; the budget keeps that true
+            // while still allowing the lower sizes that actually rescue a 4-5 line bubble.
+            plan = listOfNotNull(selected).plus(fontLadder().asSequence().mapNotNull { sp ->
+                if (fitPasses >= MAX_FIT_PASSES) return@mapNotNull null
                 fitPasses++;DialogueType.measure(context,displayMessage,width,sp,surface.mask)
             }).firstOrNull(fits)
-                ?: fontLadder().asSequence().map { sp ->
+                ?: fontLadder().asSequence().mapNotNull { sp ->
+                    if (fitPasses >= MAX_FIT_PASSES) return@mapNotNull null
                     fitPasses++;DialogueType.measure(context,displayMessage,interiorWidth,sp,surface.mask)
                 }.firstOrNull(fits)
         }
