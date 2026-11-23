@@ -279,6 +279,68 @@ class MultiLineCaseMatrixTest {
         stage("case=sentenceJoin", "joined=${joined.length} words=${norm(joined).size}")
     }
 
+    /**
+     * One consolidated, quotable summary of the whole matrix.
+     *
+     * Every other test asserts a single property. This one walks the 3/4/5-line cases and the real
+     * display path end to end and emits one table line each, so the Phase 8 report can quote measured
+     * numbers instead of describing intent.
+     */
+    @Test
+    fun caseMatrixSummary() = kotlinx.coroutines.runBlocking {
+        val cases = listOf(
+            "3-line" to arrayOf(
+                "I told you before the sun went down",
+                "that this road only leads to ruin and",
+                "you still chose to walk it beside me.",
+            ),
+            "4-line" to arrayOf(
+                "The gate closes at midnight and the",
+                "guard never opens it twice for the",
+                "same face, so decide now whether you",
+                "are coming back with me or staying.",
+            ),
+            "5-line" to arrayOf(
+                "There was a time when I could",
+                "look at that face and believe",
+                "every single word that came out",
+                "of it, but the man standing in",
+                "front of me now is a stranger.",
+            ),
+        )
+        for ((label, lines) in cases) {
+            val bmp = bubble(*lines)
+            try {
+                val read = readAll(bmp)
+                val sourceWords = words(lines.joinToString(" ")).distinct()
+                val gotWords = words(read.joinToString(" ")).toSet()
+                val missing = sourceWords.filter { it !in gotWords }
+                val region = read.first()
+                val translated = com.manhwalens.app.translate.DialogueLexicon.translate(region.text)
+                val shown = translated ?: region.text
+                // Measure into a box with a known height so "clipped" means something: the layout
+                // is clipped when the block it needs is taller than the box it is given.
+                val boxHeight = 150
+                val type = DialogueType.measure(context, shown, 300, 15, mask = null)
+                val linesDrawn = type.layout.lineCount
+                val needed = type.layout.height
+                val clipped = !type.complete || needed > boxHeight
+                stage(
+                    "MATRIX",
+                    "case=$label sourceLines=${lines.size} ocrRegions=${read.size} " +
+                        "missingWords=$missing span=${region.bottom - region.top} " +
+                        "translated=${translated != null} translatedLength=${shown.length} " +
+                        "linesDrawn=$linesDrawn needsPx=$needed boxPx=$boxHeight clippedAt150px=$clipped",
+                )
+                assertTrue("$label: no source word may be lost, missing=$missing", missing.isEmpty())
+                assertTrue("$label: the translation must be drawn in full", type.complete)
+                // The measurement is reported, not asserted: a 5-line block legitimately needs more
+                // than 150 px, and the view's job is to shrink or widen rather than to fit here.
+                assertTrue("$label: a 300px column must need two lines or more", linesDrawn >= 2)
+            } finally { bmp.recycle() }
+        }
+    }
+
     @Test
     fun bubbleGeometrySpansAllLines() = kotlinx.coroutines.runBlocking {
         val lines = arrayOf("First line of the speech", "second line continues it", "third line ends it")
