@@ -9,7 +9,7 @@ on:
       version_name:
         description: Candidate versionName (must end with -rc, e.g. 1.1.42-rc4)
         required: true
-        default: 1.1.42-rc4
+        default: 1.1.42-rc7
       installed_version_code:
         description: versionCode currently installed on the test phone; the candidate is computed strictly above it
         required: true
@@ -40,13 +40,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VERSION_NAME: ${{ inputs.version_name || '1.1.42-rc4' }}
+  VERSION_NAME: ${{ inputs.version_name || '1.1.42-rc7' }}
   # The candidate must be installable *over* what is already on the phone, so the floor is
   # supplied explicitly instead of guessed from the repository's latest release.
-  INSTALLED_VERSION_CODE: ${{ inputs.installed_version_code || '217442875' }}
+  INSTALLED_VERSION_CODE: ${{ inputs.installed_version_code || '217442876' }}
   # Explicit hard floor: the candidate must be installable over the newest official release
   # even when nothing is installed on the test phone. Fail closed if it cannot be met.
-  MIN_INSTALLED_VERSION_CODE: ${{ inputs.min_installed_version_code || '217442875' }}
+  MIN_INSTALLED_VERSION_CODE: ${{ inputs.min_installed_version_code || '217442876' }}
   # Makes the Gradle release task refuse an unsigned output path, even if someone sets
   # ALLOW_UNSIGNED_RELEASE in this job by mistake.
   CANDIDATE_RELEASE_BUILD: 'true'
@@ -295,11 +295,44 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Refuse a candidate name whose tag is already taken
+        # A tag that already exists belongs to an earlier build. Reusing it would either
+        # move a published ref (destroying evidence) or attach this APK to a tag that
+        # names different code. Neither is acceptable, so a taken name is a hard stop
+        # and the operator picks the next one.
+        id: tagfree
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: rc-${{ env.VERSION_NAME }}
+        run: |
+          set -euo pipefail
+          set +e
+          python3 .github/scripts/verify_release_tag.py --tag "$TAG" --exists
+          status=$?
+          set -e
+          if [ "$status" = 3 ]; then
+            echo "::notice title=Candidate tag::${TAG} is unused; this run may publish it"
+            exit 0
+          fi
+          if [ "$status" != 0 ]; then
+            echo "::error::could not determine whether $TAG exists (exit $status)"
+            exit 1
+          fi
+          echo "::error title=Candidate tag taken::$TAG already exists. Publishing would move a published ref or attach this APK to a tag that names different code. Choose the next unused candidate name."
+          exit 1
+
       - name: Publish the APK as a direct download (prerelease, never latest)
         # A workflow artefact is only ever delivered as a zip. The owner needs the .apk
         # itself, so the same verified file is attached to a PRERELEASE whose tag is
         # derived from the candidate version. Prereleases are skipped by the published-
         # release lookup above and can never become "Latest", so nothing is published.
+        #
+        # The tag is created with an explicit `--target "$GITHUB_SHA"`. Without it GitHub
+        # tags the repository's DEFAULT BRANCH, which is how rc4 ended up with a tag on
+        # main while its APK carried a different commit. The tag is then re-resolved
+        # through the Git API and compared to the APK identity; if they disagree, this
+        # step fails before any asset is attached.
         id: direct
         env:
           GH_TOKEN: ${{ github.token }}
@@ -308,23 +341,35 @@ jobs:
           set -euo pipefail
           apk="artifacts/ManhwaLens-${{ env.VERSION_NAME }}-release.apk"
           sha=$(awk '{print $1}' artifacts/SHA256SUMS.txt)
+          # The commit this APK was actually built from, as recorded inside the APK's
+          # identity file. Resolved from the APK, not from $GITHUB_SHA, so a mismatch
+          # between the two is caught here rather than published.
+          apk_commit=$(grep -E '^git_revision=' artifacts/APK-IDENTITY.txt | cut -d= -f2)
+          if [ "$apk_commit" != "$GITHUB_SHA" ]; then
+            echo "::error::the APK identity $apk_commit is not the commit under test $GITHUB_SHA"
+            exit 1
+          fi
           notes="Official signed RELEASE build for physical-device testing. Not a published release.
 
-          - commit: \`$(git rev-parse HEAD)\`
+          - commit: \`$GITHUB_SHA\`
           - APK SHA-256: \`$sha\`
           - signer certificate SHA-256: \`$(tr -d ' \n' < signing/release-cert.sha256)\`
           - versionName/versionCode: see APK-IDENTITY.txt
 
           $(cat artifacts/APK-IDENTITY.txt)"
-          # Create on first run, refresh afterwards; assets are replaced (--clobber) so the
-          # download URL stays stable across reruns of the same candidate version.
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" \
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
             --prerelease --title "Release candidate ${TAG#rc-}" --notes "$notes"
-          gh release edit "$TAG" --prerelease --notes "$notes" >/dev/null
-          gh release upload "$TAG" "$apk" artifacts/APK-IDENTITY.txt artifacts/SHA256SUMS.txt artifacts/release-cert.sha256 --clobber
+          # Resolve the tag the way a consumer would: through the Git API, following an
+          # annotated tag to its commit. The release title and notes prove nothing.
+          python3 .github/scripts/verify_release_tag.py --tag "$TAG" --expect "$GITHUB_SHA" \
+            | tee artifacts/TAG-RESOLUTION.txt
+          gh release upload "$TAG" "$apk" artifacts/APK-IDENTITY.txt artifacts/SHA256SUMS.txt \
+            artifacts/release-cert.sha256
           url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/$(basename "$apk")"
           echo "direct_apk_url=$url" >> "$GITHUB_OUTPUT"
           echo "::notice title=Direct APK download::${url}"
+          echo "::notice title=Tag target::${TAG} -> $GITHUB_SHA (verified through the Git API)"
 
       - name: Verify the direct download really serves the tested APK
         # The whole point is a link that hands over the .apk, so check the published asset

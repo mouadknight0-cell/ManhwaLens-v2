@@ -369,6 +369,11 @@ class StashUntouchedTest(unittest.TestCase):
             "app/src/main/java/com/manhwalens/app/ui/SettingsScreen.kt",
             "app/src/main/java/com/manhwalens/app/MainActivity.kt",
             "docs/TRANSLATION-EVALUATION-PHASE-B2.1",
+            # RC5: the release tag must be proven to name the build commit. The
+            # resolver and its tests are this phase's own work, and the workflow
+            # that publishes the candidate is where the defect lived.
+            ".github/scripts/verify_release_tag.py",
+            ".github/tests/test_release_tag_binding.py",
         )
         unexpected = [l for l in lines if not any(m in l for m in allowed)]
         self.assertEqual([], unexpected, f"unrelated files present in worktree: {unexpected}")
