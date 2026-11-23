@@ -63,8 +63,16 @@ class MultiLineCaseMatrixTest {
     }
 
     private fun readAll(bmp: Bitmap): List<TextRegion> = kotlinx.coroutines.runBlocking {
-        val recognized = TextRecognitionClient().recognize(bmp, "en")
-        DialogueAssembler.assemble(recognized) { _, _ -> true }.sortedBy { it.top }
+        // Log the raw recogniser output as well as the assembled result. Without this, a word
+        // loss cannot be attributed: it is either the recogniser itself or a later stage that
+        // rewrote the text, and those need completely different fixes.
+        val audit = mutableListOf<String>()
+        val recognized = TextRecognitionClient().recognize(bmp, "en", audit = { audit.add(it) })
+        val assembled = DialogueAssembler.assemble(recognized) { _, _ -> true }.sortedBy { it.top }
+        stage("ocr-before-assembly", "count=${recognized.size} texts=${recognized.map { it.text }}")
+        stage("ocr-after-assembly", "count=${assembled.size} texts=${assembled.map { it.text }}")
+        audit.forEach { stage("ocr-audit", it) }
+        assembled
     }
 
     private fun words(s: String) = s.lowercase()
@@ -99,7 +107,7 @@ class MultiLineCaseMatrixTest {
 
     @Test
     fun oneLineIsReadCompletely() = kotlinx.coroutines.runBlocking {
-        val lines = arrayOf("I never wanted this fight.")
+        val lines = arrayOf("We never wanted this fight.")
         val bmp = bubble(*lines)
         try {
             val read = readAll(bmp)
