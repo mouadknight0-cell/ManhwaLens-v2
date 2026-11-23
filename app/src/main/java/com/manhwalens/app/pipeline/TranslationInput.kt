@@ -143,7 +143,13 @@ object TranslationInput {
 
     /** The OCR repair chain, guarded so a masked sentinel can never be rewritten or dropped. */
     private fun prepareRepair(masked:String, shielded:List<String>):String {
-        val repaired = ReadingEnglish.repair(OcrLexicon.repair(EnglishOcrRepair.repair(masked)))
+        val corrected = ReadingEnglish.repair(OcrLexicon.repair(EnglishOcrRepair.repair(masked)))
+        // Restore apostrophes the recogniser dropped, *after* the corrector has already decided
+        // each token is a real word it will not rewrite. `ILL` staying `ILL` was the right call
+        // (it is a word); turning it into `I'LL` needs the following word as evidence, which is
+        // exactly what this stage supplies. Every proposal, accepted or refused, is recorded.
+        val (repaired, ledger) = ContractionRepair.repair(corrected)
+        if (ledger.isNotEmpty()) RepairLedger.last = RepairLedger.summary(ledger)
         if(shielded.isEmpty()) return repaired
         val sentinels = Regex("\\b7\\d{3}\\b").findAll(masked).map { it.value }.toSet()
         return if(sentinels.all { it in repaired }) repaired else masked
