@@ -7,6 +7,78 @@ object ReadingEnglish {
     private val tokens=Regex("[A-Za-z0-9]+(?:['’-][A-Za-z]+)*")
     private val stutter=Regex("\\b([a-z])-((?:\\1)[a-z']+)",RegexOption.IGNORE_CASE)
     private val observed=mapOf("aheao" to "ahead","dio" to "did","angwer" to "answer","commano" to "command","headouarters" to "headquarters","1s" to "is")
+
+    /**
+     * Canonical lookup form for one token.
+     *
+     * OCR loses the apostrophe glyph routinely: `YOU'VE`, `YOU’VE` and `YOUVE` are the same
+     * word, but only the last one reaches the repair chain, and it used to reach it as dead
+     * debris. Keeping the word is the safe answer, and it needs a form the ranked vocabulary
+     * can recognise.
+     *
+     * Two steps only — nothing here edits the displayed text:
+     *  1. curly quotes (`’` U+2019, `‘`) fold to the ASCII apostrophe, so the two spellings of
+     *     one contraction cannot take different paths;
+     *  2. a trailing/embedded apostrophe is stripped **only for the lookup**, because the
+     *     ranked list stores `youre`, `dont`, `wasnt` without it.
+     *
+     * Deliberately narrow: the token is lowercased and nothing else. No trailing `s`/`ed` is
+     * trimmed (that would make `YOURS` look like `your`), no digits are substituted, and no
+     * letters are dropped. A word that is not a contraction simply fails to match and keeps
+     * its apostrophe.
+     */
+    internal fun lookupForm(token: String): String =
+        token.lowercase().replace('\u2019', '\'').replace('\u2018', '\'').replace("'", "")
+
+    /**
+     * Apostrophe-bearing tokens are never rewritten by a proximity suggestion.
+     *
+     * `wasnt` -> `wasn't` is a reviewed contraction repair that the pipeline wants; `you've`
+     * -> `house` is the same fallback firing on a word whose apostrophe OCR dropped. A token
+     * that carries an apostrophe (ASCII or curly) is already evidence the recogniser saw a
+     * contraction, so a symmetric-delete guess from a 20-word domain list is not sufficient
+     * evidence to replace it. Measured: this is what stops `THEY'LL` -> `hell`.
+     */
+    private fun carriesApostrophe(token: String): Boolean =
+        token.any { it == '\'' || it == '\u2019' || it == '\u2018' }
+
+    /**
+     * A contraction whose apostrophe OCR dropped, e.g. `youve`, `theyll`.
+     *
+     * Recognised by structure, not by a word list: a short pronoun/auxiliary stem followed by
+     * one of the contraction tails below. `YOUVE` = `YOU` + `VE`, `THEYLL` = `THEY` + `LL`.
+     * Returning true means "this is a word in its own right, do not guess it away" -- it does
+     * not add an apostrophe, which this phase deliberately does not do.
+     */
+    private fun isContractionForm(word: String): Boolean {
+        val w = word.lowercase()
+        for (tail in contractionTails) {
+            if (w.length <= tail.length || !w.endsWith(tail)) continue
+            val stem = w.dropLast(tail.length)
+            if (stem in pronounStems || stem in auxiliaryStems) return true
+        }
+        return false
+    }
+    private val contractionTails = listOf("ve", "ll", "re", "s", "t", "d", "m")
+    private val pronounStems = setOf(
+        "i", "you", "we", "they", "he", "she", "it", "that", "there", "what", "who", "here", "let", "this",
+    )
+    private val auxiliaryStems = setOf(
+        "is", "was", "are", "were", "do", "does", "did", "have", "has", "had",
+        "could", "would", "should", "can", "wo", "ai", "must",
+    )
+
+    /**
+     * Whether the ranked vocabulary knows this token, in any of the spellings OCR produces.
+     *
+     * Checked before every proximity fallback so a known English word can never be replaced
+     * by a domain-list guess. The raw and apostrophe-stripped forms are both tried, which is
+     * what makes `YOURE` (rank 13295) and `YOU'RE` equally protected.
+     */
+    private fun knownWord(token: String): Boolean {
+        val lower = token.lowercase()
+        return lower in words || lookupForm(token) in words
+    }
     private val context=mapOf("1 SEE" to "I SEE", "THE GARTH" to "THE EARTH", "STILL ALVE" to "STILL ALIVE", "GET YO," to "GET YOU,","A NALL" to "A WALL","THIG IG" to "THIS IS","THEY SAV" to "THEY SAY")
     private val swap=mapOf('8' to "b",'p' to "f",'f' to "p",'o' to "dq",'d' to "o",'g' to "es",'e' to "g",'v' to "y",'y' to "v",'3' to "e",'5' to "s",'s' to "g",'4' to "a",'1' to "il",'0' to "o",'q' to "o")
     fun validCount(text:String)=tokens.findAll(text.lowercase()).count { it.value in words || it.value.replace("'","") in words }
@@ -197,18 +269,34 @@ object ReadingEnglish {
         val contextual=context.entries.fold(stutter.replace(ComicSpelling.context(masked),"$2")){s,e->s.replace(e.key,e.value,ignoreCase=true)}
         return tokens.replace(contextual){ m -> val raw=m.value;val w=raw.lowercase()
             if((raw.any(Char::isLowerCase) && raw.count(Char::isUpperCase)<raw.length/2 && !raw.any(Char::isDigit)) || raw.all(Char::isDigit)) return@replace raw
-            val corrected=observed[w] ?: if(w.length in 4..18 && w !in words) {
+            // Precedence, in order, and nothing below may skip a step:
+            //   1. a token the ranked vocabulary knows in any spelling OCR produces is already
+            //      an English word -- no proximity guess may replace it;
+            //   2. a token carrying an apostrophe is evidence of a contraction the recogniser
+            //      saw, so a domain-list guess is not sufficient evidence to rewrite it;
+            //   3. only then do the reviewed repair stages run, cheapest evidence first.
+            // Steps 1 and 2 exist because a 20-word domain list was allowed to overrule an
+            // 18,000-word vocabulary: `YOUVE` became `HOUSE` and `THEY'LL` became `HELL`.
+            val corrected=observed[w] ?: if(w.length in 4..18 && !knownWord(raw)) {
                 // A plausibly valid inflection (HORNED, RINSING) is not an OCR slip. The glyph
                 // cluster swap used to turn RINSING into RINGING, i.e. it corrupted correct
                 // English that simply is not in the ranked list. Keep the token as written and
                 // let the block report an uncertainty instead of inventing a different word.
-                if(looksInflected(w)) null else {
+                // A contraction form is a word, not debris: neither an apostrophe-bearing token
+                // nor an apostrophe-free contraction (`YOUVE`, `THEYLL`) may be rewritten or
+                // split here. Splitting was the second way `YOUVE` got mutated -- into `YOU VE`.
+                if(looksInflected(w) || carriesApostrophe(raw) || isContractionForm(w)) null else {
                 val hits=mutableSetOf<String>();val chars=w.toCharArray()
                 for(i in chars.indices) for(a in swap[w[i]].orEmpty()) { chars[i]=a
                     String(chars).takeIf(words::contains)?.let(hits::add)
                     for(j in i+1 until chars.size) for(b in swap[w[j]].orEmpty()) { chars[j]=b; String(chars).takeIf(words::contains)?.let(hits::add);chars[j]=w[j] }
                     chars[i]=w[i]
-                };hits.singleOrNull() ?: ComicSpelling.suggest(w) ?: segment(w) ?: insertion(w)
+                }
+                // The domain list is the last resort and is consulted only for a token with no
+                // apostrophe, no known spelling and no glyph-swap evidence. Even here its
+                // suggestion is refused when the token is itself an English contraction that
+                // the vocabulary stores differently, so `YOUVE` keeps its letters.
+                hits.singleOrNull() ?: ComicSpelling.suggest(w) ?: segment(w) ?: insertion(w)
                 }
             } else null
             corrected?.uppercase() ?: raw
