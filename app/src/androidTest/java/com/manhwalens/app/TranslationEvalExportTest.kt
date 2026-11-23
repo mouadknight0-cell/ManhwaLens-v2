@@ -78,19 +78,19 @@ class TranslationEvalExportTest {
                         else -> "ok"
                     }
                     record.put("status", status)
-                        .put("translated", translated)
-                        .put("error_code", block.errorCode ?: JSONObject.NULL)
-                        .put("method", block.method)
-                        .put("duration_ms", block.durationMs ?: JSONObject.NULL)
+                    record.put("translated", translated)
+                    record.put("error_code", block.errorCode ?: JSONObject.NULL)
+                    record.put("method", block.method)
+                    record.put("duration_ms", block.durationMs ?: JSONObject.NULL)
                     Log.i("ManhwaLensEvalExport", "$caseId status=$status len=${translated.length}")
                 } catch (failure: Exception) {
                     // A thrown failure is still a real device observation and is
                     // exported as such rather than dropped.
                     record.put("status", "failed")
-                        .put("translated", "")
-                        .put("error_code", failure.javaClass.simpleName)
-                        .put("method", JSONObject.NULL)
-                        .put("duration_ms", JSONObject.NULL)
+                    record.put("translated", "")
+                    record.put("error_code", failure.javaClass.simpleName)
+                    record.put("method", JSONObject.NULL)
+                    record.put("duration_ms", JSONObject.NULL)
                     Log.i("ManhwaLensEvalExport", "$caseId threw ${failure.javaClass.simpleName}")
                 }
                 results.put(record)
@@ -100,30 +100,37 @@ class TranslationEvalExportTest {
         }
 
         val context = instrumentation.targetContext
-        val device = JSONObject()
-            .put("manufacturer", android.os.Build.MANUFACTURER)
-            .put("model", android.os.Build.MODEL)
-            .put("sdk", android.os.Build.VERSION.SDK_INT)
-            .put("abi", android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "unknown")
-            .put("emulator", isEmulator())
+        val device = JSONObject().apply {
+            put("manufacturer", android.os.Build.MANUFACTURER)
+            put("model", android.os.Build.MODEL)
+            put("sdk", android.os.Build.VERSION.SDK_INT)
+            put("abi", android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "unknown")
+            put("emulator", isEmulator())
+        }
 
-        val engine = JSONObject()
-            .put("engine_id", "mlkit-en-ar")
+        val engine = JSONObject().apply {
+            put("engine_id", "mlkit-en-ar")
             // The commit id cannot be read from inside the app, and inventing one
             // would defeat reproducibility, so it is supplied by whoever runs the
             // test: `-Pandroid.testInstrumentationRunnerArguments.gitRevision=<sha>`.
             // If absent the importer reports the run as unusable as a baseline
             // rather than letting it look traceable.
-            .put("revision", instrumentation.arguments.getString("gitRevision") ?: "unknown")
-            .put("app_version", BuildConfig.VERSION_NAME)
-            .put("model_identity", modelIdentity(ready))
+            put(
+                "revision",
+                androidx.test.platform.app.InstrumentationRegistry.getArguments()
+                    .getString("gitRevision") ?: "unknown",
+            )
+            put("app_version", BuildConfig.VERSION_NAME)
+            put("model_identity", modelIdentity(ready))
+        }
 
-        val payload = JSONObject()
-            .put("schema", schema)
-            .put("dataset_fingerprint", corpus.optString("dataset_fingerprint"))
-            .put("engine", engine)
-            .put("device", device)
-            .put("results", results)
+        val payload = JSONObject().apply {
+            put("schema", schema)
+            put("dataset_fingerprint", corpus.optString("dataset_fingerprint"))
+            put("engine", engine)
+            put("device", device)
+            put("results", results)
+        }
 
         val folder = File(context.getExternalFilesDir(null), "overlay-evidence").apply { mkdirs() }
         val file = File(folder, "translation-eval-export.json")
