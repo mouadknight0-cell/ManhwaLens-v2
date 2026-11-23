@@ -163,7 +163,7 @@ class MultiLineCaseMatrixTest {
 
     /** Draws [message] into a box and returns the line count actually rasterised. */
     private fun drawnLines(message: String, w: Int, h: Int, sp: Int): Pair<Int, Boolean> {
-        val type = DialogueType.measure(context, message, w, sp, surface = null)
+        val type = DialogueType.measure(context, message, w, sp, mask = null)
         return type.layout.lineCount to type.complete
     }
 
