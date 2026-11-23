@@ -13,9 +13,13 @@ package com.manhwalens.app.evaluation
  * the record separator, and a nested object whose fields collided with the outer separator. Typed
  * access removes the class of bug instead of patching instances of it.
  */
-internal object BenchmarkJson {
+/**
+ * A parsed case. Declared at file scope: a `typealias` nested inside an object is rejected by the
+ * project's Kotlin version even though newer compilers accept it, so it must not live in the object.
+ */
+internal typealias BenchCase = Map<String, Any?>
 
-    typealias Case = Map<String, Any?>
+internal object BenchmarkJson {
 
     data class Fragment(
         val text: String,
@@ -25,22 +29,22 @@ internal object BenchmarkJson {
         val bottom: Int,
     )
 
-    fun parseCases(json: String): List<Case> {
-        val root = Parser(json).parseDocument() as? Case ?: error("benchmark root must be an object")
+    fun parseCases(json: String): List<BenchCase> {
+        val root = Parser(json).parseDocument() as? BenchCase ?: error("benchmark root must be an object")
         val cases = root["cases"] as? List<*> ?: error("benchmark must carry `cases`")
-        return cases.map { entry -> entry as? Case ?: error("each case must be an object") }
+        return cases.map { entry -> entry as? BenchCase ?: error("each case must be an object") }
     }
 
-    fun str(case: Case, key: String): String? = case[key] as? String
+    fun str(case: BenchCase, key: String): String? = case[key] as? String
 
-    fun strOrBlank(case: Case, key: String): String = str(case, key) ?: ""
+    fun strOrBlank(case: BenchCase, key: String): String = str(case, key) ?: ""
 
-    fun strings(case: Case, key: String): List<String> =
+    fun strings(case: BenchCase, key: String): List<String> =
         (case[key] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
 
-    fun fragments(case: Case): List<Fragment> =
+    fun fragments(case: BenchCase): List<Fragment> =
         (case["fragments"] as? List<*>).orEmpty().map { raw ->
-            val map = raw as? Case ?: error("fragment must be an object")
+            val map = raw as? BenchCase ?: error("fragment must be an object")
             Fragment(
                 text = str(map, "text") ?: error("fragment needs text"),
                 left = int(map, "left"),
@@ -50,7 +54,7 @@ internal object BenchmarkJson {
             )
         }
 
-    private fun int(map: Case, key: String): Int =
+    private fun int(map: BenchCase, key: String): Int =
         (map[key] as? String)?.toIntOrNull()
             ?: (map[key] as? Number)?.toInt()
             ?: error("fragment field '$key' must be a number, got ${map[key]}")

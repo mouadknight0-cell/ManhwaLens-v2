@@ -35,15 +35,15 @@ class Rc9BenchmarkTest {
             ?: error("evaluation-rc9-benchmark.json not found from ${File(".").absolutePath}")
     }
 
-    private fun cases(): List<BenchmarkJson.Case> = BenchmarkJson.parseCases(benchmark)
+    private fun cases(): List<BenchCase> = BenchmarkJson.parseCases(benchmark)
 
-    private fun regionsOf(case: BenchmarkJson.Case): List<TextRegion> =
+    private fun regionsOf(case: BenchCase): List<TextRegion> =
         BenchmarkJson.fragments(case).map {
             TextRegion(it.text, it.left, it.top, it.right, it.bottom, 0.8f, "en")
         }
 
     /** The production order: copies of one region collapse, then distinct fragments join. */
-    private fun rebuild(case: BenchmarkJson.Case): List<TextRegion> =
+    private fun rebuild(case: BenchCase): List<TextRegion> =
         BubbleReconstructor.reconstruct(BubbleReconstructor.collapseDuplicates(regionsOf(case))).first
 
     // ------------------------------------------------------------------ structure
