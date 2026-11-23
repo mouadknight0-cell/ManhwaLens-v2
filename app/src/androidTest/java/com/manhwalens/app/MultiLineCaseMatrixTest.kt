@@ -308,6 +308,7 @@ class MultiLineCaseMatrixTest {
                 "front of me now is a stranger.",
             ),
         )
+        val summary = StringBuilder()
         for ((label, lines) in cases) {
             val bmp = bubble(*lines)
             try {
@@ -325,12 +326,11 @@ class MultiLineCaseMatrixTest {
                 val linesDrawn = type.layout.lineCount
                 val needed = type.layout.height
                 val clipped = !type.complete || needed > boxHeight
-                stage(
-                    "MATRIX",
+                summary.append(
                     "case=$label sourceLines=${lines.size} ocrRegions=${read.size} " +
-                        "missingWords=$missing span=${region.bottom - region.top} " +
+                        "missingWords=${missing.size} span=${region.bottom - region.top} " +
                         "translated=${translated != null} translatedLength=${shown.length} " +
-                        "linesDrawn=$linesDrawn needsPx=$needed boxPx=$boxHeight clippedAt150px=$clipped",
+                        "linesDrawn=$linesDrawn needsPx=$needed clippedAt150px=$clipped | ",
                 )
                 assertTrue("$label: no source word may be lost, missing=$missing", missing.isEmpty())
                 assertTrue("$label: the translation must be drawn in full", type.complete)
@@ -339,6 +339,10 @@ class MultiLineCaseMatrixTest {
                 assertTrue("$label: a 300px column must need two lines or more", linesDrawn >= 2)
             } finally { bmp.recycle() }
         }
+        // One line, not three: GitHub keeps at most ten annotations per step, and a per-case stage()
+        // call pushed the earlier rows out of the retained set, which is how the 4-line and 5-line
+        // evidence disappeared from the first report attempt.
+        stage("MATRIX-SUMMARY", summary.toString().trimEnd())
     }
 
     @Test
