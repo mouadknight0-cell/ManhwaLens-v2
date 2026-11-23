@@ -291,10 +291,11 @@ private fun SampleCard(
                 )
                 sample.surface?.let { hint ->
                     Text(
-                        "surface hint: " + (0 until hint.length()).joinToString(" ") { key ->
-                            val name = hint.names()?.optString(key).orEmpty()
-                            "$name=${hint.opt(key)}"
-                        },
+                        // `JSONObject.names()` is a JSONArray; `keys()` is the name
+                        // iterator. Printing the hint is a record of what was saved,
+                        // so every key is shown rather than a chosen subset.
+                        "surface hint: " + hint.keys().asSequence()
+                            .joinToString(" ") { name -> "$name=${hint.opt(name)}" },
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
