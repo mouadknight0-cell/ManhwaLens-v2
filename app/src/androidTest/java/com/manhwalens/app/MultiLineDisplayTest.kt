@@ -55,7 +55,7 @@ class MultiLineDisplayTest {
     // ── measurement-level assertions (the real block) ────────────────────────────────
 
     @Test
-    fun `a long translation wraps to at least three lines in a bubble sized for it`() {
+    fun longTranslationWrapsToAtLeastThreeLines() {
         val type = DialogueType.measure(context, longTranslation, width = 480, sp = 15)
         assertTrue(
             "expected 3+ lines for a long translation, got ${type.layout.lineCount}",
@@ -78,7 +78,7 @@ class MultiLineDisplayTest {
     }
 
     @Test
-    fun `the same translation can reach four or five lines at a narrower width`() {
+    fun narrowerWidthProducesMoreLines() {
         // A narrow bubble forces more lines rather than shrinking the font to unreadability.
         val type = DialogueType.measure(context, longTranslation, width = 360, sp = 15)
         assertTrue("a narrow column must produce more lines", type.layout.lineCount >= 3)
@@ -90,14 +90,14 @@ class MultiLineDisplayTest {
     }
 
     @Test
-    fun `a short translation stays on one or two lines`() {
+    fun shortTranslationStaysCompact() {
         val type = DialogueType.measure(context, shortTranslation, width = 480, sp = 15)
         assertTrue("short text must not be spread over many lines", type.layout.lineCount <= 2)
         assertTrue(type.complete)
     }
 
     @Test
-    fun `every readable size in the ladder produces a complete layout`() {
+    fun everyReadableSizeProducesACompleteLayout() {
         // The ladder now runs 15..11; each step must be usable, not merely non-crashing.
         ReplacementTranslationView.fontLadder().forEach { sp ->
             val type = DialogueType.measure(context, longTranslation, width = 420, sp = sp)
@@ -112,7 +112,7 @@ class MultiLineDisplayTest {
     }
 
     @Test
-    fun `the font ladder starts at the preferred size and never goes below the readable floor`() {
+    fun fontLadderStartsPreferredAndStopsAtFloor() {
         val ladder = ReplacementTranslationView.fontLadder()
         assertEquals(ReplacementTranslationView.PREFERRED_SP, ladder.first())
         assertEquals(ReplacementTranslationView.MIN_READABLE_SP, ladder.last())
@@ -123,7 +123,7 @@ class MultiLineDisplayTest {
     // ── rasterised assertions (what the user actually sees) ─────────────────────────
 
     @Test
-    fun `a four line translation is actually drawn and covers its whole column`() {
+    fun longTranslationIsActuallyDrawn() {
         val rendered = render(longTranslation, widthPx = 440, heightPx = 340, sp = 15)
         val painted = IntArray(rendered.bitmap.width * rendered.bitmap.height).also {
             rendered.bitmap.getPixels(it, 0, rendered.bitmap.width, 0, 0, rendered.bitmap.width, rendered.bitmap.height)
@@ -133,7 +133,7 @@ class MultiLineDisplayTest {
     }
 
     @Test
-    fun `text stays inside the bubble bounds in the rasterised output`() {
+    fun rasterisedTextStaysInsideBounds() {
         val width = 440
         val height = 340
         val rendered = render(longTranslation, width, height, 15)
@@ -150,7 +150,7 @@ class MultiLineDisplayTest {
     }
 
     @Test
-    fun `mixed digits and punctuation render without truncation`() {
+    fun mixedDigitsAndPunctuationAreNotTruncated() {
         val mixed = "المهمة رقم 50 اكتملت في 2024، لكن النتيجة لم تُعرف بعد!"
         val type = DialogueType.measure(context, mixed, width = 420, sp = 15)
         assertEquals(mixed, type.layout.text.toString())
