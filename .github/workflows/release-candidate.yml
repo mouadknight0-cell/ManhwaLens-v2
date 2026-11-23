@@ -178,6 +178,22 @@ jobs:
       - name: Release Kotlin compilation
         run: ./gradlew :app:compileReleaseKotlin --stacktrace --no-daemon
 
+      # TEMPORARY (Phase B2.1): kotlinc diagnostics are the only way to see what
+      # failed to compile when job logs are unavailable. Remove once the candidate
+      # is green.
+      - name: Surface Kotlin compiler diagnostics as annotations
+        if: failure()
+        run: |
+          set -uo pipefail
+          f=app/build/reports/../tmp/kotlin/compileReleaseKotlin 2>/dev/null || true
+          found=0
+          while IFS= read -r line; do
+            found=1
+            msg=$(printf '%s' "$line" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')
+            echo "::error title=kotlinc::$msg"
+          done < <(grep -rhE '^e: ' app/build 2>/dev/null | head -40)
+          if [ "$found" = 0 ]; then echo "::warning title=kotlinc::no 'e: ' diagnostics found under app/build"; fi
+
       - name: Release unit tests
         run: ./gradlew :app:testReleaseUnitTest --stacktrace --no-daemon
 
