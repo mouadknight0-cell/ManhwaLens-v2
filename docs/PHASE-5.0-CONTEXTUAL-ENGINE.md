@@ -239,6 +239,9 @@ translations cannot land on the wrong bubble or in the wrong place.
 | Field | Value |
 |---|---|
 | CI (`99a9479`) | run `45140513790` **success** (398 tests, 0 failures) |
+| CI (`81f3427`) | success |
+| RC workflow (`99a9479`) | run `45140513726` **success** (signed APK built) |
+| Android 14 emulator (`99a9479`) | run `45140513809` **failure**, then run `45141628602` on the same code **success** |
 | Debug/test APK | built by CI (`assemble debug APK`) |
 | Model | **separate**, 378.3 MiB, not in the APK |
 | APK size | see CI artifact — reported separately from the model download by design |
@@ -246,6 +249,22 @@ translations cannot land on the wrong bubble or in the wrong place.
 No release candidate was published for this commit. A signed release would currently ship a
 functional settings section and a disabled contextual engine; publishing it as a *translation
 improvement* would misrepresent it.
+
+### One pre-existing flaky test, disclosed
+
+Run `45140513809` failed in `PrecisionBubbleTest.twoIndependentBubblesPreserveArtworkAndAllSourceInkIsCovered`
+with `AssertionError: budget_14ms_component`. This is **not caused by this work**:
+
+- `BubbleMask.kt` is byte-identical at RC4, at rc6 and now (`41beac36…`) — neither this phase nor
+  the rc6 work touched it, and the test file is identical too (`2dae7d5b…`);
+- the rejection comes from a wall-clock guard, `System.nanoTime() + 14_000_000L`, evaluated
+  mid-computation, so it is sensitive to emulator scheduling pressure;
+- re-running the same workflow on the identical commit passed (`45141628602`).
+
+It is a genuine fragility in the RC4 overlay budget — the assertion treats a time-budget miss as a
+hard failure — but it belongs to a different subsystem than this phase, and "fix the flaky overlay
+timing test" is unrelated improvement, which the brief rules out. Recorded here rather than silently
+re-run until green.
 
 ---
 
