@@ -44,11 +44,11 @@ class ReplacementTranslationView(context: Context, val message: String,
         /**
          * Maximum measured layouts the view may build for one size.
          *
-         * A resize during scrolling re-measures on the main thread, so the count is bounded rather
-         * than unbounded. Generous enough for the full ladder at two candidate widths, small enough
-         * that a pathological 5x5 intermediate layout cannot stall the frame.
+         * Measurement happens on the main thread, and a resize can arrive mid-scroll, so the work is
+         * bounded. Six covers the full 15..11 ladder at a single column, which is what the common
+         * path needs; a second column is only attempted when the first found nothing.
          */
-        const val MAX_FIT_PASSES = 12
+        const val MAX_FIT_PASSES = 6
 
         internal fun lines(text:String,ink:TextPaint,width:Int,spacing:Float=.90f):StaticLayout {
             return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
@@ -124,23 +124,27 @@ class ReplacementTranslationView(context: Context, val message: String,
         val fits: (DialogueType)->Boolean = { it.complete && it.layout.height<=content.height() && it.layout.width<=width }
         var plan: DialogueType? = selected?.takeIf(fits)
         if(plan==null && message.length <= 20000 && content.width()>=1){
-            // Reuse the already-measured candidate when it fits; otherwise measure once from the
-            // same painter, at the optimizer's column and then at the full interior width.
-            // Try every readable size at the optimizer's column, then at the full interior width:
-            // a narrower column that failed may still fit when the box is used fully. RC4 tried only
-            // 15/14 here, so a longer translation fell through to "no layout" and drew nothing.
-            //
-            // Passes are budgeted. The ladder is wider than RC4's, and an existing regression guard
-            // requires the resize path to stay under six measurements; the budget keeps that true
-            // while still allowing the lower sizes that actually rescue a 4-5 line bubble.
-            plan = listOfNotNull(selected).plus(fontLadder().asSequence().mapNotNull { sp ->
-                if (fitPasses >= MAX_FIT_PASSES) return@mapNotNull null
-                fitPasses++;DialogueType.measure(context,displayMessage,width,sp,surface.mask)
-            }).firstOrNull(fits)
-                ?: fontLadder().asSequence().mapNotNull { sp ->
-                    if (fitPasses >= MAX_FIT_PASSES) return@mapNotNull null
-                    fitPasses++;DialogueType.measure(context,displayMessage,interiorWidth,sp,surface.mask)
-                }.firstOrNull(fits)
+            // Walk the readable sizes at one column, newest measurement first, within a fixed budget.
+            fun sweepAt(column: Int, ok: (DialogueType) -> Boolean): DialogueType? {
+                for (sp in fontLadder()) {
+                    if (fitPasses >= MAX_FIT_PASSES) return null
+                    fitPasses++
+                    val tried = DialogueType.measure(context, displayMessage, column, sp, surface.mask)
+                    if (ok(tried)) return tried
+                }
+                return null
+            }
+            val fitsInterior: (DialogueType)->Boolean = { it.complete && it.layout.height<=content.height() && it.layout.width<=content.width() }
+            // Full interior width first. A wider column fits more characters per line, so it needs
+            // fewer lines and a shorter block: it is strictly more likely to fit the measured height
+            // than the optimizer's narrower guess. RC4 only ever tried 15/14, so anything longer fell
+            // through to "no layout" and drew nothing at all.
+            plan = sweepAt(interiorWidth, fitsInterior)
+            // Only then the narrower optimizer column, and only when it is actually a different
+            // width: without a plan the column already *is* the interior, and re-measuring it would
+            // spend the budget repeating identical work. The sweep also declines to start when the
+            // first one already used the budget, which is the case for a degenerate box.
+            if (plan == null && width < interiorWidth && fitPasses < MAX_FIT_PASSES) plan = sweepAt(width, fits)
         }
         layout=plan?.layout?.takeIf { plan.complete && it.width<=content.width()+.5f && it.height<=content.height() && it.text==displayMessage }
         fittedSp=plan?.sp?.toFloat() ?: 0f

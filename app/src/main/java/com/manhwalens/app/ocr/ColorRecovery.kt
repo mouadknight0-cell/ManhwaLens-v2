@@ -138,15 +138,22 @@ internal class ColorRecovery {
             // long noisy one, so no confidence threshold can detect it: it is a completeness
             // failure. Keep the original whenever the candidate would lose words.
             if(best.isNotEmpty() && value>=.60){
+                val added=java.util.Collections.newSetFromMap(java.util.IdentityHashMap<TextRegion,Boolean>())
                 for(hit in best){
                     val same=output.filter { overlap(box(it),box(hit))>.45 }
-                    // Replace only the originals this candidate fully covers. An original with a word
-                    // the candidate lacks is kept, so a genuine 4-5 line transcription survives a
-                    // shorter re-read; a neighbour that merely overlaps is not in `same` at all unless
-                    // it also overlaps this box, and is never touched unless fully covered.
+                    // No existing region covers this hit: it is newly discovered text (the empty
+                    // first pass, or a caption the detector found elsewhere). It must still be added,
+                    // otherwise discovery would read text and then throw it away. RC4 added it here
+                    // because `same` was empty and it appended unconditionally; the completeness rule
+                    // below must not accidentally turn that into a no-op.
+                    if(same.isEmpty()){ if(added.add(hit)) output.add(hit); continue }
+                    // Replace only the originals this candidate fully covers. An original holding a
+                    // word the candidate lacks is kept, so a genuine 4-5 line transcription survives a
+                    // shorter re-read. A neighbour that merely overlaps is never touched unless the
+                    // candidate actually covers all of its words.
                     val replaceable=same.filter { !CandidateRecovery.losesText(it,hit) }
                     if(replaceable.isEmpty())continue
-                    output.removeAll(replaceable);output.add(hit)
+                    output.removeAll(replaceable);if(added.add(hit))output.add(hit)
                 }
             }
         };return output.sortedWith(compareBy({it.top},{it.left}))
