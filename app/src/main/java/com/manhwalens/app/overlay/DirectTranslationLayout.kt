@@ -167,10 +167,10 @@ object DirectTranslationLayout {
         }
         // Same ladder as the proven-geometry path: try the preferred size first, then every
         // readable size below it, instead of three fixed attempts.
-        var pool=ArrayList<Pair<DialogueType,ArabicLayoutPlanner.Candidate>>()
-        for(sp in ReplacementTranslationView.fontLadder()){
-            pool=collect(sp)
-            if(pool.isNotEmpty()) break
+        var pool: List<Pair<DialogueType, ArabicLayoutPlanner.Candidate>> = emptyList()
+        for (sp in ReplacementTranslationView.fontLadder()) {
+            val attempt = collect(sp)
+            if (attempt.isNotEmpty()) { pool = attempt; break }
         }
         if(pool.isEmpty()){ report("text_capacity"); return null }
 

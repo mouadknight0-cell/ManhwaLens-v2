@@ -39,7 +39,7 @@ class ReplacementTranslationView(context: Context, val message: String,
          * text. Extending the ladder means more layouts fit, fewer translations are dropped, and the
          * text still never leaves the bubble.
          */
-        fun fontLadder(): IntArray = (PREFERRED_SP downTo MIN_READABLE_SP).toList().toIntArray()
+        fun fontLadder(): IntArray = IntArray(PREFERRED_SP - MIN_READABLE_SP + 1) { PREFERRED_SP - it }
 
         internal fun lines(text:String,ink:TextPaint,width:Int,spacing:Float=.90f):StaticLayout {
             return StaticLayout.Builder.obtain(text, 0, text.length, ink, width)
