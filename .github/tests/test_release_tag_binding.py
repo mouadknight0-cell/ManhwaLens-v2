@@ -206,31 +206,31 @@ class WorkflowFallbackTest(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertGreaterEqual(int(self._fallback(key)), 217442876)
 
-    def test_candidate_name_is_a_new_unused_rc10(self):
-        # RC10: rc9 is now published, so its tag is taken and a default naming it could only
+    def test_candidate_name_is_a_new_unused_rc11(self):
+        # RC11: rc10 is now published, so its tag is taken and a default naming it could only
         # ever fail the "tag already taken" guard. The pin advances with the release, which is
         # what this test exists to force: a stale default is a broken release job.
-        self.assertEqual('1.1.42-rc10', self._default('version_name'))
-        self.assertEqual('1.1.42-rc10', self._fallback('VERSION_NAME'))
-        # rc2-rc9 are published; their tags must not be reused. Only the *resolved*
+        self.assertEqual('1.1.42-rc11', self._default('version_name'))
+        self.assertEqual('1.1.42-rc11', self._fallback('VERSION_NAME'))
+        # rc2-rc10 are published; their tags must not be reused. Only the *resolved*
         # name is checked -- history is allowed to mention earlier candidates.
-        for taken in ('rc2', 'rc3', 'rc4', 'rc5', 'rc6', 'rc7', 'rc8', 'rc9'):
+        for taken in ('rc2', 'rc3', 'rc4', 'rc5', 'rc6', 'rc7', 'rc8', 'rc9', 'rc10'):
             self.assertNotIn(f"|| '1.1.42-{taken}'", self.text)
-        self.assertNotIn("default: 1.1.42-rc9", self.text)
+        self.assertNotIn("default: 1.1.42-rc10", self.text)
 
     def test_floors_clear_the_published_rc7(self):
         # rc7 shipped 217442877, so a candidate must be strictly above it to install.
         self.assertGreaterEqual(int(self._fallback('INSTALLED_VERSION_CODE')), 217442877)
         self.assertGreaterEqual(int(self._fallback('MIN_INSTALLED_VERSION_CODE')), 217442878)
 
-    def test_floors_clear_the_published_rc9(self):
-        # RC9 shipped versionCode 217442880 and is what the tester has installed, so an RC10
+    def test_floors_clear_the_published_rc10(self):
+        # RC10 shipped versionCode 217442881 and is what the tester has installed, so an RC11
         # candidate at or below it would be rejected as a downgrade -- and the only way past
         # that on a phone is an uninstall, which destroys history, samples and benchmarks.
-        # The candidate code is computed as floor + 1, so a floor of >= 217442880 is required.
+        # The candidate code is computed as floor + 1, so a floor of >= 217442881 is required.
         for key in ('INSTALLED_VERSION_CODE', 'MIN_INSTALLED_VERSION_CODE'):
             with self.subTest(key=key):
-                self.assertGreaterEqual(int(self._fallback(key)), 217442880)
+                self.assertGreaterEqual(int(self._fallback(key)), 217442881)
 
 
 class WorkflowTagTargetTest(unittest.TestCase):

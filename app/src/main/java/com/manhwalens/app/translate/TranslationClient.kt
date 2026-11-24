@@ -89,6 +89,8 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             // §11: the contextual engine may keep the baseline or replace it, never invent a line.
             // `contextualPass` is a no-op unless a caller supplied a page and a work, so the
             // ordinary single-region path costs one branch here and nothing else.
+            // `normalized` is the line under translation; it overrides whatever row the page
+            // snapshot nominates, so the analysed sentence is always the one on screen.
             val enhanced = contextualPass(normalized, output.text, terms, evidence)
             // A verified rewrite of the English earns one extra pass, and only in gated mode: shadow
             // must never change what the reader sees, and the extra call must be paid only where a
@@ -165,6 +167,23 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
     var lastRewrittenSource: String? = null
 
     /**
+     * Wire the one extra translation pass the bridge may need.
+     *
+     * Split from the property above so the dependency runs the right way: this class does not know
+     * how to build a translator, and the owner of the model seam supplies it. `translatorFor` is the
+     * same function the ordinary path uses, so a clarified line is translated by exactly the same
+     * engine and settings as the baseline it replaces — never by a different, unproven path.
+     *
+     * Called once after construction. Idempotent.
+     */
+    fun connectClarifiedTranslator() {
+        if (clarifiedTranslator != null) return
+        clarifiedTranslator = { english ->
+            runCatching { translateText(english) }.getOrNull()
+        }
+    }
+
+    /**
      * Run the contextual engine over one finished line.
      *
      * Returns [baseline] itself when there is no page context, when the engine declines, or when the
@@ -179,12 +198,15 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         evidence: MutableMap<String, String>?,
     ): String {
         val page = pageContext ?: return baseline
+        // Bind the analysed sentence to this call. The snapshot describes the page; the line is
+        // whatever is being translated right now, and it must not be inferred from an index.
+        val scoped = if (page.source == source) page else page.copy(source = source)
         if (baseline.isBlank()) return baseline
         val started = System.nanoTime()
         val outcome = try {
             com.manhwalens.app.context.ContextTranslation.run(
                 baseline = baseline,
-                snapshot = page,
+                snapshot = scoped,
                 memory = storyMemory,
                 glossary = terms,
                 maxLevel = contextMaxLevel,

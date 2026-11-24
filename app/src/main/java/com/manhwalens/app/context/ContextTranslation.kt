@@ -23,6 +23,15 @@ data class PageSnapshot(
     val previousPage: List<String> = emptyList(),
     /** Region bounds in the current panel, for the "adjacent panel" level. Unused at level 0. */
     val panelIndex: Int = 0,
+    /**
+     * The utterance under analysis, when the caller knows it better than [regions] does.
+     *
+     * A caller translating one region at a time cannot guarantee that [target] indexes the right
+     * row — the pipeline dispatches regions concurrently and reorders them. Passing the source
+     * explicitly removes that dependency: the page supplies the *neighbours*, this supplies the
+     * *sentence*. Null means "read row [target]", which is what the tests and whole-page callers do.
+     */
+    val source: String? = null,
 ) {
     /**
      * One region.
@@ -161,7 +170,9 @@ object ContextTranslation {
         maxLevel: ContextLevel = ContextLevel.WIDEST,
     ): Outcome {
         val target = snapshot.targetRegion
-        val source = target?.text ?: ""
+        // Explicit source wins: see PageSnapshot.source. Falling back to the row keeps every
+        // existing caller and test working unchanged.
+        val source = snapshot.source ?: target?.text ?: ""
         if (source.isBlank() || baseline.isBlank()) {
             return Outcome(
                 arabic = baseline,
@@ -185,7 +196,10 @@ object ContextTranslation {
             reviewed = glossary,
             maxLevel = maxLevel,
         )
-        val context = ContextBuilder.build(builder)
+        // Pass the source explicitly: ContextBuilder already supports an overriding text, and using
+        // it keeps the analysis sentence and the spatial index from disagreeing when the caller
+        // translates a region out of order.
+        val context = ContextBuilder.build(builder, text = snapshot.source)
 
         // What the engine could turn into an edit. Computed before the Arabic candidate so the
         // report can distinguish "nothing executable" from "something executable that declined".

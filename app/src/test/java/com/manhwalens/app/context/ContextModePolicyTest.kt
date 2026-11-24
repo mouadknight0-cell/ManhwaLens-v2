@@ -142,3 +142,122 @@ class ContextModePolicyTest {
         if (expected == actual) throw AssertionError("expected a changed output but got the baseline")
     }
 }
+
+/**
+ * §11: a settled fact must reach the translation *mechanism*, not just the frame.
+ *
+ * The phase report could previously say "the pronoun was resolved" and nothing more. Writing these
+ * tests was how a real dead wire was found: `ContextBuilder` settled referent questions inside
+ * `tryAnswer` and then dropped the answer, so `frame.pronounReferents` -- the only field
+ * `ContextBridge` reads -- was never populated by the production path. A test that only checked
+ * "the engine has the information" would have passed happily. Each test below therefore checks a
+ * link in the chain, and the negative tests are as important as the positive one.
+ */
+class SettledFactReachesTranslationTest {
+
+    /**
+     * Memory in the only shape the engine can settle a referent from.
+     *
+     * `ContextBuilder.memoryEntryFor` looks up `MemoryKind.NAME` with the *pronoun surface* as the
+     * key, so a record means "`him` refers to Jin". A record keyed by the character's own name
+     * (`jin -> Jin`) is a name the engine already knows, not an antecedent, and deliberately does
+     * not settle anything. That is a real limitation of the current memory model and it is recorded
+     * as such in the phase report rather than disguised by a test fixture.
+     */
+    private fun memoryWithJin() = StoryMemory().apply {
+        add(
+            MemoryEntry("work-a", MemoryKind.NAME, "him", "Jin", EvidenceKind.EXPLICIT, 0.95, "chapter:1/page:2", chapter = 1),
+        )
+    }
+
+    private fun page(source: String, vararg others: String) = PageSnapshot(
+        regions = (others.toList() + source).mapIndexed { i, t ->
+            PageSnapshot.RegionInput(t, 10, 10 + i * 60, 300, 50 + i * 60, i, 0, "dialogue", 0.95f)
+        },
+        target = (others.toList() + source).lastIndex,
+        workId = "work-a",
+    )
+
+    @Test fun aSettledReferentBecomesTheExactTextTheSecondPassReceives() {
+        // The chain that matters: story memory -> resolved question -> recorded referent ->
+        // bridge rewrite -> the string handed to the extra translation pass.
+        val outcome = ContextTranslation.run(
+            "حذّرت ميرا منه بشأن البوابة.",
+            page("Mira warned him about the gate."),
+            memory = memoryWithJin(),
+        )
+
+        val rewrite = outcome.bridge?.rewrite
+        assertNotNull("the engine must produce a rewrite for a resolvable pronoun: ${outcome.bridge}", rewrite)
+        assertEquals("Mira warned Jin about the gate.", rewrite!!.rewritten)
+        // The original is preserved, so a reviewer can always see both sides of the edit.
+        assertEquals("Mira warned him about the gate.", rewrite.original)
+        assertEquals("him", rewrite.replaced)
+        assertEquals("Jin", rewrite.replacement)
+    }
+
+    @Test fun theDecisionCarriesTheEvidenceThatJustifiedIt() {
+        // A change without provenance is a guess with a nicer log line.
+        val outcome = ContextTranslation.run(
+            "حذّرت ميرا منه بشأن البوابة.",
+            page("Mira warned him about the gate."),
+            memory = memoryWithJin(),
+        )
+        val fact = outcome.bridge?.rewrite?.fact
+        assertNotNull(fact)
+        assertEquals(ContextBridge.FactKind.PRONOUN_REFERENT, fact!!.kind)
+        assertEquals("Jin", fact.value)
+        assertEquals("memory_name", fact.source)
+        assertTrue("the rewrite must name the span it changed", outcome.bridge!!.rewrite!!.reason.startsWith("pronoun_clarified:him->Jin"))
+    }
+
+    @Test fun aPronounIsNeverBoundToANearbyNameWithoutEvidence() {
+        // Phase G defect 2, pinned through the *real* path rather than the isolated bridge: a name in
+        // the neighbouring bubble is not an antecedent. "Jin drew his sword." next to "Mira warned
+        // him..." must leave `him` unresolved, because nothing says which of them it is.
+        val outcome = ContextTranslation.run(
+            "حذّرت ميرا منه بشأن البوابة.",
+            page("Mira warned him about the gate.", "Jin drew his sword."),
+        )
+        assertNull("a nearby name is not an antecedent: ${outcome.bridge}", outcome.bridge?.rewrite)
+        assertFalse("and nothing may be claimed as replaced", outcome.replaced)
+    }
+
+    @Test fun theExplicitSourceWinsOverAStaleTargetIndex() {
+        // Callers translate regions concurrently, so a target index cannot be trusted to point at
+        // the sentence being translated. The explicit source must win, or the engine would analyse
+        // one line and edit another.
+        val snapshot = PageSnapshot(
+            regions = listOf(
+                PageSnapshot.RegionInput("Jin drew his sword.", 10, 10, 300, 50, 0, 0, "dialogue", 0.95f),
+                PageSnapshot.RegionInput("Mira warned him about the gate.", 10, 70, 300, 110, 1, 0, "dialogue", 0.95f),
+            ),
+            target = 0,
+            source = "Mira warned him about the gate.",
+            workId = "work-a",
+        )
+        val outcome = ContextTranslation.run("حذّرت ميرا منه بشأن البوابة.", snapshot, memory = memoryWithJin())
+        assertEquals(
+            "the analysed sentence must be the explicit source, not the row at target",
+            "Mira warned Jin about the gate.",
+            outcome.bridge?.rewrite?.rewritten,
+        )
+    }
+
+    @Test fun aResolutionWithoutAnExecutableRuleStaysUnused() {
+        // The MAGE case, end to end. The gender is settled and Arabic first person does not mark it,
+        // so the outcome must record the fact and change nothing.
+        val memory = StoryMemory().apply {
+            add(MemoryEntry("work-a", MemoryKind.GENDER, "speaker", "female", EvidenceKind.STORY_MEMORY, 0.9, "chapter:1/page:1", chapter = 1))
+        }
+        val outcome = ContextTranslation.run(
+            "أصبحتُ ساحرًا في ذلك اليوم.",
+            page("That day, I became a mage."),
+            memory = memory,
+        )
+        assertNull("a fact without an executable rule must not rewrite anything", outcome.bridge?.rewrite)
+        assertFalse("and must not be reported as a replacement", outcome.replaced)
+        // The fact is still visible, so a report can distinguish "known but unusable" from "unknown".
+        assertNotNull("the bridge must still record the decision", outcome.bridge)
+    }
+}

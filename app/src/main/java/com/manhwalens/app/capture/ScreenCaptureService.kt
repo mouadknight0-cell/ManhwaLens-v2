@@ -122,7 +122,13 @@ class ScreenCaptureService : Service() {
      * clear it on teardown so a capture taken after the session ends reports no engine run rather
      * than a stale one.
      */
-    private fun publishClient() { CaptureManager.translationClient = translation }
+    private fun publishClient() {
+        // One extra call may be needed when the bridge verified an English rewrite, so the seam
+        // must exist before any line is translated; otherwise gated mode would silently never
+        // produce a clarified line and every case would read as NO_CANDIDATE.
+        translation.connectClarifiedTranslator()
+        CaptureManager.translationClient = translation
+    }
 
     private fun unpublishClient() { CaptureManager.translationClient = null }
     private val nameGlossary by lazy { NameGlossaryStore(applicationContext) }
@@ -687,6 +693,31 @@ class ScreenCaptureService : Service() {
         BenchmarkTracker.mark("M1") // Model availability checked lazily on actual MT misses.
         BenchmarkTracker.mark("T8")
         val id = journeyId
+        // Teach the translation client about this page *before* it is used, so the contextual
+        // engine has a page to reason about. Until now `pageContext` was never assigned anywhere
+        // outside tests, which meant the engine could not run on a device at all no matter how
+        // much analysis it could do -- the gap this phase exists to close.
+        //
+        // The target row is deliberately index 0: `translate` below overrides the analysed sentence
+        // with the region actually being translated (PageSnapshot.source), so the choice of target
+        // cannot make the analysis disagree with the line on screen. The other rows are what supply
+        // neighbouring dialogue.
+        translation.pageContext = com.manhwalens.app.context.PageSnapshot(
+            regions = prepared.map { item ->
+                com.manhwalens.app.context.PageSnapshot.RegionInput(
+                    text = item.region.text,
+                    left = item.region.left,
+                    top = item.region.top,
+                    right = item.region.right,
+                    bottom = item.region.bottom,
+                    kind = "dialogue",
+                    ocrConfidence = item.region.confidence.takeIf { it.isFinite() },
+                )
+            },
+        )
+        // Opt-in only, and off by default: the reader turns the contextual mode on in settings.
+        // Baseline remains the default, so an untouched install behaves exactly like RC10.
+        translation.contextMode = com.manhwalens.app.context.ContextMode.A_BASELINE
         val prefs=(application as ManhwaLensApp).settingsRepository
         val dictionaryContext=Triple(learnedNames.toList(),prefs.readings.value,prefs.corrections.value)
         val attempted=java.util.concurrent.ConcurrentHashMap.newKeySet<TextRegion>()

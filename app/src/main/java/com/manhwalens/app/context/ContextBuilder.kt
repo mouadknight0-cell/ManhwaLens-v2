@@ -74,14 +74,22 @@ object ContextBuilder {
         val unresolved = mutableListOf<OpenQuestion>()
 
         val settled = mutableListOf<ContextLevel>()
+        // A settled question must leave a record or nothing downstream can act on it. Before this
+        // existed, `settledAt` knew a referent had been resolved while `frame.pronounReferents` --
+        // the only thing ContextBridge reads -- stayed empty, so a resolution was indistinguishable
+        // from no resolution at every later stage.
+        val resolutions = mutableMapOf<String, Claim<String>>()
 
         for (question in frame.openQuestions) {
-            val answeredAt = tryAnswer(question, sources, observation, snippets, escalations)
+            val answeredAt = tryAnswer(question, sources, observation, snippets, escalations, resolutions)
             if (answeredAt == null) unresolved += question else settled += answeredAt
         }
 
+        val resolvedFrame =
+            if (resolutions.isEmpty()) frame else frame.copy(pronounReferents = resolutions.toMap())
+
         return ContextPackage(
-            frame = frame,
+            frame = resolvedFrame,
             level = minOf(reachedLevel(escalations.distinct()), sources.maxLevel),
             snippets = snippets.distinctBy { it.text }.sortedBy { it.distance }.take(ContextPackage.MAX_SNIPPETS),
             escalations = escalations.distinct(),
@@ -97,6 +105,7 @@ object ContextBuilder {
         observation: TextObservation?,
         snippets: MutableList<ContextSnippet>,
         escalations: MutableList<String>,
+        resolutions: MutableMap<String, Claim<String>> = mutableMapOf(),
     ): ContextLevel? {
         val ceiling = sources.maxLevel
         val needed = question.smallestUsefulLevel
@@ -208,6 +217,18 @@ object ContextBuilder {
                         // The strength of the *fact*, not of the channel it was fetched from.
                         evidenceStrength = entry.kindOfEvidence,
                     )
+                    // Record the answer, not just the fact that memory was reached. The evidence
+                    // kind travels with it because ContextBridge refuses anything weaker than
+                    // NEARBY_DIALOGUE and anything ranked HYPOTHESIS, and a value without its
+                    // provenance cannot be checked against that rule.
+                    if (question.kind == OpenQuestion.Kind.PRONOUN_REFERENT) {
+                        resolutions[question.subject] = Claim(
+                            value = entry.value,
+                            kind = entry.kindOfEvidence,
+                            confidence = entry.confidence,
+                            source = "memory_${entry.kind.name.lowercase()}",
+                        )
+                    }
                     return ContextLevel.STORY
                 }
             }
