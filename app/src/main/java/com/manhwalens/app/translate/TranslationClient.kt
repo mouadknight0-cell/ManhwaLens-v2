@@ -90,8 +90,17 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
             // `contextualPass` is a no-op unless a caller supplied a page and a work, so the
             // ordinary single-region path costs one branch here and nothing else.
             val enhanced = contextualPass(normalized, output.text, terms, evidence)
-            if (enhanced != output.text) {
-                TranslatedBlock(region, normalized, enhanced, method = output.method + " + context")
+            // A verified rewrite of the English earns one extra pass, and only in gated mode: shadow
+            // must never change what the reader sees, and the extra call must be paid only where a
+            // fact was actually executable.
+            val clarified = if (contextMode == com.manhwalens.app.context.ContextMode.C_GATED) {
+                lastContextOutcome?.let { clarifiedPass(output.text, it, evidence) } ?: output.text
+            } else {
+                output.text
+            }
+            val delivered = clarified.ifBlank { enhanced }
+            if (delivered != output.text) {
+                TranslatedBlock(region, normalized, delivered, method = output.method + " + context")
             } else TranslatedBlock(region, normalized, output.text, method = output.method)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {
@@ -124,6 +133,36 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
 
     private val contextLookups = java.util.concurrent.atomic.AtomicLong()
     private val contextReplaced = java.util.concurrent.atomic.AtomicLong()
+
+    /**
+     * How much the engine may affect the output. Baseline by default.
+     *
+     * A property rather than a constructor argument so every existing call site keeps RC10's
+     * behaviour without being touched: a caller that has not been taught about modes gets no mode.
+     */
+    var contextMode: com.manhwalens.app.context.ContextMode = com.manhwalens.app.context.ContextMode.A_BASELINE
+
+    /**
+     * The last engine outcome, for a capture taken immediately after a translation.
+     *
+     * Holds the *most recent* result rather than a map keyed by text: a capture is taken by a person
+     * looking at one bubble, and a keyed cache would grow without bound on a long session.
+     */
+    @Volatile
+    var lastContextOutcome: com.manhwalens.app.context.ContextTranslation.Outcome? = null
+
+    /**
+     * Translation of a contextually clarified source, when the bridge produced a rewrite.
+     *
+     * Injected rather than called directly so this class keeps knowing nothing about coroutines or
+     * the model seam; the caller supplies "translate this English with the same settings". Returning
+     * null means the caller cannot do it, and the baseline stands.
+     */
+    var clarifiedTranslator: (suspend (String) -> String?)? = null
+
+    /** The English that was actually translated, when a rewrite was applied. For capture only. */
+    @Volatile
+    var lastRewrittenSource: String? = null
 
     /**
      * Run the contextual engine over one finished line.
@@ -170,8 +209,57 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         Diagnostics.info("translate", "context_engine",
             "level=${outcome.reachedLevel.name}/${outcome.settledLevel.name} replaced=${outcome.replaced} " +
                 "verdict=${outcome.verdict.name} lookups=${contextLookups.get()} replaced_total=${contextReplaced.get()}")
+        lastContextOutcome = outcome
+        lastRewrittenSource = outcome.bridge?.rewrite?.rewritten
         if (!com.manhwalens.app.context.ContextTranslation.isDisplayable(outcome)) return baseline
-        return outcome.arabic
+
+        // Shadow measures and never shows. Gated may show, but only a verified semantic replacement:
+        // a punctuation-only difference is surface, and §8 forbids counting it as a gain.
+        return when (contextMode) {
+            com.manhwalens.app.context.ContextMode.A_BASELINE -> baseline
+            com.manhwalens.app.context.ContextMode.B_SHADOW -> baseline
+            com.manhwalens.app.context.ContextMode.C_GATED -> outcome.arabic
+        }
+    }
+
+    /**
+     * A second translation pass over the clarified English, when the bridge produced one.
+     *
+     * Costs one extra ML Kit call and is therefore only attempted when a rewrite already exists —
+     * which requires a resolved referent, strong evidence and a verified single-span edit. On a page
+     * with no such case this is free.
+     *
+     * Returns the delivered Arabic (never null) and records the outcome for capture.
+     */
+    private suspend fun clarifiedPass(
+        baseline: String,
+        outcome: com.manhwalens.app.context.ContextTranslation.Outcome,
+        evidence: MutableMap<String, String>?,
+    ): String {
+        val rewrite = outcome.bridge?.rewrite ?: return baseline
+        val translate = clarifiedTranslator ?: return baseline
+        val started = System.nanoTime()
+        val clarified = try {
+            translate(rewrite.rewritten)
+        } catch (failure: Exception) {
+            evidence?.put("ctx_rewrite_error", failure.javaClass.simpleName)
+            null
+        }
+        val millis = (System.nanoTime() - started) / 1_000_000
+        evidence?.apply {
+            put("ctx_rewritten", rewrite.rewritten.take(200))
+            put("ctx_rewrite_ms", millis.toString())
+            put("bridge_code", outcome.bridge.code.name)
+            put("bridge_reasons", outcome.bridge.reasons.joinToString(",").take(200))
+        }
+        if (clarified.isNullOrBlank()) return baseline
+        // An unchanged result means the clarification could not be expressed; the baseline stands and
+        // the fact is recorded as unusable in practice rather than silently accepted.
+        if (clarified.trim() == baseline.trim()) {
+            evidence?.put("bridge_code", "CANDIDATE_REJECTED")
+            return baseline
+        }
+        return clarified
     }
 
     /** Core translate path used for every complete utterance. */

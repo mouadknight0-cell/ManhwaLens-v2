@@ -190,6 +190,63 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * The last translated line, as a capture candidate.
+ *
+ * Reads from the result the reader is already looking at rather than from a new capture, so nothing
+ * is re-recognised and nothing can drift. The page snapshot is built from the same blocks, which is
+ * what makes the recorded context the context that actually applied.
+ *
+ * Returns null when there is nothing to capture, and the screen says so rather than saving a case
+ * with an empty line that would later read as the engine finding nothing.
+ */
+private fun evidenceInput(
+    result: CaptureResult?,
+    activity: MainActivity,
+): com.manhwalens.app.context.EvidenceCollector.Input? {
+    val blocks = result?.blocks?.filter { it.errorCode == null && it.original.isNotBlank() } ?: return null
+    val chosen = blocks.firstOrNull { it.translated.isNotBlank() } ?: return null
+    val client = CaptureManager.translationClient
+    val outcome = client?.lastContextOutcome
+    val snapshot = com.manhwalens.app.context.PageSnapshot(
+        regions = blocks.map { block ->
+            com.manhwalens.app.context.PageSnapshot.RegionInput(
+                text = block.original,
+                left = block.region.left,
+                top = block.region.top,
+                right = block.region.right,
+                bottom = block.region.bottom,
+                readingOrder = blocks.indexOf(block),
+                // The pipeline does not classify regions, so "dialogue" is a claim we cannot make;
+                // the empty kind is recorded instead and the page's own bounds carry the information.
+                kind = "",
+                ocrConfidence = block.region.confidence,
+            )
+        },
+        target = blocks.indexOf(chosen),
+        workId = "",
+    )
+    return com.manhwalens.app.context.EvidenceCollector.Input(
+        id = "case-" + System.currentTimeMillis(),
+        capturedAtMs = System.currentTimeMillis(),
+        sourceText = chosen.original,
+        ocrText = chosen.region.text,
+        baselineArabic = chosen.translated,
+        displayedArabic = chosen.translated,
+        snapshot = snapshot,
+        outcome = outcome,
+        mode = client?.contextMode ?: com.manhwalens.app.context.ContextMode.A_BASELINE,
+        appVersionName = BuildConfig.VERSION_NAME,
+        appVersionCode = BuildConfig.VERSION_CODE,
+        gitRevision = BuildConfig.GIT_REVISION,
+        baselineMillis = chosen.durationMs,
+        pageId = result.id,
+        regionsDetected = blocks.size,
+        error = chosen.errorCode,
+        regionKind = "",
+    )
+}
+
 @Composable
 private fun ManhwaLensRoot(
     overlayGranted: Boolean,
@@ -218,6 +275,9 @@ private fun ManhwaLensRoot(
     val sessionPhase by CaptureManager.sessionPhase.collectAsState()
     val sessionActive = sessionPhase == CaptureManager.SessionPhase.ACTIVE
     var showEvaluation by remember { mutableStateOf(false) }
+    // Evidence capture is opened deliberately from Settings, never automatically: a capture reads the
+    // last translated page, and doing that behind the reader's back would be a surprise.
+    var showEvidence by remember { mutableStateOf(false) }
     var learnedNames by remember { mutableStateOf(nameGlossary.all()) }
     var confirmedNames by remember { mutableStateOf(nameGlossary.translationNames().toSet()) }
     var benchmarksRecorded by remember { mutableStateOf(BenchmarkTracker.records().size) }
@@ -376,6 +436,7 @@ private fun ManhwaLensRoot(
                             benchmarksRecorded = 0
                         },
                         onOpenEvaluation = { showEvaluation = true },
+                        onOpenEvidence = { showEvidence = true },
                     )
                 }
             }
@@ -384,6 +445,15 @@ private fun ManhwaLensRoot(
                 androidx.activity.compose.BackHandler { showEvaluation = false }
                 androidx.compose.material3.Surface(Modifier.fillMaxSize()) {
                     com.manhwalens.app.evaluation.EvaluationScreen(onBack = { showEvaluation = false })
+                }
+            }
+
+            if (showEvidence) {
+                androidx.activity.compose.BackHandler { showEvidence = false }
+                androidx.compose.material3.Surface(Modifier.fillMaxSize()) {
+                    com.manhwalens.app.ui.EvidenceCaptureScreen(
+                        caseProvider = { evidenceInput(selectedResult, activity) },
+                    )
                 }
             }
 

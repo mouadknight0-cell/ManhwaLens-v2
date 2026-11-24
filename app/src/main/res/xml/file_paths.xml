@@ -2,4 +2,10 @@
 <paths>
     <!-- Exported diagnostic bundles are written under filesDir/diagnostics/ -->
     <files-path name="exports" path="diagnostics/" />
+    <!--
+      Evidence bundles: JSON captures exported from real reading sessions, written under
+      filesDir/evidence-cases/. Separate from diagnostics/ so a bundle is never mixed into an
+      automatic diagnostic report, and so deleting captures cannot touch anything else.
+    -->
+    <files-path name="evidence" path="evidence-cases/" />
 </paths>

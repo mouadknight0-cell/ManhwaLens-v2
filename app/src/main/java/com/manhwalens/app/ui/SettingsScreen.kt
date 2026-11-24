@@ -46,6 +46,7 @@ fun SettingsScreen(
     onExportDiagnostics: () -> Unit,
     onClearBenchmarks: () -> Unit,
     onOpenEvaluation: () -> Unit = {},
+    onOpenEvidence: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -122,6 +123,11 @@ fun SettingsScreen(
         // store: nothing here reads or rewrites the report, samples or history.
         OutlinedButton(onClick = onOpenEvaluation, modifier = Modifier.fillMaxWidth()) {
             Text("Translation Evaluation · تقييم الترجمة")
+        }
+        // Evidence capture sits beside evaluation because both are about learning from real pages.
+        // It stores text and structure only, never a page image, and exports one JSON file.
+        OutlinedButton(onClick = onOpenEvidence, modifier = Modifier.fillMaxWidth()) {
+            Text("جمع حالات حقيقية · Real-page evidence")
         }
         SettingsGroup("متقدم · Advanced", "الأداء، سجل القراءة، معلومات التطبيق") {
             Text("المعالجة محلية. OCR أصلي واحد كحد أقصى، ومهمتا ترجمة أصليتان. الكاش تلقائي ولا توجد إعدادات جودة وهمية.")

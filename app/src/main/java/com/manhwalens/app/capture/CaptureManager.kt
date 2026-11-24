@@ -23,6 +23,16 @@ object CaptureManager {
     var hideControlsForFrame: (() -> Boolean)? = null
     @Volatile var activeResultId: String? = null
 
+    /**
+     * The translation client currently in use, so a capture can read the engine outcome that applied
+     * to the page the reader is looking at.
+     *
+     * A reference rather than a copy: the outcome belongs to the same client that produced the text,
+     * and copying it would let the two disagree. Null when no session is running, which is the
+     * honest state for the capture screen to report.
+     */
+    @Volatile var translationClient: com.manhwalens.app.translate.TranslationClient? = null
+
     sealed interface CaptureState {
         data object Idle : CaptureState
         data class Working(val status: Status) : CaptureState

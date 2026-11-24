@@ -116,6 +116,15 @@ class ScreenCaptureService : Service() {
     private val recovery=com.manhwalens.app.ocr.ColorRecovery()
     private val textRecognition by lazy { TextRecognitionClient() }
     private val translation by lazy { TranslationClient(post={ (application as ManhwaLensApp).settingsRepository.corrections.value },debug={ (application as ManhwaLensApp).settingsRepository.debug.value },readings={ (application as ManhwaLensApp).settingsRepository.readings.value }) }
+
+    /**
+     * Publish the client so the capture screen can read the outcome that applied to this page, and
+     * clear it on teardown so a capture taken after the session ends reports no engine run rather
+     * than a stale one.
+     */
+    private fun publishClient() { CaptureManager.translationClient = translation }
+
+    private fun unpublishClient() { CaptureManager.translationClient = null }
     private val nameGlossary by lazy { NameGlossaryStore(applicationContext) }
 
     // ── Persistent capture pipeline ────────────────────────────────
@@ -247,6 +256,7 @@ class ScreenCaptureService : Service() {
     override fun onBind(intent: Intent?) = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        publishClient()
         requestNs = intent?.getLongExtra("request_ns", System.nanoTime()) ?: System.nanoTime()
         when (intent?.action) {
             ACTION_START_SESSION -> handleStartSession(intent)
@@ -1052,6 +1062,7 @@ class ScreenCaptureService : Service() {
         }
         mediaProjection = null
         scope.cancel()
+        unpublishClient()
         translation.close()
         com.manhwalens.app.diagnostics.SessionScorecard.end()
         super.onDestroy()
