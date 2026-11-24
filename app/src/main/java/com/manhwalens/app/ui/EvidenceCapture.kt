@@ -147,7 +147,7 @@ fun EvidenceCaptureScreen(
         }
 
         Spacer(Modifier.height(16.dp))
-        Divider()
+        HorizontalDivider()
         Spacer(Modifier.height(12.dp))
 
         Row(
@@ -189,7 +189,7 @@ fun EvidenceCaptureScreen(
         LazyColumn(Modifier.weight(1f)) {
             items(cases.asReversed(), key = { it.id }) { case ->
                 CaseRow(case)
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -208,7 +208,7 @@ private fun CasePreview(case: EvidenceCase) {
                 Text(
                     case.baselineArabic,
                     fontSize = 13.sp,
-                    textDirection = TextDirection.Rtl,
+                    style = androidx.compose.ui.text.TextStyle(textDirection = TextDirection.Rtl),
                 )
             }
             Spacer(Modifier.height(6.dp))
@@ -222,11 +222,19 @@ private fun CaseRow(case: EvidenceCase) {
     Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Text(case.sourceText, fontSize = 13.sp)
         if (case.baselineArabic.isNotBlank()) {
-            Text(case.baselineArabic, fontSize = 13.sp, textDirection = TextDirection.Rtl)
+            Text(
+                case.baselineArabic,
+                fontSize = 13.sp,
+                style = androidx.compose.ui.text.TextStyle(textDirection = TextDirection.Rtl),
+            )
         }
         Text(engineLine(case), fontSize = 11.sp)
         if (case.note.isNotBlank()) {
-            Text("ملاحظة: ${case.note}", fontSize = 11.sp, textDirection = TextDirection.Rtl)
+            Text(
+                "ملاحظة: ${case.note}",
+                fontSize = 11.sp,
+                style = androidx.compose.ui.text.TextStyle(textDirection = TextDirection.Rtl),
+            )
         }
     }
 }
