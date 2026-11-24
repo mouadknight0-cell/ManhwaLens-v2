@@ -133,6 +133,14 @@ object ContextTranslation {
          * question of whether a win depended on hindsight.
          */
         val contextSources: List<String> = emptyList(),
+        /**
+         * What the bridge concluded about turning the analysis into an edit.
+         *
+         * Present even when nothing was changed, because "the engine found an executable fact and
+         * declined" and "the engine found nothing executable" are different results and a report
+         * must be able to tell them apart.
+         */
+        val bridge: ContextBridge.Decision? = null,
     )
 
     /**
@@ -179,6 +187,10 @@ object ContextTranslation {
         )
         val context = ContextBuilder.build(builder)
 
+        // What the engine could turn into an edit. Computed before the Arabic candidate so the
+        // report can distinguish "nothing executable" from "something executable that declined".
+        val bridge = ContextBridge.decide(context.frame, context, glossary)
+
         // The candidate. `phrase` declines unless a rule applies, so this is not an assumption that
         // the engine has something better to say.
         val candidate = ArabicPhrasing.phrase(baseline, context.frame, context, glossary)
@@ -212,6 +224,7 @@ object ContextTranslation {
             confidences = verdict.confidences,
             contextText = context.contextText(),
             contextSources = context.snippets.map { it.reason }.distinct(),
+            bridge = bridge,
         )
     }
 
