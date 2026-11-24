@@ -86,7 +86,13 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         val evidence=if(debug()) mutableMapOf<String,String>() else null
         val block = try {
             val output=DialogueLexicon.render(normalized,match,terms){ translateText(it,glossaryNames,terms,retryCase,evidence,contextual=contextual) }
-            TranslatedBlock(region, normalized, output.text, method = output.method)
+            // §11: the contextual engine may keep the baseline or replace it, never invent a line.
+            // `contextualPass` is a no-op unless a caller supplied a page and a work, so the
+            // ordinary single-region path costs one branch here and nothing else.
+            val enhanced = contextualPass(normalized, output.text, terms, evidence)
+            if (enhanced != output.text) {
+                TranslatedBlock(region, normalized, enhanced, method = output.method + " + context")
+            } else TranslatedBlock(region, normalized, output.text, method = output.method)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (failure: TranslationFailure) {
             Diagnostics.info("translate","rejected","reason=${failure.code} retry_case=$retryCase source_retained=true")
@@ -97,6 +103,75 @@ class TranslationClient(private val cache: TranslationCache = TranslationCache(5
         }
         if(evidence!=null && block.errorCode==null)TranslationOutput.reviewReason(normalized,block.translated)?.let {evidence["review_reason"]=it}
         return block.copy(evidence=evidence.orEmpty(),durationMs = (System.nanoTime() - began) / 1_000_000)
+    }
+
+    // ------------------------------------------------------------------ contextual engine
+
+    /**
+     * The page and work the current journey is translating, when the caller knows them.
+     *
+     * Null by default, which is what keeps this optional: a caller that has not been taught about
+     * context (every existing call site) gets exactly RC9's behaviour, because [contextualPass]
+     * returns its input unchanged when there is no page.
+     */
+    var pageContext: com.manhwalens.app.context.PageSnapshot? = null
+
+    /** Per-work story memory, loaded once per title by the caller. Never shared between titles. */
+    var storyMemory: com.manhwalens.app.context.StoryMemory? = null
+
+    /** Latency bound for the engine, so a slow device degrades to RC9 rather than to a stall. */
+    var contextMaxLevel: com.manhwalens.app.context.ContextLevel = com.manhwalens.app.context.ContextLevel.WIDEST
+
+    private val contextLookups = java.util.concurrent.atomic.AtomicLong()
+    private val contextReplaced = java.util.concurrent.atomic.AtomicLong()
+
+    /**
+     * Run the contextual engine over one finished line.
+     *
+     * Returns [baseline] itself when there is no page context, when the engine declines, or when the
+     * verifier contradicts the result. Anything other than "the baseline" has to be justified by
+     * evidence the engine recorded, and the counts below are the only thing written to diagnostics:
+     * never the dialogue, never the Arabic.
+     */
+    private fun contextualPass(
+        source: String,
+        baseline: String,
+        terms: Map<String, String>,
+        evidence: MutableMap<String, String>?,
+    ): String {
+        val page = pageContext ?: return baseline
+        if (baseline.isBlank()) return baseline
+        val started = System.nanoTime()
+        val outcome = try {
+            com.manhwalens.app.context.ContextTranslation.run(
+                baseline = baseline,
+                snapshot = page,
+                memory = storyMemory,
+                glossary = terms,
+                maxLevel = contextMaxLevel,
+            )
+        } catch (failure: Exception) {
+            // The engine is an enhancement. A defect in it must never lose a translation, so a
+            // failure is recorded as a count and the RC9 result is returned untouched.
+            Diagnostics.info("translate", "context_engine", "ctx-EXCEPTION source_retained=true")
+            return baseline
+        }
+        contextLookups.incrementAndGet()
+        if (outcome.replaced) contextReplaced.incrementAndGet()
+        // Separate, un-amalgamated numbers: which stage is responsible stays visible (§12).
+        evidence?.apply {
+            put("ctx_level", outcome.reachedLevel.name + "/" + outcome.settledLevel.name)
+            put("ctx_reasons", outcome.reasons.joinToString(",").take(200))
+            put("ctx_verdict", outcome.verdict.name)
+            put("ctx_confidences", outcome.confidences.asMap().entries.joinToString(",") { "${it.key}=${it.value}" }.take(300))
+            if (outcome.unresolved.isNotEmpty()) put("ctx_unresolved", outcome.unresolved.joinToString(",").take(160))
+            put("ctx_ms", ((System.nanoTime() - started) / 1_000_000).toString())
+        }
+        Diagnostics.info("translate", "context_engine",
+            "level=${outcome.reachedLevel.name}/${outcome.settledLevel.name} replaced=${outcome.replaced} " +
+                "verdict=${outcome.verdict.name} lookups=${contextLookups.get()} replaced_total=${contextReplaced.get()}")
+        if (!com.manhwalens.app.context.ContextTranslation.isDisplayable(outcome)) return baseline
+        return outcome.arabic
     }
 
     /** Core translate path used for every complete utterance. */
