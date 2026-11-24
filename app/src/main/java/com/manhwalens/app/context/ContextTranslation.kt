@@ -124,6 +124,15 @@ object ContextTranslation {
         val confidences: SemanticVerdict.Confidences,
         /** Context snippets that were retrieved, already bounded. Source text, never a translation. */
         val contextText: String,
+        /**
+         * Where each retrieved snippet came from, one reason code per snippet
+         * (`same_panel`, `frame_context`, `previous_frame`, `memory_*`, `preceding_utterance`).
+         *
+         * Derived from the snippets themselves rather than reconstructed afterwards: a report that
+         * cannot say whether a fact came from this panel or from chapter 3 cannot answer the §6
+         * question of whether a win depended on hindsight.
+         */
+        val contextSources: List<String> = emptyList(),
     )
 
     /**
@@ -202,6 +211,7 @@ object ContextTranslation {
             verdict = verdict.outcome,
             confidences = verdict.confidences,
             contextText = context.contextText(),
+            contextSources = context.snippets.map { it.reason }.distinct(),
         )
     }
 
