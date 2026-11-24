@@ -176,7 +176,33 @@ class EngineUntouchedTest(unittest.TestCase):
         # `DialogueLexicon.render`. The edit there is held to the same standard as
         # the edits above rather than waved through -- see RETURNED_ENGINE_CONTRACT.
         "app/src/main/java/com/manhwalens/app/translate/TranslationClient.kt",
+        # RC10 Phase G.2. A captured case has to describe the engine outcome that applied
+        # to the page the reader is looking at, and the only live object that holds it is the
+        # session's client. `CaptureManager` gains one volatile reference to it and nothing
+        # else. Held to the same standard as the seam above rather than waved through: the
+        # edit must be the reference, and it must not touch capture timing, the scene epoch,
+        # the live status or any state machine -- those are the parts §12 says may not be
+        # weakened for the sake of the contextual engine.
+        "app/src/main/java/com/manhwalens/app/capture/CaptureManager.kt",
     })
+
+    #: What the Phase G.2 edit to `CaptureManager.kt` must and must not be.
+    #:
+    #: Required: the added reference, so a capture can only be reading a real client.
+    #: Forbidden: any change to the machinery that keeps capture stable. A phase that
+    #: weakened the epoch, the state machine or the live status while adding evidence
+    #: collection would fail here even though the file is exempt.
+    CAPTURE_MANAGER_ADDITION = "translationClient"
+    #: Verbatim substrings of the file as it is actually written, so the check cannot pass
+    #: vacuously against a reformatted copy.
+    CAPTURE_MANAGER_INVARIANTS = (
+        "activeResultId",
+        "internal val scene=SceneEpoch()",
+        "internal fun setLive(status: LiveStatus)",
+        "fun setSessionActive(value: Boolean)",
+        "fun setState(state: CaptureState)",
+        "val consentGeneration =",
+    )
 
     #: What the RC10 Phase G edit to `TranslationClient.kt` is allowed to be.
     #:
@@ -229,8 +255,48 @@ class EngineUntouchedTest(unittest.TestCase):
         if engine_seam in changed:
             self._assert_engine_seam_edit_is_a_wiring(base)
             changed = [c for c in changed if c != engine_seam]
+        if "app/src/main/java/com/manhwalens/app/capture/CaptureManager.kt" in changed:
+            self._assert_capture_manager_edit_is_addition_only(base)
+            changed = [c for c in changed if c != "app/src/main/java/com/manhwalens/app/capture/CaptureManager.kt"]
         changed = [c for c in changed if c not in self.PHASE_ALLOWED_EDITS]
         self.assertEqual([], changed, f"protected files were modified: {changed}")
+
+    def _assert_capture_manager_edit_is_addition_only(self, base: str) -> None:
+        """The CaptureManager edit must add the client reference and remove nothing.
+
+        Addition-only is checked structurally: every removed line must be re-added, and
+        every invariant that keeps capture stable must survive. This is stricter than
+        allowing the file wholesale, which is the point of the exemption list existing.
+        """
+        proc = subprocess.run(
+            ["git", "diff", base, "--",
+             "app/src/main/java/com/manhwalens/app/capture/CaptureManager.kt"],
+            cwd=str(ROOT), capture_output=True, text=True, timeout=60,
+        )
+        if proc.returncode != 0:
+            self.fail(f"could not diff CaptureManager: {proc.stderr.strip()}")
+        diff = proc.stdout
+
+        added = [l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++")]
+        removed = [l for l in diff.splitlines() if l.startswith("-") and not l.startswith("---")]
+
+        self.assertTrue(
+            any(self.CAPTURE_MANAGER_ADDITION in line for line in added),
+            "the edit must add the live client reference",
+        )
+        for line in removed:
+            # A removal is only acceptable if the identical content is restored elsewhere.
+            self.assertIn(
+                line[1:], [a[1:] for a in added],
+                f"CaptureManager lost a line instead of only gaining one: {line}",
+            )
+
+        current = (ROOT / "app/src/main/java/com/manhwalens/app/capture/CaptureManager.kt").read_text(encoding="utf-8")
+        for invariant in self.CAPTURE_MANAGER_INVARIANTS:
+            self.assertIn(
+                invariant, current,
+                f"capture stability invariant was removed: {invariant}",
+            )
 
     def _assert_engine_seam_edit_is_a_wiring(self, base: str) -> None:
         """The TranslationClient edit must add the seam and remove no validation.
