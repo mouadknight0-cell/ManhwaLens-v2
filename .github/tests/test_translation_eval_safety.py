@@ -126,7 +126,13 @@ class EngineUntouchedTest(unittest.TestCase):
     #: and the translation review, so a guard pinned before RC8 would report the
     #: whole release as a violation. The baseline is per-release and reviewable in
     #: the diff, exactly like the exemption list below.
-    BASE = "f9278d6"
+    #:
+    #: RC10 Phase G moves it to the RC9 release report (`a9b6b60`), which is the
+    #: commit the phase branched from. Phase G introduces a new `context/` engine
+    #: and wires it into the translation path, so a guard still pinned at `f9278d6`
+    #: would report RC9's entire release -- already reviewed and shipped -- as this
+    #: phase's violation, and would say nothing about what Phase G actually did.
+    BASE = "a9b6b60"
 
     #: The only protected files the current phase is mandated to change.
     #:
@@ -165,7 +171,31 @@ class EngineUntouchedTest(unittest.TestCase):
         "app/src/main/java/com/manhwalens/app/pipeline/TranslationInput.kt",
         "app/src/main/java/com/manhwalens/app/capture/ScreenCaptureService.kt",
         "app/src/main/java/com/manhwalens/app/translate/MeaningValidator.kt",
+        # RC10 Phase G. The engine's output has to reach the reader, and there is
+        # exactly one seam where a finished line exists: `translateBlock`'s call to
+        # `DialogueLexicon.render`. The edit there is held to the same standard as
+        # the edits above rather than waved through -- see RETURNED_ENGINE_CONTRACT.
+        "app/src/main/java/com/manhwalens/app/translate/TranslationClient.kt",
     })
+
+    #: What the RC10 Phase G edit to `TranslationClient.kt` is allowed to be.
+    #:
+    #: The phase's own §11 rule is that the contextual engine may *keep or replace*
+    #: the line RC9 already produced and may never invent one. That is checkable in
+    #: the diff, so it is checked: the edit must reach the engine, and it must not
+    #: remove any of the validation that RC9 depends on. A phase that later strips
+    #: the OCR-confidence gate or the numeric-content short-circuit while wiring
+    #: context would fail here even though the file is on the exemption list.
+    ENGINE_EDIT_REQUIRED = (
+        "ContextTranslation.run(",
+        "contextualPass(",
+    )
+    ENGINE_EDIT_FORBIDDEN_REMOVALS = (
+        "OCR-UNCERTAIN",
+        "isNumericContent",
+        "TR-NAME-SHIELD",
+        "TranslationFailure",
+    )
 
     def test_protected_paths_are_unmodified_by_this_phase(self):
         """Diff the protected areas against the commit this phase started from."""
@@ -195,8 +225,42 @@ class EngineUntouchedTest(unittest.TestCase):
             if self._build_change_is_identity_only(base):
                 changed = [c for c in changed if c != "app/build.gradle.kts"]
         # Phase 1's own mandated subject: the corrector files, named individually.
+        engine_seam = "app/src/main/java/com/manhwalens/app/translate/TranslationClient.kt"
+        if engine_seam in changed:
+            self._assert_engine_seam_edit_is_a_wiring(base)
+            changed = [c for c in changed if c != engine_seam]
         changed = [c for c in changed if c not in self.PHASE_ALLOWED_EDITS]
         self.assertEqual([], changed, f"protected files were modified: {changed}")
+
+    def _assert_engine_seam_edit_is_a_wiring(self, base: str) -> None:
+        """The TranslationClient edit must add the seam and remove no validation.
+
+        Adding context may not be paid for by dropping a guard RC9 put there. The
+        checks below are the ones whose loss would let an untranslatable region
+        through or let a failed model call become visible Arabic.
+        """
+        diff = subprocess.run(
+            ["git", "diff", "-U0", base, "--",
+             "app/src/main/java/com/manhwalens/app/translate/TranslationClient.kt"],
+            cwd=str(ROOT), capture_output=True, text=True, timeout=60,
+        )
+        self.assertEqual(0, diff.returncode, diff.stderr)
+        added = [
+            line[1:] for line in diff.stdout.splitlines()
+            if line.startswith("+") and not line.startswith("+++")
+        ]
+        removed = [
+            line[1:] for line in diff.stdout.splitlines()
+            if line.startswith("-") and not line.startswith("---")
+        ]
+        joined = "\n".join(added)
+        for needed in self.ENGINE_EDIT_REQUIRED:
+            self.assertIn(needed, joined, f"the seam must actually call {needed!r}")
+        for guard in self.ENGINE_EDIT_FORBIDDEN_REMOVALS:
+            self.assertFalse(
+                any(guard in line for line in removed),
+                f"wiring context must not remove RC9's {guard!r} guard",
+            )
 
     IDENTITY_ONLY_ADDITIONS = (
         "GIT_REVISION",
