@@ -16,17 +16,17 @@ object EvidenceStoreFile {
 
     private const val DIRECTORY = "evidence-cases"
 
-    private lateinit var store: EvidenceStore
+    private lateinit var instance: EvidenceStore
     private lateinit var root: File
 
     @Synchronized
     fun init(context: Context) {
-        if (::store.isInitialized) return
+        if (::instance.isInitialized) return
         root = File(context.filesDir, DIRECTORY)
-        store = EvidenceStore(root)
+        instance = EvidenceStore(root)
     }
 
-    fun store(): EvidenceStore = store
+    fun store(): EvidenceStore = instance
 
     /** The directory, for the export's file provider. */
     fun directory(): File = root
