@@ -4,7 +4,14 @@ package com.manhwalens.app.overlay
  * if attachment fails or request identity changes during commit.
  */
 object ReplacementCommit {
-    fun eligible(id: String, activeId: String?, complete: Boolean) = complete && id == activeId
+    data class Owner(val result:String,val scene:Long)
+    enum class Coverage { NONE, PARTIAL, COMPLETE }
+    fun coverage(owner:Owner,current:Owner?,expected:Set<String>,visible:Map<String,Owner>,final:Boolean,failed:Boolean):Coverage {
+        if(owner!=current || expected.isEmpty())return Coverage.NONE
+        val n=expected.count { visible[it]==owner }
+        return when { n==0 -> Coverage.NONE; final && !failed && n==expected.size -> Coverage.COMPLETE; else -> Coverage.PARTIAL }
+    }
+    fun eligible(id: String, activeId: String?, complete: Boolean) = id == activeId
     fun <T> commit(items: List<T>, current: () -> Boolean, attach: (T) -> Unit, remove: (T) -> Unit): Boolean {
         if (!current()) return false
         val attempted = mutableListOf<T>()

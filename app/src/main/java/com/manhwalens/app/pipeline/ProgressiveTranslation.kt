@@ -2,6 +2,8 @@ package com.manhwalens.app.pipeline
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 
 /** Bounded workers, one request per exact utterance, serialized progressive delivery. */
@@ -11,6 +13,7 @@ suspend fun progressiveTranslation(
     translate: suspend (TextRegion) -> TranslatedBlock,
     onReady: suspend (List<TranslatedBlock>) -> Unit,
     // Callers with position-dependent validation/context must include those inputs.
+    onException: (Exception) -> Unit = {},
     identity: (TextRegion) -> Any = { it.text.trim() },
 ): List<TranslatedBlock> = coroutineScope {
     require(concurrency > 0)
@@ -22,7 +25,20 @@ suspend fun progressiveTranslation(
     val workers = List(minOf(concurrency, groups.size)) {
         launch {
             for (group in jobs) {
-                val translated = translate(group.first().value)
+                val region = group.first().value
+                suspend fun attempt(): TranslatedBlock = try { translate(region) }
+                catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    // A cancelled SDK task is not necessarily a cancelled page. If this
+                    // worker still has a live owner, finish its group and drain the queue.
+                    currentCoroutineContext().ensureActive()
+                    TranslatedBlock(region,region.text,"","TR-REQUEST-CANCELLED")
+                }
+                catch (failure: Exception) { onException(failure); TranslatedBlock(region, region.text, "", "TR-BLOCK-EXCEPTION") }
+                var translated = attempt()
+                if (translated.errorCode in setOf(com.manhwalens.app.diagnostics.ErrorCodes.TRANSLATE_FAILED,"TR-BLOCK-EXCEPTION")) {
+                    kotlinx.coroutines.delay(120)
+                    translated = attempt()
+                }
                 results.send(group.map { it.index to translated.copy(region = it.value) })
             }
         }

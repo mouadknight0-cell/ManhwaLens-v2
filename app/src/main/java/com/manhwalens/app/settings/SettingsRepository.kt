@@ -51,6 +51,24 @@ class SettingsRepository(context: Context) {
         _bubbleEnabled.value = enabled
     }
 
+    private val defaultReadings=com.manhwalens.app.translate.ReadingGlossary.defaults
+    val readings=MutableStateFlow(prefs.getString("arabic_readings",null)?.let { com.manhwalens.app.translate.ReadingGlossary.parse(it) } ?: defaultReadings)
+    fun saveReadings(text:String):Boolean {
+        val parsed=com.manhwalens.app.translate.ReadingGlossary.parse(text) ?: return false
+        prefs.edit().putString("arabic_readings",text).apply(); readings.value=parsed; return true
+    }
+    private fun parseCorrections(s:String)=s.lineSequence().filter { it.isNotBlank() }.associate { it.substringBefore('=').trim() to it.substringAfter('=',"").trim() }
+    val corrections=MutableStateFlow(parseCorrections(prefs.getString("post_ar","البارير=الحاجز\nانها=إنها") ?: ""))
+    fun saveCorrections(s:String):Boolean {
+        val map=parseCorrections(s); if(map.size>100 || map.any { (k,v)->k.length !in 1..64 || v.length !in 1..64 || !com.manhwalens.app.translate.ArabicOutput.hasLetters(k) || !com.manhwalens.app.translate.ArabicOutput.hasLetters(v) }) return false
+        prefs.edit().putString("post_ar",s).apply(); corrections.value=map;return true
+    }
+    val matchStyle=MutableStateFlow(prefs.getBoolean("match_style",true))
+    fun setMatchStyle(v:Boolean){ prefs.edit().putBoolean("match_style",v).apply(); matchStyle.value=v }
+    private val _debug = MutableStateFlow(prefs.getBoolean("debug_geometry", false))
+    val debug = _debug.asStateFlow()
+    fun setDebug(enabled:Boolean) { prefs.edit().putBoolean("debug_geometry",enabled).apply(); _debug.value=enabled }
+
     fun markOnboardingSeen() {
         prefs.edit().putBoolean(KEY_ONBOARDING, true).apply()
         _onboardingSeen.value = true

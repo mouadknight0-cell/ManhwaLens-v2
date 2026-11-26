@@ -1,0 +1,55 @@
+# Page funnel — 1.1.26
+
+Input: local 1.1.25 report, Xiaomi 23106RN0DA / Android 14; private report not committed. Retained samples are not a record of compositor success. Before evidence (distinct trace IDs, not counts of repeated log entries):
+
+- `t-mwpafcmq-g`: only `1 CANNOT` reached translation and passed; not evidence that the full balloon was ever read. `t-mwpafebv-h`: `SEE!` and `1 CANNOT SEE!` both failed OCR input validation.
+- `t-mwpafmou-p`: one success and one `TR-UNTRANSLATED` for a corrupted source. `t-mwpafhif-o`: both regions returned successfully. This is not a universal first-item limit.
+- `t-mwpagh2t-13`: `IM STARTING TO 2EMEMBER.` reached block processing but ended `OCR-UNCERTAIN`. MediaProjection did deliver pixels. A spelling fix does not necessarily overcome the confidence gate.
+- No joined batch parser or top-one selector in production. Identical work fans out to indexed source regions. Unexpected worker exceptions previously could cancel siblings; not demonstrated as the cause of these particular samples. A scene revision cancels stale work by design. No evidence of a deadlocked worker. Previously render used one rollback transaction for all windows, not erase-after-each-block. Model validation can reject residual Latin words; distinguish that from an OCR failure. Do not disable name shielding or accept untranslated prose.
+
+New tracing: frame acquisition and OCR-stage counts (blocks and lines are different units), occlusion/filter/group decisions, translation dispatch, block result code and per-region window attachment or preservation. Window attachment is not proof of physical visibility. Local OCR retry uses the affected source crop only; no full-page second pass. Translation workers isolate exceptions and retry eligible failed work once. Stale jobs must still cancel. In-place geometry never relocates to a free rectangle. Insufficient space, obstruction and unreliable reconstruction keep the source.
+
+Scope: real-image OCR replay is not the full reader, compositor or downloaded ML Kit translator. No new physical captures, OEM permission grant, revoked-token recovery or matched end-to-end timing available. Do not infer OEM denial from timeout. Cross-balloon semantic redistribution is not implemented. Textured reconstruction is a bounded local gradient approximation, not restoration of original art.
+
+### File manifest (relative to v1.1.25)
+
+- `M	.github/scripts/android-quality.sh`
+- `M	PROJECT_STATE.md`
+- `A	app/src/androidTest/assets/report25-question.png`
+- `A	app/src/androidTest/assets/report25-voice.png`
+- `A	app/src/androidTest/assets/report25-watching.png`
+- `M	app/src/androidTest/java/com/manhwalens/app/QualityInstrumentedTest.kt`
+- `M	app/src/main/java/com/manhwalens/app/capture/CaptureManager.kt`
+- `M	app/src/main/java/com/manhwalens/app/capture/ScreenCaptureService.kt`
+- `M	app/src/main/java/com/manhwalens/app/ocr/TextRecognitionClient.kt`
+- `M	app/src/main/java/com/manhwalens/app/overlay/BubbleOverlayService.kt`
+- `D	app/src/main/java/com/manhwalens/app/overlay/DirectPlacement.kt`
+- `M	app/src/main/java/com/manhwalens/app/overlay/DirectTranslationLayout.kt`
+- `M	app/src/main/java/com/manhwalens/app/overlay/ReplacementSurface.kt`
+- `M	app/src/main/java/com/manhwalens/app/overlay/ReplacementTranslationView.kt`
+- `A	app/src/main/java/com/manhwalens/app/overlay/StrokePatch.kt`
+- `M	app/src/main/java/com/manhwalens/app/pipeline/OcrInputQuality.kt`
+- `M	app/src/main/java/com/manhwalens/app/pipeline/OcrLexicon.kt`
+- `M	app/src/main/java/com/manhwalens/app/pipeline/ProgressiveTranslation.kt`
+- `M	app/src/main/java/com/manhwalens/app/pipeline/RegionFilter.kt`
+- `M	app/src/main/java/com/manhwalens/app/translate/DialogueLexicon.kt`
+- `M	app/src/main/java/com/manhwalens/app/translate/TranslationClient.kt`
+- `M	app/src/main/java/com/manhwalens/app/ui/SettingsScreen.kt`
+- `A	app/src/main/java/com/manhwalens/app/ui/XiaomiSetup.kt`
+- `D	app/src/test/java/com/manhwalens/app/pipeline/DirectPlacementTest.kt`
+- `M	app/src/test/java/com/manhwalens/app/pipeline/ProgressiveTranslationTest.kt`
+- `M	app/src/test/java/com/manhwalens/app/pipeline/Xiaomi124Test.kt`
+- `A	docs/PAGE-FUNNEL-1.1.26.md`
+
+Paired evidence from the same page: `t-mwpaes7c-2` has WHO.. → Arabic and WHO A2E YOV2 → OCR-UNCERTAIN; `t-mwpaf4l4-b` has WHO ARE YOZ → Arabic and L CANNOT SEE! → OCR-UNCERTAIN. These are upstream failures, not proof of a missing window. Regression tests cover those exact damaged inputs. A truncated `1 CANNOT` with no final line is not a complete dialogue replacement. `pipeline/OcrInputQuality.kt` also changed to reject those incomplete fragments.
+
+### After: Android 14 emulator, tested implementation 331e0b1
+
+[CI](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44792981027) and [Android quality with diagnostic annotations](https://github.com/mouadknight0-cell/ManhwaLens-v2/actions/runs/44792980855) passed. Bundled ML Kit OCR on actual phone crops:
+
+| Crop | OCR blocks / lines | Filtered lines | Groups | Downstream evidence |
+|---|---:|---:|---:|---|
+| Inner voice | 1 / 3 | 3 | 1 | 0.62894 confidence; reviewed Arabic found; native prepared=true |
+| Watching | 1 / 3 | 3 | 1 | 0.61502 confidence, TONGVE in raw OCR; model path required, not run in replay |
+
+The question crop also passed the non-empty OCR assertion; do not infer final model output from that check. Forced one exception among six tasks: five unaffected outputs; failed task attempted twice, one terminal reason. Source-only geometry and button-conflict refusal tested on Android. Warm cleanup only: 3,399,078 vs 2,767,780 μs total for 1,000 utterances, not a comparison of end-to-end release latency. The old report did not record a complete line-to-window funnel, so retrospective physical-device counts would be fabricated. No real-device 1/2/3/5+ page matrix or OEM settings round-trip was performed.

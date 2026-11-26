@@ -18,6 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Record build identity
+        # Full commit SHA, so any APK assembled here can be traced back to source.
+        # The Gradle build rejects a malformed value and records "unknown" when absent.
+        run: echo "GIT_REVISION=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
       - name: Signing recovery regression tests
         run: |
           python3 -m pip install cryptography
@@ -71,6 +76,21 @@ jobs:
             echo "::error::${line//'%'/'%25'}"
           done
 
+      # The emulator workflow hides its Gradle log behind an artifact that can be
+      # unavailable; compiling the instrumented sources here makes those errors readable.
+      - name: Compile instrumented test sources
+        id: compile-android-tests
+        shell: bash
+        run: ./gradlew :app:compileDebugAndroidTestKotlin --stacktrace --no-daemon 2>&1 | tee /tmp/compile-android-tests.log
+
+      - name: Annotate instrumented compiler errors
+        if: failure() && steps.compile-android-tests.outcome == 'failure'
+        run: |
+          grep -E 'e: |error:' /tmp/compile-android-tests.log | head -30 | while IFS= read -r line; do
+            echo "::error::${line//'%'/'%25'}"
+          done
+          exit 1
+
       - name: Unit tests
         id: unit-tests
         shell: bash
@@ -92,11 +112,3 @@ jobs:
 
       - name: Assemble debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon
-
-      - name: Upload debug APK
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: manhwalens-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
-          retention-days: 14

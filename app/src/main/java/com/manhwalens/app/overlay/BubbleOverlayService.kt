@@ -48,7 +48,7 @@ class BubbleOverlayService : Service() {
     private var acceptResults = false
     private var requestedAt = Long.MAX_VALUE
     private var running = false
-    private var statusLabel: TextView? = null
+    private var stopControl: TextView? = null
     private var startControl: TextView? = null
     private fun updateControlState() {
         val phase = CaptureManager.sessionPhase.value
@@ -59,8 +59,6 @@ class BubbleOverlayService : Service() {
             CaptureManager.SessionPhase.STOPPING -> "جارٍ الإيقاف / Stopping"
             CaptureManager.SessionPhase.FAILED -> "فشلت / Failed — أعد المحاولة"
         }
-        val work = (CaptureManager.state.value as? CaptureManager.CaptureState.Working)?.status
-        statusLabel?.text = "Capture: $label • ${work ?: CaptureManager.live.value}"
         bubbleView?.contentDescription = "Capture session: $label. Tap for Start and Stop controls."
         (bubbleView as? ImageView)?.setColorFilter(when (phase) {
             CaptureManager.SessionPhase.ACTIVE -> 0xFF86EFAC.toInt()
@@ -68,8 +66,9 @@ class BubbleOverlayService : Service() {
             CaptureManager.SessionPhase.FAILED -> 0xFFFCA5A5.toInt()
             else -> PANEL_TEXT
         })
-        startControl?.isEnabled = phase !in listOf(CaptureManager.SessionPhase.STARTING, CaptureManager.SessionPhase.STOPPING) &&
-            (phase != CaptureManager.SessionPhase.ACTIVE || CaptureManager.live.value in listOf(CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR))
+        startControl?.isEnabled = phase in listOf(CaptureManager.SessionPhase.INACTIVE, CaptureManager.SessionPhase.FAILED)
+        stopControl?.isEnabled = phase == CaptureManager.SessionPhase.ACTIVE
+        stopControl?.alpha = if (stopControl?.isEnabled == true) 1f else 0.45f
         startControl?.alpha = if (startControl?.isEnabled == true) 1f else 0.45f
     }
     private val translationRects = mutableListOf<android.graphics.Rect>()
@@ -86,11 +85,16 @@ class BubbleOverlayService : Service() {
     private fun event(operation: String) = com.manhwalens.app.diagnostics.Diagnostics.info("overlay", operation, "floating control event")
     private fun collapseActions() {
         actionDock?.let { it.animate().cancel(); runCatching { windowManager.removeView(it) } }
+        CaptureManager.dockVisible = false
         actionDock = null
-        statusLabel = null
+        stopControl = null
         startControl = null
         dockRect = null
         publishBounds()
+    }
+    private fun closeService(){
+        (application as ManhwaLensApp).settingsRepository.setBubbleEnabled(false)
+        stopTranslation();stopForeground(STOP_FOREGROUND_REMOVE);stopSelf()
     }
     private fun stopTranslation() {
         event("stop_click")
@@ -104,7 +108,8 @@ class BubbleOverlayService : Service() {
     }
     private fun startTranslation() {
         event("start_click")
-        if (CaptureManager.live.value !in listOf(CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR) || startJob?.isActive == true) return
+        if (startJob?.isActive == true) return
+        if (CaptureManager.sessionActive) return
         collapseActions()
         clearTranslations()
         CaptureManager.setState(CaptureManager.CaptureState.Working(CaptureManager.Status.PREPARING))
@@ -116,8 +121,7 @@ class BubbleOverlayService : Service() {
             try {
                 // Keep a visible overlay and launch in the tap's main-thread turn.
                 // Hiding it before startActivity removes the visible-overlay BAL exemption.
-                if (CaptureManager.sessionActive) ScreenCaptureService.captureNow(this@BubbleOverlayService, requestedAtNs)
-                else CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true, requestedAtNs = requestedAtNs)
+                CaptureConsentActivity.launch(this@BubbleOverlayService, autoCapture = true, requestedAtNs = requestedAtNs, source="bubble")
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (failure: Exception) {
                 running = false
@@ -128,13 +132,21 @@ class BubbleOverlayService : Service() {
         }
     }
 
+    private var debugView: View? = null
     private val translationViews = mutableListOf<View>()
+    private var checkCoverage: (() -> Unit)? = null
     private var displayedResultId: String? = null
     private val displayedBlocks = mutableSetOf<String>()
     private var startJob: kotlinx.coroutines.Job? = null
+    private data class Attached(val owner:ReplacementCommit.Owner,val id:com.manhwalens.app.pipeline.PageState.Id,val hash:Int?,val key:String,val trace:String,var lastVisibility:String?=null)
+    private val attached=mutableMapOf<View,Attached>()
+    private fun discard(view:View){val idx=translationViews.indexOf(view);if(idx<0)return
+        runCatching { windowManager.removeViewImmediate(view) };translationViews.removeAt(idx);translationRects.removeAt(idx);attached.remove(view)?.let { displayedBlocks.remove(it.key) };publishBounds() }
     private fun clearTranslations() {
-        translationViews.forEach { it.visibility = View.INVISIBLE; runCatching { windowManager.removeView(it) } }
-        translationViews.clear()
+        checkCoverage=null
+        translationViews.forEach { it.visibility = View.INVISIBLE; runCatching { windowManager.removeViewImmediate(it) } }
+        debugView?.let { runCatching { windowManager.removeViewImmediate(it) } }; debugView=null
+        attached.clear();translationViews.clear()
         displayedBlocks.clear()
         displayedResultId = null
         translationRects.clear()
@@ -153,17 +165,28 @@ class BubbleOverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        CaptureManager.invalidateWindows={
+            val obsolete=attached.filterValues { it.owner.scene!=CaptureManager.scene.current }.keys.toList()
+            obsolete.forEach(::discard)
+            if(obsolete.isNotEmpty()) com.manhwalens.app.diagnostics.Diagnostics.info("overlay","scene_remove","revision=${CaptureManager.scene.current} windows=${obsolete.size}")
+        }
+        CaptureManager.validateOverlays={ hashes-> attached.toMap().forEach { (view,stamp)->if(stamp.hash==null || hashes[stamp.id]!=stamp.hash)discard(view) else if(!CaptureManager.appVisible.value)view.visibility=View.VISIBLE };publishBounds() }
+        CaptureManager.hideControlsForFrame = {
+            bubbleView?.visibility=View.INVISIBLE; actionDock?.visibility=View.INVISIBLE
+            translationViews.forEach { it.visibility=View.INVISIBLE }; debugView?.visibility=View.INVISIBLE
+            CaptureManager.overlayBounds=emptyList(); bubbleView!=null
+        }
+        CaptureManager.restoreControlsAfterFrame={ bubbleView?.visibility=View.VISIBLE; actionDock?.visibility=View.VISIBLE; publishBounds() }
+        scope.launch { (application as ManhwaLensApp).settingsRepository.debug.collect { enabled ->
+            if(!enabled){debugView?.let { runCatching { windowManager.removeViewImmediate(it) } };debugView=null}
+        } }
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startBubble()
-            ACTION_STOP -> {
-                stopTranslation()
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                stopSelf()
-            }
+            ACTION_START -> { startBubble(); bubbleView?.visibility=View.VISIBLE; publishBounds() }
+            ACTION_STOP -> closeService()
             else -> startBubble()
         }
         return START_STICKY
@@ -171,7 +194,7 @@ class BubbleOverlayService : Service() {
 
     private fun startBubble() {
         if (!Settings.canDrawOverlays(this)) {
-            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_overlay_denied)))
+            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_overlay_denied),"PERM-OVERLAY"))
             stopSelf()
             return
         }
@@ -195,12 +218,12 @@ class BubbleOverlayService : Service() {
         scope.launch {
             CaptureManager.live.collect { status ->
                 when (status) {
-                    CaptureManager.LiveStatus.SCROLLING, CaptureManager.LiveStatus.PAUSED_APP -> clearTranslations()
+                    CaptureManager.LiveStatus.PAUSED_APP -> clearTranslations()
                     CaptureManager.LiveStatus.PROCESSING -> {
                         acceptResults = !CaptureManager.appVisible.value
                         requestedAt = System.currentTimeMillis()
                     }
-                    CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR -> clearTranslations()
+                    CaptureManager.LiveStatus.OFF, CaptureManager.LiveStatus.ERROR -> { acceptResults=false; clearTranslations() }
                     else -> Unit
                 }
                 updateControlState()
@@ -215,8 +238,8 @@ class BubbleOverlayService : Service() {
             CaptureManager.state.collect { state ->
                 updateControlState()
                 when (state) {
-                    is CaptureManager.CaptureState.Done -> { running = false; bubbleView?.alpha = 1f; showPanel(state.result, final = true) }
-                    is CaptureManager.CaptureState.Partial -> showPanel(state.result, final = false)
+                    is CaptureManager.CaptureState.Done -> { running = false; bubbleView?.alpha = 1f; renderTranslations(state.result, final = true) }
+                    is CaptureManager.CaptureState.Partial -> renderTranslations(state.result, final = false)
                     is CaptureManager.CaptureState.Error -> { running = false; bubbleView?.alpha = 1f; if (acceptResults) showError(state.message) }
                     is CaptureManager.CaptureState.Working -> { running = true; showWorking(state.status) }
                     CaptureManager.CaptureState.Idle -> { running = false; clearTranslations(); bubbleView?.alpha = 1f }
@@ -267,7 +290,7 @@ class BubbleOverlayService : Service() {
                 windowManager.updateViewLayout(icon, params)
                 val current = CaptureManager.state.value
                 clearTranslations()
-                if (current is CaptureManager.CaptureState.Done) showPanel(current.result,true)
+                if (current is CaptureManager.CaptureState.Done) renderTranslations(current.result,true)
                 publishBounds()
                 getSharedPreferences("bubble_position", MODE_PRIVATE).edit().putInt("x", params.x).putInt("y", params.y).apply()
             },
@@ -289,60 +312,53 @@ class BubbleOverlayService : Service() {
         if (actionDock != null) { collapseActions(); return }
         val bubble = bubbleParams ?: return
         val bounds = availableBounds()
-        val buttonSize = ((bounds.width() - dp(BUBBLE_SIZE_DP)) / 4).coerceIn(dp(48), dp(60))
-        val width = buttonSize * 4
-        val height = dp(94)
+        val buttonSize = (bounds.width()/3).coerceIn(dp(48),dp(110))
+        val width = buttonSize * 3
+        val height = dp(52)
         val dock = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            background = GradientDrawable().apply { cornerRadius = dp(24).toFloat(); setColor(PANEL_BACKGROUND); setStroke(dp(2), PANEL_ACCENT) }
-            elevation = dp(8).toFloat()
+            orientation = LinearLayout.HORIZONTAL
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+            background = GradientDrawable().apply { cornerRadius = dp(18).toFloat(); setColor(PANEL_BACKGROUND) }
         }
-        statusLabel = TextView(this).apply { textSize = 10f; setTextColor(PANEL_TEXT); gravity = Gravity.CENTER; setPadding(dp(4), dp(4), dp(4), dp(4)) }
-        dock.addView(statusLabel, LinearLayout.LayoutParams(width, dp(30)))
-        val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        dock.addView(actions)
-        fun action(symbol: String, description: String, enabled: Boolean = true, handler: () -> Unit) {
-            actions.addView(TextView(this).apply {
-                text = symbol; textSize = 14f; gravity = Gravity.CENTER
-                if (description.startsWith("Start")) startControl = this
-                contentDescription = description
-                setTextColor(if (enabled) PANEL_TEXT else PANEL_SECONDARY_TEXT)
-                isEnabled = enabled
-                isClickable = true
+        FloatingAction.entries.forEach { action ->
+            val button=TextView(this).apply {
+                text=if(action==FloatingAction.CLOSE)getString(R.string.action_close) else action.label
+                if(action==FloatingAction.CLOSE){contentDescription=text;setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_close,0,0,0)}
+                 gravity=Gravity.CENTER; textSize=14f; maxLines=1
+                ellipsize=android.text.TextUtils.TruncateAt.END; setTextColor(PANEL_TEXT)
                 setOnClickListener {
-                    event(description)
-                    try { handler() } catch (failure: Exception) {
-                        com.manhwalens.app.diagnostics.Diagnostics.error("overlay", "action_failed", "OVL-ACTION", "floating action failed", throwable = failure)
-                        Toast.makeText(this@BubbleOverlayService, "Action failed; check permissions in the app", Toast.LENGTH_SHORT).show()
+                    collapseActions()
+                    when(action) {
+                        FloatingAction.START -> startTranslation()
+                        FloatingAction.STOP -> stopTranslation()
+                        FloatingAction.CLOSE -> closeService()
                     }
                 }
-                setOnLongClickListener { Toast.makeText(this@BubbleOverlayService, description, Toast.LENGTH_SHORT).show(); true }
-            }, LinearLayout.LayoutParams(buttonSize, dp(64)))
-        }
-        action("▶\nترجمة", "Start Translation / بدء الترجمة") { startTranslation() }
-        action("■\nإيقاف", "Stop Capture Session / إيقاف جلسة الالتقاط") { stopTranslation() }
-        action("⊗\nإخفاء", "Disable Floating Icon / تعطيل الفقاعة") {
-            stopTranslation()
-            (application as ManhwaLensApp).settingsRepository.setBubbleEnabled(false)
-            stopForeground(STOP_FOREGROUND_REMOVE)
-            stopSelf()
-        }
-        action("↗\nالتطبيق", "Open App / فتح التطبيق") {
-            collapseActions()
-            clearTranslations()
-            acceptResults = false
-            startActivity(Intent(this, com.manhwalens.app.MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+            if(action==FloatingAction.START) startControl=button
+            if(action==FloatingAction.STOP) stopControl=button
+            dock.addView(button, LinearLayout.LayoutParams(buttonSize,height))
         }
         val params = WindowManager.LayoutParams(width, height, overlayType(),
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT).apply {
             gravity = Gravity.TOP or Gravity.LEFT
             x = (if (bubble.x > bounds.width() / 2) bubble.x - width else bubble.x + dp(BUBBLE_SIZE_DP))
                 .coerceIn(0, (bounds.width() - width).coerceAtLeast(0))
             y = bubble.y.coerceIn(0, (bounds.height() - height).coerceAtLeast(0))
         }
+        val dialogue=(CaptureManager.state.value as? CaptureManager.CaptureState.Done)?.result?.blocks.orEmpty()
+        val maxY=(bounds.height()-height).coerceAtLeast(0)
+        val offset=if(Build.VERSION.SDK_INT>=30) windowManager.currentWindowMetrics.windowInsets.getInsets(android.view.WindowInsets.Type.statusBars()).top else 0
+        val candidates=listOf(params.y,0,maxY,maxY/2)
+        params.y=candidates.minByOrNull { y -> dialogue.sumOf { block ->
+            val r=block.region
+            (minOf(params.x+width,r.right)-maxOf(params.x,r.left)).coerceAtLeast(0).toLong()*
+                (minOf(y+offset+height,r.bottom)-maxOf(y+offset,r.top)).coerceAtLeast(0)
+        } } ?: params.y
+        dock.setOnTouchListener { _,e -> if(e.actionMasked==MotionEvent.ACTION_OUTSIDE) { collapseActions(); true } else false }
         runCatching { windowManager.addView(dock, params) }.onSuccess {
+            CaptureManager.dockVisible = true
             actionDock = dock
             updateControlState()
             val topInset = if (Build.VERSION.SDK_INT >= 30) windowManager.currentWindowMetrics.windowInsets.getInsets(android.view.WindowInsets.Type.statusBars()).top else 0
@@ -369,80 +385,161 @@ class BubbleOverlayService : Service() {
 
     // ── Result panel ───────────────────────────────────────────────
 
-    private fun showPanel(result: CaptureResult, final: Boolean) {
+    private fun renderTranslations(result: CaptureResult, final: Boolean) {
         // StateFlow replays its last result to new subscribers: never render history over a different app.
-        if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt) return
-        if (!ReplacementCommit.eligible(result.id, CaptureManager.activeResultId, final)) return
-        if (displayedResultId != result.id) { clearTranslations(); displayedResultId = result.id }
+        fun terminal(reason:String) = result.blocks.forEach { com.manhwalens.app.diagnostics.SessionScorecard.outcome(result.id,it.region,reason) }
+        if (!acceptResults || CaptureManager.appVisible.value || result.timestamp < requestedAt) { terminal("CANCELLED"); return }
+        val owner=ReplacementCommit.Owner(result.id,result.sceneRevision)
+        fun current()=result.sceneRevision==CaptureManager.scene.current && result.id==CaptureManager.activeResultId
+        if(!current()){terminal("STALE_RESULT");com.manhwalens.app.diagnostics.Diagnostics.info("overlay","stale_result","id=${result.id} revision=${result.sceneRevision}");return}
+        if(displayedResultId!=result.id){clearTranslations();displayedResultId=result.id}
+        val expected=mutableSetOf<String>()
         val bounds = if (Build.VERSION.SDK_INT >= 30) {
-            val metrics = windowManager.maximumWindowMetrics
+            val metrics = windowManager.currentWindowMetrics
             val inset = metrics.windowInsets.getInsetsIgnoringVisibility(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
             android.graphics.Rect(inset.left, inset.top, metrics.bounds.width() - inset.right, metrics.bounds.height() - inset.bottom)
-        } else availableBounds()
-        if (displayedBlocks.isNotEmpty()) return
-        val replacing = result.blocks.filter { it.translated != it.original }
-        if (replacing.isEmpty()) return
-        data class Ready(val view: ReplacementTranslationView, val params: WindowManager.LayoutParams, val rect: android.graphics.Rect)
-        val ready = mutableListOf<Ready>()
-        val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,bounds.bottom)
-        val occupied = mutableListOf<ReplacementSurface>()
-        bubbleView?.let { button ->
+        } else android.graphics.Rect().also { r ->
+            bubbleView?.getWindowVisibleDisplayFrame(r)
+            if(r.isEmpty) r.set(availableBounds())
+        }
+        fun outcome(i:Int,reason:String){
+            if(reason in setOf("replacement_prepared","expanded_prepared","balloon_attached","overlay_collision","out_of_bounds","text_capacity","mask_defect","clipped"))
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(result.blocks[i].region),reason)
+            if(reason in setOf("replacement_prepared","expanded_prepared"))
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(result.blocks[i].region),"LAYOUT_SELECTED")
+            if(reason in setOf("overlay_collision","out_of_bounds","text_capacity","mask_defect","clipped"))
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(result.blocks[i].region),"LAYOUT_REJECTED_"+reason.uppercase())
+            if(reason=="balloon_attached"){
+                val id=com.manhwalens.app.pipeline.PageState.id(result.blocks[i].region)
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,id,"PLACEMENT_ACCEPTED")
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,id,"RENDERED")
+            }
+            if(reason in setOf("RENDER_FAILED","TRANSLATION_FAILED","CANCELLED","STALE_RESULT","balloon_attached")) com.manhwalens.app.diagnostics.SessionScorecard.outcome(result.id,result.blocks[i].region,reason)
+            com.manhwalens.app.diagnostics.Diagnostics.info("funnel","render","page=${result.id} bounds=${result.blocks[i].region.let { "${it.left},${it.top},${it.right},${it.bottom}" }} outcome=$reason",traceId=result.traceId)
+        }
+        val detail=CaptureManager.pageDetail?.takeIf { it.first==result.id }?.second
+        val screen = ReplacementSurface(bounds.left,bounds.top,bounds.right,minOf(bounds.bottom,detail?.bottom ?: bounds.bottom))
+        val occupied = translationViews.mapNotNull { (it as? ReplacementTranslationView)?.geometry }.toMutableList()
+        val boxes=CaptureManager.currentBoxes?.takeIf { it.first==result.id }?.second.orEmpty()
+        dockRect?.let { occupied.add(ReplacementSurface(it.left,it.top,it.right,it.bottom)) }
+        bubbleView?.takeIf { it.visibility==View.VISIBLE }?.let { button ->
             val xy=IntArray(2); button.getLocationOnScreen(xy)
-            occupied.add(ReplacementSurface(xy[0]-dp(8),xy[1]-dp(8),xy[0]+dp(BUBBLE_SIZE_DP)+dp(8),xy[1]+dp(BUBBLE_SIZE_DP)+dp(8)))
-        }
-        // An expanded successful translation must not cover failed source dialogue.
-        result.blocks.filter { it.errorCode != null || it.translated.isBlank() }.forEach {
-            occupied.add(SurfacePlacement.source(it.region))
-        }
-        for (block in replacing) {
-            if (block.errorCode != null || block.translated.isBlank()) continue
-            val source = SurfacePlacement.visible(block.region,screen) ?: continue
-            val prepared = runCatching { DirectTranslationLayout.prepare(this,block.translated,source,screen,occupied) }.getOrNull()
-            if (prepared == null) {
-                com.manhwalens.app.diagnostics.Diagnostics.warn("overlay","screen_capacity","Original retained: complete text exceeds available display or rendering failed")
-                continue
+            val old=android.graphics.Rect(xy[0],xy[1],xy[0]+button.width,xy[1]+button.height)
+            if(actionDock==null && boxes.any { android.graphics.Rect.intersects(it,old) }) {
+                val free=listOf(bounds.left,bounds.right-button.width).flatMap { x -> listOf(bounds.top,bounds.bottom-button.height).map { y -> android.graphics.Rect(x,y,x+button.width,y+button.height) } }.firstOrNull { r -> (boxes+translationRects).none { android.graphics.Rect.intersects(it,r) } }
+                if(free!=null) bubbleParams?.let { p -> p.x+=free.left-old.left;p.y+=free.top-old.top;windowManager.updateViewLayout(button,p);xy[0]=free.left;xy[1]=free.top }
             }
-            val surface=prepared.surface
-            val text=prepared.view
-            val rect=android.graphics.Rect(surface.left,surface.top,surface.right,surface.bottom)
-            val params = WindowManager.LayoutParams(surface.width, surface.height, overlayType(),
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                PixelFormat.TRANSLUCENT).apply {
-                gravity = Gravity.TOP or Gravity.LEFT; x = surface.left; y = surface.top; alpha = 1f
-            }
-            text.setOnLongClickListener { clearTranslations(); true }
-            ready.add(Ready(text, params, rect))
-            occupied.add(surface)
+            occupied.add(ReplacementSurface(xy[0],xy[1],xy[0]+button.width,xy[1]+button.height))
         }
-        val committed = ReplacementCommit.commit(ready,
-            current = { acceptResults && !CaptureManager.appVisible.value &&
-                ReplacementCommit.eligible(result.id, CaptureManager.activeResultId, final) },
-            attach = { windowManager.addView(it.view, it.params) },
-            remove = { it.view.visibility = View.INVISIBLE; windowManager.removeViewImmediate(it.view) })
-        if (!committed) return
-        ready.forEach { translationViews.add(it.view); translationRects.add(it.rect) }
-        displayedBlocks.add(result.id)
-        publishBounds()
-        if (ready.isNotEmpty()) markRendered(result, final && ready.size == replacing.size)
-    }
-
-    private fun markRendered(result: CaptureResult, final: Boolean) {
-        // Exact result identity prevents a queued callback marking a newer journey.
-        bubbleView?.post {
-            val current = CaptureManager.state.value
-            val currentId = when (current) {
-                is CaptureManager.CaptureState.Partial -> current.result.id
-                is CaptureManager.CaptureState.Done -> current.result.id
+        // Two blocks describing (almost) the same source rectangle are one bubble detected
+        // twice, not two dialogues. Only the first may render; the duplicate is reported, and
+        // neither half of the pair keeps the other out of the way.
+        val duplicateOf=com.manhwalens.app.pipeline.OverlayPolicy.duplicates(result.blocks)
+        var renderFailure = false
+        result.blocks.forEachIndexed { i,block ->
+            val id=com.manhwalens.app.pipeline.PageState.id(block.region);val hash=CaptureManager.pixelHashes[id]
+            val key="${block.region.left}:${block.region.top}:${block.region.right}:${block.region.bottom}:$id:$hash:${block.translated}"
+            // Duplicates cannot be rendered, so they must not be counted as expected coverage
+            // either (that would keep the page permanently "incomplete").
+            if(com.manhwalens.app.pipeline.OverlayPolicy.renderable(block) && i !in duplicateOf)expected.add(key)
+            attached.filterValues { it.id==id && it.key!=key }.keys.toList().forEach(::discard)
+            if(key in displayedBlocks) return@forEachIndexed
+            val reason=when {
+                block.errorCode!=null -> block.errorCode
+                block.translated==block.original -> "source_preserved"
+                block.translated.isBlank() -> "empty_output"
                 else -> null
             }
-            if (currentId != result.id || displayedResultId != result.id || translationViews.isEmpty()) return@post
-            if (result.blocks.any { it.errorCode == null && it.translated != it.original }) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T10")
-            if (final) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(result.id, "T12")
+            if(reason!=null) { outcome(i,"TRANSLATION_FAILED"); return@forEachIndexed }
+            if(i in duplicateOf){
+                com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,id,"PLACEMENT_REJECTED_DUPLICATE_SOURCE_REGION")
+                outcome(i,"DUPLICATE_SOURCE_REGION"); return@forEachIndexed
+            }
+            if(attached.values.any { it.id==id && it.key==key }) return@forEachIndexed // already drawn for this page
+            val source=SurfacePlacement.visible(block.region,screen)
+            val r=block.region
+            val anchor=ReplacementSurface(r.left,r.top,r.right,r.bottom,source?.color ?: -1)
+            // Obstacles = blocks that will actually attempt to render (plus committed
+            // overlays/dock already in `occupied`). Rejected, failed, source-preserved and
+            // duplicate blocks reserve nothing, so a dead region can no longer block a valid
+            // neighbor. Raw OCR boxes are never obstacles: they are inside these blocks or stale.
+            val others=result.blocks.filterIndexed { index,b -> index!=i && index !in duplicateOf && b.region!==r && com.manhwalens.app.pipeline.OverlayPolicy.renderable(b) }.map { b ->
+                b.region.let { ReplacementSurface(it.left,it.top,it.right,it.bottom) }
+            }
+            fun failed(){outcome(i,if(!current()) "STALE_RESULT" else "RENDER_FAILED");renderFailure=true}
+            val prepared=DirectTranslationLayout.anchored(this,block.translated,anchor,source,screen,occupied+others,detail,r.sourceLineCount){outcome(i,it)}
+            if(prepared==null){failed();return@forEachIndexed}
+            when(prepared.view.maskValid) { true -> com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(block.region),"MASK_VALIDATED")
+                false -> com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(block.region),"MASK_REJECTED")
+                null -> com.manhwalens.app.diagnostics.SessionScorecard.stage(result.id,com.manhwalens.app.pipeline.PageState.id(block.region),"MASK_NOT_APPLICABLE") }
+            outcome(i,if(prepared.surface!==source && prepared.surface.capsule) "expanded_prepared" else "replacement_prepared")
+            outcome(i,prepared.surface.let { "mode=${when { it.mask!=null->"mask";it.oval->"oval";it.patch!=null->"patch";it.capsule->"capsule";else->"fallback" }} mask_survived=${it.mask!=null && it.mask===source?.mask} delta_ltrb=${it.left-r.left},${it.top-r.top},${it.right-r.right},${it.bottom-r.bottom} final_surface=${it.left},${it.top},${it.right},${it.bottom} ${prepared.view.measurement}" })
+            val surface=prepared.surface; val text=prepared.view
+            val params=WindowManager.LayoutParams(surface.width,surface.height,overlayType(),
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply {
+                gravity=Gravity.TOP or Gravity.LEFT; x=surface.left; y=surface.top
+            }
+            text.setOnLongClickListener { clearTranslations(); true }
+            val committed=ReplacementCommit.commit(listOf(text),current={ acceptResults && !CaptureManager.appVisible.value && current() },
+                attach={windowManager.addView(it,params)}, remove={windowManager.removeViewImmediate(it)})
+            if(committed) {
+                translationViews.add(text); translationRects.add(android.graphics.Rect(surface.left,surface.top,surface.right,surface.bottom))
+                attached[text]=Attached(owner,id,hash,key,result.traceId)
+                text.postDelayed({if(text in attached){discard(text);if(CaptureManager.sessionActive)ScreenCaptureService.captureNow(this)}},120_000L)
+                text.onPresented={checkCoverage?.invoke()}
+                text.onRasterLost={ if(text in attached && current()) { discard(text); failed();checkCoverage?.invoke() } }
+                occupied.add(surface); displayedBlocks.add(key); outcome(i,"balloon_attached")
+            } else { failed() }
+        }
+        publishBounds()
+        if(final && renderFailure) CaptureManager.setLive(CaptureManager.LiveStatus.NO_TRANSLATION)
+        CaptureManager.debugBoxes?.takeIf { it.first==result.id && (application as ManhwaLensApp).settingsRepository.debug.value }?.let { (_,boxes) ->
+            android.util.Log.i("ManhwaLensFunnel","page=${result.id} translated=${result.blocks.count { it.errorCode==null && it.original!=it.translated }} attached=${displayedBlocks.size}")
+            if(debugView==null) {
+                val outline=object:View(this){
+                    val pen=android.graphics.Paint().apply { style=android.graphics.Paint.Style.STROKE; strokeWidth=2f; color=android.graphics.Color.CYAN }
+                    override fun onDraw(canvas:android.graphics.Canvas){ val xy=IntArray(2);getLocationOnScreen(xy);canvas.translate(-xy[0].toFloat(),-xy[1].toFloat());boxes.forEach { canvas.drawRect(it,pen) } }
+                }
+                val lp=WindowManager.LayoutParams(-1,-1,overlayType(),WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT).apply { alpha=.35f }
+                runCatching { windowManager.addView(outline,lp) }.onSuccess { debugView=outline }
+            }
+        }
+        checkCoverage={markRendered(owner,expected,final,renderFailure || result.blocks.any { it.errorCode!=null || it.translated==it.original || it.translated.isBlank() })}
+        checkCoverage?.invoke()
+    }
+
+    private fun markRendered(owner:ReplacementCommit.Owner,expected:Set<String>,final:Boolean,failed:Boolean) {
+        bubbleView?.post {
+            val active=CaptureManager.activeResultId?.let { ReplacementCommit.Owner(it,CaptureManager.scene.current) }
+            if(active!=owner || !acceptResults) return@post
+            val visible=mutableMapOf<String,ReplacementCommit.Owner>()
+            attached.forEach { (view,stamp) ->
+                val text=view as ReplacementTranslationView
+                val score=com.manhwalens.app.diagnostics.SessionScorecard
+                val full=text.fullyOnScreen()
+                val state=if(full) "visible_in_image" else if(!text.presented) "awaiting_draw" else "hidden_clipped_or_displaced"
+                if(stamp.owner==owner && state!=stamp.lastVisibility && (application as ManhwaLensApp).settingsRepository.debug.value){
+                    stamp.lastVisibility=state
+                    com.manhwalens.app.diagnostics.Diagnostics.info("overlay","presentation","page=${owner.result} source_id=${stamp.id.l},${stamp.id.t},${stamp.id.r},${stamp.id.b} state=$state",traceId=stamp.trace)
+                }
+                if(stamp.owner==owner && full) {
+                    visible[stamp.key]=stamp.owner
+                    score.stage(owner.result,stamp.id,"source_mask_drawn")
+                    score.outcome(owner.result,stamp.id,"VISIBLE_IN_IMAGE")
+                } else if(stamp.owner==owner && text.presented && text.isShown) {
+                    score.stage(owner.result,stamp.id,"clipped_or_displaced");score.outcome(owner.result,stamp.id,"RENDER_FAILED")
+                }
+            }
+            val status=ReplacementCommit.coverage(owner,active,expected,visible,final,failed)
+            com.manhwalens.app.diagnostics.Diagnostics.info("overlay","render_coverage","id=${owner.result} revision=${owner.scene} visible=${expected.count { visible[it]==owner }} expected=${expected.size} status=$status")
+            if(status!=ReplacementCommit.Coverage.NONE && CaptureManager.sessionActive) CaptureManager.setLive(CaptureManager.LiveStatus.READY)
+            if(status!=ReplacementCommit.Coverage.NONE) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(owner.result,"T10")
+            if(status==ReplacementCommit.Coverage.COMPLETE) com.manhwalens.app.benchmarks.BenchmarkTracker.markForResult(owner.result,"T12")
         }
     }
 
     private fun showWorking(status: CaptureManager.Status) {
-        if (status == CaptureManager.Status.PREPARING) { clearTranslations() }
+        // Retain verified source-aligned views until the clean frame validates their signatures.
         // Do not put our own status text into the screen being OCR'd.
         bubbleView?.alpha = 0.65f
     }
@@ -475,7 +572,8 @@ class BubbleOverlayService : Service() {
             .setContentText(getString(R.string.notif_bubble_text))
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .addAction(R.drawable.ic_stat_lens, getString(R.string.notif_action_stop), stopPending)
+            .addAction(R.drawable.ic_stat_lens,"الإعدادات",PendingIntent.getActivity(this,2,Intent(this,com.manhwalens.app.MainActivity::class.java).putExtra("show_settings",true),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+            .addAction(R.drawable.ic_stat_lens, getString(R.string.action_close), stopPending)
             .build()
     }
 
@@ -487,6 +585,10 @@ class BubbleOverlayService : Service() {
         bubbleView?.let { view -> runCatching { windowManager.removeView(view) } }
         bubbleView = null
         CaptureManager.overlayBounds = emptyList()
+        CaptureManager.hideControlsForFrame = null
+        CaptureManager.invalidateWindows=null
+        CaptureManager.validateOverlays=null
+        CaptureManager.restoreControlsAfterFrame=null
         super.onDestroy()
     }
 
@@ -499,7 +601,7 @@ class BubbleOverlayService : Service() {
         private const val BUBBLE_SIZE_DP = 56
         private const val TAG_WORKING_TEXT = "working_text"
 
-        private val PANEL_BACKGROUND = 0xF21A1430.toInt()
+        private val PANEL_BACKGROUND = 0xFF1A1430.toInt()
         private val PANEL_TEXT = 0xFFF3EFFA.toInt()
         private val PANEL_SECONDARY_TEXT = 0xFFB9B3D6.toInt()
         private val PANEL_ACCENT = 0xFFC4B5FD.toInt()
@@ -561,7 +663,7 @@ private class BubbleTouchListener(
                 true
             }
             MotionEvent.ACTION_UP -> {
-                if (!dragging) onTap() else onRelease()
+                if (!dragging && event.eventTime-event.downTime <= android.view.ViewConfiguration.getLongPressTimeout()) onTap() else if(dragging) onRelease()
                 dragging = false
                 true
             }

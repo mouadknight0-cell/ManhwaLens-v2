@@ -1,7 +1,31 @@
 # Changelog
 
+## 1.1.30
+- Conditional colour-crop OCR recovery, ranked candidate passes and local text repair. Murim readings, interjection handling, bounded translation timeout and Close control. Physical Redmi metrics pending.
+
+## 1.1.29 — Xiaomi reader update
+- Three-action RTL dock; hiding the icon no longer ends projection. Restore via notification or app.
+- Bounded sampled bubble contours, source-centred fallback, stricter MT output checks and OCR repair.
+- Bound capture settling, add connected-clause and reviewed dialogue handling.
+- Confirmed diagnostic reset and recent-record UTF-8 report budgets. Device acceptance not yet measured.
+
+
 All notable changes to ManhwaLens are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [1.1.28] - 2026-11-20
+
+- Live-only translation, incremental bubble commits, matched page-state reuse, motion confirmation and post-cycle backpressure.
+- Measured fit fallbacks, bounded full-surface OCR retries, 18k offline lexical scoring, and script-share validation.
+- Comic-surface filtering, indexed reviewed dialogue and editable post-translation corrections.
+- Added session outcome/latency scorecards to the full report. No new sensitive permission or model.
+
+## [1.1.27] - 2026-11-20
+
+- Resize undersized OCR retry crops for ML Kit, retain per-block failures, process surface evidence beyond region 24, and add opt-in geometry/logcat diagnostics.
+- Keep the capture menu open through page completion. Add pause/resume, automatic/manual capture, translate-now, settings and outside dismissal. Hide capture windows while acquiring a fresh frame.
+- Editable Arabic readings for character names/terms, punctuation-preserving reviewed whole utterances and short dialogue. Preserve GYU as SFX.
+- Bounded flat-ring growth with original-box fallback and larger native auto-fit range. No new translator or on-page reader.
 
 ## [1.1.23] - 2026-11-19
 

@@ -17,25 +17,44 @@ object NameShield {
     data class MaskResult(val maskedText: String, val names: List<String>,
         val tokens: List<String> = names.indices.map { (BASE + it).toString() })
 
-    fun mask(text: String, names: List<String>): MaskResult {
+    fun mask(text: String, names: List<String>, preserveSpelling:Boolean=false): MaskResult {
         if (names.isEmpty() || text.isBlank()) return MaskResult(text, emptyList())
         // longest first, unique
         val unique = names.map { it.trim() }.filter { it.isNotBlank() }.distinctBy { it.lowercase() }
             .sortedByDescending { it.length }
+        if(unique.none { text.contains(it,ignoreCase=true) }) return MaskResult(text,emptyList())
         var result = text
         val used = mutableListOf<String>()
         val tokens = mutableListOf<String>()
         val originalDigits = normalizeDigits(text)
         var next = BASE
         for (name in unique) {
-            val regex = Regex("(?<![\\p{L}\\p{N}_])" + Regex.escape(name) + "(?![\\p{L}\\p{N}_])", RegexOption.IGNORE_CASE)
-            if (regex.containsMatchIn(result)) {
+            // The possessive suffix belongs to the name: "Gus's" is ONE identity. Leaving the
+            // "'s" outside the sentinel sent a bare suffix to the translator, which dropped it,
+            // so the restored line silently lost the possessive ("Gus sword").
+            val suffixed = Regex("(?<![\\p{L}\\p{N}_])" + Regex.escape(name) + "['’][sS](?![\\p{L}\\p{N}_])",
+                RegexOption.IGNORE_CASE)
+            val plain = Regex("(?<![\\p{L}\\p{N}_])" + Regex.escape(name) + "(?![\\p{L}\\p{N}_])",
+                RegexOption.IGNORE_CASE)
+            var occurrences = 0
+            while (occurrences < MAX_OCCURRENCES) {
+                // Prefer the possessive occurrence so its suffix is swallowed with the name.
+                val possessive = suffixed.find(result)
+                val hit = possessive ?: plain.find(result) ?: break
                 while (next <= MAX && originalDigits.contains(next.toString())) next++
                 require(next <= MAX) { "No collision-free name sentinel available" }
                 val token = next.toString()
+                // An explicitly supplied canonical spelling is restored exactly as given. A
+                // lowercase dictionary key keeps the whole surface the panel printed — suffix
+                // included for a possessive ("SECT'S") — which is what the reader shows today.
+                // A lowercase dictionary key keeps the whole printed surface the panel showed
+                // ("HEFEI", "SECT'S"); an explicitly supplied spelling is restored verbatim.
+                // Either way the suffix never escapes as a bare "'s" into the model input.
+                val identity = if (preserveSpelling && name == name.lowercase()) hit.value else name
+                result = result.replaceRange(hit.range, " $token ")
                 tokens.add(token)
-                result = result.replace(regex, " $token ")
-                used.add(name)
+                used.add(identity)
+                occurrences++
                 next += 1
                 if (next > MAX) break
             }
@@ -44,6 +63,11 @@ object NameShield {
         result = fixSpaceBeforePunctuation(result)
         return MaskResult(result, used, tokens)
     }
+
+    /** Bound the per-name work; a phone screen never needs more. */
+    private const val MAX_OCCURRENCES = 8
+
+    private fun bareOf(surface: String): String = surface.replace(Regex("['’][sS]$"), "")
 
     /** "hello , world" -> "hello, world" — protects masked text and restored output alike. */
     private fun fixSpaceBeforePunctuation(text: String): String =
@@ -66,7 +90,10 @@ object NameShield {
     fun restore(translated: String, mask: MaskResult): String {
         if (mask.names.isEmpty()) return translated
         var result = normalizeDigits(translated)
-        mask.tokens.zip(mask.names).forEach { (token, name) ->
+        // Longest token first: with several names the shorter token is a substring of the
+        // longer one ("7000" inside "7001"), so restoring in declaration order let name #1
+        // swallow part of a later token and produce "Lizzy1". Masking is order-independent.
+        mask.tokens.zip(mask.names).sortedByDescending { it.first.length }.forEach { (token, name) ->
             result = tokenPattern(token).replace(result) { name }
         }
         return fixSpaceBeforePunctuation(result.replace(Regex("\\s{2,}"), " ").trim())

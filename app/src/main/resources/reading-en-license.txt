@@ -1,0 +1,5 @@
+reading-en.txt is adapted from FrequencyWords by Hermit Dave and contributors,
+https://github.com/hermitdave/FrequencyWords/blob/master/content/2018/en/en_50k.txt
+Source corpus: OpenSubtitles 2018. Adaptation: first 18,000 lowercase alphabetic entries, counts removed.
+Word-list content and this adaptation: Creative Commons Attribution-ShareAlike 4.0 International,
+https://creativecommons.org/licenses/by-sa/4.0/ . No endorsement implied.

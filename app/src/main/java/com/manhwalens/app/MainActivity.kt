@@ -3,7 +3,6 @@ package com.manhwalens.app
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Build
@@ -104,23 +103,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private val projectionManager: MediaProjectionManager? by lazy {
-        getSystemService(MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
-    }
-
     private var overlayGranted by mutableStateOf(false)
     private var notificationsGranted by mutableStateOf(false)
 
-    private val captureConsentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val data = result.data
-        if (result.resultCode == RESULT_OK && data != null) {
-            ScreenCaptureService.startSession(this, result.resultCode, data, autoCapture = true)
-        } else {
-            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_capture_denied)))
-        }
-    }
-
     private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if(!granted) com.manhwalens.app.diagnostics.Diagnostics.warn("permissions","notifications","Enable notifications in Android settings for visible session controls",code="PERM-NOTIFICATIONS")
         notificationsGranted = granted
     }
 
@@ -167,6 +154,7 @@ class MainActivity : ComponentActivity() {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             },
         )
+        com.manhwalens.app.diagnostics.Diagnostics.warn("permissions","overlay","Grant Display over other apps in Android settings",code="PERM-OVERLAY")
         Toast.makeText(this, getString(R.string.settings_bubble_permission_missing), Toast.LENGTH_LONG).show()
     }
 
@@ -183,11 +171,7 @@ class MainActivity : ComponentActivity() {
             ScreenCaptureService.captureNow(this)
             return
         }
-        val manager = projectionManager ?: run {
-            CaptureManager.setState(CaptureManager.CaptureState.Error(getString(R.string.error_capture_denied)))
-            return
-        }
-        captureConsentLauncher.launch(manager.createScreenCaptureIntent())
+        com.manhwalens.app.capture.CaptureConsentActivity.launch(this, source="main")
     }
 
     private fun onBubbleToggled(enabled: Boolean) {
@@ -204,6 +188,63 @@ class MainActivity : ComponentActivity() {
             settingsRepository.setBubbleEnabled(false)
         }
     }
+}
+
+/**
+ * The last translated line, as a capture candidate.
+ *
+ * Reads from the result the reader is already looking at rather than from a new capture, so nothing
+ * is re-recognised and nothing can drift. The page snapshot is built from the same blocks, which is
+ * what makes the recorded context the context that actually applied.
+ *
+ * Returns null when there is nothing to capture, and the screen says so rather than saving a case
+ * with an empty line that would later read as the engine finding nothing.
+ */
+private fun evidenceInput(
+    result: CaptureResult?,
+    activity: MainActivity,
+): com.manhwalens.app.context.EvidenceCollector.Input? {
+    val blocks = result?.blocks?.filter { it.errorCode == null && it.original.isNotBlank() } ?: return null
+    val chosen = blocks.firstOrNull { it.translated.isNotBlank() } ?: return null
+    val client = CaptureManager.translationClient
+    val outcome = client?.lastContextOutcome
+    val snapshot = com.manhwalens.app.context.PageSnapshot(
+        regions = blocks.map { block ->
+            com.manhwalens.app.context.PageSnapshot.RegionInput(
+                text = block.original,
+                left = block.region.left,
+                top = block.region.top,
+                right = block.region.right,
+                bottom = block.region.bottom,
+                readingOrder = blocks.indexOf(block),
+                // The pipeline does not classify regions, so "dialogue" is a claim we cannot make;
+                // the empty kind is recorded instead and the page's own bounds carry the information.
+                kind = "",
+                ocrConfidence = block.region.confidence,
+            )
+        },
+        target = blocks.indexOf(chosen),
+        workId = "",
+    )
+    return com.manhwalens.app.context.EvidenceCollector.Input(
+        id = "case-" + System.currentTimeMillis(),
+        capturedAtMs = System.currentTimeMillis(),
+        sourceText = chosen.original,
+        ocrText = chosen.region.text,
+        baselineArabic = chosen.translated,
+        displayedArabic = chosen.translated,
+        snapshot = snapshot,
+        outcome = outcome,
+        mode = client?.contextMode ?: com.manhwalens.app.context.ContextMode.A_BASELINE,
+        appVersionName = BuildConfig.VERSION_NAME,
+        appVersionCode = BuildConfig.VERSION_CODE,
+        gitRevision = BuildConfig.GIT_REVISION,
+        baselineMillis = chosen.durationMs,
+        pageId = result.id,
+        regionsDetected = blocks.size,
+        error = chosen.errorCode,
+        regionKind = "",
+    )
 }
 
 @Composable
@@ -226,13 +267,17 @@ private fun ManhwaLensRoot(
     val onboardingSeen by activity.settingsRepository.onboardingSeen.collectAsState()
     val bubbleEnabled by activity.settingsRepository.bubbleEnabled.collectAsState()
 
-    var tab by remember { mutableStateOf(Tab.HOME) }
+    var tab by remember { mutableStateOf(if(activity.intent.getBooleanExtra("show_settings",false)) Tab.SETTINGS else Tab.HOME) }
     var entries by remember { mutableStateOf(emptyList<CaptureResult>()) }
     var selectedResult by remember { mutableStateOf<CaptureResult?>(null) }
     var resultIsFinal by remember { mutableStateOf(true) }
     var workingStatus by remember { mutableStateOf<CaptureManager.Status?>(null) }
     val sessionPhase by CaptureManager.sessionPhase.collectAsState()
     val sessionActive = sessionPhase == CaptureManager.SessionPhase.ACTIVE
+    var showEvaluation by remember { mutableStateOf(false) }
+    // Evidence capture is opened deliberately from Settings, never automatically: a capture reads the
+    // last translated page, and doing that behind the reader's back would be a surprise.
+    var showEvidence by remember { mutableStateOf(false) }
     var learnedNames by remember { mutableStateOf(nameGlossary.all()) }
     var confirmedNames by remember { mutableStateOf(nameGlossary.translationNames().toSet()) }
     var benchmarksRecorded by remember { mutableStateOf(BenchmarkTracker.records().size) }
@@ -390,6 +435,24 @@ private fun ManhwaLensRoot(
                             BenchmarkTracker.clearRecords()
                             benchmarksRecorded = 0
                         },
+                        onOpenEvaluation = { showEvaluation = true },
+                        onOpenEvidence = { showEvidence = true },
+                    )
+                }
+            }
+
+            if (showEvaluation) {
+                androidx.activity.compose.BackHandler { showEvaluation = false }
+                androidx.compose.material3.Surface(Modifier.fillMaxSize()) {
+                    com.manhwalens.app.evaluation.EvaluationScreen(onBack = { showEvaluation = false })
+                }
+            }
+
+            if (showEvidence) {
+                androidx.activity.compose.BackHandler { showEvidence = false }
+                androidx.compose.material3.Surface(Modifier.fillMaxSize()) {
+                    com.manhwalens.app.ui.EvidenceCaptureScreen(
+                        caseProvider = { evidenceInput(selectedResult, activity) },
                     )
                 }
             }

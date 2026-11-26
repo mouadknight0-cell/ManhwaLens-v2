@@ -4,6 +4,7 @@ import org.junit.Test
 class ReaderContentFilterTest {
     private fun region(text: String, top: Int = 200) = TextRegion(text, 50, top, 250, top + 30)
     @Test fun excludesActualStatusBarAndBrowserAddress() {
+        assertFalse(ReaderContentFilter.keep(region("Today 19:50"),68,1500))
         assertFalse(ReaderContentFilter.keep(region("MB/S lll62", 24), 68, 1500))
         assertFalse(ReaderContentFilter.keep(region("roliascan. com/read/legend-of-a", 112), 68, 1500))
         assertTrue(ReaderContentFilter.keep(region("I DO HOLD A GRUDGE FOR SURE."), 68, 1500))

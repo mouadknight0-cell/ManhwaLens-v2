@@ -32,22 +32,28 @@ object SentenceReconstructor {
     }
 
     /** Normalize punctuation spacing and duplicates. */
+    private val spaces = Regex("\\s{2,}")
+    private val beforePunct = Regex("\\s+([,.;:!?%\\)\\]»”])")
+    private val afterSeparator = Regex("([,;:!?])([^\\s\\)\\]»”.!?])")
+    private val afterTerminal = Regex("([.!?])([^\\d\\s\\)\\]»”.!?])")
+    private val leftParen = Regex("\\(\\s+")
+    private val rightParen = Regex("\\s+\\)")
     fun normalize(text: String): String {
         var t = text.trim()
         if (t.isEmpty()) return ""
-        t = t.replace(Regex("\\s{2,}"), " ")
+        t = t.replace(spaces, " ")
         // remove space before , . ; : ! ? % ) ] » ”
-        t = t.replace(Regex("\\s+([,.;:!?%\\)\\]»”])"), "$1")
+        t = t.replace(beforePunct, "$1")
         // ensure space after , . ; : ! ? (but not between digits like 3.5)
-        t = Regex("([,;:!?])([^\\s\\)\\]»”.!?])").replace(t) { match ->
+        t = afterSeparator.replace(t) { match ->
             val numericSeparator = match.groupValues[1] in listOf(",", ":") &&
                 t.getOrNull(match.range.first - 1)?.isDigit() == true && match.groupValues[2].first().isDigit()
             if (numericSeparator) match.value else "${match.groupValues[1]} ${match.groupValues[2]}"
         }
-        t = t.replace(Regex("([.!?])([^\\d\\s\\)\\]»”.!?])"), "$1 $2")
+        t = t.replace(afterTerminal, "$1 $2")
         // normalize ( spacing
-        t = t.replace(Regex("\\(\\s+"), "(")
-        t = t.replace(Regex("\\s+\\)"), ")")
+        t = t.replace(leftParen, "(")
+        t = t.replace(rightParen, ")")
         // Repetition and emphatic punctuation can encode hesitation/emotion. Only
         // spatially duplicate OCR regions are deduplicated, never repeated words.
         return t.trim()

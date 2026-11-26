@@ -20,4 +20,24 @@ class DialogueAssemblerTest {
         val lines = listOf(line("ONE", 10, 100, 130), line("TWO", 140, 100, 250), line("THREE", 10, 400, 130))
         assertEquals(3, DialogueAssembler.assemble(lines) { _, _ -> true }.size)
     }
+    @Test fun wrappedLineWithRealMlKitBoxOverlapStillJoins() {
+        // ML Kit line boxes routinely overlap by ~25-35% of their height. The old 50% clearance
+        // rule dropped the second line of the same sentence.
+        val a = TextRegion("DARN IT, WHY DO I ALWAYS", 300, 1000, 620, 1032, languageHint = "en")
+        val b = TextRegion("END UP STEPPING ASIDE?", 296, 1022, 618, 1054, languageHint = "en")
+        val result = DialogueAssembler.assemble(listOf(a, b)) { _, _ -> true }
+        assertEquals(1, result.size)
+        assertEquals("DARN IT, WHY DO I ALWAYS END UP STEPPING ASIDE?", result.single().text)
+        assertEquals(2, result.single().sourceLineCount)
+    }
+    @Test fun completedSentenceDoesNotSwallowTheNextLine() {
+        val a = TextRegion("I AM FINE.", 300, 1000, 620, 1032, languageHint = "en")
+        val b = TextRegion("LEAVE ME ALONE.", 300, 1044, 620, 1076, languageHint = "en")
+        assertEquals(2, DialogueAssembler.assemble(listOf(a, b)) { _, _ -> true }.size)
+    }
+    @Test fun distinctBubblesSideBySideStaySeparate() {
+        val a = TextRegion("WAIT!", 40, 500, 260, 532, languageHint = "en")
+        val b = TextRegion("NO!", 300, 500, 520, 532, languageHint = "en")
+        assertEquals(2, DialogueAssembler.assemble(listOf(a, b)) { _, _ -> true }.size)
+    }
 }

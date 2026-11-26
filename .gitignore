@@ -38,3 +38,12 @@ node_modules/
 # Python audit tooling bytecode
 __pycache__/
 *.pyc
+
+# Translation evaluation: device-produced outputs and review decisions are user
+# data. They may contain captured dialogue and must never be committed.
+evaluation/device/
+evaluation/review/*.decisions.json
+# The review sheet is generated on demand (`review-sheet`); keep it out of Git.
+evaluation/review/review-sheet.html
+evaluation/reports/evaluation-run.*
+evaluation/reports/regression-review.*

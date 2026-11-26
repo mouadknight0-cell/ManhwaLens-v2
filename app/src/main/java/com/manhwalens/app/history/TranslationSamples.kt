@@ -31,6 +31,7 @@ object TranslationSamples {
                 all.add(JSONObject().apply {
                     put("id", key); put("trace", trace); put("timestamp", System.currentTimeMillis())
                     put("source", safe(block.original)); put("ocr_source", safe(block.region.text))
+                    if(block.evidence.isNotEmpty())put("pipeline",JSONObject(block.evidence.mapValues {safe(it.value).take(512)}))
                     put("semantic_quality", "unverified")
                     block.region.surface?.let { surface ->
                         put("surface_hint", JSONObject().put("oval", surface.oval).put("color", surface.color)
@@ -47,6 +48,8 @@ object TranslationSamples {
                     put("right", block.region.right); put("bottom", block.region.bottom)
                 })
             }
+            // Keep full native detail for only the twelve most recent diagnostic rows.
+            all.asReversed().asSequence().filter { it.has("pipeline") }.drop(12).forEach { it.remove("pipeline") }
             write(JSONArray(all.takeLast(200)))
         }
     }

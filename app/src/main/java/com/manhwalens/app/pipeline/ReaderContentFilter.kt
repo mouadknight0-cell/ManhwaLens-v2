@@ -15,8 +15,11 @@ object ReaderContentFilter {
         return text.contains("progressive image loading") &&
             (text.contains("stay up to date") || text.contains("manga district"))
     }
+    private val timestamp=Regex("(?i)^(?:(?:today|yesterday)\\s+)?\\d{1,2}:\\d{2}(?:\\s*[ap]m)?$")
+    private val uiLabels=setOf("settings","photos","collections","artifacts","projects","preview","free plan","upgrade","search your tabs")
     fun keep(region: TextRegion, contentTop: Int, contentBottom: Int): Boolean {
         if (region.top < contentTop || region.bottom > contentBottom) return false
-        return !address.containsMatchIn(region.text)
+        val t=region.text.trim()
+        return !address.containsMatchIn(t) && !timestamp.matches(t) && t.lowercase() !in uiLabels && !t.all { it.isDigit() || it.isWhitespace() }
     }
 }
