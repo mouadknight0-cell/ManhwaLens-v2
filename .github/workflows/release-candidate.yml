@@ -9,18 +9,18 @@ on:
       version_name:
         description: Candidate versionName (must end with -rc, e.g. 1.1.42-rc4)
         required: true
-        default: 1.1.42-rc11
+        default: 1.1.42-rc12
       installed_version_code:
         description: versionCode currently installed on the test phone; the candidate is computed strictly above it
         required: true
-        # RC10 was published with 217442881. A push-triggered run must not rebuild that same
+        # RC11 was published with 217442882. A push-triggered run must not rebuild that same
         # number: an equal versionCode is not an upgrade, so the phone would reject it, and the
         # only way past a rejected upgrade is an uninstall that destroys the user's history.
-        default: '217442881'
+        default: '217442882'
       min_installed_version_code:
         description: Hard floor the candidate must clear (fail closed if lower); usually the newest official release
         required: true
-        default: '217442881'
+        default: '217442882'
   push:
     branches: [arena/f6ce5fe4-manhwalens-v2]
     paths:
@@ -43,13 +43,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VERSION_NAME: ${{ inputs.version_name || '1.1.42-rc11' }}
+  VERSION_NAME: ${{ inputs.version_name || '1.1.42-rc12' }}
   # The candidate must be installable *over* what is already on the phone, so the floor is
   # supplied explicitly instead of guessed from the repository's latest release.
-  INSTALLED_VERSION_CODE: ${{ inputs.installed_version_code || '217442881' }}
+  INSTALLED_VERSION_CODE: ${{ inputs.installed_version_code || '217442882' }}
   # Explicit hard floor: the candidate must be installable over the newest official release
   # even when nothing is installed on the test phone. Fail closed if it cannot be met.
-  MIN_INSTALLED_VERSION_CODE: ${{ inputs.min_installed_version_code || '217442881' }}
+  MIN_INSTALLED_VERSION_CODE: ${{ inputs.min_installed_version_code || '217442882' }}
   # Makes the Gradle release task refuse an unsigned output path, even if someone sets
   # ALLOW_UNSIGNED_RELEASE in this job by mistake.
   CANDIDATE_RELEASE_BUILD: 'true'
