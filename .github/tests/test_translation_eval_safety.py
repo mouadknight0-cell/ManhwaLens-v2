@@ -184,6 +184,12 @@ class EngineUntouchedTest(unittest.TestCase):
         # the live status or any state machine -- those are the parts §12 says may not be
         # weakened for the sake of the contextual engine.
         "app/src/main/java/com/manhwalens/app/capture/CaptureManager.kt",
+        # RC12. A capture crash: `ArrayIndexOutOfBoundsException` at BubbleContours.detect
+        # (BubbleMask.kt:93) aborted the whole journey on RC11. The fix is a bounds guard in
+        # the border test -- it adds no capability, changes no threshold, and leaves every
+        # detection that succeeded before returning the same surface. Held to a contract
+        # rather than waved through: see BUBBLE_MASK_ADDITION_MARKERS.
+        "app/src/main/java/com/manhwalens/app/overlay/BubbleMask.kt",
     })
 
     #: What the Phase G.2 edit to `CaptureManager.kt` must and must not be.
@@ -212,6 +218,29 @@ class EngineUntouchedTest(unittest.TestCase):
     #: remove any of the validation that RC9 depends on. A phase that later strips
     #: the OCR-confidence gate or the numeric-content short-circuit while wiring
     #: context would fail here even though the file is on the exemption list.
+    #: What the RC12 edit to `BubbleMask.kt` must and must not be.
+    #:
+    #: Required: the four neighbour reads must be guarded by their grid position, and the
+    #: colour probe must be index-checked. Those are the two reads that threw.
+    #: Forbidden: any change to sampling density, the grid cap, the deadline, the rejection
+    #: reasons or the palette. A phase that "fixed" an index bug by lowering the sampling or
+    #: loosening a rejection would fail here even though the file is exempt.
+    BUBBLE_MASK_REQUIRED = (
+        "if(i>=nx) cells[i-nx] else -1",
+        "if(i<cells.size-nx) cells[i+nx] else -1",
+        "if(i%nx!=0) cells[i-1] else -1",
+        "if(i%nx!=nx-1) cells[i+1] else -1",
+        "if(j in pixels.indices",
+    )
+    BUBBLE_MASK_FORBIDDEN_REMOVALS = (
+        "source_outside_crop",
+        "component_at_crop_edge",
+        "insufficient_closed_margin",
+        "budget_14ms_sampling",
+        "budget_14ms_component",
+        "at most 48 x 48 cells",
+    )
+
     ENGINE_EDIT_REQUIRED = (
         "ContextTranslation.run(",
         "contextualPass(",
@@ -258,6 +287,10 @@ class EngineUntouchedTest(unittest.TestCase):
         if "app/src/main/java/com/manhwalens/app/capture/CaptureManager.kt" in changed:
             self._assert_capture_manager_edit_is_addition_only(base)
             changed = [c for c in changed if c != "app/src/main/java/com/manhwalens/app/capture/CaptureManager.kt"]
+        for exempt in self.PHASE_ALLOWED_EDITS:
+            short = exempt.rsplit("/", 1)[-1]
+            if exempt.endswith("BubbleMask.kt") and any(c.endswith(short) for c in changed):
+                self._assert_bubble_mask_edit_is_a_bounds_guard(base)
         changed = [c for c in changed if c not in self.PHASE_ALLOWED_EDITS]
         self.assertEqual([], changed, f"protected files were modified: {changed}")
 
@@ -296,6 +329,33 @@ class EngineUntouchedTest(unittest.TestCase):
             self.assertIn(
                 invariant, current,
                 f"capture stability invariant was removed: {invariant}",
+            )
+
+    def _assert_bubble_mask_edit_is_a_bounds_guard(self, base: str) -> None:
+        """The BubbleMask edit must close the out-of-range reads and hide no evidence.
+
+        RC12's crash was an index computed without a grid check. The danger in fixing it is
+        dropping a rejection path so fewer regions are refused -- which would trade a crash for
+        a wrong mask. Both halves are checked against the file and the diff.
+        """
+        path = "app/src/main/java/com/manhwalens/app/overlay/BubbleMask.kt"
+        current = (ROOT / path).read_text(encoding="utf-8")
+        for needed in self.BUBBLE_MASK_REQUIRED:
+            self.assertIn(needed, current, f"the bounds guard must contain {needed!r}")
+
+        diff = subprocess.run(
+            ["git", "diff", "-U0", base, "--", path],
+            cwd=str(ROOT), capture_output=True, text=True, timeout=60,
+        )
+        self.assertEqual(0, diff.returncode, diff.stderr)
+        removed = [
+            line[1:] for line in diff.stdout.splitlines()
+            if line.startswith("-") and not line.startswith("---")
+        ]
+        for guard in self.BUBBLE_MASK_FORBIDDEN_REMOVALS:
+            self.assertFalse(
+                any(guard in line for line in removed),
+                f"fixing an index bug must not remove the {guard!r} rejection",
             )
 
     def _assert_engine_seam_edit_is_a_wiring(self, base: str) -> None:

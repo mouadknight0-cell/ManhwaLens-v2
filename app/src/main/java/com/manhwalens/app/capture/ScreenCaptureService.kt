@@ -939,8 +939,24 @@ class ScreenCaptureService : Service() {
                 else detected
                 val matched=(application as ManhwaLensApp).settingsRepository.matchStyle.value
                 var contourReason=if(matched) "accepted" else "style_disabled"
-                val contour = if (matched) com.manhwalens.app.overlay.BubbleContours.bitmap(item.region,detected.color,bitmap){contourReason=it}?.takeUnless { s ->
-                    classified.any { other -> other!==item && com.manhwalens.app.overlay.SurfacePlacement.intersects(s,other.region.let { com.manhwalens.app.overlay.ReplacementSurface(it.left,it.top,it.right,it.bottom) }) }.also { if(it)contourReason="neighbor_source" }
+                // One region's contour must not cost the page. This used to run unguarded, so a
+                // defect inside BubbleContours aborted prepareRegions and failed the whole journey
+                // (CAP-2011). The bounds bug that caused it is fixed at its source; this keeps the
+                // blast radius at one region if another appears, because the fallback below already
+                // yields a safe surface that retains the source and the OCR result.
+                val contour = if (matched) try {
+                    com.manhwalens.app.overlay.BubbleContours.bitmap(item.region,detected.color,bitmap){contourReason=it}?.takeUnless { s ->
+                        classified.any { other -> other!==item && com.manhwalens.app.overlay.SurfacePlacement.intersects(s,other.region.let { com.manhwalens.app.overlay.ReplacementSurface(it.left,it.top,it.right,it.bottom) }) }.also { if(it)contourReason="neighbor_source" }
+                    }
+                } catch (failure: Throwable) {
+                    // Cancellation is not a contour failure and must still unwind.
+                    if (failure is kotlinx.coroutines.CancellationException) throw failure
+                    contourReason="contour_error:${failure.javaClass.simpleName}"
+                    Diagnostics.warn("overlay","contour_failed","CONTOUR-EXCEPTION source_retained=true",
+                        throwable=failure,
+                        context=mapOf("bounds" to "${item.region.left},${item.region.top},${item.region.right},${item.region.bottom}",
+                            "frame" to "${bitmap.width}x${bitmap.height}"))
+                    null
                 } else null
                 val local = contour ?: if (surface.reliable) com.manhwalens.app.overlay.FlatInterior.expand(surface,bitmap.width,bitmap.height,{ s ->
                     classified.any { other -> other!==item && other.region.left-2<s.right && other.region.right+2>s.left && other.region.top-2<s.bottom && other.region.bottom+2>s.top }

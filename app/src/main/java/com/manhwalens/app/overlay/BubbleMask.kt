@@ -90,7 +90,25 @@ object BubbleContours {
             var halo=0;var haloCount=0;var border=0;var colored=0;var turns=0;var prevStart=-1;var prevEnd=-1
             for(i in cells.indices){if(cells[i]!=2)continue;val x=i%nx;val y=i/nx;val c=pixels[i]
                 if(x in l until rr && y in t until bb && chroma(c)>48 && delta(c,bg)>28 && delta(c,fg)>24){halo=c;haloCount++}
-                if(cells[i-1]!=2 || cells[i+1]!=2 || cells[i-nx]!=2 || cells[i+nx]!=2){val j=when{cells[i-1]!=2->i-1;cells[i+1]!=2->i+1;cells[i-nx]!=2->i-nx;else->i+nx};border++;if(chroma(pixels[j])>55)colored++}
+                // Border test. The four neighbours are read only when they exist: a cell in the
+                // first or last grid row has no row above or below it, and indexing cells[i-nx]
+                // or cells[i+nx] there ran off the array. This exact expression threw
+                // ArrayIndexOutOfBoundsException on a 15x41 grid (Index 615 for length 615), which
+                // aborted the whole capture journey. An out-of-grid neighbour means the component
+                // is bounded by the crop rather than by ink, which is not evidence of a border, so
+                // it is skipped here and the component_at_crop_edge check upstream decides.
+                val up   = if(i>=nx) cells[i-nx] else -1
+                val down = if(i<cells.size-nx) cells[i+nx] else -1
+                val prev = if(i%nx!=0) cells[i-1] else -1
+                val next = if(i%nx!=nx-1) cells[i+1] else -1
+                if(up!=2 || down!=2 || prev!=2 || next!=2){
+                    // Only a neighbour that exists can say anything about this cell's colour. When
+                    // the neighbour is off-grid (a first/last row or column) there is no pixel to
+                    // inspect, so it counts as a border but cannot contribute a colour verdict.
+                    val j=when{prev!=2->i-1;next!=2->i+1;up!=2->i-nx;else->i+nx}
+                    border++
+                    if(j in pixels.indices && chroma(pixels[j])>55)colored++
+                }
             }
             for(i in rows.indices step 3){if(prevStart!=-1 && (abs(prevStart-rows[i+1])>2 || abs(prevEnd-rows[i+2])>2))turns++;prevStart=rows[i+1];prevEnd=rows[i+2]}
             val density=strokes.toDouble()/((rr-l)*(bb-t));val coverage=cells.count { it==2 }.toDouble()/((xmax-xmin)*(ymax-ymin))
